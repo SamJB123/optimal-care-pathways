@@ -96,11 +96,11 @@ CREATE TABLE `sections` (
 	`step_number` integer,
 	`ownership` text DEFAULT 'owned' NOT NULL,
 	`core_section_id` text,
+	`pathway_ownership` text,
 	`apparatus` integer DEFAULT false NOT NULL,
 	`hidden` integer DEFAULT false NOT NULL,
 	`point_of_care` integer DEFAULT false NOT NULL,
 	`body_json` text,
-	`guidance_json` text,
 	`updated_at` integer,
 	`updated_by` text,
 	CONSTRAINT `fk_sections_document_id_documents_id_fk` FOREIGN KEY (`document_id`) REFERENCES `documents`(`id`) ON DELETE CASCADE

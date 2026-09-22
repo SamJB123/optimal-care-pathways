@@ -39,6 +39,7 @@ import {
 	text,
 	uniqueIndex,
 } from 'drizzle-orm/sqlite-core'
+import type { JsonNode } from '#/content/schema.ts'
 
 const timestampMs = (name: string) => integer(name, { mode: 'timestamp_ms' })
 const bool = (name: string) => integer(name, { mode: 'boolean' })
@@ -89,7 +90,8 @@ export const documents = sqliteTable(
 			.notNull()
 			.references(() => templates.id),
 		/** The better-auth organisation whose members draft, review and view this document.
-		 *  The central organisation for core documents. */
+		 *  The central organisation for core documents, which therefore exists before any
+		 *  document does: creating it is the first step of a fresh deployment. */
 		orgId: text('org_id').notNull(),
 		/** This system's own address, e.g. 'breast-cancer'. */
 		slug: text('slug').notNull(),
@@ -139,6 +141,10 @@ export const sections = sqliteTable(
 		ownership: text('ownership').$type<Ownership>().notNull().default('owned'),
 		/** For a shared section: the core document's section it renders. */
 		coreSectionId: text('core_section_id'),
+		/** Core documents only: the template's rule for this section — what a pathway
+		 *  seeded from it starts as. 'shared' renders the core body by reference; 'owned'
+		 *  copies the core body as the pathway's starting draft. Null on pathway sections. */
+		pathwayOwnership: text('pathway_ownership').$type<Ownership>(),
 		/** Template scaffolding a document never renders: the developer instructions,
 		 *  the cover banner, the contents page. */
 		apparatus: bool('apparatus').notNull().default(false),
@@ -146,11 +152,11 @@ export const sections = sqliteTable(
 		hidden: bool('hidden').notNull().default(false),
 		/** Belongs in the quick reference guide (a derived view). */
 		pointOfCare: bool('point_of_care').notNull().default(false),
-		/** The draft body, ProseMirror JSON, folded from the section room. Null when shared. */
-		bodyJson: text('body_json', { mode: 'json' }),
-		/** Drafting instruction for whoever writes this section — the template's green or
-		 *  purple text. Metadata about the section, never rendered to a reader. */
-		guidanceJson: text('guidance_json', { mode: 'json' }),
+		/** The draft body, ProseMirror JSON in the content schema (src/content/schema.ts),
+		 *  folded from the section room. Drafting guidance (the template's green and purple
+		 *  text) lives INSIDE the body as `guidance` nodes, where the author needs it, and is
+		 *  stripped at publish. Null when shared. */
+		bodyJson: text('body_json', { mode: 'json' }).$type<JsonNode>(),
 		updatedAt: timestampMs('updated_at'),
 		updatedBy: text('updated_by'),
 	},
@@ -233,7 +239,7 @@ export const snapshotSections = sqliteTable(
 		hidden: bool('hidden').notNull(),
 		pointOfCare: bool('point_of_care').notNull(),
 		/** The resolved body: the section's own, or the core section's at that moment. */
-		bodyJson: text('body_json', { mode: 'json' }),
+		bodyJson: text('body_json', { mode: 'json' }).$type<JsonNode>(),
 		html: text('html'),
 		markdown: text('markdown'),
 		/** The publish version in which this section's resolved body last changed — the
@@ -312,7 +318,7 @@ export const legacySections = sqliteTable(
 		heading: text('heading'),
 		/** The legacy identity key the section mapping addresses ('step-3/staging'). */
 		key: text('key'),
-		bodyJson: text('body_json', { mode: 'json' }),
+		bodyJson: text('body_json', { mode: 'json' }).$type<JsonNode>(),
 	},
 	(t) => [
 		index('legacy_sections_document').on(t.documentId),

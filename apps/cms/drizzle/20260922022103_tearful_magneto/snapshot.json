@@ -1,7 +1,7 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "be61cd0d-a9ef-4781-a1f4-2deff7b03ae7",
+  "id": "2276db35-7a60-488b-bdad-8b161dff0a77",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -721,6 +721,16 @@
       "table": "sections"
     },
     {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "pathway_ownership",
+      "entityType": "columns",
+      "table": "sections"
+    },
+    {
       "type": "integer",
       "notNull": true,
       "autoincrement": false,
@@ -757,16 +767,6 @@
       "default": null,
       "generated": null,
       "name": "body_json",
-      "entityType": "columns",
-      "table": "sections"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "guidance_json",
       "entityType": "columns",
       "table": "sections"
     },

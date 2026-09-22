@@ -3,6 +3,12 @@
 	"root": false,
 	"extends": ["@aicolab/biome-config"],
 	"files": {
-		"includes": ["**", "!drizzle"]
-	}
+		"includes": ["**", "!drizzle", "!template"]
+	},
+	"overrides": [
+		{
+			"includes": ["scripts/**"],
+			"linter": { "rules": { "suspicious": { "noConsole": "off" } } }
+		}
+	]
 }
