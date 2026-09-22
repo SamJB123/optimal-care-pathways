@@ -189,6 +189,9 @@ overrides:
   # monorepo runs. Two better-auth copies break its plugin types (the monorepo's
   # "duplicate @better-auth/core" trap), so `pnpm dedupe` after any change here.
   'better-auth': 1.7.2
+  # ONE zod copy: better-auth's option types are zod schemas, and a second copy (4.6.5
+  # floated in through a range) makes them stop matching. Held at the monorepo's.
+  zod: 4.4.3
   '@better-auth/api-key': 1.7.2
   '@better-auth/core': 1.7.2
   '@better-auth/drizzle-adapter': 1.7.2
