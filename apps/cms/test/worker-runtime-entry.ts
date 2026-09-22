@@ -2,9 +2,11 @@
 // wrangler.test.jsonc → main). Exports the Durable Object classes the runtime
 // must construct, plus a test-only auth stub so a room's real authenticated
 // websocket upgrade path can be exercised without the auth worker.
+
 // biome-ignore lint/correctness/noUnresolvedImports: provided by the Workers runtime
 import { WorkerEntrypoint } from 'cloudflare:workers'
-import { OcpBell } from '#/lib/rpc-root.ts'
+import { serveCapnweb } from '@aicolab/room-service/base-worker'
+import { CoreRpcRoot, OcpBell } from '#/lib/rpc-root.ts'
 import { DocumentRoom } from '#/rooms/document-room.ts'
 
 export { DocumentRoom, OcpBell }
@@ -23,6 +25,13 @@ const parseMember = (userId: string): { role: string; orgId: string } | null => 
 }
 
 export class TestAuth extends WorkerEntrypoint {
+	/** The `/api/ws` upgrade's cookie check (serveCapnweb) and the root's `whoami`
+	 *  probe: the cookie IS the user id in this fixture, so a browser socket dialled
+	 *  with `Cookie: member@org-a` is sealed as `member@org-a`. */
+	async verifySession(cookie: string) {
+		return { user: cookie ? { id: cookie } : null }
+	}
+
 	async getUsersByIds(userIds: string[]) {
 		return Object.fromEntries(userIds.map((id) => [id, { name: id }]))
 	}
@@ -60,7 +69,20 @@ export class TestAuth extends WorkerEntrypoint {
 }
 
 export default {
-	async fetch(): Promise<Response> {
+	/** `/api/ws` is the REAL browser door (serveCapnweb over the app's own CoreRpcRoot),
+	 *  so a pool test can run the production client stack — shared socket → managed
+	 *  sessions → connectDocumentRoom → DocumentRoom — end to end. The Start handler is
+	 *  stubbed: no server functions are served here. */
+	async fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext): Promise<Response> {
+		if (new URL(request.url).pathname === '/api/ws') {
+			return serveCapnweb({
+				request,
+				env,
+				ctx,
+				Root: CoreRpcRoot,
+				handler: { fetch: () => new Response('not found', { status: 404 }) },
+			})
+		}
 		return new Response('worker-runtime test entry')
 	},
 } satisfies ExportedHandler<Cloudflare.Env>
