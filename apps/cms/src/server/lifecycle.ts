@@ -62,6 +62,9 @@ export interface Lifecycle {
 	 *  Injected so this module stays free of the view layer and the runtime tests can
 	 *  run it without compiling Solid. */
 	renderHtml(body: JsonNode, derived: DerivedView): string
+	/** Drop cached responses carrying these tags (the document's PDF, decision 126);
+	 *  best-effort, after the publish has committed. */
+	purge?(tags: string[]): Promise<void>
 }
 
 export class LifecycleRefusal extends Error {}
@@ -649,6 +652,14 @@ export async function publish(
 		label: input.label,
 	})
 	void publishDocumentRows([document])
+	if (lc.purge) {
+		const tags = [document.slug, ...(document.partnerSlug ? [document.partnerSlug] : [])].map((s) => `document-${s}`)
+		try {
+			await lc.purge(tags)
+		} catch (error) {
+			console.error('[lifecycle] cache purge failed:', error instanceof Error ? error.message : error)
+		}
+	}
 	await notify(
 		lc,
 		await recipients(lc, document, 'viewer'),

@@ -780,3 +780,16 @@ export function parseBody(json: unknown): PmNode {
 }
 
 export const emptyBody = (): JsonNode => ({ type: 'doc', content: [{ type: 'paragraph' }] })
+
+/** True when the JSON is a body the content schema accepts — a checked guard, so loose
+ *  JSON from the wire (the public API) becomes a typed node without a cast. */
+export const isContentNode = (value: unknown): value is JsonNode => {
+	try {
+		parseBody(value)
+		return true
+	} catch {
+		return false
+	}
+}
+
+export const contentNode = (value: unknown): JsonNode | null => (isContentNode(value) ? value : null)

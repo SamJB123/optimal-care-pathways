@@ -17,6 +17,13 @@ catalog:
   # is `ctx.id.name` (workerd#2240 resolved) — no setName / room header.
   agents: ^0.24.0
   '@modelcontextprotocol/sdk': ^1.30.0
+  # (pathways) the public read API (decisions 122–128): the operation table's three
+  # registrars. MCP on the SDK v2 server package (spec 2026-07-28, stateless
+  # createMcpHandler, Standard Schema → zod v4); REST + OpenAPI 3.1 through chanfana on
+  # Hono, mounted in one TanStack Start catch-all server route.
+  '@modelcontextprotocol/server': 2.0.0
+  chanfana: 3.4.0
+  hono: 4.13.8
   # @moq/net + @moq/watch are PATCHED (patches/@moq__*): pinned exact and
   # declared only here, so every consumer (kolo, moq-lab, threejs) resolves
   # the one patched instance — a literal pin elsewhere silently gets an

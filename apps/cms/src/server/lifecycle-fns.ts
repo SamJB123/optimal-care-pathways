@@ -45,6 +45,11 @@ async function lifecycleOf(): Promise<lifecycle.Lifecycle> {
 		},
 		origin: env.PUBLIC_ORIGIN ?? 'https://ocp-cms.aicolab.workers.dev',
 		renderHtml: renderBodyHtml,
+		purge: async (tags) => {
+			// biome-ignore lint/correctness/noUnresolvedImports: provided by the Workers runtime
+			const { cache } = await import('cloudflare:workers')
+			await cache.purge({ tags })
+		},
 	}
 }
 

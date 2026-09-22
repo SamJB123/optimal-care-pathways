@@ -18,6 +18,9 @@ catalogs:
     '@cloudflare/workers-types':
       specifier: ^5.20260921.1
       version: 5.20260921.1
+    '@modelcontextprotocol/server':
+      specifier: 2.0.0
+      version: 2.0.0
     '@prosekit/core':
       specifier: 0.13.3
       version: 0.13.3
@@ -93,6 +96,9 @@ catalogs:
     cbor-x:
       specifier: ^1.6.6
       version: 1.6.6
+    chanfana:
+      specifier: 3.4.0
+      version: 3.4.0
     convex:
       specifier: ^1.46.0
       version: 1.46.0
@@ -102,6 +108,9 @@ catalogs:
     drizzle-orm:
       specifier: 1.0.0-rc.4
       version: 1.0.0-rc.4
+    hono:
+      specifier: 4.13.8
+      version: 4.13.8
     jose:
       specifier: ^6.2.12
       version: 6.2.12
@@ -284,6 +293,9 @@ importers:
       '@fontsource-variable/inter':
         specifier: ^5.2.8
         version: 5.3.0
+      '@modelcontextprotocol/server':
+        specifier: 'catalog:'
+        version: 2.0.0
       '@prosekit/core':
         specifier: 'catalog:'
         version: 0.13.3(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.1)
@@ -320,9 +332,15 @@ importers:
       capnweb-experimental-hibernation:
         specifier: 'catalog:'
         version: 0.12.0-hibernation.3(cbor-x@1.6.6)
+      chanfana:
+        specifier: 'catalog:'
+        version: 3.4.0
       drizzle-orm:
         specifier: 'catalog:'
         version: 1.0.0-rc.4(@cloudflare/workers-types@5.20260921.1)(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(@types/sql.js@1.4.11)(pg@8.23.0)(sql.js@1.14.2)(valibot@1.2.0(typescript@7.0.2))(zod@4.6.5)
+      hono:
+        specifier: 'catalog:'
+        version: 4.13.8
       pdfjs-dist:
         specifier: 'catalog:'
         version: 6.3.289
@@ -399,6 +417,9 @@ importers:
       '@aicolab/ui-solid':
         specifier: workspace:^
         version: link:../ui-solid
+      '@modelcontextprotocol/server':
+        specifier: 'catalog:'
+        version: 2.0.0
       '@prosekit/core':
         specifier: 'catalog:'
         version: 0.13.3(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.1)
@@ -423,9 +444,18 @@ importers:
       capnweb-experimental-hibernation:
         specifier: 'catalog:'
         version: 0.12.0-hibernation.3(cbor-x@1.6.6)
+      chanfana:
+        specifier: 'catalog:'
+        version: 3.4.0
+      hono:
+        specifier: 'catalog:'
+        version: 4.13.8
       lib0:
         specifier: 1.0.0-rc.32
         version: 1.0.0-rc.32
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
     devDependencies:
       '@aicolab/tsconfig':
         specifier: workspace:^
@@ -939,6 +969,11 @@ packages:
   '@asamuzakjp/dom-selector@9.2.1':
     resolution: {integrity: sha512-NT4s3yZLjovPpliRpTvdsdzyPjqRqiCZj9MxnarBihbaY5MbAG7DWAJcrLlhmC7xKTNCXsTELcqB8YsqpLnUFQ==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
+
+  '@asteasolutions/zod-to-openapi@8.5.0':
+    resolution: {integrity: sha512-SABbKiObg5dLRiTFnqiW1WWwGcg1BJfmHtT2asIBnBHg6Smy/Ms2KHc650+JI4Hw7lSkdiNebEGXpwoxfben8Q==}
+    peerDependencies:
+      zod: 4.6.5
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -5283,6 +5318,11 @@ packages:
     resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
     engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
+  chanfana@3.4.0:
+    resolution: {integrity: sha512-zNXyjQWnuhxd2m5QOQjAT7dCi8jg/SXckhD3y/Z6PKJfsf/XfSlvxyxFJpJh8O19lrvrsM4SUgEz2628imtWJQ==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   character-entities-html4@2.1.0:
     resolution: {integrity: sha512-1v7fgQRj6hnSwFpq1Eu0ynr/CDEw0rXo2B61qXrLNdHZmPKgb7fqS1a2JwF0rISo9q77jDI8VMEHoApn8qDoZA==}
 
@@ -6701,6 +6741,9 @@ packages:
     resolution: {integrity: sha512-YgBpdJHPyQ2UE5x+hlSXcnejzAvD0b22U2OuAP+8OnlJT+PjWPxtgmGqKKc+RgTM63U9gN0YzrYc71R2WT/hTA==}
     engines: {node: '>=18'}
 
+  openapi3-ts@4.6.1:
+    resolution: {integrity: sha512-XW9MOldkhoICNeXVzzmXzmOW5G73ppOEGmh7fLCqHjgfdEYCGGN+00MlVCeUZgovjjfC56j9tvtDt1zGabNjjA==}
+
   orderedmap@2.1.1:
     resolution: {integrity: sha512-TvAWxi0nDe1j/rtMcWcIj94+Ffe6n7zhow33h40SKxmsmozs6dz/e+EajymfoFcHd7sxNn8yHM8839uixMOV6g==}
 
@@ -8019,6 +8062,10 @@ packages:
     engines: {node: '>= 14.6'}
     hasBin: true
 
+  yargs-parser@22.0.0:
+    resolution: {integrity: sha512-rwu/ClNdSMpkSrUb+d6BRsSkLUq1fmfsY6TOpYzTwvwkg1/NRG85KBy3kq++A8LKQwX6lsu+aWad+2khvuXrqw==}
+    engines: {node: ^20.19.0 || ^22.12.0 || >=23}
+
   yoctocolors@2.2.0:
     resolution: {integrity: sha512-xYqdZFUK/VYazNl/oCDYN+3WloWQwMfZxBoiNt6qNyk+xfOdi598muWE42rNZFp1kNOiqW936q5RhUdnpqElSg==}
     engines: {node: '>=18'}
@@ -8100,6 +8147,11 @@ snapshots:
       css-tree: 3.2.1
       is-potential-custom-element-name: 1.0.1
       lru-cache: 11.5.3
+
+  '@asteasolutions/zod-to-openapi@8.5.0(zod@4.6.5)':
+    dependencies:
+      openapi3-ts: 4.6.1
+      zod: 4.6.5
 
   '@babel/code-frame@7.27.1':
     dependencies:
@@ -11856,6 +11908,14 @@ snapshots:
 
   chalk@5.6.2: {}
 
+  chanfana@3.4.0:
+    dependencies:
+      '@asteasolutions/zod-to-openapi': 8.5.0(zod@4.6.5)
+      js-yaml: 4.3.2
+      openapi3-ts: 4.6.1
+      yargs-parser: 22.0.0
+      zod: 4.6.5
+
   character-entities-html4@2.1.0: {}
 
   character-entities-legacy@3.0.0: {}
@@ -12984,6 +13044,10 @@ snapshots:
       define-lazy-prop: 3.0.0
       is-inside-container: 1.0.0
       wsl-utils: 0.1.0
+
+  openapi3-ts@4.6.1:
+    dependencies:
+      yaml: 2.9.1
 
   orderedmap@2.1.1: {}
 
@@ -14419,6 +14483,8 @@ snapshots:
   yallist@3.1.1: {}
 
   yaml@2.9.1: {}
+
+  yargs-parser@22.0.0: {}
 
   yoctocolors@2.2.0: {}
 

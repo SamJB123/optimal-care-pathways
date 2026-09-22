@@ -16,6 +16,8 @@ import type { BellCapability, ScopedWriter } from '@aicolab/room-service/d1-sync
 import { D1BellServer } from '@aicolab/room-service/d1-sync'
 import type { RpcStub } from 'capnweb-experimental-hibernation'
 import { eq } from 'drizzle-orm'
+import { PublishedApi } from '#/api/rpc.ts'
+import { apiContext } from '#/api/server.ts'
 import { db, schema } from '#/db/index.ts'
 import { DocumentsLiveTopic, type LiveTopicHost, SectionsLiveTopic } from '#/lib/live-topics.ts'
 import { OCP_NAMESPACE, ROLE_LADDER, type Role } from '#/lib/roles.ts'
@@ -110,5 +112,12 @@ export class CoreRpcRoot extends WorkerRoot<Cloudflare.Env> implements LiveTopic
 	connectDocumentsTopic(): DocumentsLiveTopic {
 		this.#documentsTopic ??= new DocumentsLiveTopic(this, this.userId)
 		return this.#documentsTopic
+	}
+
+	/** The published-content operations (decision 122) as a capnweb capability: the same
+	 *  table the REST API and the MCP server serve, for first-party callers. Public data,
+	 *  so any sealed user may hold it. */
+	connectPublished(): PublishedApi {
+		return new PublishedApi(apiContext(this.env))
 	}
 }

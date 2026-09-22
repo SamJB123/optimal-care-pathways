@@ -55,7 +55,15 @@
 			{ "name": "OCP_BELL", "class_name": "OcpBell" }
 		]
 	},
-	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["DocumentRoom", "OcpBell"] }]
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["DocumentRoom", "OcpBell"] }],
+
+	// Browser Run, for the PDF of a published version (decision 126): the Worker calls
+	// `env.BROWSER.quickAction("pdf", { url })` on its own print page, on demand.
+	"browser": { "binding": "BROWSER" },
+
+	// Workers Cache (decision 126): the PDF response carries Cache-Control and a Cache-Tag
+	// per document; publishing purges the tag.
+	"cache": { "enabled": true }
 
 	// Still to come, each with its own migration tag: R2 for images and the legacy PDFs,
 	// and Browser Rendering for PDF.

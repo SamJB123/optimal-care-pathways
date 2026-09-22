@@ -1,0 +1,97 @@
+/* The public read page of a published document, on screen and on paper. */
+.ocp-published {
+	max-width: 52rem;
+	margin-inline: auto;
+	padding: 1.5rem 1.25rem 4rem;
+}
+
+.ocp-published-head {
+	margin-block-end: 2rem;
+}
+
+.ocp-published-head h1 {
+	margin: 0.25rem 0 0.5rem;
+	font-size: 2rem;
+	line-height: 1.2;
+}
+
+.ocp-published-meta {
+	margin: 0;
+	color: var(--color-base-content-muted);
+}
+
+.ocp-published-notes {
+	margin: 0.75rem 0 0;
+	white-space: pre-wrap;
+}
+
+.ocp-published-section {
+	margin-block: 1.75rem;
+}
+
+.ocp-published-title {
+	margin: 0 0 0.5rem;
+	font-size: 1.5rem;
+	line-height: 1.25;
+}
+
+.ocp-published-section[data-depth="1"] .ocp-published-title {
+	font-size: 1.25rem;
+}
+
+.ocp-published-section[data-depth="2"] .ocp-published-title,
+.ocp-published-section[data-depth="3"] .ocp-published-title {
+	font-size: 1.05rem;
+}
+
+.ocp-published-number {
+	color: var(--color-base-content-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.ocp-published-references ol {
+	padding-inline-start: 2.5rem;
+}
+
+.ocp-published-references li {
+	margin-block: 0.35rem;
+	overflow-wrap: anywhere;
+}
+
+@page {
+	size: A4;
+	margin: 18mm 16mm;
+}
+
+@media print {
+	/* The app's chrome is not part of the document. */
+	body > header,
+	nav,
+	.ui-theme-toggle,
+	[data-tsd-source*="__root"] > header {
+		display: none;
+	}
+
+	.ocp-published {
+		max-width: none;
+		padding: 0;
+	}
+
+	.ocp-published-section {
+		break-inside: avoid-page;
+	}
+
+	.ocp-published-title {
+		break-after: avoid-page;
+	}
+
+	a[href^="http"]::after {
+		content: " (" attr(href) ")";
+		font-size: 0.85em;
+		color: var(--color-base-content-muted);
+	}
+
+	.ocp-published-references a[href^="http"]::after {
+		content: none;
+	}
+}
