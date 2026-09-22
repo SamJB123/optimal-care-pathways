@@ -55,7 +55,7 @@ export const Route = createRootRoute({
 
 function RootDocument(props: ParentProps) {
 	return (
-		<html lang="en-AU">
+		<html lang="en-AU" class="ui-theme">
 			<head>
 				<meta charset="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />

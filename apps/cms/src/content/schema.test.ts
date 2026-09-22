@@ -15,15 +15,22 @@ describe('content schema (workerd)', () => {
 			'table',
 			'image',
 			'box',
+			'columns',
+			'column',
 			'variants',
 			'variant',
 			'banner',
 			'timeframe',
 			'carePoint',
 			'timeframeSnapshot',
+			'pathwayMap',
+			'resourceList',
+			'resource',
 			'guidance',
 			'citation',
 			'footnote',
+			'pageBreak',
+			'mention',
 		])
 			expect(contentSchema.nodes[name], name).toBeDefined()
 		for (const name of [

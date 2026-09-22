@@ -19,6 +19,13 @@ export function hydrateRoot(root: YNode, body: JsonNode): void {
 	root.applyDelta(pmnodeToDelta(parseBody(body)))
 }
 
+/** Replace whatever a live root holds with `body` — the room's answer when the row
+ *  changed behind it (a reseed, a migration): D1 is the truth, so the live doc yields. */
+export function replaceRoot(root: YNode, body: JsonNode): void {
+	if (root.length > 0) root.delete(0, root.length)
+	hydrateRoot(root, body)
+}
+
 /** Read the yjs root as a body. Read without an attribution renderer, so the result
  *  is content, not history. */
 export function bodyFromRoot(root: YNode): JsonNode {

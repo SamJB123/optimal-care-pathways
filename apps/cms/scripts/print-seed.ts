@@ -93,13 +93,19 @@ const emit = (indent: number, text: string) => lines.push(`${'  '.repeat(indent)
 function block(node: JsonNode, indent: number): void {
 	switch (node.type) {
 		case 'paragraph':
-			emit(indent, inline(node.content) || '¶')
+			emit(
+				indent,
+				`${node.attrs?.textAlign ? `⇔${String(node.attrs.textAlign)} ` : ''}${inline(node.content) || '¶'}`,
+			)
 			return
 		case 'heading':
 			emit(indent, `${'#'.repeat(Number(node.attrs?.level ?? 1))} ${inline(node.content)}`)
 			return
 		case 'banner':
-			emit(indent, `▌ BANNER: ${inline(node.content)}`)
+			emit(
+				indent,
+				`▌ ${node.attrs?.tone === 'sub' ? 'SUB-BAND' : 'BANNER'}: ${inline(node.content)}`,
+			)
 			return
 		case 'guidance':
 			emit(indent, '┃ GUIDANCE')
@@ -128,12 +134,33 @@ function block(node: JsonNode, indent: number): void {
 		case 'timeframeSnapshot':
 			emit(indent, '⌗ TIMEFRAME SNAPSHOT (derived from the document’s timeframes at render)')
 			return
+		case 'pathwayMap':
+			emit(indent, '⌗ PATHWAY MAP (derived from the document’s steps at render)')
+			return
+		case 'columns':
+			emit(indent, `⫴ COLUMNS (${(node.content ?? []).length})`)
+			;(node.content ?? []).forEach((column, i) => {
+				emit(indent + 1, `│ column ${i + 1}`)
+				for (const c of column.content ?? []) block(c, indent + 2)
+			})
+			return
+		case 'resourceList':
+			for (const c of node.content ?? []) block(c, indent)
+			return
+		case 'resource':
+			emit(
+				indent,
+				`⛁ ${String(node.attrs?.title ?? '')}${node.attrs?.url ? ` <${String(node.attrs.url)}>` : ''}`,
+			)
+			for (const c of node.content ?? []) block(c, indent + 1)
+			return
 		case 'list': {
 			const kind = String(node.attrs?.kind ?? 'bullet')
 			const marker =
 				kind === 'check' ? (node.attrs?.pointOfCare ? '☑' : '☐') : kind === 'ordered' ? '1.' : '•'
 			const [first, ...more] = node.content ?? []
-			emit(indent, `${marker} ${first?.type === 'paragraph' ? inline(first.content) : ''}`)
+			const icon = node.attrs?.icon ? `[icon ${String(node.attrs.icon).split('/').pop()}] ` : ''
+			emit(indent, `${marker} ${icon}${first?.type === 'paragraph' ? inline(first.content) : ''}`)
 			if (first && first.type !== 'paragraph') block(first, indent + 1)
 			for (const c of more) block(c, indent + 1)
 			return
@@ -183,7 +210,7 @@ for (const [index, s] of result.sections.entries()) {
 	lines.push('')
 	emit(
 		0,
-		`${'#'.repeat(Math.min(6, depth(s) + 1))} [${s.address}] ${s.printedNumber ? `${s.printedNumber} ` : ''}${s.title ?? ''}  (${s.pathwayOwnership}${s.apparatus ? ', apparatus' : ''}${s.canonical ? ', canonical' : ''}, H${s.headingLevel}${page ? `, p.${page}` : ''})`,
+		`${'#'.repeat(Math.min(6, depth(s) + 1))} [${s.address}] ${s.icon ? '⌾ ' : ''}${s.printedNumber ? `${s.printedNumber} ` : ''}${s.title ?? ''}  (${s.pathwayOwnership}${s.apparatus ? ', apparatus' : ''}${s.canonical ? ', canonical' : ''}, H${s.headingLevel}${page ? `, p.${page}` : ''})`,
 	)
 	for (const c of s.bodyJson.content ?? []) block(c, 0)
 }

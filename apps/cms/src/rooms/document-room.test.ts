@@ -249,4 +249,47 @@ describe('DocumentRoom (workerd, real DO over D1)', () => {
 			expect(stored?.content?.[0]?.type).toBe('paragraph')
 		})
 	})
+
+	it('a row rewritten behind the room (a reseed) wins: the live doc re-hydrates from it', async () => {
+		const reseeded: JsonNode = {
+			type: 'doc',
+			content: [
+				{
+					type: 'box',
+					attrs: { kind: 'callout', icon: '', family: 'info' },
+					content: [
+						{ type: 'paragraph', content: [{ type: 'text', text: 'Reseeded by the test' }] },
+					],
+				},
+			],
+		}
+		await sleep(20)
+		await db(env.DB)
+			.update(schema.sections)
+			.set({ bodyJson: reseeded, updatedAt: new Date() })
+			.where(eq(schema.sections.id, OWNED_ID))
+		await runInDurableObject(room(), async (instance: DocumentRoom) => {
+			await instance.ready
+			// The fold finds the row newer than anything this room wrote: it yields.
+			const normalised = parseBody(reseeded).toJSON()
+			const folded = await instance.foldSection(OWNED_ID)
+			expect(folded).toEqual(normalised)
+			const storedNow = await storedBody(OWNED_ID)
+			expect(storedNow && parseBody(storedNow).toJSON()).toEqual(normalised)
+			// A fresh open reads the reseeded body, not the edit the room used to hold.
+			const facet = await instance
+				.createCapability(`member@${ORG}`)
+				.openDoc({ docId: OWNED_ID }, makeFacetCb().stub)
+			const client = makeClientSink()
+			const subscription = await subscribeBody(facet, client)
+			await sleep(800)
+			const live = plain(parseBody(await instance.foldSection(OWNED_ID)).toJSON() as JsonNode)
+			expect(live).toContain('Reseeded by the test')
+			expect(live).not.toContain('Appended by the test')
+			const storedAfter = await storedBody(OWNED_ID)
+			expect(storedAfter && parseBody(storedAfter).toJSON()).toEqual(normalised)
+			subscription[Symbol.dispose]()
+			facet[Symbol.dispose]()
+		})
+	})
 })

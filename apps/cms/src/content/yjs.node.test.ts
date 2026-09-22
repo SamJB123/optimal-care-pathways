@@ -12,7 +12,7 @@ import type { ExtractedDocument } from '#/template/extract/model.ts'
 import { TEMPLATES } from '#/template/templates.ts'
 import { deterministicId } from '../../scripts/ids.ts'
 import { type JsonNode, parseBody } from './schema.ts'
-import { bodyFromRoot, hydrateRoot } from './yjs.ts'
+import { bodyFromRoot, hydrateRoot, replaceRoot } from './yjs.ts'
 
 const readModel = (key: string): ExtractedDocument =>
 	JSON.parse(
@@ -143,6 +143,30 @@ describe('yjs round trip', () => {
 			],
 		}
 		expect(roundTrip(body)).toEqual(parseBody(body).toJSON())
+	})
+
+	it('replaces a live root with a resting body, leaving nothing of the old one', () => {
+		const doc = new Doc()
+		const root = doc.get('')
+		hydrateRoot(root, {
+			type: 'doc',
+			content: [
+				{ type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Old heading' }] },
+				{ type: 'paragraph', content: [{ type: 'text', text: 'Old body' }] },
+			],
+		})
+		const next: JsonNode = {
+			type: 'doc',
+			content: [
+				{
+					type: 'box',
+					attrs: { kind: 'callout', icon: '', family: 'info' },
+					content: [{ type: 'paragraph', content: [{ type: 'text', text: 'New body' }] }],
+				},
+			],
+		}
+		replaceRoot(root, next)
+		expect(bodyFromRoot(root)).toEqual(parseBody(next).toJSON())
 	})
 
 	describe.each(TEMPLATES.map((t) => t.key))('%s', (key) => {

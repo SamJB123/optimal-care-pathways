@@ -37,12 +37,16 @@ export interface TextRun {
 	endnote: number | null
 }
 
+export type Alignment = 'left' | 'center' | 'right'
+
 export interface Paragraph {
 	kind: 'paragraph'
 	runs: TextRun[]
 	page: number
 	/** The fill behind the whole paragraph's box, when it sits on shading. */
 	background: string | null
+	/** How the lines sit in their element: centred tiles and captions keep it. */
+	align: Alignment
 }
 
 export type ListMarker = 'bullet' | 'dash' | 'check' | 'cross' | 'number' | 'other'
@@ -103,6 +107,8 @@ export interface Section {
 	page: number
 	/** The heading's baseline on its page (PDF space), for resolving internal links. */
 	y: number
+	/** The glyph printed beside the heading (a principle's icon), when there is one. */
+	icon: Figure | null
 	blocks: Block[]
 	children: Section[]
 }

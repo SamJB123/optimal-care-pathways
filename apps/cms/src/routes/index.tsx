@@ -146,7 +146,12 @@ function Documents(props: { snapshot: Awaited<ReturnType<typeof documentsSnapsho
 										<ButtonLink href={`/d/${doc.id}`} variant="text">
 											{doc.title}
 										</ButtonLink>
-										<span class="ocp-document-meta">{doc.audience}</span>
+										<span class="ocp-document-meta">
+											{doc.audience} ·{' '}
+											<ButtonLink href={`/review/${doc.id}`} variant="text">
+												review against the template
+											</ButtonLink>
+										</span>
 									</li>
 								)}
 							</For>

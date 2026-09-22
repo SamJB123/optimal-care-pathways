@@ -1,6 +1,7 @@
 /* The complete UI system and its default theme come from @aicolab/ui-solid. This
    file holds application composition only; component paint belongs to the package. */
 @import "@aicolab/ui-solid/styles.css";
+@import "./theme.css";
 
 @view-transition {
 	navigation: auto;

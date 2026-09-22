@@ -17,7 +17,8 @@ import {
 } from '@aicolab/ui-solid'
 import { createFileRoute, Outlet, useNavigate } from '@tanstack/solid-router'
 import { createContext, createEffect, createMemo, createSignal, For } from 'solid-js'
-import type { SectionWireRow } from '#/lib/live-topics.ts'
+import type { DerivedView } from '#/content/derived.ts'
+import type { DocumentWireRow, SectionWireRow } from '#/lib/live-topics.ts'
 import { type PathwayClient, pathwayClientFor } from '#/lib/ocp-client.ts'
 import type { Role } from '#/lib/roles.ts'
 import { sectionsSnapshot } from '#/server/documents.ts'
@@ -31,9 +32,12 @@ export const Route = createFileRoute('/d/$documentId')({
 /** What every section view on the stage needs: the outline, the room, the role. */
 export interface DocumentWorkspace {
 	documentId: string
+	document: DocumentWireRow
 	role: Role
 	sections: () => SectionWireRow[]
 	client: () => PathwayClient | null
+	/** Citation numbers and the timeframe snapshot, as of the page load (decision 15, 50). */
+	derived: DerivedView
 }
 
 /** Default-less: the context IS the provider, and reading it outside one throws. */
@@ -92,8 +96,14 @@ function DocumentShell() {
 		get documentId() {
 			return params().documentId
 		},
+		get document() {
+			return data().document
+		},
 		get role() {
 			return data().role
+		},
+		get derived() {
+			return data().derived
 		},
 		sections,
 		client,
@@ -110,6 +120,16 @@ function DocumentShell() {
 					>
 						<WorkspaceNavigationGroup id="ocp-nav-parts" label="Outline" colorBase="primary">
 							<WorkspaceNavigationList label="Parts of the document">
+								<WorkspaceNavigationItem
+									label="Overview"
+									mark="◈"
+									onSelect={() =>
+										void navigate({
+											to: '/d/$documentId',
+											params: { documentId: params().documentId },
+										})
+									}
+								/>
 								<For each={parts()}>
 									{(part) => (
 										<WorkspaceNavigationItem

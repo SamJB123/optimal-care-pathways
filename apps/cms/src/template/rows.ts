@@ -42,6 +42,10 @@ export interface SectionRow {
 	pathwayOwnership: Ownership
 	apparatus: boolean
 	bodyJson: JsonNode
+	/** The source PDF pages the section spans, as printed ("13" or "13-14"). */
+	sourcePages: string
+	/** The heading's icon as a served URL, or null. */
+	icon: string | null
 }
 
 export interface ReferenceRow {
@@ -70,5 +74,6 @@ export interface SeedResult {
 		figures: number
 		links: number
 		placeholders: number
+		resources: number
 	}
 }

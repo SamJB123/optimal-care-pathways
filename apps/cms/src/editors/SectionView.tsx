@@ -15,9 +15,9 @@
  */
 
 import type { DocHandle, DocRoomClient } from '@aicolab/app-kit/doc-room/client'
-import { DOMSerializer } from '@prosekit/pm/model'
-import { createEffect, createSignal, onSettled, Show, untrack, useContext } from 'solid-js'
-import { contentSchema, type JsonNode, parseBody } from '#/content/schema.ts'
+import { createSignal, onSettled, Show, untrack, useContext } from 'solid-js'
+import { RenderedBody } from '#/content/render.tsx'
+import type { JsonNode } from '#/content/schema.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { pathwayClientFor } from '#/lib/ocp-client.ts'
 import { DocumentContext } from '#/routes/d.$documentId.tsx'
@@ -65,7 +65,9 @@ function OwnedBody(props: { sectionId: string }) {
 	})
 	return (
 		<Show when={opened()} fallback={<StaticBody sectionId={props.sectionId} />} keyed>
-			{({ id, handle, room }) => <SectionEditor room={room} handle={handle} sectionId={id} />}
+			{({ id, handle, room }) => (
+				<SectionEditor room={room} handle={handle} sectionId={id} derived={workspace.derived} />
+			)}
 		</Show>
 	)
 }
@@ -73,6 +75,7 @@ function OwnedBody(props: { sectionId: string }) {
 /** The resting body, rendered once; what a shared section shows, and what an owned
  *  section shows before its room is connected. */
 function StaticBody(props: { sectionId: string }) {
+	const workspace = useContext(DocumentContext)
 	const [body, setBody] = createSignal<JsonNode | null | undefined>(undefined)
 	// Fetched once per mount: a resting body is static by definition, and the view is
 	// keyed by section id upstream, so a different section is a different mount.
@@ -92,7 +95,7 @@ function StaticBody(props: { sectionId: string }) {
 				<p class="ocp-section-empty">{body() === undefined ? 'Loading…' : 'No content yet.'}</p>
 			}
 		>
-			{(json) => <RenderedBody body={json()} />}
+			{(json) => <RenderedBody body={json()} derived={workspace.derived} />}
 		</Show>
 	)
 }
@@ -106,16 +109,4 @@ function SharedBody(props: { sectionId: string }) {
 			<StaticBody sectionId={props.sectionId} />
 		</div>
 	)
-}
-
-function RenderedBody(props: { body: JsonNode }) {
-	let host!: HTMLDivElement
-	createEffect(
-		() => props.body,
-		(body) => {
-			const node = parseBody(body)
-			host.replaceChildren(DOMSerializer.fromSchema(contentSchema).serializeFragment(node.content))
-		},
-	)
-	return <div class="ocp-body ocp-body-static" ref={host} />
 }

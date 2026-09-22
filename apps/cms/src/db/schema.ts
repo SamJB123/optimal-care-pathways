@@ -157,6 +157,13 @@ export const sections = sqliteTable(
 		 *  text) lives INSIDE the body as `guidance` nodes, where the author needs it, and is
 		 *  stripped at publish. Null when shared. */
 		bodyJson: text('body_json', { mode: 'json' }).$type<JsonNode>(),
+		/** Provenance: the pages of the source PDF this section was extracted from, as
+		 *  printed ("13" or "13-14"). Set by the seed for core documents and by the legacy
+		 *  import; null on sections an author created. The review page reads it. */
+		sourcePages: text('source_pages'),
+		/** The glyph printed beside the heading (a principle's icon), as a URL the app
+		 *  serves; null for most sections (decision 65). */
+		icon: text('icon'),
 		updatedAt: timestampMs('updated_at'),
 		updatedBy: text('updated_by'),
 	},

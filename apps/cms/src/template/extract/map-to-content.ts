@@ -23,7 +23,7 @@
  * step number for a step, a slug path under the parent otherwise.
  */
 
-import type { JsonMark, JsonNode } from '#/content/schema.ts'
+import type { ColorFamily, JsonMark, JsonNode } from '#/content/schema.ts'
 import type { Ownership } from '#/db/schema.ts'
 import type { DocumentRow, ReferenceRow, SectionRow, SeedResult, TemplateRow } from '../rows.ts'
 import { figureUrl, type TemplateInfo } from '../templates.ts'
@@ -127,7 +127,8 @@ export function contentFigures(model: ExtractedDocument): { figure: Figure; inde
 	const visit = (blocks: Block[]) => {
 		for (const b of blocks) {
 			if (b.kind === 'figure') {
-				if (isIcon(b)) continue
+				// Every figure is rendered, band icons included: a real table keeps its icons
+				// as pictures, and a box's band icon costs nothing to have on disk.
 				const index = (perPage.get(b.page) ?? 0) + 1
 				perPage.set(b.page, index)
 				out.push({ figure: b, index })
@@ -139,12 +140,37 @@ export function contentFigures(model: ExtractedDocument): { figure: Figure; inde
 	visit(model.front)
 	const sections = (list: Section[]) => {
 		for (const s of list) {
+			if (s.icon) visit([s.icon])
 			visit(s.blocks)
 			sections(s.children)
 		}
 	}
 	sections(model.sections)
 	return out
+}
+
+/** A printed colour's theme family, by hue and lightness (decision 60): the templates
+ *  shade in navy, blues, greens, yellow, red and purple; grey is neutral. */
+function familyOf(hex: string): ColorFamily | null {
+	const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex)
+	if (!m) return null
+	const [r, g, b] = [m[1], m[2], m[3]].map((h) => Number.parseInt(h ?? '0', 16) / 255)
+	const max = Math.max(r ?? 0, g ?? 0, b ?? 0)
+	const min = Math.min(r ?? 0, g ?? 0, b ?? 0)
+	const l = (max + min) / 2
+	const chroma = max - min
+	if (l > 0.97) return null
+	if (chroma < 0.06) return 'neutral'
+	let hue = 0
+	if (max === r) hue = (((g ?? 0) - (b ?? 0)) / chroma) % 6
+	else if (max === g) hue = ((b ?? 0) - (r ?? 0)) / chroma + 2
+	else hue = ((r ?? 0) - (g ?? 0)) / chroma + 4
+	hue = (((hue * 60) % 360) + 360) % 360
+	if (hue >= 40 && hue < 70) return 'warning'
+	if (hue >= 70 && hue < 170) return 'success'
+	if (hue >= 170 && hue < 250) return l < 0.35 ? 'secondary' : 'info'
+	if (hue >= 250 && hue < 330) return 'accent'
+	return 'error'
 }
 
 const luminance = (hex: string): number => {
@@ -277,7 +303,26 @@ function normalisePlaceholders(runs: TextRun[]): TextRun[] {
 		if (last && r.background !== null && sameMarks(last, r)) last.text += r.text
 		else merged.push(r)
 	}
-	return merged
+	// The token is the highlighted WORDS: Word's highlight often runs on over the space
+	// after them (or begins on the space before), which would put a gap between the slot
+	// and its punctuation. Edge whitespace moves out to the plain run beside it.
+	const trimmed: TextRun[] = []
+	for (const r of merged) {
+		if (r.background === null || r.text.trim() === '') {
+			trimmed.push(r)
+			continue
+		}
+		const lead = /^\s+/.exec(r.text)?.[0] ?? ''
+		const trail = /\s+$/.exec(r.text)?.[0] ?? ''
+		if (lead) {
+			const previous = trimmed.at(-1)
+			if (previous && previous.background === null) previous.text += lead
+			else trimmed.push({ ...r, background: null, text: lead })
+		}
+		trimmed.push({ ...r, text: r.text.trim() })
+		if (trail) trimmed.push({ ...r, background: null, text: trail })
+	}
+	return trimmed
 }
 
 const sameMarks = (a: TextRun, b: TextRun): boolean =>
@@ -401,7 +446,10 @@ const isInstructionParagraph = (p: Paragraph, g: Grammar) =>
 
 const paragraphNode = (p: Paragraph, g: Grammar): JsonNode | null => {
 	const content = inlineOf(p.runs, g, { instructionAsMark: !isInstructionParagraph(p, g) })
-	return content.length > 0 ? { type: 'paragraph', content } : null
+	if (content.length === 0) return null
+	return p.align === 'left'
+		? { type: 'paragraph', content }
+		: { type: 'paragraph', attrs: { textAlign: p.align }, content }
 }
 
 function listNode(list: List, g: Grammar): JsonNode[] {
@@ -483,7 +531,11 @@ function joinButtedTables(blocks: Block[], g: Grammar): Block[] {
 	return out
 }
 
-function blockNodes(blocks: Block[], g: Grammar): JsonNode[] {
+function blockNodes(
+	blocks: Block[],
+	g: Grammar,
+	options: { keepIcons?: boolean } = {},
+): JsonNode[] {
 	const staged: { node: JsonNode; instruction: boolean }[] = []
 	for (const b of joinButtedTables(blocks, g)) {
 		switch (b.kind) {
@@ -503,7 +555,9 @@ function blockNodes(blocks: Block[], g: Grammar): JsonNode[] {
 				for (const node of tableNodes(b, g)) staged.push({ node, instruction: false })
 				break
 			case 'figure': {
-				if (isIcon(b)) break
+				// Band icons are the box's own (consumed as its `icon`); in a real table an
+				// icon is a picture in a cell and stays.
+				if (isIcon(b) && !options.keepIcons) break
 				g.stats.figures++
 				const index = g.figureIndex.get(b) ?? 0
 				staged.push({
@@ -598,21 +652,31 @@ const bannerNode = (cell: TableCell, g: Grammar): JsonNode => ({
 })
 
 /** A real table: rows of several columns; shaded or TH label cells are header cells. */
-function tableNode(rows: ClassifiedRow[], g: Grammar): JsonNode {
+/** `cells` picks the cells a row contributes: a box's column rows leave the band icons
+ *  out (`r.cells`), a real table keeps every cell and its figures (`r.row.cells`). */
+function tableNode(rows: ClassifiedRow[], g: Grammar, mode: 'box' | 'real' = 'box'): JsonNode {
 	g.stats.tables++
 	return {
 		type: 'table',
 		content: rows.map((r) => ({
 			type: 'tableRow',
-			content: r.cells.map((cell) => {
+			content: (mode === 'real' ? r.row.cells : r.cells).map((cell) => {
 				const blocks = blockNodes(
-					cell.blocks.filter((b) => !(b.kind === 'figure' && isIcon(b))),
+					mode === 'real'
+						? cell.blocks
+						: cell.blocks.filter((b) => !(b.kind === 'figure' && isIcon(b))),
 					g,
+					{ keepIcons: mode === 'real' },
 				)
 				const header = cell.header && cell.background !== null && luminance(cell.background) < 0.97
+				const background = cell.background ? familyOf(cell.background) : null
 				return {
 					type: header ? 'tableHeaderCell' : 'tableCell',
-					attrs: { colspan: cell.colSpan, rowspan: cell.rowSpan },
+					attrs: {
+						colspan: cell.colSpan,
+						rowspan: cell.rowSpan,
+						...(background ? { background } : {}),
+					},
 					content: blocks.length > 0 ? blocks : [{ type: 'paragraph' }],
 				}
 			}),
@@ -622,15 +686,129 @@ function tableNode(rows: ClassifiedRow[], g: Grammar): JsonNode {
 
 /** Consecutive check-list rows of a box become one check list; group-header rows stay
  *  paragraphs between them. */
-function boxContent(rows: ClassifiedRow[], g: Grammar): JsonNode[] {
+/** A shaded single row inside a banded box holding one short paragraph and no list is a
+ *  group header ("For people who may be at risk due to inherited factors"): a sub-band. */
+const isGroupHeader = (r: ClassifiedRow, rows: ClassifiedRow[]): boolean => {
+	const cell = r.cells[0]
+	if (!cell || r.kind !== 'content' || cell.background === null) return false
+	if (!rows.some((x) => x.kind === 'band' || x.kind === 'icon-band')) return false
+	const paragraphs = cell.blocks.filter((b): b is Paragraph => b.kind === 'paragraph')
+	if (paragraphs.length !== 1 || cell.blocks.length !== 1) return false
+	const words = plainText(paragraphs[0]?.runs ?? [])
+		.trim()
+		.split(/\s+/).length
+	return words <= 14
+}
+
+/** Find out more / See also entries (decision 64): a paragraph's leading bold or linked
+ *  text is the title, its first link the url (a section reference as `#address`, a
+ *  printed "<hyperlink to be added>" as none), the rest the description. */
+const linkUrl = (g: Grammar, run: TextRun): string | null => {
+	if (!run.link) return null
+	if ('url' in run.link) return run.link.url
+	const address = sectionAt(g, run.link.page, run.link.y)
+	return address ? `#${address}` : ''
+}
+
+/** A printed "<hyperlink …>" is the author's note of a link to add (or the link's own
+ *  address again); the resource's url carries what it says. */
+const HYPERLINK_NOTE = /<\s*hyperlink\b/i
+const isHyperlinkNote = (run: TextRun): boolean => HYPERLINK_NOTE.test(run.text)
+
+/** The runs without their hyperlink notes, which Word splits over several runs when the
+ *  address inside is itself a link: "<hyperlink:", " ", "https://…", ">". */
+function withoutHyperlinkNotes(runs: TextRun[]): TextRun[] {
+	const out: TextRun[] = []
+	for (let i = 0; i < runs.length; i++) {
+		const run = runs[i]
+		if (!run) continue
+		const open = run.text.search(HYPERLINK_NOTE)
+		if (open < 0) {
+			out.push(run)
+			continue
+		}
+		const before = run.text.slice(0, open).trimEnd()
+		if (before !== '') out.push({ ...run, text: before })
+		let closer = run
+		let from = open
+		while (!closer.text.includes('>', from)) {
+			const next = runs[++i]
+			if (!next) return out
+			closer = next
+			from = 0
+		}
+		const after = closer.text.slice(closer.text.indexOf('>', from) + 1)
+		if (after.trim() !== '') out.push({ ...closer, text: after })
+	}
+	return out
+}
+
+/** Whether a paragraph opens a resource entry: it leads with bold or linked text (a
+ *  title). Anything else continues the entry before it. */
+const opensResource = (p: Paragraph): boolean => {
+	const first = p.runs.find((r) => r.text.trim() !== '')
+	return first !== undefined && (first.bold || first.link !== null) && !isHyperlinkNote(first)
+}
+
+function resourceNode(paragraphs: Paragraph[], g: Grammar): JsonNode {
+	const [lead, ...more] = paragraphs
+	const runs = (lead?.runs ?? []).filter(
+		(r) => r.text !== '' || r.footnote !== null || r.endnote !== null,
+	)
+	// Title = the leading run(s) that are bold or linked, stopping at a placeholder or
+	// instruction token or a hyperlink note.
+	const isToken = (r: TextRun) =>
+		r.background !== null ||
+		g.instruction.has(r.colour) ||
+		ANGLE_TOKEN.test(r.text.trim()) ||
+		isHyperlinkNote(r)
+	let titleEnd = 0
+	while (titleEnd < runs.length) {
+		const run = runs[titleEnd]
+		if (!run || !(run.bold || run.link !== null) || isToken(run)) break
+		titleEnd++
+	}
+	const title = plainText(runs.slice(0, titleEnd)).replace(/\s+/g, ' ').trim()
+	const rest = runs.slice(titleEnd)
+	const description: JsonNode[] = []
+	const tail = inlineOf(withoutHyperlinkNotes(rest), g, { instructionAsMark: true })
+	if (tail.length > 0) description.push({ type: 'paragraph', content: tail })
+	for (const p of more) {
+		const content = inlineOf(withoutHyperlinkNotes(p.runs), g, { instructionAsMark: true })
+		if (content.length > 0) description.push({ type: 'paragraph', content })
+	}
+	// The url is the first link anywhere in the entry.
+	const url =
+		paragraphs
+			.flatMap((p) => p.runs)
+			.map((r) => linkUrl(g, r))
+			.find((u): u is string => u !== null) ?? ''
+	return { type: 'resource', attrs: { title, url }, content: description }
+}
+
+function boxContent(rows: ClassifiedRow[], g: Grammar, kind: string = 'plain'): JsonNode[] {
 	const out: JsonNode[] = []
 	let columns: ClassifiedRow[] = []
 	const flushColumns = () => {
-		if (columns.length > 0) out.push(tableNode(columns, g))
+		if (columns.length > 0) {
+			const rows = columns.map((r) => r.row)
+			out.push(...(iconRowsList(rows, g) ?? tileColumns(rows, g) ?? [tableNode(columns, g)]))
+		}
 		columns = []
+	}
+	// Resource entries: a title paragraph and the plain paragraphs that follow it, which
+	// may sit in the next row when the box broke over a page.
+	let entry: Paragraph[] | null = null
+	const flushEntry = () => {
+		if (entry) {
+			g.stats.resources++
+			out.push(resourceNode(entry, g))
+		}
+		entry = null
 	}
 	for (const r of rows) {
 		if (r.kind === 'columns') {
+			flushEntry()
 			columns.push(r)
 			continue
 		}
@@ -638,9 +816,32 @@ function boxContent(rows: ClassifiedRow[], g: Grammar): JsonNode[] {
 		const cell = r.cells[0]
 		if (!cell) continue
 		if (r.kind === 'band' || r.kind === 'icon-band') {
+			flushEntry()
 			out.push(bannerNode(cell, g))
 			continue
 		}
+		if (isGroupHeader(r, rows)) {
+			flushEntry()
+			out.push({ ...bannerNode(cell, g), attrs: { tone: 'sub' } })
+			continue
+		}
+		// The box's heading row ("Find out more" beside its icon) is a title, not an entry.
+		if ((kind === 'resources' || kind === 'seeAlso') && r.kind === 'content' && r.icon === null) {
+			for (const b of cell.blocks) {
+				const prose =
+					b.kind === 'paragraph' && !isInstructionParagraph(b, g) && plainText(b.runs).trim() !== ''
+				if (prose && opensResource(b)) {
+					flushEntry()
+					entry = [b]
+				} else if (prose && entry) entry.push(b)
+				else {
+					flushEntry()
+					out.push(...blockNodes([b], g))
+				}
+			}
+			continue
+		}
+		flushEntry()
 		const nodes = blockNodes(cell.blocks, g)
 		for (const node of nodes) {
 			const last = out.at(-1)
@@ -655,7 +856,21 @@ function boxContent(rows: ClassifiedRow[], g: Grammar): JsonNode[] {
 			} else out.push(node)
 		}
 	}
+	flushEntry()
 	flushColumns()
+	return groupResources(out)
+}
+
+/** Consecutive resource entries become one `resourceList`. */
+function groupResources(nodes: JsonNode[]): JsonNode[] {
+	const out: JsonNode[] = []
+	for (const node of nodes) {
+		const last = out.at(-1)
+		if (node.type === 'resource') {
+			if (last?.type === 'resourceList') last.content = [...(last.content ?? []), node]
+			else out.push({ type: 'resourceList', content: [node] })
+		} else out.push(node)
+	}
 	return out
 }
 
@@ -743,26 +958,53 @@ function timeframeNodes(rows: ClassifiedRow[], g: Grammar): JsonNode[] {
 }
 
 /** A real table: every row has columns and none is a band, an icon row or an "Or". */
-const isRealTable = (table: Table, g: Grammar): boolean =>
-	table.rows.every((r) => classifyRow(r, g, { collapseEmpty: false }).kind === 'columns')
+/** A real table: rows of columns, none of them a band, an icon row, an "Or" or guidance;
+ *  a row spanning the full width (a title or a note row) does not make it a box. */
+const isRealTable = (table: Table, g: Grammar): boolean => {
+	const kinds = table.rows.map((r) => classifyRow(r, g, { collapseEmpty: false }).kind)
+	const columns = kinds.filter((k) => k === 'columns').length
+	return (
+		kinds.every((k) => k === 'columns' || k === 'content') &&
+		columns * 2 >= kinds.length &&
+		columns > 0
+	)
+}
 
 function tableNodes(table: Table, g: Grammar): JsonNode[] {
-	if (isRealTable(table, g))
+	// A table with nothing left to show (the endnote lists moved to the references) is
+	// Word's layout, not content.
+	if (
+		!table.rows.some((row) =>
+			row.cells.some((cell) => cellHasText(cell) || cellFigures(cell).length > 0),
+		)
+	)
+		return []
+	if (isRealTable(table, g)) {
+		const iconRows = iconRowsList(table.rows, g)
+		if (iconRows) return iconRows
+		const diagram = diagramColumns(table.rows, g)
+		if (diagram) return diagram
+		const tiles = tileColumns(table.rows, g)
+		if (tiles) return tiles
 		return [
 			tableNode(
 				table.rows.map((r) => classifyRow(r, g, { collapseEmpty: false })),
 				g,
+				'real',
 			),
 		]
+	}
 
 	const rows = table.rows.map((r) => classifyRow(r, g, { collapseEmpty: true }))
 	// An icon row heads a box (the stopwatch heads a care point inside one), so a table
 	// whose icon rows come mid-way holds that many boxes stacked in one Word table: the
 	// pen row above a checklist, the See also under a Find out more, a supportive care
 	// page's considerations / checklist / communication boxes.
+	// A heading row is the icon and its title, and nothing else: an icon among several
+	// content cells (a diagram's row) is content.
 	const segments: ClassifiedRow[][] = []
 	for (const r of rows) {
-		const heads = r.icon !== null && r.icon.icon !== 'stopwatch'
+		const heads = r.icon !== null && r.icon.icon !== 'stopwatch' && r.row.cells.length <= 2
 		if (heads || segments.length === 0) segments.push([r])
 		else segments.at(-1)?.push(r)
 	}
@@ -852,18 +1094,251 @@ function boxNodes(rows: ClassifiedRow[], icons: (typeof ICONS)[number][], g: Gra
 		const groups = [firstAlternative, ...alternatives.slice(1)].filter((gr) => gr.length > 0)
 		g.stats.variants++
 		content = [
-			...boxContent(intro, g),
+			...boxContent(intro, g, kind),
 			{
 				type: 'variants',
 				content: groups.map((gr) => {
-					const nodes = boxContent(gr, g)
+					const nodes = boxContent(gr, g, kind)
 					return { type: 'variant', content: nodes.length > 0 ? nodes : [{ type: 'paragraph' }] }
 				}),
 			},
 		]
-	} else content = boxContent(rows, g)
+	} else content = boxContent(rows, g, kind)
 	if (content.length === 0) return []
-	return [{ type: 'box', attrs: { kind, icon }, content }]
+	// A callout keeps the shade it was printed in, as a theme family.
+	const shade = kind === 'callout' ? rows[0]?.cells[0]?.background : null
+	const family = shade ? (familyOf(shade) ?? '') : ''
+	return [{ type: 'box', attrs: { kind, icon, family }, content }]
+}
+
+/** Rows of [icon | text] (decision 59): a list whose items carry the icon. Only when
+ *  EVERY row is exactly that shape; anything else is a table. */
+function iconRowsList(rows: TableRow[], g: Grammar): JsonNode[] | null {
+	const isSpacer = (row: TableRow) =>
+		row.cells.every((cell) => !cellHasText(cell) && cellFigures(cell).length === 0)
+	const live = rows.filter((row) => !isSpacer(row))
+	if (live.length === 0) return null
+	const items: { icon: Figure | null; label: Paragraph | null; blocks: Block[] }[] = []
+	let withIcon = 0
+	// Rows still covered by the last lead cell's row span continue its item (Word lays a
+	// long item's list out as cells of the rows beneath).
+	let covered = 0
+	for (const row of live) {
+		const last = items.at(-1)
+		if (covered > 0 && last) {
+			covered--
+			last.blocks = [...last.blocks, ...row.cells.flatMap((cell) => cell.blocks)]
+			continue
+		}
+		if (row.cells.length < 2 || row.cells.length > 3) return null
+		const [lead, ...restCells] = row.cells
+		if (!lead) return null
+		const figures = cellFigures(lead)
+		const paragraphs = lead.blocks.filter((b): b is Paragraph => b.kind === 'paragraph')
+		// The lead cell is the icon, or the icon with a short label under or over it, or
+		// (one row of a set) nothing at all. A three-cell row keeps the label in its own
+		// cell between the icon and the text.
+		const labelCell = restCells.length === 2 ? restCells[0] : undefined
+		const text = restCells.at(-1)
+		if (!text || !cellHasText(text)) return null
+		if (figures.length > 1 || lead.blocks.length - figures.length - paragraphs.length !== 0)
+			return null
+		if (paragraphs.length > 1 || (paragraphs[0] && wordsOf(lead) > 12)) return null
+		if (figures.length === 0 && paragraphs.length > 0) return null
+		let label: Paragraph | null = paragraphs[0] ?? null
+		if (labelCell) {
+			const labelParagraphs = labelCell.blocks.filter((b): b is Paragraph => b.kind === 'paragraph')
+			if (
+				label ||
+				labelParagraphs.length > 1 ||
+				labelParagraphs.length !== labelCell.blocks.length ||
+				wordsOf(labelCell) > 12
+			)
+				return null
+			label = labelParagraphs[0] ?? null
+		}
+		if (figures[0]) withIcon++
+		covered = Math.max(0, lead.rowSpan - 1)
+		items.push({ icon: figures[0] ?? null, label, blocks: text.blocks })
+	}
+	if (withIcon * 2 < items.length) return null
+	return items.map(({ icon, label, blocks }) => {
+		const content = blockNodes(blocks, g)
+		if (label) {
+			const lead = paragraphNode(
+				{ ...label, runs: label.runs.map((r) => ({ ...r, bold: true })), align: 'left' },
+				g,
+			)
+			if (lead) content.unshift(lead)
+		}
+		if (content[0]?.type !== 'paragraph') content.unshift({ type: 'paragraph' })
+		return {
+			type: 'list',
+			attrs: {
+				kind: 'bullet',
+				icon: icon ? figureUrl(g.templateKey, icon.page, g.figureIndex.get(icon) ?? 0) : '',
+			},
+			content,
+		}
+	})
+}
+
+const cellHasText = (cell: TableCell): boolean => cellText(cell) !== ''
+
+/**
+ * A layout diagram (decision 58): a table whose shaded cells span three or more rows is
+ * a figure drawn with a table — labels down one side, a column of icon-and-name rows,
+ * blocks of text down the other. It becomes `columns`: one per logical column, each a
+ * stack of the cells that sit in it (a spanning shaded cell as a callout in its family);
+ * a column that holds only icons folds into its neighbour as icon rows.
+ */
+function diagramColumns(rows: TableRow[], g: Grammar): JsonNode[] | null {
+	if (!rows.some((row) => row.cells.some((cell) => cell.rowSpan >= 3 && cellHasText(cell))))
+		return null
+	// Place every cell on the grid its spans describe.
+	const width = Math.max(...rows.map((row) => row.cells.reduce((n, c) => n + c.colSpan, 0)))
+	const occupied: boolean[][] = rows.map(() => Array.from({ length: width }, () => false))
+	const placed: GridCell[] = []
+	for (const [r, row] of rows.entries()) {
+		let c = 0
+		for (const cell of row.cells) {
+			while (occupied[r]?.[c]) c++
+			placed.push({ cell, c, r })
+			for (let dr = 0; dr < cell.rowSpan; dr++)
+				for (let dc = 0; dc < cell.colSpan; dc++) {
+					const slots = occupied[r + dr]
+					if (slots) slots[c + dc] = true
+				}
+			c += cell.colSpan
+		}
+	}
+	// Bands: a run of rows no cell spans out of. Each band reads on its own — one cell
+	// wide is a block, wider is a `columns` of the logical columns it holds.
+	const bands: GridCell[][] = []
+	let band: GridCell[] = []
+	let reach = 0
+	for (const [r] of rows.entries()) {
+		if (r >= reach && band.length > 0) {
+			bands.push(band)
+			band = []
+		}
+		for (const p of placed.filter((p) => p.r === r)) {
+			band.push(p)
+			reach = Math.max(reach, r + p.cell.rowSpan)
+		}
+	}
+	if (band.length > 0) bands.push(band)
+	const out: JsonNode[] = []
+	for (const cells of bands) {
+		const live = cells.filter((p) => cellHasText(p.cell) || cellFigures(p.cell).length > 0)
+		if (live.length === 0) continue
+		const starts = [...new Set(live.map((p) => p.c))].sort((a, b) => a - b)
+		if (starts.length === 1) {
+			for (const p of live) out.push(...diagramCell(p.cell, g))
+			continue
+		}
+		const columns: JsonNode[] = []
+		for (let i = 0; i < starts.length; i++) {
+			const c = starts[i] ?? 0
+			const inColumn = live.filter((p) => p.c === c).sort((a, b) => a.r - b.r)
+			const next = starts[i + 1]
+			const iconOnly = inColumn.every(
+				(p) => !cellHasText(p.cell) && cellFigures(p.cell).length === 1,
+			)
+			if (iconOnly && next !== undefined) {
+				// A column of icons beside a column of names: one icon list.
+				const names = live.filter((p) => p.c === next).sort((a, b) => a.r - b.r)
+				const pairs: TableRow[] = names.map((name) => ({
+					cells: [
+						inColumn.find((icon) => icon.r === name.r)?.cell ?? {
+							header: false,
+							rowSpan: 1,
+							colSpan: 1,
+							background: null,
+							blocks: [],
+						},
+						name.cell,
+					],
+				}))
+				const list = iconRowsList(pairs, g)
+				if (list) {
+					columns.push({ type: 'column', content: list })
+					i++
+					continue
+				}
+			}
+			const content = inColumn.flatMap((p) => diagramCell(p.cell, g))
+			if (content.length > 0) columns.push({ type: 'column', content })
+		}
+		if (columns.length === 1) out.push(...(columns[0]?.content ?? []))
+		else if (columns.length > 1) out.push({ type: 'columns', content: columns })
+	}
+	return out.length > 0 ? out : null
+}
+
+interface GridCell {
+	cell: TableCell
+	c: number
+	r: number
+}
+
+/** A diagram cell's blocks: a shaded cell is a callout in its colour's family. */
+function diagramCell(cell: TableCell, g: Grammar): JsonNode[] {
+	const blocks = blockNodes(cell.blocks, g, { keepIcons: true })
+	if (blocks.length === 0) return []
+	const family = cell.background ? familyOf(cell.background) : null
+	if (!family) return blocks
+	g.stats.boxes++
+	return [{ type: 'box', attrs: { kind: 'callout', icon: '', family }, content: blocks }]
+}
+
+const wordsOf = (cell: TableCell): number =>
+	allParagraphs(cell.blocks).reduce(
+		(n, p) => n + plainText(p.runs).trim().split(/\s+/).filter(Boolean).length,
+		0,
+	)
+
+/** A grid of tiles (decision 58): every row has the same two or more cells, and the cells
+ *  are tiles — short, and mostly centred or picture-led. Each row becomes `columns`; a
+ *  shaded tile is a callout box in its family. Real data tables (left-aligned prose,
+ *  header rows over values) are not tiles. */
+function tileColumns(rows: TableRow[], g: Grammar): JsonNode[] | null {
+	const width = rows[0]?.cells.length ?? 0
+	if (width < 2 || rows.length === 0) return null
+	if (!rows.every((row) => row.cells.length === width)) return null
+	const cells = rows.flatMap((row) => row.cells)
+	if (
+		cells.some(
+			(cell) =>
+				wordsOf(cell) > 60 || cell.blocks.some((b) => b.kind === 'list' || b.kind === 'table'),
+		)
+	)
+		return null
+	const tileLike = cells.filter(
+		(cell) =>
+			cellFigures(cell).length > 0 || allParagraphs(cell.blocks).some((p) => p.align === 'center'),
+	).length
+	if (tileLike * 2 < cells.length) return null
+	return rows.map(
+		(row): JsonNode => ({
+			type: 'columns',
+			content: row.cells.map((cell): JsonNode => {
+				const blocks = blockNodes(cell.blocks, g, { keepIcons: true })
+				const content: JsonNode[] = blocks.length > 0 ? blocks : [{ type: 'paragraph' }]
+				const family = cell.background ? familyOf(cell.background) : null
+				if (family) {
+					g.stats.boxes++
+					const tile: JsonNode = {
+						type: 'box',
+						attrs: { kind: 'callout', icon: '', family },
+						content,
+					}
+					return { type: 'column', content: [tile] }
+				}
+				return { type: 'column', content }
+			}),
+		}),
+	)
 }
 
 // ---------------------------------------------------------------------------
@@ -941,6 +1416,22 @@ function placeSections(model: ExtractedDocument): Placed[] {
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
+/** The PDF pages a section's own blocks span (children are sections of their own):
+ *  "13" or "13-14". */
+function sourcePagesOf(section: Section): string {
+	let last = section.page
+	const visit = (blocks: Block[]) => {
+		for (const b of blocks) {
+			if ('page' in b) last = Math.max(last, b.page)
+			if (b.kind === 'list') for (const item of b.items) visit(item.blocks)
+			else if (b.kind === 'table')
+				for (const row of b.rows) for (const cell of row.cells) visit(cell.blocks)
+		}
+	}
+	visit(section.blocks)
+	return last > section.page ? `${section.page}-${last}` : `${section.page}`
+}
+
 /** The heading without its printed number ("1.1 Prevention" → "Prevention", "Step 1:
  *  Treatment" → "Treatment"); the number is kept on the row's own column. */
 function titleOf(headingText: string, number: string | null): string | null {
@@ -989,6 +1480,7 @@ export function mapTemplate(input: MapInput): SeedResult {
 		figures: 0,
 		links: 0,
 		placeholders: 0,
+		resources: 0,
 	}
 	const placed = placeSections(model)
 	const g: Grammar = {
@@ -1028,7 +1520,8 @@ export function mapTemplate(input: MapInput): SeedResult {
 			p.parent?.address === 'contents'
 		// The contents page is a derived view of the section tree, never content; a
 		// template-declared derived section keeps its prose and boxes but its printed table
-		// (the snapshot schematic) is replaced by the node the CMS renders from the document.
+		// (the snapshot schematic) or figure (the steps schematic) is replaced by the node
+		// the CMS renders from the document.
 		const derived = template.derived.find((d) => d.address === p.address)
 		const body =
 			p.address === 'contents'
@@ -1036,7 +1529,9 @@ export function mapTemplate(input: MapInput): SeedResult {
 				: derived
 					? [
 							...blockNodes(
-								p.section.blocks.filter((b) => !(b.kind === 'table' && isRealTable(b, g))),
+								p.section.blocks.filter(
+									(b) => !(b.kind === 'table' && isRealTable(b, g)) && b.kind !== 'figure',
+								),
 								g,
 							),
 							{ type: derived.node },
@@ -1058,6 +1553,10 @@ export function mapTemplate(input: MapInput): SeedResult {
 			pathwayOwnership: ownershipOf(p.section, g),
 			apparatus,
 			bodyJson: { type: 'doc', content: body.length > 0 ? body : [{ type: 'paragraph' }] },
+			sourcePages: sourcePagesOf(p.section),
+			icon: p.section.icon
+				? figureUrl(template.key, p.section.icon.page, g.figureIndex.get(p.section.icon) ?? 0)
+				: null,
 		}
 	})
 

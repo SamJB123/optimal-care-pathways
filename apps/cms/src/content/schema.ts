@@ -19,9 +19,19 @@
  *
  *   box                         a bordered or shaded box: `kind` says what it is for
  *                               (developer, resources, seeAlso, actions, communication,
- *                               considerations, callout, plain) and `icon` names the
- *                               glyph on its band; holds a banner and the box's content
- *   banner                      the title band of a box ("Signs and symptoms of cancer")
+ *                               considerations, callout, plain), `icon` names the glyph
+ *                               on its band and `family` may name a theme colour (a
+ *                               tile's shading); holds a banner and the box's content
+ *   columns / column            side-by-side layout: tiles, icon grids, paired boxes
+ *   resource                    a Find out more / See also entry: `title`, `url`, and a
+ *                               description
+ *   pathwayMap (atom)           the steps schematic, derived from the document's steps
+ *   banner                      the title band of a box ("Signs and symptoms of cancer");
+ *                               `tone` 'sub' is a light group header inside a box
+ *   list.icon                   an icon-and-text row's glyph, on the list item
+ *   tableCell.background        a shaded cell's theme colour family
+ *   textAlign                   ProseKit's alignment attribute on paragraphs and headings
+ *   pageBreak, mention          ProseKit's, adopted for print and cross-reference entry
  *   variants / variant          mutually exclusive alternatives the template offers
  *                               ("Or" rows); an author keeps one
  *   timeframe                   a timeframe box: a care point ("Timeframe for referral to a
@@ -60,6 +70,7 @@ import { defineImageSpec } from '@prosekit/extensions/image'
 import { defineItalicSpec } from '@prosekit/extensions/italic'
 import { defineLinkSpec } from '@prosekit/extensions/link'
 import { defineListSpec } from '@prosekit/extensions/list'
+import { defineMentionSpec } from '@prosekit/extensions/mention'
 import { defineParagraphSpec } from '@prosekit/extensions/paragraph'
 import { defineStrikeSpec } from '@prosekit/extensions/strike'
 import { defineSubscriptSpec } from '@prosekit/extensions/subscript'
@@ -98,6 +109,39 @@ export interface BoxAttrs {
 	/** The glyph on the band, as the template names it: pen, info, hand, clipboard,
 	 *  speech, care, stopwatch; empty when there is none. */
 	icon: string
+	/** A theme colour family overriding the kind's own (a tile's shading); '' = the kind's. */
+	family: string
+}
+
+/** The theme's colour families a block may name (ui-solid's `colorBase` values). */
+export const COLOR_FAMILIES = [
+	'primary',
+	'secondary',
+	'accent',
+	'neutral',
+	'info',
+	'success',
+	'warning',
+	'error',
+] as const
+export type ColorFamily = (typeof COLOR_FAMILIES)[number]
+export const isColorFamily = (value: string): value is ColorFamily =>
+	(COLOR_FAMILIES as readonly string[]).includes(value)
+
+export interface BannerAttrs {
+	/** 'band' = the box's navy title band; 'sub' = a light group header inside a box. */
+	tone: 'band' | 'sub'
+}
+
+export interface ResourceAttrs {
+	title: string
+	/** A URL, a `#address` section reference, or '' when the source printed a placeholder. */
+	url: string
+}
+
+export interface GuidanceAttrs {
+	/** Marked done by an author: the box collapses and stops counting as an open item. */
+	done: boolean
 }
 
 export interface CitationAttrs {
@@ -119,14 +163,71 @@ export interface SectionLinkAttrs {
 
 const attr = (element: HTMLElement, name: string) => element.getAttribute(name) ?? ''
 
+/**
+ * Paint comes from ui-solid's colour resolver: a block names its colour FAMILY and
+ * VARIANT with the package's own attributes, and the theme (light or dark) supplies
+ * the surface, ink and border. No block names a colour of its own.
+ */
+const ui = (base: string, variant: 'solid' | 'soft' | 'outline') => ({
+	'data-ui-color-base': base,
+	'data-ui-color-variant': variant,
+})
+
+/** The colour family each box kind is painted in. */
+const BOX_FAMILY: Record<BoxKind, string> = {
+	developer: 'success',
+	resources: 'info',
+	seeAlso: 'info',
+	actions: 'secondary',
+	communication: 'secondary',
+	considerations: 'secondary',
+	callout: 'info',
+	plain: 'secondary',
+}
+
+const isBoxKind = (value: string): value is BoxKind =>
+	(BOX_KINDS as readonly string[]).includes(value)
+
+/** A box's attributes read off loose node attributes (JSON, a ProseMirror node). */
+export const boxAttrsOf = (attrs: Record<string, unknown>): BoxAttrs => ({
+	kind: typeof attrs.kind === 'string' && isBoxKind(attrs.kind) ? attrs.kind : 'callout',
+	icon: typeof attrs.icon === 'string' ? attrs.icon : '',
+	family: typeof attrs.family === 'string' ? attrs.family : '',
+})
+
+/** The family a box paints in: its own, else its kind's (decision 60). */
+export const boxFamily = (attrs: { kind: string; family: string }): ColorFamily => {
+	if (isColorFamily(attrs.family)) return attrs.family
+	const kind = attrs.kind
+	const family = isBoxKind(kind) ? BOX_FAMILY[kind] : 'info'
+	return isColorFamily(family) ? family : 'info'
+}
+
 const defineBanner = () =>
-	defineNodeSpec({
+	defineNodeSpec<'banner', BannerAttrs>({
 		name: 'banner',
 		content: 'inline*',
 		group: 'block',
 		defining: true,
-		parseDOM: [{ tag: 'p[data-ocp="banner"]' }],
-		toDOM: () => ['p', { 'data-ocp': 'banner' }, 0],
+		attrs: { tone: { default: 'band', validate: 'string' } },
+		parseDOM: [
+			{
+				tag: 'p[data-ocp="banner"]',
+				getAttrs: (element) => ({ tone: attr(element, 'data-tone') === 'sub' ? 'sub' : 'band' }),
+			},
+		],
+		toDOM: (node) => {
+			const tone = node.attrs.tone === 'sub' ? 'sub' : 'band'
+			return [
+				'p',
+				{
+					'data-ocp': 'banner',
+					'data-tone': tone,
+					...ui('secondary', tone === 'sub' ? 'soft' : 'solid'),
+				},
+				0,
+			]
+		},
 	})
 
 const defineBox = () =>
@@ -138,6 +239,7 @@ const defineBox = () =>
 		attrs: {
 			kind: { default: 'callout', validate: 'string' },
 			icon: { default: '', validate: 'string' },
+			family: { default: '', validate: 'string' },
 		},
 		parseDOM: [
 			{
@@ -145,18 +247,140 @@ const defineBox = () =>
 				getAttrs: (element) => ({
 					kind: attr(element, 'data-kind'),
 					icon: attr(element, 'data-icon'),
+					family: attr(element, 'data-family'),
 				}),
 			},
 		],
-		toDOM: (node) => [
-			'section',
+		toDOM: (node) => {
+			const kind = String(node.attrs.kind)
+			const own = String(node.attrs.family)
+			const family = isColorFamily(own) ? own : isBoxKind(kind) ? BOX_FAMILY[kind] : 'info'
+			return [
+				'section',
+				{
+					'data-ocp': 'box',
+					'data-kind': kind,
+					'data-icon': String(node.attrs.icon),
+					'data-family': own,
+					...ui(family, kind === 'callout' ? 'soft' : 'outline'),
+				},
+				0,
+			]
+		},
+	})
+
+/** Side-by-side layout: the template's tiles, icon grids and paired boxes. Each column
+ *  holds blocks; the grid gives every column an equal share. */
+const defineColumns = () =>
+	defineNodeSpec({
+		name: 'columns',
+		content: 'column+',
+		group: 'block',
+		defining: true,
+		parseDOM: [{ tag: 'div[data-ocp="columns"]' }],
+		toDOM: () => ['div', { 'data-ocp': 'columns' }, 0],
+	})
+
+const defineColumn = () =>
+	defineNodeSpec({
+		name: 'column',
+		content: 'block+',
+		defining: true,
+		parseDOM: [{ tag: 'div[data-ocp="column"]' }],
+		toDOM: () => ['div', { 'data-ocp': 'column' }, 0],
+	})
+
+/** The entries of a Find out more / See also box, as one list (a RichList in the
+ *  view): consecutive entries in the source become one of these. */
+const defineResourceList = () =>
+	defineNodeSpec({
+		name: 'resourceList',
+		content: 'resource+',
+		group: 'block',
+		defining: true,
+		parseDOM: [{ tag: 'ul[data-ocp="resourceList"]' }],
+		toDOM: () => ['ul', { 'data-ocp': 'resourceList' }, 0],
+	})
+
+/** A Find out more / See also entry: a titled link with a description (decision 64). */
+const defineResource = () =>
+	defineNodeSpec<'resource', ResourceAttrs>({
+		name: 'resource',
+		content: 'block*',
+		defining: true,
+		attrs: {
+			title: { default: '', validate: 'string' },
+			url: { default: '', validate: 'string' },
+		},
+		parseDOM: [
 			{
-				'data-ocp': 'box',
-				'data-kind': String(node.attrs.kind),
-				'data-icon': String(node.attrs.icon),
+				tag: 'li[data-ocp="resource"]',
+				getAttrs: (element) => ({
+					title: attr(element, 'data-title'),
+					url: attr(element, 'data-url'),
+				}),
 			},
-			0,
 		],
+		toDOM: (node) => {
+			const title = String(node.attrs.title)
+			const url = String(node.attrs.url)
+			return [
+				'li',
+				{ 'data-ocp': 'resource', 'data-title': title, 'data-url': url },
+				url === ''
+					? ['span', { class: 'ocp-resource-title' }, title]
+					: ['a', { class: 'ocp-resource-title', href: url }, title],
+				['div', { class: 'ocp-resource-body' }, 0],
+			]
+		},
+	})
+
+/** The pathway map: derived from the document's steps at render (decisions 63, 67–74). */
+const definePathwayMap = () =>
+	defineNodeSpec({
+		name: 'pathwayMap',
+		group: 'block',
+		atom: true,
+		selectable: true,
+		parseDOM: [{ tag: 'div[data-ocp="pathwayMap"]' }],
+		toDOM: () => ['div', { 'data-ocp': 'pathwayMap' }],
+	})
+
+/** Rows of [icon | text] carry the icon on the list item (decision 59). */
+const defineListIcon = () =>
+	defineNodeAttr<'list', 'icon', string>({
+		type: 'list',
+		attr: 'icon',
+		default: '',
+		splittable: false,
+		// The icon reaches the DOM as a custom property, the one form CSS can paint from
+		// (a url may not come out of attr()); the marker rule in section.css reads it.
+		toDOM: (value) => (value ? ['style', `--ocp-list-icon: url("${encodeURI(value)}")`] : null),
+		parseDOM: (element) => {
+			const m = /^url\("(.*)"\)$/.exec(element.style.getPropertyValue('--ocp-list-icon').trim())
+			return m?.[1] ? decodeURI(m[1]) : ''
+		},
+	})
+
+/** Shaded cells name a theme family (decision 60), never a colour. */
+const defineCellBackground = (type: 'tableCell' | 'tableHeaderCell') =>
+	defineNodeAttr<typeof type, 'background', string>({
+		type,
+		attr: 'background',
+		default: '',
+		toDOM: (value) => (isColorFamily(value) ? ['data-background', value] : null),
+		parseDOM: (element) => element.getAttribute('data-background') ?? '',
+	})
+
+/** ProseKit's TextAlign attribute, spec-only (its commands and keymap join in the editor). */
+const defineTextAlignAttr = (type: 'paragraph' | 'heading' | 'carePoint') =>
+	defineNodeAttr<typeof type, 'textAlign', string | null>({
+		type,
+		attr: 'textAlign',
+		default: null,
+		splittable: true,
+		toDOM: (value) => (value ? ['style', `text-align:${value};`] : null),
+		parseDOM: (element) => element.style.getPropertyValue('text-align') || null,
 	})
 
 const defineVariants = () =>
@@ -185,7 +409,7 @@ const defineTimeframe = () =>
 		group: 'block',
 		defining: true,
 		parseDOM: [{ tag: 'aside[data-ocp="timeframe"]' }],
-		toDOM: () => ['aside', { 'data-ocp': 'timeframe' }, 0],
+		toDOM: () => ['aside', { 'data-ocp': 'timeframe', ...ui('error', 'outline') }, 0],
 	})
 
 const defineCarePoint = () =>
@@ -205,17 +429,31 @@ const defineTimeframeSnapshot = () =>
 		atom: true,
 		selectable: true,
 		parseDOM: [{ tag: 'div[data-ocp="timeframeSnapshot"]' }],
-		toDOM: () => ['div', { 'data-ocp': 'timeframeSnapshot' }],
+		toDOM: () => ['div', { 'data-ocp': 'timeframeSnapshot', ...ui('error', 'outline') }],
 	})
 
 const defineGuidance = () =>
-	defineNodeSpec({
+	defineNodeSpec<'guidance', GuidanceAttrs>({
 		name: 'guidance',
 		content: 'block+',
 		group: 'block',
 		defining: true,
-		parseDOM: [{ tag: 'aside[data-ocp="guidance"]' }],
-		toDOM: () => ['aside', { 'data-ocp': 'guidance' }, 0],
+		attrs: { done: { default: false, validate: 'boolean' } },
+		parseDOM: [
+			{
+				tag: 'aside[data-ocp="guidance"]',
+				getAttrs: (element) => ({ done: element.getAttribute('data-done') === 'true' }),
+			},
+		],
+		toDOM: (node) => [
+			'aside',
+			{
+				'data-ocp': 'guidance',
+				'data-done': node.attrs.done ? 'true' : 'false',
+				...ui('success', 'soft'),
+			},
+			0,
+		],
 	})
 
 const defineCitation = () =>
@@ -299,7 +537,11 @@ const definePlaceholder = () =>
 		],
 		toDOM: (mark) => [
 			'mark',
-			{ 'data-ocp': 'placeholder', 'data-label': String(mark.attrs.label) },
+			{
+				'data-ocp': 'placeholder',
+				'data-label': String(mark.attrs.label),
+				...ui('warning', 'soft'),
+			},
 			0,
 		],
 	})
@@ -331,6 +573,23 @@ const defineSectionLink = () =>
 // ---------------------------------------------------------------------------
 
 /**
+ * ProseKit's page break, as its `definePageBreakSpec` writes it (name, DOM class and the
+ * `pageBreak` flag its page rendering keys on), defined here because ProseKit's page
+ * module registers a custom element at load and so cannot be imported where the Worker
+ * builds this schema. The editor unions ProseKit's page-break commands and keymap.
+ */
+function definePageBreak() {
+	return defineNodeSpec({
+		name: 'pageBreak',
+		group: 'block',
+		selectable: true,
+		parseDOM: [{ tag: 'div.prosekit-page-break' }],
+		toDOM: () => ['div', { class: 'prosekit-horizontal-rule prosekit-page-break' }, ['hr']],
+		pageBreak: true,
+	})
+}
+
+/**
  * Spec-only. The editor adds behaviour; the server adds nothing.
  *
  * ORDER MATTERS: ProseKit gives the LATEST definition the highest priority, so the
@@ -353,8 +612,13 @@ export function defineContentSchema() {
 		defineTableRowSpec(),
 		defineTableCellSpec(),
 		defineTableHeaderCellSpec(),
+		defineCellBackground('tableCell'),
+		defineCellBackground('tableHeaderCell'),
 		defineListSpec(),
 		definePointOfCare(),
+		defineListIcon(),
+		definePageBreak(),
+		defineMentionSpec(),
 		defineBoldSpec(),
 		defineItalicSpec(),
 		defineUnderlineSpec(),
@@ -363,12 +627,17 @@ export function defineContentSchema() {
 		defineSubscriptSpec(),
 		defineLinkSpec(),
 		defineBox(),
+		defineColumns(),
+		defineColumn(),
 		defineVariants(),
 		defineVariant(),
 		defineBanner(),
 		defineTimeframe(),
 		defineCarePoint(),
 		defineTimeframeSnapshot(),
+		definePathwayMap(),
+		defineResourceList(),
+		defineResource(),
 		defineGuidance(),
 		defineCitation(),
 		defineFootnote(),
@@ -376,6 +645,9 @@ export function defineContentSchema() {
 		defineInstruction(),
 		defineSectionLink(),
 		defineParagraphSpec(), // last, so first in the schema (see above)
+		defineTextAlignAttr('paragraph'),
+		defineTextAlignAttr('heading'),
+		defineTextAlignAttr('carePoint'),
 	)
 }
 
@@ -393,11 +665,16 @@ export const BLOCK_NODE_NAMES = [
 	'table',
 	'list',
 	'box',
+	'columns',
 	'variants',
 	'banner',
 	'timeframe',
 	'timeframeSnapshot',
+	'pathwayMap',
+	'resourceList',
+	'resource',
 	'guidance',
+	'pageBreak',
 ] as const satisfies readonly NodeName[]
 
 function buildSchema(): Schema {

@@ -1,186 +1,57 @@
-/* The template's blocks, as they read in the editor and in the read-only view.
-   Colours follow the printed templates: black core content, green guidance, white-on-
-   blue title bands, a bordered timeframe box, ticks for check items. */
+/* A section body's text, marks, lists and tables, as they read in the editor and in the
+   read-only view. The template's blocks (boxes, banners, guidance, timeframes,
+   resources, columns) are Solid components with their own sheet, content/blocks.css.
+
+   No colour is named here. Every marked span carries ui-solid's colour attributes, so
+   the package resolver supplies --ui-surface, --ui-ink and --ui-border for the family
+   in whichever scheme is active; the theme (src/theme.css) maps the families to the
+   printed templates' palette with light-dark(). Text sizes and spacing live here. */
 
 .ocp-body {
 	line-height: 1.55;
 }
 
-.ocp-body p[data-ocp="banner"] {
-	margin: 1.2em 0 0.4em;
-	padding: 0.35em 0.7em;
-	background: var(--ocp-banner-bg, #004c97);
-	color: #fff;
-	font-weight: 600;
-	border-radius: 0.3em;
-}
-
-.ocp-body aside[data-ocp="guidance"] {
-	margin: 0.8em 0;
-	padding: 0.6em 0.9em;
-	border-left: 4px solid #00b050;
-	background: color-mix(in srgb, #00b050 10%, transparent);
-	color: color-mix(in srgb, #00b050 55%, CanvasText);
-	font-size: 0.95em;
-}
-
-.ocp-body aside[data-ocp="guidance"]::before {
-	content: "Drafting guidance";
-	display: block;
-	font-size: 0.75em;
-	font-weight: 700;
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
-	margin-bottom: 0.3em;
-}
-
-.ocp-body aside[data-ocp="timeframe"] {
-	margin: 0.8em 0;
-	padding: 0.6em 0.9em 0.6em 2.4em;
-	border: 1px solid #004c97;
-	border-radius: 0.4em;
-	position: relative;
-}
-
-.ocp-body aside[data-ocp="timeframe"]::before {
-	content: "⏱";
-	position: absolute;
-	left: 0.7em;
-	top: 0.55em;
-}
-
-.ocp-body aside[data-ocp="timeframe"] p[data-ocp="carePoint"] {
-	font-weight: 600;
-	color: #004c97;
-	margin: 0 0 0.25em;
-}
-
-/* The snapshot schematic is generated from the document's timeframe boxes; the seeded
-   body holds only its marker. */
-.ocp-body div[data-ocp="timeframeSnapshot"] {
-	margin: 1em 0;
-	padding: 0.8em 1em;
-	border: 1px dashed #004c97;
-	border-radius: 0.4em;
-	color: color-mix(in srgb, #004c97 70%, CanvasText);
-	font-size: 0.95em;
-}
-
-.ocp-body div[data-ocp="timeframeSnapshot"]::before {
-	content: "Snapshot of optimal timeframes — generated from this document's timeframe boxes.";
-}
-
-/* Boxes: the template's bordered units. The kind sets the border and heading colours the
-   printed templates use (green developer input, blue resource / cross-reference bands,
-   navy-banded action and consideration tables, a shaded callout); the icon glyph sits in
-   the top-left corner where the template prints it. */
-.ocp-body section[data-ocp="box"] {
-	position: relative;
-	margin: 1em 0;
-	padding: 0.7em 0.9em 0.7em 2.6em;
-	border: 1px solid var(--ocp-box-border, #004c97);
-	border-radius: 0.4em;
-	background: var(--ocp-box-bg, transparent);
-}
-
-.ocp-body section[data-ocp="box"]::before {
-	content: "";
-	position: absolute;
-	left: 0.75em;
-	top: 0.65em;
-	font-size: 1.1em;
-	line-height: 1;
-	color: var(--ocp-box-border, #004c97);
-}
-
-.ocp-body section[data-ocp="box"][data-icon="pen"]::before {
-	content: "✎";
-}
-.ocp-body section[data-ocp="box"][data-icon="info"]::before {
-	content: "ⓘ";
-}
-.ocp-body section[data-ocp="box"][data-icon="hand"]::before {
-	content: "☞";
-}
-.ocp-body section[data-ocp="box"][data-icon="clipboard"]::before {
-	content: "☑";
-}
-.ocp-body section[data-ocp="box"][data-icon="speech"]::before {
-	content: "🗨";
-}
-.ocp-body section[data-ocp="box"][data-icon="care"]::before {
-	content: "☜";
-}
-.ocp-body section[data-ocp="box"][data-icon=""] {
-	padding-left: 0.9em;
-}
-
-.ocp-body section[data-ocp="box"][data-kind="developer"] {
-	--ocp-box-border: #00b050;
-	--ocp-box-bg: color-mix(in srgb, #00b050 6%, transparent);
-}
-
-.ocp-body section[data-ocp="box"][data-kind="resources"],
-.ocp-body section[data-ocp="box"][data-kind="seeAlso"] {
-	--ocp-box-border: #8eaadb;
-	--ocp-box-bg: color-mix(in srgb, #c6d9f1 35%, transparent);
-}
-
-.ocp-body section[data-ocp="box"][data-kind="callout"] {
-	--ocp-box-border: transparent;
-	--ocp-box-bg: color-mix(in srgb, #c6d9f1 55%, transparent);
-}
-
-.ocp-body section[data-ocp="box"][data-kind="actions"],
-.ocp-body section[data-ocp="box"][data-kind="communication"],
-.ocp-body section[data-ocp="box"][data-kind="considerations"],
-.ocp-body section[data-ocp="box"][data-kind="plain"] {
-	--ocp-box-border: #0f1e64;
-}
-
-.ocp-body section[data-ocp="box"] > :first-child {
-	margin-top: 0;
-}
-
-.ocp-body section[data-ocp="box"] > :last-child {
-	margin-bottom: 0;
-}
-
-.ocp-body section[data-ocp="box"] p[data-ocp="banner"] {
-	margin-left: -1.7em;
-	margin-right: -0.9em;
-	border-radius: 0;
-	background: #0f1e64;
-}
-
-/* Alternatives: the template's "Or" rows. Each variant is one alternative; the author
-   keeps one. */
-.ocp-body div[data-ocp="variants"] {
-	margin: 0.6em 0;
-	border-left: 3px dotted color-mix(in srgb, CanvasText 30%, transparent);
-	padding-left: 0.8em;
-}
-
-.ocp-body div[data-ocp="variant"] + div[data-ocp="variant"]::before {
-	content: "or";
-	display: block;
-	font-style: italic;
-	font-weight: 600;
-	color: #00b050;
-	margin: 0.4em 0;
-}
-
 /* Inline developer instruction inside core text ("<Delete if not relevant>"). */
 .ocp-body span[data-ocp="instruction"] {
-	color: #00b050;
+	color: var(--color-success);
 	font-style: italic;
+}
+
+.ocp-body mark[data-ocp="placeholder"] {
+	background: var(--ui-surface);
+	color: var(--ui-ink);
+	border-radius: 0.2em;
+	padding: 0 0.15em;
+	box-shadow: inset 0 -1px 0 var(--ui-border);
+}
+
+/* The number is derived at render (decision 15): the citation carries data-number. */
+.ocp-body sup[data-ocp="citation"]::before {
+	content: attr(data-number);
+	font-size: 0.75em;
+	color: var(--color-primary);
+}
+
+.ocp-body sup[data-ocp="citation"] + sup[data-ocp="citation"]::before,
+.ocp-body
+	:has(> sup[data-ocp="citation"]:only-child)
+	+ :has(> sup[data-ocp="citation"]:only-child)
+	sup::before {
+	content: "," attr(data-number);
 }
 
 .ocp-body sup[data-ocp="footnote"]::before {
 	content: "†";
 	font-size: 0.7em;
-	color: #004c97;
+	color: var(--color-primary);
 	cursor: help;
+}
+
+/* Prose links; the pathway map's own links keep the map's inks. */
+.ocp-body a[data-ocp="section"],
+.ocp-body a[href]:not(.ui-flow-map *) {
+	color: var(--color-primary);
+	text-decoration-color: color-mix(in oklab, var(--color-primary) 45%, transparent);
 }
 
 .ocp-body img {
@@ -188,6 +59,7 @@
 	height: auto;
 	display: block;
 	margin: 0.6em 0;
+	border-radius: 0.3em;
 }
 
 .ocp-body table {
@@ -199,28 +71,41 @@
 
 .ocp-body th,
 .ocp-body td {
-	border: 1px solid color-mix(in srgb, CanvasText 25%, transparent);
+	border: 1px solid var(--color-border-strong);
 	padding: 0.35em 0.6em;
 	vertical-align: top;
 	text-align: left;
 }
 
 .ocp-body th {
-	background: color-mix(in srgb, #c6d9f1 45%, transparent);
+	background: var(--color-base-200);
 	font-weight: 600;
 }
 
-.ocp-body mark[data-ocp="placeholder"] {
-	background: color-mix(in srgb, #ffc000 35%, transparent);
-	color: inherit;
-	border-radius: 0.2em;
-	padding: 0 0.15em;
+/* A shaded cell paints its family's soft roles (decision 60). */
+.ocp-body :is(th, td)[data-background] {
+	background: var(--ui-surface);
+	color: var(--ui-ink);
 }
 
-.ocp-body sup[data-ocp="citation"]::before {
-	content: "[" attr(data-reference-id) "]";
-	font-size: 0.7em;
-	color: #004c97;
+/* An icon-and-text row (decision 59): the list item's glyph replaces the bullet. A
+   bullet item has no marker element (the bullet is its list-style), so the glyph is
+   drawn by the item itself, in the gutter the list leaves for the bullet. */
+.ocp-body .prosemirror-flat-list[style*="--ocp-list-icon"] {
+	list-style: none;
+	position: relative;
+	margin-block: 0.45em;
+	padding-inline-start: 2.4em;
+}
+
+.ocp-body .prosemirror-flat-list[style*="--ocp-list-icon"]::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 1.8em;
+	height: 1.8em;
+	background: var(--ocp-list-icon) center / contain no-repeat;
 }
 
 .ocp-body .prosemirror-flat-list[data-list-kind="check"] {
@@ -229,7 +114,7 @@
 
 .ocp-body .prosemirror-flat-list[data-list-kind="check"] > .list-marker::before {
 	content: "✓";
-	color: #004c97;
+	color: var(--color-primary);
 	font-weight: 700;
 }
 
@@ -237,8 +122,14 @@
 	.prosemirror-flat-list[data-list-kind="check"][data-point-of-care="true"]
 	> .list-marker::after {
 	content: " ◆";
-	color: #c00000;
+	color: var(--color-error);
 	font-size: 0.7em;
+}
+
+/* The editor's node views host their content in one element; it takes no space of
+   its own. */
+.ocp-body .ocp-node-content {
+	display: contents;
 }
 
 .ocp-section-viewing {
@@ -258,17 +149,17 @@
 
 .ocp-section-number {
 	font-variant-numeric: tabular-nums;
-	opacity: 0.6;
+	color: var(--color-base-content-muted);
 }
 
 .ocp-section-shared {
 	padding: 0.8rem 1rem;
 	border-radius: 0.5rem;
-	background: color-mix(in srgb, CanvasText 5%, transparent);
+	background: var(--color-base-150);
 }
 
 .ocp-section-shared-note {
 	font-size: 0.85em;
-	opacity: 0.7;
+	color: var(--color-base-content-muted);
 	margin-bottom: 0.4rem;
 }

@@ -26,8 +26,8 @@
  */
 
 import { readFileSync } from 'node:fs'
-import { getDocument, OPS, Util } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist/legacy/build/pdf.mjs'
+import { getDocument, OPS, Util } from 'pdfjs-dist/legacy/build/pdf.mjs'
 // The display-layer record types are declared in pdf.js's typings but not re-exported
 // from the entry module.
 import type {

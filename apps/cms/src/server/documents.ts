@@ -8,8 +8,14 @@
  */
 
 import { createServerFn } from '@tanstack/solid-start'
-import { and, eq, inArray } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import { z } from 'zod'
+import {
+	citationNumbers,
+	type DerivedView,
+	pathwayMapView,
+	timeframeRows,
+} from '#/content/derived.ts'
 import type { JsonNode } from '#/content/schema.ts'
 import { schema } from '#/db/index.ts'
 import { publishDocumentRows } from '#/lib/live-publish.ts'
@@ -20,6 +26,7 @@ import {
 	sectionWireRow,
 } from '#/lib/live-topics.ts'
 import { OCP_NAMESPACE, ROLE_LADDER, type Role, roles } from '#/lib/roles.ts'
+import { TEMPLATES } from '#/template/templates.ts'
 import { envOf, requireUser } from './env.ts'
 
 /** The central organisation: Cancer Australia, owner of core content and of publishing. */
@@ -126,6 +133,112 @@ export const documentsSnapshot = createServerFn({ method: 'GET' }).handler(
 	},
 )
 
+type SectionRow = typeof schema.sections.$inferSelect
+
+/** The Principles core document's principle sections (the ones with an icon), for the
+ *  map's footer cards (decision 73); null before the Principles document exists. */
+async function principlesCards(): Promise<{
+	documentId: string
+	sections: { address: string; title: string | null; icon: string | null }[]
+} | null> {
+	const { d } = await envOf()
+	const template = TEMPLATES.find((t) => t.kind === 'principles')
+	if (!template) return null
+	const doc = (
+		await d
+			.select({ id: schema.documents.id })
+			.from(schema.documents)
+			.where(
+				and(
+					eq(schema.documents.kind, 'core'),
+					eq(schema.documents.templateId, template.templateId),
+				),
+			)
+			.limit(1)
+	)[0]
+	if (!doc) return null
+	const rows = await d
+		.select({
+			address: schema.sections.address,
+			title: schema.sections.title,
+			icon: schema.sections.icon,
+			orderIndex: schema.sections.orderIndex,
+			parentId: schema.sections.parentId,
+		})
+		.from(schema.sections)
+		.where(eq(schema.sections.documentId, doc.id))
+	return {
+		documentId: doc.id,
+		sections: rows
+			.filter((r) => r.parentId === null && r.icon !== null)
+			.sort((a, b) => a.orderIndex - b.orderIndex)
+			.map((r) => ({ address: r.address, title: r.title, icon: r.icon })),
+	}
+}
+
+/** The views a page derives from a document's bodies (decisions 15, 50, 72), computed
+ *  over the RESOLVED bodies — a shared section counts its core section's citations and
+ *  timeframes — in outline order. */
+async function derivedFor(
+	document: { id: string; templateId: string },
+	rows: SectionRow[],
+): Promise<DerivedView> {
+	const { d } = await envOf()
+	const coreIds = rows.flatMap((r) =>
+		r.ownership === 'shared' && r.coreSectionId ? [r.coreSectionId] : [],
+	)
+	const coreBodies = new Map<string, JsonNode | null>()
+	if (coreIds.length > 0) {
+		const cores = await d
+			.select({ id: schema.sections.id, bodyJson: schema.sections.bodyJson })
+			.from(schema.sections)
+			.where(inArray(schema.sections.id, coreIds))
+		for (const c of cores) coreBodies.set(c.id, c.bodyJson ?? null)
+	}
+	const ordered = outlineOrder(rows)
+		.filter((r) => !r.hidden && !r.apparatus)
+		.map((r) => ({
+			stepNumber: r.stepNumber,
+			address: r.address,
+			printedNumber: r.printedNumber,
+			title: r.title,
+			body:
+				r.ownership === 'shared' && r.coreSectionId
+					? (coreBodies.get(r.coreSectionId) ?? null)
+					: (r.bodyJson ?? null),
+		}))
+	const topology = TEMPLATES.find((t) => t.templateId === document.templateId)?.map ?? null
+	const resolvedBody = (r: SectionRow) =>
+		r.ownership === 'shared' && r.coreSectionId
+			? (coreBodies.get(r.coreSectionId) ?? null)
+			: (r.bodyJson ?? null)
+	const map = topology
+		? pathwayMapView({
+				documentId: document.id,
+				topology,
+				sections: rows
+					.filter((r) => !r.hidden && !r.apparatus)
+					.map((r) => ({
+						id: r.id,
+						parentId: r.parentId,
+						address: r.address,
+						title: r.title,
+						printedNumber: r.printedNumber,
+						stepNumber: r.stepNumber,
+						ownership: r.ownership,
+						updatedAt: r.updatedAt?.getTime() ?? null,
+						body: resolvedBody(r),
+					})),
+				principles: await principlesCards(),
+			})
+		: null
+	return {
+		referenceNumbers: citationNumbers(ordered.map((s) => s.body)),
+		timeframes: timeframeRows(ordered),
+		map,
+	}
+}
+
 /** One document's outline for first paint; the live sections topic takes over. */
 export const sectionsSnapshot = createServerFn({ method: 'GET' })
 	.inputValidator(z.object({ documentId: z.string().min(1).max(64) }))
@@ -133,7 +246,12 @@ export const sectionsSnapshot = createServerFn({ method: 'GET' })
 		async ({
 			data,
 			context,
-		}): Promise<{ document: DocumentWireRow; sections: SectionWireRow[]; role: Role }> => {
+		}): Promise<{
+			document: DocumentWireRow
+			sections: SectionWireRow[]
+			role: Role
+			derived: DerivedView
+		}> => {
 			const userId = requireUser(context.userId)
 			const { d } = await envOf()
 			const document = (
@@ -150,7 +268,12 @@ export const sectionsSnapshot = createServerFn({ method: 'GET' })
 				.select()
 				.from(schema.sections)
 				.where(eq(schema.sections.documentId, data.documentId))
-			return { document: documentWireRow(document), sections: sections.map(sectionWireRow), role }
+			return {
+				document: documentWireRow(document),
+				sections: sections.map(sectionWireRow),
+				role,
+				derived: await derivedFor(document, sections),
+			}
 		},
 	)
 
@@ -185,6 +308,153 @@ export const sectionBody = createServerFn({ method: 'GET' })
 		)[0]
 		return { body: core?.bodyJson ?? null, resolvedFrom: section.coreSectionId }
 	})
+
+/** A section as the review page shows it: the outline row with its resting body. */
+export type ReviewSectionRow = SectionWireRow & { body: JsonNode | null }
+
+/**
+ * Everything the review page needs in one call: a core document's sections with their
+ * bodies, in outline order, and the template PDF they were extracted from. Central
+ * members only — the page compares core content with Cancer Australia's own templates.
+ */
+export const reviewSnapshot = createServerFn({ method: 'GET' })
+	.inputValidator(z.object({ documentId: z.string().min(1).max(64) }))
+	.handler(
+		async ({
+			data,
+			context,
+		}): Promise<{
+			document: DocumentWireRow
+			sourceFile: string
+			pageCount: number | null
+			sections: ReviewSectionRow[]
+			derived: DerivedView
+		}> => {
+			const userId = requireUser(context.userId)
+			await requireCentralMember(userId)
+			const { d } = await envOf()
+			const document = (
+				await d
+					.select()
+					.from(schema.documents)
+					.where(eq(schema.documents.id, data.documentId))
+					.limit(1)
+			)[0]
+			if (!document) throw new Error('Document not found.')
+			if (document.kind !== 'core')
+				throw new Error(
+					'The review page compares core documents with the templates they came from.',
+				)
+			const template = (
+				await d
+					.select()
+					.from(schema.templates)
+					.where(eq(schema.templates.id, document.templateId))
+					.limit(1)
+			)[0]
+			if (!template) throw new Error('The document names a template that does not exist.')
+			const rows = await d
+				.select()
+				.from(schema.sections)
+				.where(eq(schema.sections.documentId, data.documentId))
+			return {
+				document: documentWireRow(document),
+				sourceFile: template.sourceFile,
+				pageCount: template.pageCount,
+				sections: outlineOrder(rows).map((row) => ({
+					...sectionWireRow(row),
+					body: row.bodyJson ?? null,
+				})),
+				derived: await derivedFor(document, rows),
+			}
+		},
+	)
+
+/** A review awaiting a decision, as the hub lists it. */
+export type OpenReviewRow = {
+	id: string
+	requestedBy: string
+	requestedAt: number
+	note: string | null
+}
+
+/** An activity line, as the hub's feed shows it. */
+export type ActivityRow = {
+	id: string
+	kind: string
+	actorName: string
+	at: number
+}
+
+/**
+ * The hub's live state beside the map (decision 78): the document's status and
+ * version come with the outline snapshot; this adds the open reviews and the latest
+ * activity. Members of the document only.
+ */
+export const hubSnapshot = createServerFn({ method: 'GET' })
+	.inputValidator(z.object({ documentId: z.string().min(1).max(64) }))
+	.handler(
+		async ({ data, context }): Promise<{ reviews: OpenReviewRow[]; activity: ActivityRow[] }> => {
+			const userId = requireUser(context.userId)
+			const { d } = await envOf()
+			const document = (
+				await d
+					.select({ orgId: schema.documents.orgId })
+					.from(schema.documents)
+					.where(eq(schema.documents.id, data.documentId))
+					.limit(1)
+			)[0]
+			if (!document) throw new Error('Document not found.')
+			if (!(await roleOn(userId, document.orgId)))
+				throw new Error('You are not a member of this document.')
+			const reviews = await d
+				.select()
+				.from(schema.reviews)
+				.where(and(eq(schema.reviews.documentId, data.documentId), isNull(schema.reviews.decision)))
+				.orderBy(desc(schema.reviews.requestedAt))
+			const activity = await d
+				.select()
+				.from(schema.events)
+				.where(eq(schema.events.documentId, data.documentId))
+				.orderBy(desc(schema.events.at))
+				.limit(30)
+			return {
+				reviews: reviews.map((r) => ({
+					id: r.id,
+					requestedBy: r.requestedBy,
+					requestedAt: r.requestedAt.getTime(),
+					note: r.note,
+				})),
+				activity: activity.map((e) => ({
+					id: e.id,
+					kind: e.kind,
+					actorName: e.actorName,
+					at: e.at.getTime(),
+				})),
+			}
+		},
+	)
+
+/** Depth-first reading order over the section tree. */
+function outlineOrder<T extends { id: string; parentId: string | null; orderIndex: number }>(
+	rows: T[],
+): T[] {
+	const byParent = new Map<string | null, T[]>()
+	for (const row of rows) {
+		const list = byParent.get(row.parentId) ?? []
+		list.push(row)
+		byParent.set(row.parentId, list)
+	}
+	const out: T[] = []
+	const walk = (parentId: string | null) => {
+		for (const row of (byParent.get(parentId) ?? []).sort((a, b) => a.orderIndex - b.orderIndex)) {
+			out.push(row)
+			walk(row.id)
+		}
+	}
+	walk(null)
+	return out
+}
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 

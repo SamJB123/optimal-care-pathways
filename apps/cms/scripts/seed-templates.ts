@@ -4,7 +4,7 @@
  * to the content schema with `mapTemplate`, checks every body against the schema, and
  * writes one SQL file for wrangler to apply:
  *
- *   pnpm exec tsx scripts/seed-templates.ts --org-id <central organisation id>
+ *   pnpm exec tsx scripts/seed-templates.ts --org-id <central organisation id> [--out <file>]
  *   → .wrangler/seed/templates-2026.sql
  *
  * The central organisation must exist first (it owns core content), which is why its id
@@ -44,6 +44,9 @@ const insert = (table: string, row: Record<string, string | number | boolean | n
 	`INSERT OR REPLACE INTO ${table} (${Object.keys(row).join(', ')}) VALUES (${Object.values(row).map(q).join(', ')});`
 
 const statements: string[] = []
+/** Every seeded section row is stamped with the seed's own time: a document room that
+ *  holds an older live body for the section sees the row moved and re-hydrates from it. */
+const seededAt = Date.now()
 const emit = (result: SeedResult) => {
 	const { template: t, document: d } = result
 	statements.push(
@@ -84,6 +87,9 @@ const emit = (result: SeedResult) => {
 				pathway_ownership: s.pathwayOwnership,
 				apparatus: s.apparatus,
 				body_json: JSON.stringify(s.bodyJson),
+				source_pages: s.sourcePages,
+				icon: s.icon,
+				updated_at: seededAt,
 			}),
 		)
 	}
@@ -100,9 +106,24 @@ const emit = (result: SeedResult) => {
 	}
 }
 
+/** Rows of the core documents the templates no longer produce (a section renamed or
+ *  re-parented between extractor runs) are removed after the replace, so a reseed never
+ *  leaves a stale section behind. Pathway sections are untouched. */
+const prune = (results: SeedResult[]) => {
+	const documentIds = results.map((r) => q(r.document.id)).join(', ')
+	const sectionIds = results.flatMap((r) => r.sections.map((s) => q(s.id))).join(', ')
+	const referenceIds = results.flatMap((r) => r.references.map((s) => q(s.id))).join(', ')
+	statements.push(
+		`DELETE FROM sections WHERE document_id IN (${documentIds}) AND id NOT IN (${sectionIds});`,
+		`DELETE FROM "references" WHERE document_id IN (${documentIds}) AND id NOT IN (${referenceIds});`,
+	)
+}
+
+const results: SeedResult[] = []
 for (const template of TEMPLATES) {
 	const model = read(template.key)
 	const result = mapTemplate({ model, template, orgId, id: deterministicId })
+	results.push(result)
 	emit(result)
 	const { stats } = result
 	console.log(
@@ -113,8 +134,13 @@ for (const template of TEMPLATES) {
 	)
 }
 
+prune(results)
+
 const outDir = join(import.meta.dirname, '..', '.wrangler', 'seed')
 mkdirSync(outDir, { recursive: true })
-const target = join(outDir, 'templates-2026.sql')
+// `--out <file>` names the SQL file (a remote seed carries another organisation's id and
+// must not overwrite the local one).
+const outFlag = process.argv.indexOf('--out')
+const target = outFlag > 0 && process.argv[outFlag + 1] ? process.argv[outFlag + 1] : join(outDir, 'templates-2026.sql')
 writeFileSync(target, `${statements.join('\n')}\n`)
 console.log(`${statements.length} statements → ${target}`)

@@ -1,0 +1,28 @@
+/* ── ocp — the Optimal Care Pathways theme ──────────────────────────────────
+   Anchors only, in the ui-solid contract (see packages/ui-solid/src/themes/*):
+   the ladder derives every surface, border and content role per scheme, and both
+   schemes are authored here with light-dark(). Forced with data-theme /
+   .theme-dark / .theme-light as usual; the ThemeToggle in the header cycles them.
+
+   The palette follows the printed 2026 templates so the CMS reads like the
+   documents it produces: Cancer Australia's navy as the lead, the template's
+   green as the "success" family (developer guidance is painted with it), the
+   band blue as "info" (resource boxes, callouts), amber as "warning" (the
+   editable slots), the template's purple as "accent" (population-specific
+   material) and a deep red for error (the timeframe boxes). Each dark value
+   keeps the hue and lifts lightness so the same family reads on the night
+   surface.
+
+   Authored on `.ui-theme` (the root element carries the class), never on
+   :root, so the theme stays scopable to a subtree if a page ever needs it. */
+.ui-theme {
+	--color-base-100: light-dark(#fdfdfb, #0e1526);
+	--color-base-content: light-dark(#1c2333, #e2e7f0);
+	--color-primary: light-dark(#0f3d8c, #8fb2ff);
+	--color-secondary: light-dark(#0f1e64, #5c78d6);
+	--color-accent: light-dark(#6a4c9c, #c3aef0);
+	--color-info: light-dark(#3a6fb0, #8fb7f0);
+	--color-success: light-dark(#0d7a3a, #63c98a);
+	--color-warning: light-dark(#b98400, #f2c94c);
+	--color-error: light-dark(#b8323c, #f28b8b);
+}

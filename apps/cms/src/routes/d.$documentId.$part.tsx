@@ -7,6 +7,7 @@
 import { Notice } from '@aicolab/ui-solid'
 import { createFileRoute } from '@tanstack/solid-router'
 import { createMemo, For, Show, useContext } from 'solid-js'
+import { MapContext } from '#/content/blocks.tsx'
 import { SectionView } from '#/editors/SectionView.tsx'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { DocumentContext } from './d.$documentId.tsx'
@@ -44,25 +45,29 @@ function PartPage() {
 			.find((s) => s.parentId === null && s.address === params().part)
 		return root ? subtree(workspace.sections(), root) : []
 	})
+	// The step this part is (for the map's ring), read where it is used.
+	const at = () => ({ currentStep: rows()[0]?.section.stepNumber ?? null })
 	return (
-		<div class="ocp-part">
-			<Show
-				when={rows().length > 0}
-				fallback={
-					<Notice colorBase="info" variant="soft">
-						No such part of this document.
-					</Notice>
-				}
-			>
-				{/* Keyed by the SECTION ID — never by the row object, which `rows()` allocates
-				    afresh on every outline tick. Identity keying remounted every section view
-				    (and reopened every facet) on each live update, which the fold's own
-				    republish then re-triggered: the one-second flip. See the hive's DocPage:
-				    the editor slot is keyed by the doc, never by a projection tick. */}
-				<For each={rows()} keyed={(row) => row.section.id}>
-					{(row) => <SectionView section={row().section} depth={row().depth} />}
-				</For>
-			</Show>
-		</div>
+		<MapContext value={at}>
+			<div class="ocp-part">
+				<Show
+					when={rows().length > 0}
+					fallback={
+						<Notice colorBase="info" variant="soft">
+							No such part of this document.
+						</Notice>
+					}
+				>
+					{/* Keyed by the SECTION ID — never by the row object, which `rows()` allocates
+					    afresh on every outline tick. Identity keying remounted every section view
+					    (and reopened every facet) on each live update, which the fold's own
+					    republish then re-triggered: the one-second flip. See the hive's DocPage:
+					    the editor slot is keyed by the doc, never by a projection tick. */}
+					<For each={rows()} keyed={(row) => row.section.id}>
+						{(row) => <SectionView section={row().section} depth={row().depth} />}
+					</For>
+				</Show>
+			</div>
+		</MapContext>
 	)
 }

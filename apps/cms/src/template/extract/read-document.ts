@@ -33,6 +33,7 @@
 
 import type { PDFDocumentProxy } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import type {
+	Alignment,
 	Block,
 	Endnote,
 	ExtractedDocument,
@@ -444,27 +445,279 @@ function fillStack(paths: PaintedPath[], seed: PaintedPath): PaintedPath[] {
  *  topmost, because a page tint or a table's shading may lie beneath the cell's own fill;
  *  a white cell fill on top means the block is unshaded. */
 function shadingBehind(paths: PaintedPath[], lines: Line[]): string | null {
-	if (lines.length === 0) return null
-	const x0 = Math.min(...lines.map((l) => l.x0))
-	const x1 = Math.max(...lines.map((l) => l.x1))
+	const top = shadingPathBehind(paths, lines, [])
+	return top === null || top.colour === '#ffffff' ? null : top.colour
+}
+
+type Bbox = [number, number, number, number]
+
+/** The topmost fill behind a block's lines and figures that extends beyond them (see
+ *  `shadingBehind`); white counts here, since a white cell drawn over a shaded table is a
+ *  cell of its own. Figures alone (an icon cell) are located by their boxes. */
+function shadingPathBehind(
+	paths: PaintedPath[],
+	lines: Line[],
+	figures: Bbox[],
+): PaintedPath | null {
+	const spots = [
+		...lines.map((l) => ({ x0: l.x0, x1: l.x1, y0: l.y - 1, y1: l.y + 1 })),
+		...figures.map(([x0, y0, x1, y1]) => ({
+			x0,
+			x1,
+			y0: (y0 + y1) / 2 - 1,
+			y1: (y0 + y1) / 2 + 1,
+		})),
+	]
+	if (spots.length === 0) return null
+	const x0 = Math.min(...spots.map((s) => s.x0))
+	const x1 = Math.max(...spots.map((s) => s.x1))
 	let top: PaintedPath | null = null
+	const covering: PaintedPath[] = []
 	for (const p of paths) {
 		if (p.kind !== 'fill' || p.box.height < 6) continue
 		const extendsBeyond = p.box.x < x0 - 4 || p.box.x + p.box.width > x1 + 4
 		if (!extendsBeyond) continue
-		if (
-			!lines.every(
-				(l) =>
-					p.box.y <= l.y + 1 &&
-					p.box.y + p.box.height >= l.y - 1 &&
-					p.box.x < l.x1 &&
-					p.box.x + p.box.width > l.x0,
-			)
+		const covers = spots.every(
+			(s) =>
+				p.box.y <= s.y1 &&
+				p.box.y + p.box.height >= s.y0 &&
+				p.box.x < s.x1 &&
+				p.box.x + p.box.width > s.x0,
 		)
-			continue
+		if (!covers) continue
+		covering.push(p)
 		top = p
 	}
-	return top === null || top.colour === '#ffffff' ? null : top.colour
+	if (!top) return null
+	// Word paints a paragraph's shading line by line OVER the cell's fill in the same
+	// colour; the cell is the largest of those, so the topmost names the colour and the
+	// largest same-coloured fill beneath it gives the extent.
+	const colour = top.colour
+	return covering
+		.filter((p) => p.colour === colour)
+		.reduce(
+			(best, p) => (p.box.width * p.box.height > best.box.width * best.box.height ? p : best),
+			top,
+		)
+}
+
+function contentBox(lines: Line[], figures: Bbox[]): Box | null {
+	const xs: number[] = []
+	const ys: number[] = []
+	for (const l of lines) {
+		xs.push(l.x0, l.x1)
+		ys.push(l.y - l.size * 0.25, l.y + l.size * 0.75)
+	}
+	for (const [x0, y0, x1, y1] of figures) {
+		xs.push(x0, x1)
+		ys.push(y0, y1)
+	}
+	if (xs.length === 0) return null
+	const x = Math.min(...xs)
+	const y = Math.min(...ys)
+	return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y }
+}
+
+/**
+ * The table's logical grid, read from the drawing rather than from Word's cell order.
+ * Word writes no RowSpan/ColSpan attributes and pads merged regions and gutters with
+ * empty cells, so rows arrive with different cell counts and a cell's index says little
+ * about its column. Instead: the LOGICAL COLUMNS are the x-extents where cells with
+ * content sit (clustered by overlap); the LOGICAL ROWS are the table rows that hold any
+ * content; a cell's SPAN is how many of those columns and rows its shading rectangle
+ * covers. Empty cells are Word's spacers or merged remainders and are dropped. A table
+ * with no empty cell and no spanning shade comes back unchanged.
+ */
+function inferSpans(rows: TableRow[], geometry: CellGeometry[][]): TableRow[] {
+	interface Placed {
+		cell: TableCell
+		geo: CellGeometry
+		/** The cell's index in its Word row, the fallback position for a cell that has
+		 *  content but no geometry (a figure without a box). */
+		index: number
+	}
+	const hasContent = (cell: TableCell, geo: CellGeometry | undefined): boolean =>
+		geo?.content === true || cellHasContent(cell)
+	const liveRows: Placed[][] = []
+	let empties = 0
+	for (const [r, row] of rows.entries()) {
+		const placed: Placed[] = []
+		for (const [c, cell] of row.cells.entries()) {
+			const geo = geometry[r]?.[c] ?? { bbox: null, shade: null, content: false }
+			if (hasContent(cell, geo)) placed.push({ cell, geo, index: c })
+			else empties++
+		}
+		if (placed.length > 0) liveRows.push(placed)
+	}
+	/** Where cells at this Word index sit in other rows, when this one has no geometry. */
+	const boxAtIndex = (index: number): Box | null =>
+		liveRows.flatMap((placed) =>
+			placed.filter((p) => p.index === index && p.geo.bbox).map((p) => p.geo.bbox as Box),
+		)[0] ?? null
+	if (liveRows.length === 0) return rows
+
+	// Columns are the x-ranges the NARROW cells occupy: cells are taken narrowest first,
+	// and one that overlaps a single known column widens it, one that overlaps none
+	// starts a column, and one that overlaps several is a spanning cell and starts nothing.
+	// (Left edges alone fail on centred text; index order fails on Word's ragged rows.)
+	interface Column {
+		x0: number
+		x1: number
+	}
+	const columns: Column[] = []
+	const overlapping = (x0: number, x1: number): Column[] =>
+		columns.filter((col) => {
+			const overlap = Math.min(col.x1, x1) - Math.max(col.x0, x0)
+			return overlap > Math.min(col.x1 - col.x0, x1 - x0) * 0.3
+		})
+	const boxes = liveRows
+		.flatMap((placed) => placed.flatMap((p) => (p.geo.bbox ? [p.geo.bbox] : [])))
+		.sort((a, b) => a.width - b.width)
+	for (const b of boxes) {
+		const hits = overlapping(b.x, b.x + b.width)
+		if (hits.length === 1 && hits[0]) {
+			hits[0].x0 = Math.min(hits[0].x0, b.x)
+			hits[0].x1 = Math.max(hits[0].x1, b.x + b.width)
+		} else if (hits.length === 0) columns.push({ x0: b.x, x1: b.x + b.width })
+	}
+	columns.sort((a, b) => a.x0 - b.x0)
+	if (columns.length === 0) return rows
+	/** The contiguous run of columns a horizontal extent covers: [first, count]. */
+	const columnsUnder = (x0: number, x1: number): [number, number] => {
+		const indices = columns.flatMap((col, i) => (overlapping(x0, x1).includes(col) ? [i] : []))
+		if (indices.length === 0) {
+			const centre = (x0 + x1) / 2
+			let nearest = 0
+			for (const [i, col] of columns.entries()) {
+				if (
+					Math.abs((col.x0 + col.x1) / 2 - centre) <
+					Math.abs(((columns[nearest]?.x0 ?? 0) + (columns[nearest]?.x1 ?? 0)) / 2 - centre)
+				)
+					nearest = i
+			}
+			return [nearest, 1]
+		}
+		const first = indices[0] ?? 0
+		let count = 1
+		while (indices.includes(first + count)) count++
+		return [first, count]
+	}
+	const width = columns.length
+	const rowCentre = liveRows.map((placed) => {
+		const boxes = placed.flatMap((p) => (p.geo.bbox ? [p.geo.bbox] : []))
+		if (boxes.length === 0) return Number.NaN
+		const y0 = Math.min(...boxes.map((b) => b.y))
+		const y1 = Math.max(...boxes.map((b) => b.y + b.height))
+		return (y0 + y1) / 2
+	})
+	const centreOf = (c: number): number => ((columns[c]?.x0 ?? 0) + (columns[c]?.x1 ?? 0)) / 2
+	const covers = (shade: Box, c: number): boolean =>
+		centreOf(c) > shade.x && centreOf(c) < shade.x + shade.width
+	const coversRow = (shade: Box, r: number): boolean => {
+		const centre = rowCentre[r]
+		return (
+			centre !== undefined &&
+			!Number.isNaN(centre) &&
+			centre > shade.y &&
+			centre < shade.y + shade.height
+		)
+	}
+
+	// Pass one: every cell's home column, from its own content (never its shading — one
+	// fill often runs under a whole row). Two cells landing on one column keep their
+	// order: the later moves right.
+	interface Homed extends Placed {
+		c: number
+		colSpan: number
+		rowSpan: number
+	}
+	const homed: Homed[][] = liveRows.map((placed) => {
+		const taken = new Set<number>()
+		const row: Homed[] = []
+		let cursor = 0
+		for (const p of placed) {
+			const bbox = p.geo.bbox ?? boxAtIndex(p.index)
+			let c = bbox ? columnsUnder(bbox.x, bbox.x + bbox.width)[0] : cursor
+			while (taken.has(c) && c < width - 1) c++
+			taken.add(c)
+			row.push({ ...p, c, colSpan: 1, rowSpan: 1 })
+			cursor = c + 1
+		}
+		return row.sort((a, b) => a.c - b.c)
+	})
+
+	// Pass two: spans. A cell grows right into columns no cell of its row calls home, and
+	// down into rows where those columns are free, as far as its shading covers them (or,
+	// without shading, as far as its own content reaches).
+	const homes = homed.map((row) => new Set(row.map((h) => h.c)))
+	const occupied: boolean[][] = liveRows.map(() => Array.from({ length: width }, () => false))
+	let spanning = false
+	for (const [r, row] of homed.entries()) {
+		for (const h of row) {
+			const shade = h.geo.shade
+			const bbox = h.geo.bbox
+			const reach = shade ?? bbox
+			if (reach) {
+				while (h.c + h.colSpan < width) {
+					const next = h.c + h.colSpan
+					if (homes[r]?.has(next) || occupied[r]?.[next] || !covers(reach, next)) break
+					h.colSpan++
+				}
+			}
+			if (shade) {
+				while (r + h.rowSpan < liveRows.length) {
+					const below = r + h.rowSpan
+					if (!coversRow(shade, below)) break
+					let blocked = false
+					for (let dc = 0; dc < h.colSpan; dc++) {
+						if (homes[below]?.has(h.c + dc) || occupied[below]?.[h.c + dc]) blocked = true
+					}
+					if (blocked) break
+					h.rowSpan++
+				}
+			}
+			for (let dr = 0; dr < h.rowSpan; dr++) {
+				for (let dc = 0; dc < h.colSpan; dc++) {
+					const slots = occupied[r + dr]
+					if (slots) slots[h.c + dc] = true
+				}
+			}
+			if (h.colSpan > 1 || h.rowSpan > 1) spanning = true
+		}
+	}
+
+	// Pass three: rows come out with a cell in every column that nothing spans into, so
+	// the rendered grid keeps its alignment; the fillers are Word's empty gutters.
+	const filler = (): TableCell => ({
+		header: false,
+		rowSpan: 1,
+		colSpan: 1,
+		background: null,
+		blocks: [],
+	})
+	const spannedInto: boolean[][] = liveRows.map(() => Array.from({ length: width }, () => false))
+	for (const [r, row] of homed.entries()) {
+		for (const h of row) {
+			for (let dr = 0; dr < h.rowSpan; dr++) {
+				for (let dc = 0; dc < h.colSpan; dc++) {
+					if (dr > 0 || dc > 0) {
+						const slots = spannedInto[r + dr]
+						if (slots) slots[h.c + dc] = true
+					}
+				}
+			}
+		}
+	}
+	const out: TableRow[] = homed.map((row, r) => {
+		const cells: TableCell[] = []
+		for (let c = 0; c < width; c++) {
+			const own = row.find((h) => h.c === c)
+			if (own) cells.push({ ...own.cell, colSpan: own.colSpan, rowSpan: own.rowSpan })
+			else if (!spannedInto[r]?.[c]) cells.push(filler())
+		}
+		return { cells }
+	})
+	return empties === 0 && !spanning && out.length === rows.length ? rows : out
 }
 
 function linkTarget(ctx: Context, link: LinkAnnotation): TextRun['link'] {
@@ -512,6 +765,7 @@ function inlineSegs(ctx: Context, node: TreeNode | StructTreeContent, into: Seg[
 			const start = into.length
 			inlineSegs(ctx, node, into)
 			markRaised(ctx, into.slice(start))
+			markLooseEndnotes(ctx, into.slice(start))
 		})
 		return
 	}
@@ -589,6 +843,23 @@ function noteOf(ctx: Context, note: TreeNode, markerSegs: Seg[], into: Seg[]): v
 	// Filed here rather than emitted, so the element's raised-mark pass never sees them.
 	markRaised(ctx, segs)
 	fileEndnoteLines(ctx, linesOf(segs))
+}
+
+/** A raised bare number in body prose is an endnote marker whatever the tags say: Word
+ *  sometimes writes the marker's Link around an empty span and leaves the digit inside the
+ *  paragraph's own run (p.8 of the 2026 cancer template). The number IS the note number,
+ *  so nothing is lost by reading it without its link. */
+function markLooseEndnotes(ctx: Context, segs: Seg[]): void {
+	if (ctx.inNotesPart) return
+	for (const [i, seg] of segs.entries()) {
+		if (seg.endnote !== null || seg.footnote !== null || !seg.superscript) continue
+		if (!/^\d{1,3}$/.test(seg.text.trim())) continue
+		// Directly after text (a marker), not a number standing on its own.
+		const before = segs.slice(0, i).findLast((s) => s.text.trim() !== '')
+		if (!before || before.endnote !== null || /\s$/.test(before.text)) continue
+		seg.endnote = Number(seg.text.trim())
+		seg.link = null
+	}
 }
 
 /** The inter-word space after a marker belongs to the flow, not to the marker: split it
@@ -780,15 +1051,19 @@ function paragraphsFromLines(ctx: Context, lines: Line[]): Line[][] {
  *  of the element these lines came from, for its margins. */
 function runsFromLines(lines: Line[], context: Line[] = lines): TextRun[] {
 	const runs: TextRun[] = []
+	// After a hyphen broken at the margin the next line's leading space is dropped too.
+	let joinToNext = false
 	for (const [i, line] of lines.entries()) {
 		for (const seg of line.segs) {
 			const { y: _y, x0: _x0, x1: _x1, lineSize: _s, ...run } = seg
 			const last = runs.at(-1)
 			// One space between words, whichever side of a run boundary each half was drawn on.
-			const text = last?.text.endsWith(' ') ? run.text.replace(/^\s+/, '') : run.text
+			let text = last?.text.endsWith(' ') || joinToNext ? run.text.replace(/^\s+/, '') : run.text
 			if (text === '') continue
+			joinToNext = false
 			if (last && sameStyle(last, run)) last.text += text
 			else runs.push({ ...run, text })
+			text = ''
 		}
 		const next = lines[i + 1]
 		if (next) {
@@ -797,8 +1072,10 @@ function runsFromLines(lines: Line[], context: Line[] = lines): TextRun[] {
 			// A line ending in a hyphen followed by a lower-case continuation is one word
 			// broken at the margin ("sub-" / "headings"): rejoin it without a space.
 			const hyphenated = last?.text.trimEnd().endsWith('-') && /^[a-z]/.test(nextText.trimStart())
-			if (last && hyphenated) last.text = last.text.trimEnd()
-			else if (last && endsEarly(line, next, context)) {
+			if (last && hyphenated) {
+				last.text = last.text.trimEnd()
+				joinToNext = true
+			} else if (last && endsEarly(line, next, context)) {
 				last.text = last.text.trimEnd()
 				runs.push({ ...last, text: '\n' })
 			} else if (last && !last.text.endsWith(' ')) last.text += ' '
@@ -853,6 +1130,23 @@ function trimRuns(runs: TextRun[]): void {
 	if (last) last.text = last.text.replace(/\s+$/, '')
 }
 
+/** How lines sit in their element: centred when their midpoints agree and their left
+ *  edges do not; right-aligned when their right edges agree and their left edges do not.
+ *  A single line counts only when it sits clear of the element's left margin. */
+function alignmentOf(lines: Line[], context: Line[]): Alignment {
+	const left = Math.min(...context.map((l) => l.x0))
+	const right = Math.max(...context.map((l) => l.x1))
+	if (lines.length === 0 || right - left < 20) return 'left'
+	const centre = (left + right) / 2
+	const centred = lines.every((l) => Math.abs((l.x0 + l.x1) / 2 - centre) < 3)
+	const leftEdged = lines.every((l) => Math.abs(l.x0 - left) < 3)
+	const rightEdged = lines.every((l) => Math.abs(l.x1 - right) < 3)
+	const inset = lines.some((l) => l.x0 > left + 6)
+	if (centred && !leftEdged && inset) return 'center'
+	if (rightEdged && !leftEdged && inset) return 'right'
+	return 'left'
+}
+
 function paragraphFromLines(
 	ctx: Context,
 	lines: Line[],
@@ -865,6 +1159,7 @@ function paragraphFromLines(
 		runs,
 		page: ctx.pageNumber,
 		background: shadingBehind(ctx.page.paths, lines),
+		align: alignmentOf(lines, context),
 	}
 }
 
@@ -1030,45 +1325,84 @@ function listOf(ctx: Context, node: TreeNode): List | null {
 	return items.length > 0 ? { kind: 'list', items, page: ctx.pageNumber } : null
 }
 
+/** What a cell's content occupies on the page, for reading merged cells off the drawing. */
+interface CellGeometry {
+	/** The union of the cell's text lines and figures; null for an empty cell. */
+	bbox: Box | null
+	/** The shading rectangle drawn behind the cell, when it is shaded. */
+	shade: Box | null
+	content: boolean
+}
+
 function tableOf(ctx: Context, node: TreeNode): Table | null {
 	const rows: TableRow[] = []
+	const geometry: CellGeometry[][] = []
 	const walkRows = (n: TreeNode) => {
 		for (const child of n.children ?? []) {
 			if (isLeaf(child)) continue
 			if (child.role === 'TR') {
 				const cells: TableCell[] = []
+				const geos: CellGeometry[] = []
 				for (const cellNode of child.children ?? []) {
 					if (isLeaf(cellNode) || (cellNode.role !== 'TD' && cellNode.role !== 'TH')) continue
 					const blocks: Block[] = []
 					blockChildren(ctx, cellNode, blocks)
+					const lines = linesOf(geometrySegs(ctx, cellNode))
+					const figures = blocks.flatMap((b) => (b.kind === 'figure' && b.bbox ? [b.bbox] : []))
+					const shade = shadingPathBehind(ctx.page.paths, lines, figures)
 					cells.push({
 						header: cellNode.role === 'TH',
 						rowSpan: cellNode.rowSpan ?? 1,
 						colSpan: cellNode.colSpan ?? 1,
-						background: shadingBehind(ctx.page.paths, linesOf(geometrySegs(ctx, cellNode))),
+						background: shade && shade.colour !== '#ffffff' ? shade.colour : null,
 						blocks,
 					})
+					geos.push({
+						bbox: contentBox(lines, figures),
+						shade: shade?.box ?? null,
+						content: lines.length > 0 || figures.length > 0,
+					})
 				}
-				if (cells.length > 0) rows.push({ cells })
+				if (cells.length > 0) {
+					rows.push({ cells })
+					geometry.push(geos)
+				}
 			} else walkRows(child)
 		}
 	}
 	walkRows(node)
 	if (rows.length === 0) return null
+	// Word writes no RowSpan/ColSpan attributes: merged cells arrive as their first grid
+	// cell with content and empty cells for the rest. The drawing knows better — but the
+	// reading waits until page-split shells are re-joined (`normaliseBlocks`), since a
+	// shell's empty rows are the other page's, not spacers.
+	const table: Table = { kind: 'table', rows, page: ctx.pageNumber, border: null }
+	tableGeometry.set(table, geometry)
 	const segs = geometrySegs(ctx, node)
-	if (segs.length === 0) return { kind: 'table', rows, page: ctx.pageNumber, border: null }
+	if (segs.length === 0) return table
 	const x0 = Math.min(...segs.map((s) => s.x0))
 	const x1 = Math.max(...segs.map((s) => s.x1))
-	let border: string | null = null
 	for (const p of ctx.page.paths) {
 		if (p.kind !== 'fill' || p.box.height > 1.2 || p.box.width < (x1 - x0) * 0.6) continue
 		if (p.colour === '#ffffff') continue
 		if (p.box.x <= x0 + 8 && p.box.x + p.box.width >= x1 - 8) {
-			border = p.colour
+			table.border = p.colour
 			break
 		}
 	}
-	return { kind: 'table', rows, page: ctx.pageNumber, border }
+	return table
+}
+
+/** Each table's cell geometry, kept beside the model until the spans are read (after the
+ *  page-split shells are joined) and never serialised. */
+const tableGeometry = new WeakMap<Table, CellGeometry[][]>()
+
+/** A table with its merged cells read from the drawing, when its geometry is known. */
+function withSpans(table: Table): Table {
+	const geometry = tableGeometry.get(table)
+	if (!geometry) return table
+	const shaped = inferSpans(table.rows, geometry)
+	return shaped === table.rows ? table : { ...table, rows: shaped }
 }
 
 function figureOf(ctx: Context, node: TreeNode): Figure {
@@ -1185,7 +1519,15 @@ function openSection(
 	page: number,
 	y: number,
 ): Section {
-	const headingText = plainText(heading).replace(/\s+/g, ' ').trim()
+	// The title is the heading without its note markers ("Principles of multidisciplinary
+	// care⁵²"); the runs keep them.
+	const titleRuns = heading.filter(
+		(r) =>
+			r.endnote === null &&
+			r.footnote === null &&
+			!(r.superscript && /^\d{1,3}$/.test(r.text.trim())),
+	)
+	const headingText = plainText(titleRuns).replace(/\s+/g, ' ').trim()
 	const numbered = headingText.match(NUMBERED)
 	const step = headingText.match(STEP)
 	const section: Section = {
@@ -1196,6 +1538,7 @@ function openSection(
 		number: numbered?.[1] ?? (step ? `Step ${step[1]}` : null),
 		page,
 		y,
+		icon: null,
 		blocks: [],
 		children: [],
 	}
@@ -1243,20 +1586,79 @@ function flowParagraphs(
 	}
 }
 
-/** A single-cell table whose cell holds heading-styled lines is a page frame. */
-function isFrame(ctx: Context, node: TreeNode): boolean {
-	const cells: TreeNode[] = []
+/** The rows of a table node in reading order. */
+function rowNodes(node: TreeNode): TreeNode[] {
+	const rows: TreeNode[] = []
 	const collect = (n: TreeNode) => {
 		for (const c of n.children ?? []) {
 			if (isLeaf(c)) continue
-			if (c.role === 'TD' || c.role === 'TH') cells.push(c)
+			if (c.role === 'TR') rows.push(c)
 			else collect(c)
 		}
 	}
 	collect(node)
-	const only = cells[0]
-	if (cells.length !== 1 || !only) return false
-	return linesOf(geometrySegs(ctx, only)).some((line) => headingLevelOf(ctx, line) !== null)
+	return rows
+}
+
+const cellNodes = (row: TreeNode): TreeNode[] =>
+	(row.children ?? []).filter(
+		(c): c is TreeNode => !isLeaf(c) && (c.role === 'TD' || c.role === 'TH'),
+	)
+
+/** A table's rows from the first that holds any text or figure (Word writes empty rows
+ *  ahead of a frame's heading row). */
+function liveRowNodes(ctx: Context, node: TreeNode): TreeNode[] {
+	const rows = rowNodes(node)
+	const start = rows.findIndex((row) =>
+		cellNodes(row).some((cell) => geometrySegs(ctx, cell).length > 0 || hasFigure(cell)),
+	)
+	return start < 0 ? [] : rows.slice(start)
+}
+
+/** A table whose first live row is a heading-styled line beside (at most) an icon cell is
+ *  a heading frame — Word lays a titled page's heading and its icon out as a table, and
+ *  sometimes the callout under the heading as further rows of the same table. */
+function isFrame(ctx: Context, node: TreeNode): boolean {
+	const [first] = liveRowNodes(ctx, node)
+	if (!first) return false
+	const cells = cellNodes(first)
+	if (cells.length === 0 || cells.length > 2) return false
+	// One cell carries a heading; any other cell is an icon beside it (a principle's title
+	// in the Principles document: an icon cell and a heading cell in a two-cell table).
+	const titled = cells.filter((cell) =>
+		linesOf(geometrySegs(ctx, cell)).some((line) => headingLevelOf(ctx, line) !== null),
+	)
+	const iconOnly = cells.filter((cell) => geometrySegs(ctx, cell).length === 0 && hasFigure(cell))
+	return titled.length === 1 && titled.length + iconOnly.length === cells.length
+}
+
+const hasFigure = (node: TreeNode): boolean =>
+	(node.children ?? []).some((c) => !isLeaf(c) && (c.role === 'Figure' || hasFigure(c)))
+
+/** A frame table: its heading cell is walked first so the heading opens the section, then
+ *  its icon cell, whose figure lands in that section; any further rows are an ordinary
+ *  table of that section. */
+function walkFrame(ctx: Context, outline: Outline, table: TreeNode): void {
+	const [first, ...rest] = liveRowNodes(ctx, table)
+	const cells = first ? cellNodes(first) : []
+	const withText = cells.filter((cell) => geometrySegs(ctx, cell).length > 0)
+	const iconOnly = cells.filter((cell) => !withText.includes(cell))
+	const before = outline.stack.at(-1)
+	for (const cell of withText) walkFlow(ctx, outline, cell)
+	const opened = outline.stack.at(-1)
+	for (const cell of iconOnly) {
+		const blocks: Block[] = []
+		blockChildren(ctx, cell, blocks)
+		const figure = blocks.find((b): b is Figure => b.kind === 'figure')
+		// The icon belongs to the heading it frames (decision 65): the section it just
+		// opened takes it; otherwise it stays a figure in the flow.
+		if (figure && opened && opened !== before && opened.icon === null) opened.icon = figure
+		else currentBlocks(outline).push(...blocks)
+	}
+	if (rest.length > 0) {
+		const remainder = tableOf(ctx, { role: 'Table', children: rest })
+		if (remainder) currentBlocks(outline).push(remainder)
+	}
 }
 
 /** Walk a page's tree at flow level: headings open sections; everything else is a block
@@ -1273,7 +1675,7 @@ function walkFlow(ctx: Context, outline: Outline, node: TreeNode): void {
 			continue
 		}
 		if (child.role === 'Table' && isFrame(ctx, child)) {
-			walkFlow(ctx, outline, child)
+			walkFrame(ctx, outline, child)
 			continue
 		}
 		if (
@@ -1394,7 +1796,9 @@ export async function readDocument(
 /** The repairs a block sequence needs once a whole document has been read, applied to
  *  every sequence (sections, list items, cells). */
 function normaliseBlocks(blocks: Block[]): Block[] {
-	return nestTrailingLists(joinPageSplitTables(blocks.map(descend)))
+	// Shells are joined BEFORE the descent reads spans: a shell's empty rows belong to the
+	// other page, and a joined table (two pages' geometry) is left as Word drew it.
+	return nestTrailingLists(joinPageSplitTables(blocks).map(descend))
 }
 
 function descend(block: Block): Block {
@@ -1403,13 +1807,15 @@ function descend(block: Block): Block {
 			...block,
 			items: block.items.map((i) => ({ ...i, blocks: normaliseBlocks(i.blocks) })),
 		})
-	if (block.kind === 'table')
+	if (block.kind === 'table') {
+		const shaped = withSpans(block)
 		return {
-			...block,
-			rows: block.rows.map((r) => ({
+			...shaped,
+			rows: shaped.rows.map((r) => ({
 				cells: r.cells.map((c) => ({ ...c, blocks: normaliseBlocks(c.blocks) })),
 			})),
 		}
+	}
 	return block
 }
 

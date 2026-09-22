@@ -263,8 +263,21 @@ compared by structure and scans only):
 - **p.37 timeframe care point** — SETTLED (decision 51): `carePoint` is the timeframe's
   first child node holding marked text, so "Timeframe for [treatment modality]" keeps its
   placeholder.
-- **p.6 Types of OCPs**: the two coloured tiles (green / purple) keep their text and bold
-  titles but the table cells carry no background colour in the content schema.
+- **p.6 Types of OCPs, p.7 icon grids and resource tiles** — RESOLVED (decision 58): tiles
+  are `columns` of callout boxes in their colour family (`box.family`), icon grids are
+  `columns`; shaded table cells carry `tableCell.background` (a family, decision 60) and
+  shaded group-header rows are `banner` tone 'sub'. The snapshot view (decision 50) and
+  the pathway map (decision 63, replacing the p.9 schematic figure) are rendered from the
+  document at render.
+- **Find out more / See also entries** — RESOLVED (decision 64): `resource` nodes in a
+  `resourceList`; a title leads with bold or linked text, plain paragraphs after it are
+  the description (across a page break too); `<hyperlink …>` notes are dropped in favour
+  of the url.
+- **p.8 Communication row**: Word tagged the endnote marker "7" OUTSIDE its Link (an empty
+  Link precedes the paragraph; the digit is a 7pt run at its end). The extractor now
+  reads any raised bare number in body prose as the endnote it names, so citation numbers
+  derived at render agree with the printed ones. The row's heading and text also share one
+  paragraph in the tags, so they render as one paragraph rather than two lines.
 - **Principles p.8 table / p.9 schematic**: figures are rendered as images; the schematic
   is an image.
 

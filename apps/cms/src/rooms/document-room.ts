@@ -9,6 +9,10 @@
  *     brand-new room, a purged one or a migrated one rebuilds itself from D1;
  *   - folds every debounced body change back into the D1 row (`onBodyChanged`) and
  *     announces it on the document's sections topic;
+ *   - yields to the row when it moved behind the room's back: a fold that finds the
+ *     row's `updated_at` later than the last body time this room wrote or hydrated
+ *     re-hydrates the live doc FROM the row instead of writing over it (a reseed, a
+ *     migration, an admin door — anything that writes D1 without the room);
  *   - never creates sections: the outline (D1) does, through the worker's doors.
  *
  * ROLES come from the auth worker live, keyed by the document's organisation: a
@@ -18,7 +22,7 @@
 import { DocRoom, type DocRow, type DocTier, type UserProfiles } from '@aicolab/app-kit/doc-room'
 import { and, eq } from 'drizzle-orm'
 import { emptyBody, type JsonNode } from '#/content/schema.ts'
-import { bodyFromRoot, hydrateRoot } from '#/content/yjs.ts'
+import { bodyFromRoot, hydrateRoot, replaceRoot } from '#/content/yjs.ts'
 import { db, schema } from '#/db/index.ts'
 import { publishSectionRows } from '#/lib/live-publish.ts'
 import { OCP_NAMESPACE, ROLE_LADDER, type Role, tierForRole } from '#/lib/roles.ts'
@@ -111,7 +115,27 @@ export class DocumentRoom extends DocRoom {
 			bodyUpdatedAt: 0,
 		})
 		await this.hydrateBody(row.id, (root) => hydrateRoot(root, row.bodyJson ?? emptyBody()))
+		await this.#rememberRowClock(row.id, row.updatedAt)
 		return inserted
+	}
+
+	/**
+	 * The row's `updated_at` as this room last saw it — after hydrating from the row or
+	 * writing it. A fold that finds the row at any OTHER time knows D1 moved without the
+	 * room (a reseed, a migration, an admin door) and yields to it. Kept in the room's own
+	 * storage, beside the collections, so it survives eviction with the live body.
+	 */
+	#rowClockKey(sectionId: string): string {
+		return `row-clock:${sectionId}`
+	}
+
+	async #rowClock(sectionId: string): Promise<number | null> {
+		return (await this.ctx.storage.get<number>(this.#rowClockKey(sectionId))) ?? null
+	}
+
+	async #rememberRowClock(sectionId: string, at: Date | number | null | undefined): Promise<void> {
+		const ms = at instanceof Date ? at.getTime() : (at ?? 0)
+		await this.ctx.storage.put(this.#rowClockKey(sectionId), ms)
 	}
 
 	/** The fold: the live body, as JSON, into the section's D1 row; then the announcement. */
@@ -134,17 +158,34 @@ export class DocumentRoom extends DocRoom {
 		)
 		const current = (
 			await db(this.env.DB)
-				.select({ bodyJson: schema.sections.bodyJson })
+				.select({ bodyJson: schema.sections.bodyJson, updatedAt: schema.sections.updatedAt })
 				.from(schema.sections)
 				.where(where)
 				.limit(1)
 		)[0]
-		if (current && JSON.stringify(current.bodyJson) === JSON.stringify(body)) return body
+		if (!current) return body
+		const rowAt = current.updatedAt?.getTime() ?? 0
+		const known = await this.#rowClock(sectionId)
+		if (JSON.stringify(current.bodyJson) === JSON.stringify(body)) {
+			if (known !== rowAt) await this.#rememberRowClock(sectionId, rowAt)
+			return body
+		}
+		// The row is not at the time this room last saw it (or the room never noted one,
+		// for a body materialised before this rule): D1 moved without the room, and D1 is
+		// the truth. The live doc takes the row's body; the projection this causes folds
+		// again, finds the bodies equal, and writes nothing.
+		if (known === null || rowAt !== known) {
+			const resting = current.bodyJson ?? emptyBody()
+			await this.hydrateBody(sectionId, (root) => replaceRoot(root, resting))
+			await this.#rememberRowClock(sectionId, rowAt)
+			return this.readBody(sectionId, (root) => bodyFromRoot(root))
+		}
 		const updated = await db(this.env.DB)
 			.update(schema.sections)
 			.set({ bodyJson: body, updatedAt: new Date(at) })
 			.where(where)
 			.returning()
+		await this.#rememberRowClock(sectionId, updated[0]?.updatedAt ?? at)
 		if (updated.length > 0) void publishSectionRows(this.documentId(), updated)
 		return body
 	}

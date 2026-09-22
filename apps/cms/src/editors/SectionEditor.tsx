@@ -27,12 +27,15 @@ import { configureYProsemirror } from '@y/prosemirror'
 import { UndoManager } from '@y/y'
 
 import { createSignal, onSettled, Show, untrack } from 'solid-js'
+import type { DerivedView } from '#/content/derived.ts'
 import { createSectionExtension } from './extension.ts'
 
 export default function SectionEditor(props: {
 	room: DocRoomClient
 	handle: DocHandle
 	sectionId: string
+	/** The page's derived view (citation numbers, timeframes) the block views read. */
+	derived: DerivedView
 }) {
 	// The slot upstream is keyed by (section, handle, room): a different section is a
 	// different mount, so these are constants of this instance, read once and untracked
@@ -63,6 +66,7 @@ export default function SectionEditor(props: {
 	const undoManager = new UndoManager(ytype)
 	const editor = createEditor({
 		extension: createSectionExtension({
+			derived: () => props.derived,
 			undoManager,
 			isEditable: editable,
 			onUpdate: (view, prevState) => {
@@ -169,14 +173,14 @@ export default function SectionEditor(props: {
 			'H2',
 			'Heading',
 			() => editor.commands.toggleHeading({ level: 2 }),
-			() => editor.nodes.heading.isActive({ level: 2 }),
+			() => editor.nodes.heading.isActive({ level: 2, textAlign: null }),
 		),
 		mark(
 			'heading-3',
 			'H3',
 			'Subheading',
 			() => editor.commands.toggleHeading({ level: 3 }),
-			() => editor.nodes.heading.isActive({ level: 3 }),
+			() => editor.nodes.heading.isActive({ level: 3, textAlign: null }),
 		),
 		mark(
 			'bullet-list',

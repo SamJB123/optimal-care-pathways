@@ -1,0 +1,52 @@
+/* The document hub: the map first at full width, then the state panels in a row. */
+.ocp-hub {
+	display: grid;
+	gap: 1.5rem;
+	padding: 1rem 0 2rem;
+}
+
+.ocp-hub-map {
+	max-width: 62rem;
+	margin-inline: auto;
+	width: 100%;
+}
+
+.ocp-hub-panels {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+	gap: 1rem;
+}
+
+.ocp-hub-facts {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.35rem 1rem;
+	margin: 0;
+}
+
+.ocp-hub-facts dt {
+	color: var(--color-base-content-muted);
+}
+
+.ocp-hub-facts dd {
+	margin: 0;
+	font-weight: 600;
+}
+
+.ocp-hub-reviews {
+	display: grid;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ocp-hub-reviews li {
+	display: grid;
+	gap: 0.15rem;
+}
+
+.ocp-hub-review-note {
+	color: var(--color-base-content-muted);
+	font-size: 0.9em;
+}

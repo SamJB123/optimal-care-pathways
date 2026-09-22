@@ -1,0 +1,285 @@
+/* The template's blocks (content/blocks.tsx), as they read in the editor and in every
+   read-only view. No colour is named here: every block carries ui-solid's colour
+   attributes, so the resolver supplies --ui-surface, --ui-ink and --ui-border for the
+   family in whichever scheme is active (the theme maps the families in theme.css).
+
+   The editor wraps each node view in one element of its own (ProseMirror's node view
+   `dom`), so rules that reach a block's FIRST CHILD allow for that wrapper: both
+   `body > p` and `body > wrapper > p` are matched where it matters. Rules run from the
+   general to the specific, so a later rule never loses to an earlier one. */
+
+/* ── Banner: the box's title band; 'sub' is a light group header inside a box ── */
+.ocp-body p[data-ocp="banner"] {
+	margin: 1.2em 0 0.4em;
+	padding: 0.35em 0.7em;
+	background: var(--ui-surface);
+	color: var(--ui-ink);
+	font-weight: 600;
+	border-radius: 0.3em;
+}
+
+/* Citations on a band read in the band's ink, not the link colour. */
+.ocp-body p[data-ocp="banner"] sup[data-ocp="citation"]::before {
+	color: inherit;
+}
+
+.ocp-body p[data-ocp="carePoint"] {
+	font-weight: 600;
+	color: var(--ui-ink);
+	margin: 0 0 0.25em;
+}
+
+/* The callout-kind box: a soft statement, no band. */
+.ocp-body .ocp-box-callout {
+	margin: 1em 0;
+	font-size: 1em;
+	font-weight: 400;
+	line-height: inherit;
+	padding: 0.7em 0.9em;
+}
+
+.ocp-body .ocp-box-callout > :where(:first-child, :first-child > :first-child) {
+	margin-top: 0;
+}
+
+.ocp-body .ocp-box-callout > :where(:last-child, :last-child > :last-child) {
+	margin-bottom: 0;
+}
+
+/* ── Side-by-side layout (decision 58): tiles, icon grids, paired boxes ── */
+.ocp-body div[data-ocp="columns"] {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+	gap: 0.8em;
+	align-items: start;
+	margin: 0.8em 0;
+}
+
+.ocp-body div[data-ocp="column"] > :where(:first-child, :first-child > :first-child) {
+	margin-top: 0;
+}
+
+.ocp-body div[data-ocp="column"] > :where(:last-child, :last-child > :last-child) {
+	margin-bottom: 0;
+}
+
+.ocp-body div[data-ocp="column"] img {
+	margin-inline: auto;
+	max-height: 12em;
+	width: auto;
+}
+
+/* ── Guidance: an accordion item whose open state is the done tick ── */
+.ocp-body .ocp-guidance {
+	margin: 0.8em 0;
+	border-left: 4px solid var(--ui-border);
+	font-size: 0.95em;
+}
+
+.ocp-body .ocp-guidance-summary {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.8em;
+	font-size: 0.75em;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.ocp-body .ocp-guidance-tick {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3em;
+	font: inherit;
+	font-weight: 500;
+	letter-spacing: 0;
+	text-transform: none;
+	color: inherit;
+	background: none;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+}
+
+.ocp-body .ocp-guidance-done {
+	font-weight: 500;
+	letter-spacing: 0;
+	text-transform: none;
+	opacity: 0.8;
+}
+
+.ocp-body .ocp-guidance .ui-acc-body > :where(:first-child, :first-child > :first-child) {
+	margin-top: 0;
+}
+
+.ocp-body .ocp-guidance .ui-acc-body > :where(:last-child, :last-child > :last-child) {
+	margin-bottom: 0;
+}
+
+/* ── Timeframe: a Callout in the error family, the care point its first line ── */
+.ocp-body .ocp-timeframe {
+	margin: 0.8em 0;
+}
+
+.ocp-body .ocp-timeframe .ui-callout-body {
+	position: relative;
+	padding-left: 2.4em;
+}
+
+.ocp-body .ocp-timeframe .ui-callout-body::before {
+	content: "⏱";
+	position: absolute;
+	left: 0.7em;
+	top: 0.75em;
+	color: var(--ui-ink);
+}
+
+/* ── Box: a Callout in the family; its banner child is the band ── */
+.ocp-body .ocp-box {
+	margin: 1em 0;
+}
+
+.ocp-body .ocp-box .ui-callout-body {
+	position: relative;
+}
+
+/* A banner flush to the box's edges; the first one is the band across the top. */
+.ocp-body .ocp-box .ui-callout-body p[data-ocp="banner"] {
+	margin-left: calc(-1 * var(--_ui-callout-pad, 0.8rem));
+	margin-right: calc(-1 * var(--_ui-callout-pad, 0.8rem));
+	border-radius: 0;
+}
+
+.ocp-body .ocp-box .ui-callout-body > p[data-ocp="banner"]:first-child,
+.ocp-body .ocp-box .ui-callout-body > :first-child > p[data-ocp="banner"]:only-child {
+	margin-top: calc(-1 * var(--_ui-callout-pad, 0.8rem));
+}
+
+/* The box's glyph, where the template prints it: on the band when the box opens with
+   its banner, in the top-left corner otherwise. */
+.ocp-body .ocp-box:not([data-glyph=""]) .ui-callout-body {
+	padding-left: 2.6em;
+}
+
+.ocp-body .ocp-box:not([data-glyph=""]) .ui-callout-body::before {
+	content: var(--ocp-glyph);
+	position: absolute;
+	left: 0.8em;
+	top: 0.7em;
+	font-size: 1.1em;
+	line-height: 1;
+	color: var(--ui-ink);
+	pointer-events: none;
+}
+
+.ocp-body .ocp-box:not([data-glyph=""]) .ui-callout-body p[data-ocp="banner"] {
+	margin-left: -2.6em;
+	padding-left: 2.6em;
+}
+
+.ocp-body .ocp-box .ui-callout-body:has(> p[data-ocp="banner"]:first-child)::before,
+.ocp-body .ocp-box .ui-callout-body:has(> :first-child > p[data-ocp="banner"]:only-child)::before {
+	color: var(--color-secondary-content);
+	top: 1.05em;
+}
+
+/* ── The snapshot schematic, generated from the document's timeframe boxes ── */
+.ocp-body div[data-ocp="timeframeSnapshot"] {
+	margin: 1em 0;
+	padding: 0.8em 1em;
+	border: 1px dashed var(--ui-border);
+	border-radius: 0.4em;
+	color: var(--ui-ink);
+	font-size: 0.95em;
+}
+
+.ocp-body table.ocp-snapshot caption {
+	caption-side: top;
+	text-align: left;
+	font-size: 0.85em;
+	color: var(--color-base-content-muted);
+	padding-bottom: 0.4em;
+}
+
+.ocp-body table.ocp-snapshot em {
+	color: var(--color-success);
+	font-weight: 600;
+}
+
+.ocp-pathway-map {
+	margin: 1em 0;
+}
+
+/* The map's previews: a title, a kicker, a short list, a line or two. */
+.ocp-map-preview {
+	display: grid;
+	gap: 0.35rem;
+}
+
+.ocp-map-preview ul {
+	margin: 0;
+	padding-left: 1.1em;
+}
+
+.ocp-map-preview-kicker {
+	margin: 0.2rem 0 0;
+	font-size: 0.75em;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-base-content-muted);
+}
+
+.ocp-map-preview-line {
+	margin: 0;
+	color: var(--color-base-content-muted);
+}
+
+/* ── Alternatives: the template's "Or" rows; the author keeps one ── */
+.ocp-body div[data-ocp="variants"] {
+	margin: 0.6em 0;
+	border-left: 3px dotted var(--color-border-strong);
+	padding-left: 0.8em;
+}
+
+.ocp-body div[data-ocp="variant"] + div[data-ocp="variant"]::before,
+.ocp-body :has(> div[data-ocp="variant"]) + :has(> div[data-ocp="variant"])::before {
+	content: "or";
+	display: block;
+	font-style: italic;
+	font-weight: 600;
+	color: var(--color-success);
+	margin: 0.4em 0;
+}
+
+/* ── Find out more / See also entries: a RichList of titled links ── */
+.ocp-body .ocp-resources {
+	margin: 0.3em 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ocp-body .ocp-resource-title {
+	font-weight: 600;
+	color: var(--color-primary);
+}
+
+.ocp-body .ocp-resource-body {
+	display: block;
+	color: var(--color-base-content-muted);
+}
+
+.ocp-body .ocp-resource-body p {
+	margin: 0.1em 0;
+}
+
+.ocp-body .ocp-resource-edit {
+	font: inherit;
+	font-size: 0.8em;
+	color: var(--color-primary);
+	background: none;
+	border: 1px solid var(--color-border);
+	border-radius: 0.3em;
+	padding: 0.1em 0.5em;
+	cursor: pointer;
+}

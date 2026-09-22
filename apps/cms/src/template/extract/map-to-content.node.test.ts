@@ -70,7 +70,7 @@ describe('stage two: the cancer template mapped to the content schema', () => {
 		// p.11: every "Complete the box" line is guidance, the key table keeps its labels.
 		const epidemiology = body('about-this-cancer/epidemiology-and-burden-of-disease')
 		const [box] = find(epidemiology, 'box')
-		expect(box?.attrs).toEqual({ kind: 'developer', icon: 'pen' })
+		expect(box?.attrs).toEqual({ kind: 'developer', icon: 'pen', family: '' })
 		expect(textOf(find(box ? [box] : [], 'guidance').slice(0, 1))).toMatch(/^Complete the boxes/)
 		const [table] = find(epidemiology, 'table')
 		expect(table?.content?.length).toBe(6)
