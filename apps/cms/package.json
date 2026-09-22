@@ -14,11 +14,15 @@
 		"test": "vitest run",
 		"check-types": "tsc --noEmit",
 		"cf-typegen": "wrangler types -c wrangler.jsonc -c ../auth/wrangler.jsonc",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate:local": "wrangler d1 migrations apply ocp-cms-d1 --local --persist-to ./.wrangler/state",
+		"db:migrate:remote": "wrangler d1 migrations apply ocp-cms-d1 --remote",
 		"auth:db:migrate:local": "wrangler d1 migrations apply ocp-auth-d1 --local --persist-to ./.wrangler/state -c ../auth/wrangler.jsonc"
 	},
 	"dependencies": {
 		"@aicolab/app-kit": "workspace:^",
 		"@aicolab/better-auth": "workspace:^",
+		"drizzle-orm": "catalog:",
 		"@aicolab/cloudflare": "workspace:^",
 		"@aicolab/room-service": "workspace:^",
 		"@aicolab/ui-solid": "workspace:^",
@@ -43,6 +47,7 @@
 		"@tanstack/devtools-vite": "catalog:",
 		"@tanstack/solid-router-devtools": "catalog:",
 		"@types/node": "catalog:",
+		"drizzle-kit": "catalog:",
 		"jsdom": "catalog:",
 		"typescript": "catalog:",
 		"vite": "catalog:",

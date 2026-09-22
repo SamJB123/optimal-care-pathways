@@ -22,11 +22,24 @@
 			"service": "ocp-auth",
 			"entrypoint": "AuthService"
 		}
+	],
+
+	// The content database — the SQL source of truth (src/db/schema.ts). drizzle-kit
+	// generates SQL under ./drizzle; wrangler applies it. Created 2026-09-22 on the
+	// account above; a new account needs `wrangler d1 create ocp-cms-d1` and this id.
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "ocp-cms-d1",
+			"database_id": "4a50dc82-ab08-4147-a301-4e3e5cdc653c",
+			"migrations_dir": "./drizzle",
+			"migrations_pattern": "drizzle/*/migration.sql"
+		}
 	]
 
-	// Still to come, each with its own migration tag: the D1 content database, the
-	// section rooms (Durable Objects on room-service doc-sync), the change bell
-	// (d1-sync), R2 for images and the legacy PDFs, and Browser Rendering for PDF.
+	// Still to come, each with its own migration tag: the section rooms (Durable Objects
+	// on the app-kit DocRoom), the change bell (d1-sync), R2 for images and the legacy
+	// PDFs, and Browser Rendering for PDF.
 	//
 	// Secrets (`wrangler secret put`, not committed):
 	//   CAPNWEB_SNAPSHOT_ENCRYPTION_KEY — room-service's hibernatable session

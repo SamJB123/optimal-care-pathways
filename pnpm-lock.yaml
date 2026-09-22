@@ -300,6 +300,9 @@ importers:
       capnweb-experimental-hibernation:
         specifier: 'catalog:'
         version: 0.12.0-hibernation-cbor.1(cbor-x@1.6.6)
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 1.0.0-rc.4(@cloudflare/workers-types@5.20260921.1)(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(@types/sql.js@1.4.11)(pg@8.23.0)(sql.js@1.14.2)(valibot@1.2.0(typescript@7.0.2))(zod@4.6.5)
       solid-js:
         specifier: 'catalog:'
         version: 2.0.0-rc.8
@@ -331,6 +334,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.2
+      drizzle-kit:
+        specifier: 'catalog:'
+        version: 1.0.0-rc.4
       jsdom:
         specifier: 'catalog:'
         version: 30.1.0(@noble/hashes@2.4.0)
