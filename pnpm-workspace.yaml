@@ -3,82 +3,81 @@ packages:
   - packages/*
   - tooling/*
 
-# The catalog is carried over from the aicolab-portal monorepo verbatim (2026-09-22),
-# because the six packages/* submodules declare their third-party dependencies as
-# `catalog:` and are pinned to the same commits the monorepo runs. Entries this repo
-# never resolves are inert; trim once `pnpm why` proves what is unused. The pins that
-# carry comments are load-bearing — read the comment before changing one.
+# The catalog, overrides and settings below are the aicolab-portal monorepo's, copied
+# verbatim after its 2026-09-22 dependency sweep. The six packages/* submodules declare
+# their third-party dependencies as `catalog:` and are validated only against that
+# monorepo's lockfile, which this repo's pnpm-lock.yaml is seeded from (README:
+# "Dependencies follow the monorepo"). Entries this repo never resolves are inert.
+# The pins that carry comments are load-bearing — read the comment before changing one.
 catalog:
-  '@astrojs/cloudflare': 14.0.0-alpha.0
-  '@astrojs/mdx': 6.0.0-alpha.0
-  '@astrojs/react': 6.0.0-alpha.0
-  '@astrojs/rss': ^4.0.18
-  '@astrojs/sitemap': ^3.7.2
-  # Exact: the monorepo's lockfile holds 2.5.11 and 2.5.14 adds rules (unresolved
-  # workspace subpath imports) that fire on every @aicolab package import.
-  '@biomejs/biome': 2.5.11
-  '@cloudflare/vite-plugin': ^1.54.1
+  '@biomejs/biome': ^2.5.14
+  '@cloudflare/vite-plugin': ^1.57.1
   '@cloudflare/vitest-pool-workers': ^0.22.0
   # v5 = latest-runtime types only (dated entrypoints dropped). Workers type
   # themselves via `wrangler types`; the bare entrypoint is all we use.
-  '@cloudflare/workers-types': ^5.20260828.1
-  agents: ^0.22.0
+  '@cloudflare/workers-types': ^5.20260921.1
+  agents: ^0.24.0
   '@modelcontextprotocol/sdk': ^1.30.0
   '@moq/net': 0.3.3
   '@moq/watch': 0.5.2
   '@moq/hang': 0.4.2
-  '@react-three/drei': ^11.0.0-alpha.5
+  '@react-three/drei': 11.0.0-alpha.7
   '@react-three/fiber': 10.0.0-canary.1b98c17
-  '@solidjs/h': 2.0.0-rc.3
-  '@solidjs/universal': 2.0.0-rc.3
+  '@solidjs/h': 2.0.0-rc.8
+  '@solidjs/universal': 2.0.0-rc.8
   # The canonical Solid vite plugin (vite-plugin-solid was renamed at
-  # 3.0.0-next.28; the old name ends at next.27 as a re-export shim). next.34
-  # bundles @solidjs/compiler ^2.0.0-rc.3 — the compiler cut for this runtime.
-  '@solidjs/vite-plugin': 3.0.0-next.34
-  '@solidjs/web': 2.0.0-rc.3
+  # 3.0.0-next.28; the old name ends at next.27 as a re-export shim). next.43
+  # bundles @solidjs/compiler ^2.0.0-rc.8 — the compiler cut for this runtime
+  # (next.44 moves to rc.9). The rc line must move as ONE set (see overrides): a
+  # newer compiler emits runtime helpers (readShallow) an older web lacks.
+  '@solidjs/vite-plugin': 3.0.0-next.43
+  # rc.8, not rc.9 (2026-09-22): @tanstack/solid-start 2.0.0-rc.8 imports
+  # `parseServerFunctionUrl` from @solidjs/web/server-functions, which rc.9 renamed
+  # to `parseServerFunctionActionUrl`. Move to rc.9 when TanStack's rc does.
+  '@solidjs/web': 2.0.0-rc.8
   '@tailwindcss/typography': ^0.5.19
   '@tailwindcss/vite': ^4.3.2
-  '@tanstack/ai': ^0.51.0
-  '@tanstack/ai-anthropic': ^0.18.2
-  '@tanstack/ai-client': ^0.29.1
-  '@tanstack/ai-gemini': ^0.26.3
-  '@tanstack/ai-ollama': ^0.10.2
-  '@tanstack/ai-openai': ^0.22.2
-  '@tanstack/ai-react': ^0.22.3
-  '@tanstack/devtools-event-client': ^0.4.3
+  '@tanstack/ai': ^0.58.0
+  '@tanstack/ai-anthropic': ^0.18.10
+  '@tanstack/ai-client': ^0.33.2
+  '@tanstack/ai-gemini': ^0.31.2
+  '@tanstack/ai-ollama': ^0.11.6
+  '@tanstack/ai-openai': ^0.23.1
+  '@tanstack/ai-react': ^0.27.3
+  '@tanstack/devtools-event-client': ^0.5.0
   '@tanstack/devtools-vite': ^0.8.5
   '@tanstack/query-db-collection': ^1.2.11
-  '@tanstack/react-db': ^0.3.6
+  '@tanstack/react-db': ^0.4.1
   '@tanstack/react-devtools': ^0.10.5
-  '@tanstack/react-query': ^5.102.8
+  '@tanstack/react-query': ^5.103.2
   '@tanstack/react-query-devtools': ^5.102.8
-  '@tanstack/react-router': ^1.170.32
+  '@tanstack/react-router': ^1.170.38
   '@tanstack/react-router-devtools': ^1.167.0
   '@tanstack/react-router-ssr-query': ^1.167.1
   '@tanstack/react-start': ^1.168.25
   '@tanstack/react-store': ^0.11.0
-  '@tanstack/router-plugin': ^1.168.35
+  '@tanstack/router-plugin': ^1.168.40
   '@tanstack/store': ^0.11.0
   '@testing-library/dom': ^10.4.1
   '@testing-library/react': ^16.3.2
-  '@types/node': ^26.4.0
-  '@types/react': ^19.2.18
-  '@types/react-dom': ^19.2.5
+  '@types/node': ^26.6.2
+  '@types/react': ^19.3.0
+  '@types/react-dom': ^19.3.0
   '@types/three': ^0.185.4
   # yjs v14 line — pinned EXACT (RC): doc-sync builds on the unified-YType/delta
   # API which is still moving between RCs, and @y/y + lib0 must advance as a
   # matched pair. Single yjs copy is load-bearing (instanceof checks break on
   # double-import), so nothing outside the catalog may declare its own version.
+  # HELD at rc.24 / rc.22 (2026-09-22 sweep): rc.26 removes the `Type` export
+  # doc-sync builds on; the migration is its own task in the monorepo.
   '@y/y': 14.0.0-rc.24
   lib0: 1.0.0-rc.22
+  '@y/prosemirror': 2.0.0-6
   '@vitejs/plugin-react': ^6.0.2
-  '@vitejs/plugin-rsc': 0.5.27
-  astro: 7.0.0-alpha.1
-  # Exact: the monorepo runs 1.7.2 and its D1 schema is validated against it; 1.7.5
-  # adds a stricter schema check. Bump together with the package's migrations.
-  better-auth: 1.7.2
+  '@vitejs/plugin-rsc': 0.5.35
+  better-auth: ^1.7.5
   capnweb-experimental-hibernation: 0.12.0-hibernation-cbor.1
-  convex: ^1.45.0
+  convex: ^1.46.0
   crashcat: ^0.0.5
   # Clean rc.4 releases — pinned exact so lockfile rebuilds can't float them onto
   # branch snapshots (rc.4-de6c356 broke types in packages/cloudflare and
@@ -86,76 +85,80 @@ catalog:
   drizzle-kit: 1.0.0-rc.4
   drizzle-orm: 1.0.0-rc.4
   highlight.js: ^11.12.0
-  jsdom: ^30.0.1
+  jsdom: ^30.1.0
   js-tiktoken: ^1.0.21
-  openai: ^6.45.0
-  fflate: ^0.8.2
+  openai: ^7.20.0
+  fflate: ^0.8.3
   docx: ^9.7.1
   '@cloudflare/containers': ^0.3.7
   sql.js: ^1.14.2
   koota: ^0.6.6
-  lucide-react: ^1.35.0
+  lucide-react: ^1.47.0
   mathcat: ^0.0.14
-  playwright: ^1.62.1
-  resend: ^6.16.0
-  react: ^19.2.8
-  react-dom: ^19.2.8
+  playwright: ^1.63.0
+  resend: ^6.28.1
+  react: ^19.3.0
+  react-dom: ^19.3.0
   sharp: ^0.35.4
   # ProseKit: ONE copy repo-wide (ui-solid's editor bindings compose extensions
   # with the app's; two @prosekit/core copies fail its facet union assertion).
-  '@prosekit/core': 0.13.0
-  '@prosekit/extensions': 0.18.0
-  '@prosekit/pm': 0.1.19
-  storybook: ^10.5.10
-  '@storybook/addon-docs': ^10.5.10
-  '@storybook/react': ^10.5.10
-  '@storybook/react-vite': ^10.5.10
-  storybook-solidjs-vite: ^10.7.1
-  solid-js: 2.0.0-rc.3
+  '@prosekit/core': 0.13.3
+  '@prosekit/extensions': 0.18.3
+  '@prosekit/pm': 0.1.20
+  storybook: ^10.6.0
+  '@storybook/addon-docs': ^10.6.0
+  '@storybook/react': ^10.6.0
+  '@storybook/react-vite': ^10.6.0
+  storybook-solidjs-vite: ^10.7.2
+  solid-js: 2.0.0-rc.8
   streamdown: ^2.5.0
   suspend-react: ^0.1.3
   tailwindcss: ^4.3.2
   three: ^0.185.1
   three-bvh-csg: 0.0.18
-  three-mesh-bvh: ^0.9.14
-  tsx: ^4.23.12
-  turbo: ^2.10.12
+  three-mesh-bvh: ^0.9.15
+  tsx: ^4.23.15
+  turbo: ^2.11.2
   typescript: ~7.0.2
-  vite: ^8.2.2
+  vite: ^8.3.0
   vite-tsconfig-paths: ^6.1.1
   # Kept ONLY as storybook-solidjs-vite's required peer (ui-solid): next.27 is
   # the old name's final release, a re-export shim over @solidjs/vite-plugin.
   vite-plugin-solid: 3.0.0-next.27
+  # vitest 5 is out (2026-09) but @cloudflare/vitest-pool-workers 0.22 peers on ^4.1.
   vitest: ^4.1.11
-  wrangler: ^4.127.0
-  zod: ^4.4.3
+  wrangler: ^4.136.1
+  zod: ^4.6.5
   syncpack: ^15.3.3
   three-html-render: ^0.1.2
-  '@webgpu/types': ^0.1.72
+  '@webgpu/types': ^0.1.74
+  # HELD at 0.8.6 (2026-09-22 sweep): 0.9.2 emits a second change event when an
+  # optimistic insert persists, breaking room-service's single-emission invariant.
   '@tanstack/db': ^0.8.6
   '@tanstack/db-ivm': ^0.1.19
-  '@tanstack/browser-db-sqlite-persistence': ^0.2.19
-  '@journeyapps/wa-sqlite': ^1.4.1
+  '@tanstack/browser-db-sqlite-persistence': ^0.2.23
+  '@journeyapps/wa-sqlite': ^1.7.2
   '@testing-library/jest-dom': ^7.0.1
   cbor-x: ^1.6.6
   '@tanstack/form-core': ^1.33.5
   '@tanstack/solid-store': ^0.11.1
-  # TanStack's Solid packages ride the `rc` dist-tag, kept in step with solid-js.
-  '@tanstack/solid-router-devtools': 2.0.0-rc.3
-  '@tanstack/solid-router': 2.0.0-rc.3
-  '@tanstack/solid-start': 2.0.0-rc.3
+  # TanStack's Solid packages ride the `rc` dist-tag, kept in step with solid-js
+  # (solid-start rc.8 peers on @solidjs/web >= rc.6). Devtools lags at rc.6.
+  '@tanstack/solid-router-devtools': 2.0.0-rc.6
+  '@tanstack/solid-router': 2.0.0-rc.8
+  '@tanstack/solid-start': 2.0.0-rc.8
   ws: ^8.21.3
   '@types/ws': ^8.18.1
   d3-force: ^3.0.0
   '@types/d3-force': ^3.0.10
   '@cloudflare/puppeteer': ^1.4.0
-  jose: ^6.2.10
-  marked: ^18.0.11
-  maplibre-gl: ^6.6.0
-  spacetimedb: 2.8.3
+  jose: ^6.2.12
+  marked: ^18.0.13
+  maplibre-gl: ^6.10.0
+  spacetimedb: 2.10.1
   liquidjs: 10.29.0
-  yaml: ^2.9.0
-  entities: ^8.0.0
+  yaml: ^2.9.1
+  entities: ^8.1.0
   fast-xml-parser: ^5.11.1
   '@ag-ui/core': 0.1.1-canary.beta.0
   gpt-tokenizer: ^4.0.0
@@ -167,41 +170,38 @@ catalogMode: prefer
 minimumReleaseAge: 0
 
 overrides:
-  # ONE @tanstack/db instance: room-service and cloudflare both consume it and
-  # hand Collection instances across the package boundary (nominal classes).
+  # ONE @tanstack/db instance: room-service and cloudflare hand Collection instances
+  # across the package boundary (nominal classes).
   '@tanstack/db': 0.8.6
   # Single-copy yjs v14 everywhere (double-import breaks instanceof).
   '@y/y': 14.0.0-rc.24
   lib0: 1.0.0-rc.22
   # ONE Solid compiler copy repo-wide (both plugin names pinned).
   vite-plugin-solid: 3.0.0-next.27
-  '@solidjs/vite-plugin': 3.0.0-next.34
-  # The Solid 2 rc line must resolve as ONE matched set. solid-js ranges its signals
-  # package and the vite plugin ranges the compiler + babel plugin; newer rcs exist
-  # (rc.9 at 2026-09-22) and the rc.9 compiler emits runtime helpers (readShallow)
-  # that the rc.3 web package does not export. The monorepo's lockfile holds all of
-  # these at rc.3; pin them so a fresh lockfile cannot float any one of them.
-  '@solidjs/signals': 2.0.0-rc.3
-  '@solidjs/compiler': 2.0.0-rc.3
-  '@solidjs/babel-plugin': 2.0.0-rc.3
-  # packages/better-auth ranges its @better-auth/* plugins at ^1.7.2 and third-party
-  # adapters range better-auth itself; hold the whole family at the version the
-  # monorepo runs. Two better-auth copies break its plugin types (the monorepo's
-  # "duplicate @better-auth/core" trap), so `pnpm dedupe` after any change here.
-  'better-auth': 1.7.2
-  # ONE zod copy: better-auth's option types are zod schemas, and a second copy (4.6.5
-  # floated in through a range) makes them stop matching. Held at the monorepo's.
-  zod: 4.4.3
-  '@better-auth/api-key': 1.7.2
-  '@better-auth/core': 1.7.2
-  '@better-auth/drizzle-adapter': 1.7.2
-  '@better-auth/kysely-adapter': 1.7.2
-  '@better-auth/memory-adapter': 1.7.2
-  '@better-auth/mongo-adapter': 1.7.2
-  '@better-auth/oauth-provider': 1.7.2
-  '@better-auth/passkey': 1.7.2
-  '@better-auth/prisma-adapter': 1.7.2
-  '@better-auth/telemetry': 1.7.2
+  '@solidjs/vite-plugin': 3.0.0-next.43
+  # The Solid 2 rc family resolves as ONE matched set. solid-js ranges its signals
+  # package and the vite plugin ranges the compiler + babel plugin; pinned so a
+  # fresh lockfile cannot float any one of them.
+  '@solidjs/signals': 2.0.0-rc.8
+  '@solidjs/compiler': 2.0.0-rc.8
+  '@solidjs/babel-plugin': 2.0.0-rc.8
+  '@moq/net': 0.3.3
+  '@moq/hang': 0.4.2
+  # ONE zod copy: @cloudflare/vitest-pool-workers 0.22 pins 4.4.3 exactly.
+  zod: 4.6.5
+  # This repo's own second line of defence (see README): better-auth's plugin family
+  # must resolve to one core version, or its plugin types stop matching.
+  'better-auth': 1.7.5
+  '@better-auth/api-key': 1.7.5
+  '@better-auth/core': 1.7.5
+  '@better-auth/drizzle-adapter': 1.7.5
+  '@better-auth/kysely-adapter': 1.7.5
+  '@better-auth/memory-adapter': 1.7.5
+  '@better-auth/mongo-adapter': 1.7.5
+  '@better-auth/oauth-provider': 1.7.5
+  '@better-auth/passkey': 1.7.5
+  '@better-auth/prisma-adapter': 1.7.5
+  '@better-auth/telemetry': 1.7.5
 
 # @convex-dev/better-auth (a dependency of packages/better-auth this repo never
 # calls) still peers on better-auth <1.7. Allowed explicitly, as in the monorepo.
@@ -214,12 +214,9 @@ peerDependencyRules:
 # in transitively (which pnpm.overrides cannot reach).
 resolvePeersFromWorkspaceRoot: true
 
-# Patched dependencies travel with the packages that need them: solid-js
-# (@solidjs/signals), room-service + cloudflare (@tanstack/db), ui-solid
-# (@y/prosemirror, three). A literal pin elsewhere would silently resolve an
-# unpatched copy — declare these only through the catalog.
+# Only the patches this repo resolves (no kolo here, so no moq / fiber). The
+# @solidjs/signals patch retired with Solid rc.8 (the scheduler fix landed upstream).
 patchedDependencies:
-  '@solidjs/signals@2.0.0-rc.3': patches/@solidjs__signals@2.0.0-rc.3.patch
   '@tanstack/db@0.8.6': patches/@tanstack__db@0.8.6.patch
   '@y/prosemirror@2.0.0-6': patches/@y__prosemirror@2.0.0-6.patch
   three@0.185.1: patches/three@0.185.1.patch
