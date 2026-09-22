@@ -273,10 +273,13 @@ compared by structure and scans only):
   `resourceList`; a title leads with bold or linked text, plain paragraphs after it are
   the description (across a page break too); `<hyperlink …>` notes are dropped in favour
   of the url.
-- **p.8 Communication row**: Word tagged the endnote marker "7" OUTSIDE its Link (an empty
-  Link precedes the paragraph; the digit is a 7pt run at its end). The extractor now
-  reads any raised bare number in body prose as the endnote it names, so citation numbers
-  derived at render agree with the printed ones. The row's heading and text also share one
+- **p.8 Communication row, p.40 4.4.4 "34,35,36"** — RESOLVED: Word tagged the endnote
+  marker "7" OUTSIDE its Link (an empty Link precedes the paragraph; the digit is a 7pt run
+  at its end), and set the three markers on p.40 as ONE raised run "34,35,36" with no
+  Links at all. The extractor reads any raised run of small integers directly after prose
+  as the endnote(s) it names — a list one reference per number, a range every number in
+  it — so all 89 references are cited and the numbers derived at render agree with the
+  printed ones (7.2.2 shows 89, as printed). The p.8 row's heading and text share one
   paragraph in the tags, so they render as one paragraph rather than two lines.
 - **Principles p.8 table / p.9 schematic**: figures are rendered as images; the schematic
   is an image.

@@ -765,7 +765,7 @@ function inlineSegs(ctx: Context, node: TreeNode | StructTreeContent, into: Seg[
 			const start = into.length
 			inlineSegs(ctx, node, into)
 			markRaised(ctx, into.slice(start))
-			markLooseEndnotes(ctx, into.slice(start))
+			into.splice(start, into.length - start, ...markLooseEndnotes(ctx, into.slice(start)))
 		})
 		return
 	}
@@ -849,17 +849,65 @@ function noteOf(ctx: Context, note: TreeNode, markerSegs: Seg[], into: Seg[]): v
  *  sometimes writes the marker's Link around an empty span and leaves the digit inside the
  *  paragraph's own run (p.8 of the 2026 cancer template). The number IS the note number,
  *  so nothing is lost by reading it without its link. */
-function markLooseEndnotes(ctx: Context, segs: Seg[]): void {
-	if (ctx.inNotesPart) return
+/** A raised run of one or more small integers directly after prose — "7", "34,35,36",
+ *  "12–14" — is the endnote marker(s) it names (Word tags some markers outside their
+ *  Link, and sets a list of markers as one run). A list becomes one reference per number,
+ *  a range every number in it, with the printed separators kept as raised text between
+ *  them; each piece takes a proportional share of the run's extent. */
+const MARKER_RUN = /^\d{1,3}(?:\s*[,–-]\s*\d{1,3})*$/
+
+function markLooseEndnotes(ctx: Context, segs: Seg[]): Seg[] {
+	if (ctx.inNotesPart) return segs
+	const out: Seg[] = []
 	for (const [i, seg] of segs.entries()) {
-		if (seg.endnote !== null || seg.footnote !== null || !seg.superscript) continue
-		if (!/^\d{1,3}$/.test(seg.text.trim())) continue
+		const text = seg.text.trim()
+		const marker =
+			seg.endnote === null && seg.footnote === null && seg.superscript && MARKER_RUN.test(text)
 		// Directly after text (a marker), not a number standing on its own.
 		const before = segs.slice(0, i).findLast((s) => s.text.trim() !== '')
-		if (!before || before.endnote !== null || /\s$/.test(before.text)) continue
-		seg.endnote = Number(seg.text.trim())
-		seg.link = null
+		if (!marker || !before || before.endnote !== null || /\s$/.test(before.text)) {
+			out.push(seg)
+			continue
+		}
+		const pieces: { text: string; endnote: number | null }[] = []
+		for (const part of text.split(/([,–-])/)) {
+			if (part === '') continue
+			if (/^\d+$/.test(part)) {
+				const number = Number(part)
+				const previous = pieces.at(-1)
+				const last = pieces.findLast((p) => p.endnote !== null)
+				// "12–14" is every number from 12 to 14.
+				if (
+					previous &&
+					/[–-]/.test(previous.text) &&
+					last?.endnote !== null &&
+					last &&
+					last.endnote < number
+				) {
+					pieces.pop()
+					for (let n = last.endnote + 1; n <= number; n++) {
+						pieces.push({ text: ',', endnote: null }, { text: String(n), endnote: n })
+					}
+				} else pieces.push({ text: part, endnote: number })
+			} else pieces.push({ text: part, endnote: null })
+		}
+		const width = seg.x1 - seg.x0
+		const total = pieces.reduce((n, p) => n + p.text.length, 0) || 1
+		let x = seg.x0
+		for (const piece of pieces) {
+			const share = (width * piece.text.length) / total
+			out.push({
+				...seg,
+				text: piece.text,
+				endnote: piece.endnote,
+				link: null,
+				x0: x,
+				x1: x + share,
+			})
+			x += share
+		}
 	}
+	return out
 }
 
 /** The inter-word space after a marker belongs to the flow, not to the marker: split it

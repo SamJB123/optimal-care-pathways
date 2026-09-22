@@ -141,6 +141,9 @@ mkdirSync(outDir, { recursive: true })
 // `--out <file>` names the SQL file (a remote seed carries another organisation's id and
 // must not overwrite the local one).
 const outFlag = process.argv.indexOf('--out')
-const target = outFlag > 0 && process.argv[outFlag + 1] ? process.argv[outFlag + 1] : join(outDir, 'templates-2026.sql')
+const target =
+	outFlag > 0 && process.argv[outFlag + 1]
+		? process.argv[outFlag + 1]
+		: join(outDir, 'templates-2026.sql')
 writeFileSync(target, `${statements.join('\n')}\n`)
 console.log(`${statements.length} statements → ${target}`)

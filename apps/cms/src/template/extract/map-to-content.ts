@@ -1105,8 +1105,13 @@ function boxNodes(rows: ClassifiedRow[], icons: (typeof ICONS)[number][], g: Gra
 		]
 	} else content = boxContent(rows, g, kind)
 	if (content.length === 0) return []
-	// A callout keeps the shade it was printed in, as a theme family.
-	const shade = kind === 'callout' ? rows[0]?.cells[0]?.background : null
+	// A callout keeps the shade it was printed in, as a theme family: the shade of its own
+	// full-width row, never of a tile in a columns row (p.6 holds two tiles inside a
+	// pale-blue box).
+	const shade =
+		kind === 'callout'
+			? (rows.find((r) => r.cells.length === 1)?.cells[0]?.background ?? null)
+			: null
 	const family = shade ? (familyOf(shade) ?? '') : ''
 	return [{ type: 'box', attrs: { kind, icon, family }, content }]
 }
