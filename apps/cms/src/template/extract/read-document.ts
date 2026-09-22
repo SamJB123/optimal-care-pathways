@@ -126,6 +126,32 @@ interface Context {
 	/** The frame of the container being read (a drawn table cell, a list item's body),
 	 *  while one is; paragraphs are aligned within it rather than within their own extent. */
 	frame: Frame | null
+	/** Whether this page's Link elements carry no text (Word's tagging on the first and
+	 *  last reference pages wraps every reference in one marked content and leaves the
+	 *  Links empty): then the link annotations' rectangles say where the links are. */
+	taglessLinks: boolean
+}
+
+/** Whether a page's tagged Links hold any text at all. */
+function linksAreTagless(page: PdfPage): boolean {
+	let links = 0
+	let withText = 0
+	const visit = (node: TreeNode | StructTreeContent): void => {
+		if (isLeaf(node)) return
+		if (node.role === 'Link') {
+			links++
+			if (
+				leafIds(node).some((id) =>
+					(page.textByMcid.get(id) ?? []).some((item) => item.text.trim() !== ''),
+				)
+			)
+				withText++
+		}
+		for (const child of node.children ?? []) visit(child)
+	}
+	if (page.tree) visit(page.tree)
+	// Nearly every Link empty (the list's first item keeps its text on such pages).
+	return links >= 4 && withText * 4 < links && page.links.some((l) => l.url !== undefined)
 }
 
 /** A horizontal extent paragraphs are aligned in. */
@@ -180,9 +206,13 @@ function measureElement(ctx: Context, node: TreeNode | StructTreeContent): Eleme
 			} else lines.push({ y: item.box.y, x0: item.box.x, x1: item.box.x + item.box.width })
 		}
 	}
-	let bodySize = 0
+	// The body size is the size most of the text is set in — unless a smaller size only
+	// wins by markers ("use of AI" under five superscript citations): a larger size
+	// carrying at least a third as much text is the body, the small one its notes.
 	let best = -1
-	for (const [size, count] of weights) if (count > best) [best, bodySize] = [count, size]
+	for (const count of weights.values()) best = Math.max(best, count)
+	let bodySize = 0
+	for (const [size, count] of weights) if (count * 3 >= best && size > bodySize) bodySize = size
 	return { bodySize, lines }
 }
 
@@ -271,7 +301,7 @@ function segsOf(ctx: Context, mcid: string): Seg[] {
 					width: 0,
 					height: bodySize,
 				}
-				out.push(segFor(ctx, ' ', current, box, bodySize))
+				out.push(segFor(ctx, ' ', current, box, item.box, bodySize))
 			}
 			continue
 		}
@@ -322,7 +352,7 @@ function segsOf(ctx: Context, mcid: string): Seg[] {
 			const advance = c.advance * scale
 			const size = c.span?.size ?? bodySize
 			const box: Box = { x, y: item.box.y, width: advance, height: size }
-			segs.push(segFor(ctx, c.ch, c.span, box, bodySize))
+			segs.push(segFor(ctx, c.ch, c.span, box, item.box, bodySize))
 			x += advance
 		}
 		for (const [i, seg] of segs.entries()) {
@@ -332,6 +362,16 @@ function segsOf(ctx: Context, mcid: string): Seg[] {
 			seg.underline = !!before && !!after && before.underline && after.underline
 			seg.background =
 				before && after && before.background === after.background ? before.background : null
+			// A space between two words of one drawn link is the link's too (the tags scope
+			// a Link over its spaces; the annotation rectangles are read glyph by glyph).
+			if (
+				!ctx.link &&
+				before &&
+				after &&
+				before.link &&
+				JSON.stringify(before.link) === JSON.stringify(after.link)
+			)
+				seg.link = before.link
 		}
 		for (const seg of segs) {
 			const last = out.at(-1)
@@ -345,13 +385,38 @@ function segsOf(ctx: Context, mcid: string): Seg[] {
 	return out.filter((s) => s.text !== '')
 }
 
-function segFor(ctx: Context, ch: string, span: StyleSpan | null, box: Box, bodySize: number): Seg {
+/** The link annotation drawn over a glyph, when the tags scope none: on pages where
+ *  Word's tagging left the text outside its Link elements (the first and last reference
+ *  pages carry every reference's text in one marked content), the annotation rectangles
+ *  still say exactly where the links are. */
+function linkAt(ctx: Context, box: Box): TextRun['link'] {
+	if (!ctx.taglessLinks || box.width <= 0) return null
+	const x = box.x + box.width / 2
+	const y = box.y + Math.max(1, box.height) * 0.3
+	let best: LinkAnnotation | null = null
+	for (const link of ctx.page.links) {
+		const b = link.box
+		if (!link.url) continue
+		if (x < b.x || x > b.x + b.width || y < b.y || y > b.y + b.height) continue
+		if (!best || b.width * b.height < best.box.width * best.box.height) best = link
+	}
+	return best ? linkTarget(ctx, best) : null
+}
+
+function segFor(
+	ctx: Context,
+	ch: string,
+	span: StyleSpan | null,
+	box: Box,
+	line: Box,
+	bodySize: number,
+): Seg {
 	const size = span?.size ?? bodySize
 	return {
 		text: ch,
 		bold: span?.bold ?? false,
 		italic: span?.italic ?? false,
-		underline: isSpace(ch) ? false : hasUnderline(ctx.page.paths, box),
+		underline: isSpace(ch) ? false : hasUnderline(ctx.page.paths, box, line),
 		superscript: false,
 		subscript: false,
 		size,
@@ -360,7 +425,7 @@ function segFor(ctx: Context, ch: string, span: StyleSpan | null, box: Box, body
 			isSpace(ch) && box.width === 0
 				? null
 				: highlightBehind(ctx.page.paths, box, size, ctx.element),
-		link: ctx.link ? linkTarget(ctx, ctx.link) : null,
+		link: ctx.link ? linkTarget(ctx, ctx.link) : isSpace(ch) ? null : linkAt(ctx, box),
 		footnote: null,
 		endnote: null,
 		y: box.y,
@@ -386,14 +451,20 @@ const sameStyle = (a: TextRun, b: TextRun): boolean =>
 /** A thin filled line just under the baseline at this character: an underline (a dotted
  *  one is many tiny rects spaced a point or two apart, so a small horizontal margin lets a
  *  character between two dots count). */
-function hasUnderline(paths: PaintedPath[], box: Box): boolean {
-	const mid = box.x + box.width / 2
-	const x0 = mid - 0.75
-	const x1 = mid + 0.75
+function hasUnderline(paths: PaintedPath[], box: Box, line: Box): boolean {
+	// Probe from the glyph's left edge to just past its middle: an underline runs from a
+	// run's first glyph's left edge and ends a hair before its last glyph's middle; a
+	// dotted underline is dots a point or two apart, one of which lies in that span.
+	const x0 = box.x + 0.2
+	const x1 = box.x + Math.max(box.width, 0.5) / 2 + 0.75
 	for (const p of paths) {
 		if (p.kind !== 'fill' || p.box.height > 1.5) continue
 		if (p.box.y > box.y + 0.5 || p.box.y < box.y - 3.5) continue
-		if (p.box.x < x1 && p.box.x + p.box.width > x0) return true
+		if (!(p.box.x < x1 && p.box.x + p.box.width > x0)) continue
+		// A table rule under the line runs past the text at both ends (into the cell's
+		// padding and beyond); an underline is drawn under the text it marks.
+		if (p.box.x < line.x - 4 && p.box.x + p.box.width > line.x + line.width + 4) continue
+		return true
 	}
 	return false
 }
@@ -832,18 +903,31 @@ function inlineSegs(ctx: Context, node: TreeNode | StructTreeContent, into: Seg[
 		}
 		const label = plainText(markerSegs).trim()
 		const target = link ? linkTarget(ctx, link) : null
+		// Small against the text it follows: a marker that wrapped onto a line of its own
+		// ("44,45,46,47,48" under "use of AI") is the only text on that line, and five
+		// markers outweigh the item's own words in the element, so neither the line's nor
+		// the element's dominant size can be the reference — the largest full-size text
+		// read so far in the element is.
+		const bodySize = Math.max(
+			ctx.element?.bodySize || 0,
+			...into.filter((s) => s.text.trim() !== '' && !s.superscript).map((s) => s.size),
+		)
 		if (
 			/^\d{1,3}$/.test(label) &&
 			target &&
 			'page' in target &&
 			target.page !== ctx.pageNumber &&
-			markerSegs.every((s) => s.superscript || s.size < s.lineSize * 0.8)
+			markerSegs.every(
+				(s) => s.text.trim() === '' || s.superscript || s.size < (bodySize || s.lineSize) * 0.8,
+			)
 		) {
 			const trailing = detachTrailingSpace(markerSegs)
+			// The marker is the digits; a space Word drew inside the Link stays a plain space.
 			for (const seg of markerSegs) {
+				seg.link = null
+				if (seg.text.trim() === '') continue
 				seg.endnote = Number(label)
 				seg.superscript = true
-				seg.link = null
 			}
 			markerSegs.push(...trailing)
 		}
@@ -864,6 +948,7 @@ function noteOf(ctx: Context, note: TreeNode, markerSegs: Seg[], into: Seg[]): v
 		const index = ctx.footnotes.push({ label, page: ctx.pageNumber, blocks }) - 1
 		const trailing = detachTrailingSpace(markerSegs)
 		for (const seg of markerSegs) {
+			if (seg.text.trim() === '') continue
 			seg.footnote = index
 			seg.superscript = true
 			seg.link = null
@@ -1146,7 +1231,7 @@ function titlesLine(first: Line, next: Line): boolean {
 /** Lines → runs. Lines join with a space, a margin-broken word rejoins without one, and a
  *  line the author ended early ends in a hard break (`'\n'` run). `context` is every line
  *  of the element these lines came from, for its margins. */
-function runsFromLines(lines: Line[], context: Line[] = lines): TextRun[] {
+function runsFromLines(lines: Line[], context: Line[] = lines, frame?: Frame): TextRun[] {
 	const runs: TextRun[] = []
 	// After a hyphen broken at the margin the next line's leading space is dropped too.
 	let joinToNext = false
@@ -1172,7 +1257,7 @@ function runsFromLines(lines: Line[], context: Line[] = lines): TextRun[] {
 			if (last && hyphenated) {
 				last.text = last.text.trimEnd()
 				joinToNext = true
-			} else if (last && endsEarly(line, next, context)) {
+			} else if (last && endsEarly(line, next, context, frame)) {
 				last.text = last.text.trimEnd()
 				runs.push({ ...last, text: '\n' })
 			} else if (last && !last.text.endsWith(' ')) last.text += ' '
@@ -1187,33 +1272,54 @@ function runsFromLines(lines: Line[], context: Line[] = lines): TextRun[] {
  *  needed — wrapping would have carried that word up. The margin is where wrapped lines
  *  end, so at least two lines must reach it (one long URL overflowing a cell is not the
  *  margin). */
-function endsEarly(line: Line, next: Line, context: Line[]): boolean {
-	if (context.length < 3) return false
-	const left = Math.min(...context.map((l) => l.x0))
+function endsEarly(line: Line, next: Line, context: Line[], frame?: Frame): boolean {
+	// The left edge is where the lines start — the most common x0, so a first line that
+	// begins with the item's own marker glyph ("✓ Provide clear instructions…") does not
+	// move it away from the wrapped lines it is compared with.
+	const starts = new Map<number, number>()
+	for (const l of context) {
+		const x = Math.round(l.x0 * 2) / 2
+		starts.set(x, (starts.get(x) ?? 0) + 1)
+	}
+	const left = [...starts.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]?.[0] ?? 0
+	// The margin is where wrapped lines end: two lines reaching the same x say so. In a
+	// drawn cell too short to show it (two lines: "…expected timeframe" then "Document
+	// this instruction…"), the cell's right edge less Word's padding is the margin.
 	const ends = context.map((l) => l.x1).sort((a, b) => b - a)
-	const right = ends.find((x1) => context.filter((l) => Math.abs(l.x1 - x1) <= 3).length >= 2)
+	let right = ends.find((x1) => context.filter((l) => Math.abs(l.x1 - x1) <= 3).length >= 2)
+	const fromFrame = right === undefined && frame !== undefined && context.length >= 2
+	if (fromFrame) right = frame.x1 - 6.5
 	if (right === undefined) return false
 	if (Math.abs(line.x0 - left) > 2 || Math.abs(next.x0 - left) > 2) return false
 	const firstWord = firstWordWidth(next)
 	if (firstWord <= 0) return false
 	const space = next.size * 0.28
-	return right - line.x1 > firstWord + 2 * space
+	// The word's width is estimated from its run's average glyph width, and a cell's
+	// margin is inferred rather than observed: against a frame the gap must clear the
+	// estimate with room ("OCP" at 15pt estimated, 22pt drawn, never breaks a line).
+	// An author's return leaves a gap no wrapped word explains; a wrap before a word that
+	// nearly fitted leaves a gap about that word's width. Against an inferred margin the
+	// gap must be a clear one: half a line at body size, at least.
+	return fromFrame
+		? right - line.x1 > Math.max(1.5 * firstWord + 3 * space, next.size * 6)
+		: right - line.x1 > firstWord + 2 * space
 }
 
 /** The drawn width of a line's first word, from its segments' extents. */
 function firstWordWidth(line: Line): number {
+	// Leading spaces (the inter-word space Word carried onto the line) are not the word.
 	let width = 0
+	let started = false
 	for (const seg of line.segs) {
-		const text = seg.text
-		const end = text.search(/\s/)
-		const perChar = text.length > 0 ? (seg.x1 - seg.x0) / text.length : 0
-		if (end < 0) {
-			width += seg.x1 - seg.x0
-			continue
+		const perChar = seg.text.length > 0 ? (seg.x1 - seg.x0) / seg.text.length : 0
+		for (const ch of seg.text) {
+			if (isSpace(ch)) {
+				if (started) return width
+				continue
+			}
+			started = true
+			width += perChar
 		}
-		if (end === 0 && width === 0) continue
-		width += perChar * end
-		return width
 	}
 	return width
 }
@@ -1259,7 +1365,9 @@ function paragraphFromLines(
 	lines: Line[],
 	context: Line[] = lines,
 ): Paragraph | null {
-	const runs = runsFromLines(lines, context)
+	// Only a drawn cell's frame stands in for an unproven margin (the page column's right
+	// edge is where the widest line on the page ends, not this paragraph's margin).
+	const runs = runsFromLines(lines, context, ctx.frame ?? undefined)
 	if (runs.length === 0) return null
 	return {
 		kind: 'paragraph',
@@ -1327,6 +1435,7 @@ function learnHeadingStyles(pages: PdfPage[], pageOfRef: Map<number, number>): H
 			element: null,
 			pageFrame: pageFrameOf(page),
 			frame: null,
+			taglessLinks: false,
 		}
 		const visit = (node: TreeNode | StructTreeContent): void => {
 			if (isLeaf(node)) return
@@ -1388,14 +1497,19 @@ function headingLevelOf(
 // Blocks
 // ---------------------------------------------------------------------------
 
+/** Tick and cross glyphs, incl. Wingdings' private-use codes (FC ü tick, FE þ boxed tick;
+ *  FB û cross, FD ý boxed cross). */
+const CHECK_GLYPHS = new Set(['✓', '✔', '', '', 'ü', 'þ'])
+const CROSS_GLYPHS = new Set(['☒', '✗', '✘', '', '', 'û', 'ý'])
+
 function markerKind(label: string, font: string | undefined): ListMarker {
 	const l = label.trim()
 	if (/^\d+[.)]?$/.test(l) || /^[a-z][.)]$/i.test(l)) return 'number'
 	if (l === '•' || l === '' || l === '' || l === '○' || l === '▪' || l === '■' || l === '·')
 		return 'bullet'
 	if (l === '–' || l === '-' || l === '—') return 'dash'
-	if (l === '✓' || l === '✔' || l === '' || l === 'ü') return 'check'
-	if (l === '☒' || l === '✗' || l === '✘' || l === 'û' || l === 'ý') return 'cross'
+	if (CHECK_GLYPHS.has(l)) return 'check'
+	if (CROSS_GLYPHS.has(l)) return 'cross'
 	if ((font ?? '').toLowerCase().includes('wingdings') && l !== '') return 'check'
 	return 'other'
 }
@@ -1513,6 +1627,8 @@ function tableEdges(ctx: Context, segs: Seg[], figures: Bbox[]): TableEdges | nu
 		// Table drawing (shading, rules) is outside any marked content; a fill inside one
 		// is a highlight or a figure's own artwork.
 		if (p.kind !== 'fill' || p.mcid !== null || p.colour === '#ffffff' || p.box.height < 6) continue
+		// A fill as wide as the page is a background band, not a cell.
+		if (p.box.width > ctx.page.width * 0.92) continue
 		if (p.box.y > top || p.box.y + p.box.height < bottom) continue
 		const span = { y0: p.box.y, y1: p.box.y + p.box.height }
 		if (p.box.width <= 1.5) inner.push({ x: p.box.x, ...span })
@@ -1538,7 +1654,7 @@ function tableEdges(ctx: Context, segs: Seg[], figures: Bbox[]): TableEdges | nu
 			if (last + pitch > x1 && last + pitch - x1 < pitch * 0.5) x1 = last + pitch
 		}
 	}
-	return { x0, x1, inner }
+	return { x0: Math.max(0, x0), x1: Math.min(ctx.page.width, x1), inner }
 }
 
 /** The frame a cell's paragraphs are aligned in: its shading when it is shaded, else the
@@ -1976,6 +2092,7 @@ export async function readDocument(
 			element: null,
 			pageFrame: pageFrameOf(page),
 			frame: null,
+			taglessLinks: linksAreTagless(page),
 		}
 		if (!page.tree) {
 			warnings.push({ page: page.pageNumber, message: 'page has no structure tree' })
@@ -2045,7 +2162,7 @@ function descend(block: Block): Block {
 			items: block.items.map((i) => ({ ...i, blocks: normaliseBlocks(i.blocks) })),
 		})
 	if (block.kind === 'table') {
-		const shaped = withSpans(block)
+		const shaped = withSpans(joinContinuationRows(block))
 		return {
 			...shaped,
 			rows: shaped.rows.map((r) => ({
@@ -2054,6 +2171,98 @@ function descend(block: Block): Block {
 		}
 	}
 	return block
+}
+
+/** Word's third way of breaking a row over a page: the same table holds the row twice,
+ *  the second copy with its label cell empty and its text cell carrying the sentence on
+ *  ("…impacted by any cancer. Services" | "include navigation and emotional support…").
+ *  Such a row continues the row above it. */
+function joinContinuationRows(table: Table): Table {
+	const rows: TableRow[] = []
+	const keptRows = new Set<number>()
+	for (const [index, row] of table.rows.entries()) {
+		keptRows.add(index)
+		const previous = rows.at(-1)
+		// A row holding only list items with NO marker glyph, after a row that ends in a
+		// list, is that list's last item carried on ("Referrals can be made to…" under the
+		// ACNNP check row, p.70): its paragraphs are the item's.
+		const previousCell = previous?.cells.length === 1 ? previous.cells[0] : undefined
+		const previousList = previousCell?.blocks.at(-1)
+		if (previous && previousCell && previousList?.kind === 'list' && unmarkedListRow(row)) {
+			const carried = row.cells[0]?.blocks.flatMap((b) =>
+				b.kind === 'list' ? b.items.flatMap((i) => i.blocks) : [],
+			)
+			const tail = previousList.items.at(-1)
+			if (tail && carried && carried.length > 0) {
+				const items = [
+					...previousList.items.slice(0, -1),
+					{ ...tail, blocks: [...tail.blocks, ...carried] },
+				]
+				const blocks = [...previousCell.blocks.slice(0, -1), { ...previousList, items }]
+				rows[rows.length - 1] = { cells: [{ ...previousCell, blocks }] }
+				keptRows.delete(index)
+				continue
+			}
+		}
+		if (previous && previous.cells.length === row.cells.length && continuesRow(previous, row)) {
+			const cells = previous.cells.map((cellA, j) => {
+				const cellB = row.cells[j]
+				if (!cellB || !cellHasContent(cellB)) return cellA
+				if (!cellHasContent(cellA)) return { ...cellB, header: cellA.header || cellB.header }
+				return { ...cellA, blocks: continueBlocks(cellA.blocks, cellB.blocks) }
+			})
+			rows[rows.length - 1] = { cells }
+			keptRows.delete(index)
+			continue
+		}
+		rows.push(row)
+	}
+	if (rows.length === table.rows.length) return table
+	// The joined table keeps its cells' drawn geometry (kept beside the model), less the
+	// rows folded away, so its merged cells are still read from the drawing.
+	const joined: Table = { ...table, rows }
+	const geometry = tableGeometry.get(table)
+	if (geometry)
+		tableGeometry.set(
+			joined,
+			geometry.filter((_g, i) => keptRows.has(i)),
+		)
+	return joined
+}
+
+/** A single-cell row whose content is list items Word drew no marker for. */
+const unmarkedListRow = (row: TableRow): boolean => {
+	const cell = row.cells.length === 1 ? row.cells[0] : undefined
+	if (!cell || cell.blocks.length === 0) return false
+	return cell.blocks.every(
+		(b) =>
+			b.kind === 'list' &&
+			b.items.every(
+				(i) =>
+					i.label === '' &&
+					i.blocks.some((x) => x.kind === 'paragraph' && plainText(x.runs).trim() !== ''),
+			),
+	)
+}
+
+/** Whether `row` carries `previous` on: a cell filled above stands empty here, and some
+ *  cell filled in both begins mid-sentence. */
+function continuesRow(previous: TableRow, row: TableRow): boolean {
+	let emptied = false
+	let carried = false
+	for (const [j, cellA] of previous.cells.entries()) {
+		const cellB = row.cells[j]
+		if (!cellB) return false
+		const inA = cellHasContent(cellA)
+		const inB = cellHasContent(cellB)
+		if (inA && !inB) emptied = true
+		if (inA && inB) {
+			const before = lastParagraphText(cellA.blocks)
+			const start = firstText(cellB.blocks)
+			if (before !== '' && !/[.!?:;]$/.test(before) && /^[a-z(]/.test(start)) carried = true
+		}
+	}
+	return emptied && carried
 }
 
 const lastParagraphText = (blocks: Block[]): string => {
@@ -2137,18 +2346,31 @@ function joinPageSplitTables(blocks: Block[]): Block[] {
 }
 
 function joinTables(a: Table, b: Table): Table | null {
-	if (b.page !== a.page + 1 || a.rows.length !== b.rows.length) return null
+	if (b.page !== a.page + 1) return null
+	if (a.rows.length !== b.rows.length) return joinContinuationShell(a, b)
 	const rows: TableRow[] = []
+	const geoA = tableGeometry.get(a)
+	const geoB = tableGeometry.get(b)
+	const geometry: CellGeometry[][] = []
 	let shared = 0
 	for (const [i, rowA] of a.rows.entries()) {
 		const rowB = b.rows[i]
 		if (!rowB || rowA.cells.length !== rowB.cells.length) return null
 		const cells: TableCell[] = []
+		const geoRow: CellGeometry[] = []
 		for (const [j, cellA] of rowA.cells.entries()) {
 			const cellB = rowB.cells[j]
 			if (!cellB) return null
 			const inA = cellHasContent(cellA)
 			const inB = cellHasContent(cellB)
+			// Each page drew only the cells it filled; the cell's drawing is the page's that
+			// held its text (a cell filled on both keeps the first page's).
+			const geo = (inB && !inA ? geoB?.[i]?.[j] : geoA?.[i]?.[j]) ?? {
+				bbox: null,
+				shade: null,
+				content: false,
+			}
+			geoRow.push(geo)
 			if (inA && inB) {
 				shared++
 				if (shared > 1) return null
@@ -2167,21 +2389,105 @@ function joinTables(a: Table, b: Table): Table | null {
 			})
 		}
 		rows.push({ cells })
+		geometry.push(geoRow)
 	}
-	return { kind: 'table', rows, page: a.page, border: a.border ?? b.border }
+	const joined: Table = { kind: 'table', rows, page: a.page, border: a.border ?? b.border }
+	if (geoA && geoB) tableGeometry.set(joined, geometry)
+	return joined
+}
+
+const firstText = (blocks: Block[]): string => {
+	const first = blocks.find((b) => b.kind === 'paragraph')
+	return first?.kind === 'paragraph' ? plainText(first.runs).trim() : ''
+}
+
+/** Word's other way of breaking a table over a page: two tables, the second beginning
+ *  with the row the break fell inside, whose cells hold only what ran over. That first
+ *  row has the last row's shape and either an empty cell where the last row's was
+ *  filled (the label column) or text that carries a sentence on (no full stop before,
+ *  lower case after); it continues the last row, and the rows after it are the table's. */
+function joinContinuationShell(a: Table, b: Table): Table | null {
+	const lastRow = a.rows.at(-1)
+	const firstRow = b.rows[0]
+	if (!lastRow || !firstRow || lastRow.cells.length !== firstRow.cells.length) return null
+	if (!continuesRow(lastRow, firstRow)) return null
+	const cells: TableCell[] = lastRow.cells.map((cellA, j) => {
+		const cellB = firstRow.cells[j]
+		if (!cellB || !cellHasContent(cellB)) return cellA
+		if (!cellHasContent(cellA)) return { ...cellB, header: cellA.header || cellB.header }
+		return { ...cellA, blocks: continueBlocks(cellA.blocks, cellB.blocks) }
+	})
+	const joined: Table = {
+		kind: 'table',
+		rows: [...a.rows.slice(0, -1), { cells }, ...b.rows.slice(1)],
+		page: a.page,
+		border: a.border ?? b.border,
+	}
+	// Each page drew its own rows whole, and both pages share the table's columns, so the
+	// joined table keeps both drawings; the broken row takes the geometry of whichever
+	// half held each cell's text.
+	const geoA = tableGeometry.get(a)
+	const geoB = tableGeometry.get(b)
+	const lastGeo = geoA?.at(-1)
+	const firstGeo = geoB?.[0]
+	if (geoA && geoB && lastGeo && firstGeo)
+		tableGeometry.set(joined, [
+			...geoA.slice(0, -1),
+			lastRow.cells.map(
+				(cellA, j) =>
+					(cellHasContent(cellA) ? lastGeo[j] : firstGeo[j]) ??
+					lastGeo[j] ??
+					firstGeo[j] ?? { bbox: null, shade: null, content: false },
+			),
+			...geoB.slice(1),
+		])
+	return joined
 }
 
 /** The two halves of a cell the page break fell inside. A list broken over the break
  *  continues as one list (a continuation item with no text of its own carries the nested
- *  items of the item before it); a sentence broken mid-way continues as one paragraph. */
+ *  items of the item before it; items in another marker continue the last item's nested
+ *  list); paragraphs that ran over after a list are the last item's; a sentence broken
+ *  mid-way continues as one paragraph. */
 function continueBlocks(before: Block[], after: Block[]): Block[] {
 	const last = before.at(-1)
 	const first = after[0]
+	if (last?.kind === 'list' && first?.kind === 'paragraph') {
+		// A check row is one cell: its paragraphs on the next page belong to the row's item.
+		const tail = last.items.at(-1)
+		if (tail) {
+			let n = 0
+			while (after[n]?.kind === 'paragraph') n++
+			const items = [
+				...last.items.slice(0, -1),
+				{ ...tail, blocks: [...tail.blocks, ...after.slice(0, n)] },
+			]
+			return [...before.slice(0, -1), { ...last, items }, ...after.slice(n)]
+		}
+	}
 	if (last?.kind === 'list' && first?.kind === 'list') {
+		const tail = last.items.at(-1)
+		const nested = tail?.blocks.at(-1)
+		const marker = first.items[0]?.marker
+		if (
+			tail &&
+			nested?.kind === 'list' &&
+			marker !== undefined &&
+			marker !== tail.marker &&
+			marker === nested.items[0]?.marker
+		) {
+			// "…should cover:" then seven bullets, the break after the first: the six that
+			// ran over continue the nested list, not the check list around it.
+			const grown: List = { ...nested, items: [...nested.items, ...first.items] }
+			const items = [
+				...last.items.slice(0, -1),
+				{ ...tail, blocks: [...tail.blocks.slice(0, -1), grown] },
+			]
+			return [...before.slice(0, -1), { ...last, items }, ...after.slice(1)]
+		}
 		const items = [...last.items]
 		const rest = [...first.items]
 		const carried = rest[0]
-		const tail = items.at(-1)
 		if (
 			carried &&
 			tail &&

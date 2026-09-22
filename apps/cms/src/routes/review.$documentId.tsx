@@ -9,8 +9,10 @@
 import { Notice } from '@aicolab/ui-solid'
 import { createFileRoute } from '@tanstack/solid-router'
 import { For, Show } from 'solid-js'
+import { CitationInline, DerivedContext } from '#/content/blocks.tsx'
 import { RenderedBody } from '#/content/render.tsx'
 import { PdfPages, pageRange } from '#/editors/PdfPages.tsx'
+import { numberLabel } from '#/lib/labels.ts'
 import { reviewSnapshot } from '#/server/documents.ts'
 import './review.css'
 
@@ -53,8 +55,15 @@ function ReviewPage() {
 								<header class="ocp-review-section-heading">
 									<span class="ocp-review-address">{row.address}</span>
 									<h2 data-level={row.headingLevel ?? 1}>
-										{row.printedNumber ? `${row.printedNumber} ` : ''}
+										{row.printedNumber ? `${numberLabel(row.printedNumber)} ` : ''}
 										{row.title ?? ''}
+										<Show when={row.titleCitations.length > 0}>
+											<DerivedContext value={() => data().derived}>
+												<For each={row.titleCitations}>
+													{(id) => <CitationInline referenceId={id} />}
+												</For>
+											</DerivedContext>
+										</Show>
 									</h2>
 									<span class="ocp-review-meta">
 										{row.pathwayOwnership ?? ''}

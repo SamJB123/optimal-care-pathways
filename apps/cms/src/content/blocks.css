@@ -103,6 +103,13 @@
 	font-size: 0.95em;
 }
 
+/* Inside a list item a one-line prompt is a note beside the item, not a panel. */
+.ocp-body .list-content > .ocp-guidance {
+	margin: 0.25em 0;
+	font-size: 0.9em;
+	border-left-width: 3px;
+}
+
 .ocp-body .ocp-guidance-summary {
 	display: inline-flex;
 	align-items: baseline;

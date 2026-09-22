@@ -18,6 +18,7 @@ import {
 import { createFileRoute, Outlet, useNavigate } from '@tanstack/solid-router'
 import { createContext, createEffect, createMemo, createSignal, For } from 'solid-js'
 import type { DerivedView } from '#/content/derived.ts'
+import { numberLabel } from '#/lib/labels.ts'
 import type { DocumentWireRow, SectionWireRow } from '#/lib/live-topics.ts'
 import { type PathwayClient, pathwayClientFor } from '#/lib/ocp-client.ts'
 import type { Role } from '#/lib/roles.ts'
@@ -57,7 +58,7 @@ export function partsOf(sections: SectionWireRow[]): Part[] {
 		.map((root) => ({
 			key: root.address,
 			label: root.printedNumber
-				? `${root.printedNumber}: ${root.title ?? ''}`
+				? `${numberLabel(root.printedNumber)} ${root.title ?? ''}`
 				: (root.title ?? root.address),
 			root,
 		}))

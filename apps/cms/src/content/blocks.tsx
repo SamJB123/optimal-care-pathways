@@ -98,7 +98,7 @@ export function BoxBlock(props: BlockProps<BoxAttrs>) {
 		>
 			<Notice
 				colorBase={boxFamily(props.attrs)}
-				variant="soft"
+				variant={props.attrs.variant}
 				role="note"
 				class="ocp-box ocp-box-callout"
 				data-ocp="box"

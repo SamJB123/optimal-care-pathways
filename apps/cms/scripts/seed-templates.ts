@@ -89,6 +89,7 @@ const emit = (result: SeedResult) => {
 				body_json: JSON.stringify(s.bodyJson),
 				source_pages: s.sourcePages,
 				icon: s.icon,
+				title_citations: s.titleCitations.length > 0 ? JSON.stringify(s.titleCitations) : null,
 				updated_at: seededAt,
 			}),
 		)

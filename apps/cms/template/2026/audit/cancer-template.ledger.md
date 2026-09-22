@@ -299,6 +299,108 @@ compared by structure and scans only):
 - **Principles p.8 table / p.9 schematic**: figures are rendered as images; the schematic
   is an image.
 
+## Visual pass 2026-09-23, pp.13–88 (delegated page-by-page read; RESOLVED 2026-09-23)
+
+Resolution, verified on the rendered review page and the editor (worker version
+fe2ac61c): page-break continuations — on a re-joined table a marker-less continuation
+row continues the previous row's last block (list item or paragraph), and a table Word
+split into two same-shape shells keeps each cell's drawn geometry from the page that
+held its text. Rule-as-underline — a fill extending past the line at both ends is a
+rule. References — tagless endnote pages take links from URL annotations by geometry.
+Resource lists — group-header rows are sub-banners inside resource lists; bold/linked
+lead rows are resources; each table row starts an entry; a title runs through a
+bold+highlight run; bare `<URL>` notes dropped, plain-text URL notes become the url;
+punctuation-only descriptions dropped. "Step N:" — the number is stored bare ("Step 1")
+and the renderer adds the colon (decision: renderer, once). Boxes — a pen row heading a
+box of another kind wraps it (developer box); a shaded group header inside a checklist
+is a sub-banner whatever its family. Instruction colour — wholly-instruction rows are
+instruction whatever their siblings; a punctuation-only run inherits the previous run's
+colour. Placeholders — adjacent highlighted runs coalesce ignoring style marks; a
+citation inside a highlight stays inside it. Hard return inside a cell — a `hardBreak`
+node inside the paragraph (decision: Word's soft return is a line break, a separate
+paragraph is never merged). Inline typed cross-reference — the See-also placeholder
+class. Render — a nested guidance is compact inside a list item; chips spread via
+box-shadow so punctuation stays put; section paragraphs get 0.55em; one comma between
+citations supplied by the renderer; the review page carries the body stylesheet
+(prosekit's list sheet, the same one the editor uses). Minor items and "not defects"
+stand as listed; the eviQ `file:///` drop is deliberate (normalise entry below).
+
+Every page 13–88 read against the render. The step grammar holds page for page; the
+defects are general Word rules, mostly at page breaks and in the Find out more apparatus.
+
+- **Page-break continuations** (`structure`): the ACNNP funded-NGO check row runs over
+  pp.70–71 and its continuation paragraph is emitted as a top-level bullet outside the
+  checklist (pp.54–55 same row is one item); the marker-less continuation row
+  "[insert cancer-specific symptoms]" (p.23) is the nested list of the p.22 check row
+  "…including:" but lands as a sibling; the ECOG resource description (pp.74–75) becomes
+  two paragraphs. Rule: on a re-joined table, a continuation row without a marker
+  continues the previous row's last block (its list, its paragraph).
+- **False underline from a table rule** (`inline`): the last line above a table's bottom
+  rule is marked underline — at the page break (p.70 "the ACNNP …", p.74 ECOG) and under
+  an inset nested row (p.76 "for use by Australian haematology teams."). A rule is not an
+  underline: an underline sits within the text's own line box and spans its glyphs.
+- **References lose their links** (`inline`, significant): refs 1–10, 13, 15–21 and
+  85–89 (pp.84, 88 — the first and last endnote pages) carry no url although every one
+  has a link annotation in the PDF; 22–84 keep theirs (52 correctly has none).
+- **Resource lists** (`structure`/`semantics`, decision 64 refinements): shaded grey
+  group-header rows ("Teletrials and decentralised trials", "Interpreters and clinical
+  trials", "Research and clinical trials for Aboriginal and Torres Strait Islander
+  peoples", "Guidelines and frameworks", "Reports", "Communication tools"; pp.77–79) are
+  emitted as url-less resources — they are sub-banners (tone 'sub'), the rule is not
+  reaching rows inside a resource list; bulleted rows whose lead is bold/linked ("NSW
+  Regional Cancer Research Network", "Regional Trials Network Victoria", p.77) are
+  resources, and their lead-in row ("Regional trial networks are available…") is a
+  paragraph of its own, not the previous resource's description; a link-less title row
+  ("Resources for practical and social support", p.24) is swallowed as the previous
+  entry's description — each table row starts a new entry; a title is cut at its
+  highlighted placeholder run ("Guide to Best Cancer Care for people with [cancer
+  type]", p.34) — the title continues through a bold+highlight run; note variants: a
+  bare `<url>` note without the word "hyperlink" (Australian Clinical Trials, p.77) is
+  kept as visible text; a note whose URL is plain text with no link mark (eviQ
+  Calculators p.75, McGrath Foundation p.80) is the entry's only address — take the url
+  from the note instead of losing it; the title's sentence-ending "." survives as the
+  whole description (Surgery p.75, Nuclear medicine p.76).
+- **"Step N:" headings lose the colon** (`text`): Word's list definition `Step %1:` puts
+  the separator in the auto-number; the extractor keeps the number and drops the ":".
+- **Boxes** (`structure`): a green pen row heading a box of ANOTHER kind (Find out more
+  p.35, Key actions p.40) is emitted as its own empty pen box above the real box — a pen
+  row continues into the box it heads; the shaded group-header row "For people diagnosed
+  with advanced cancer" inside the supportive-care checklist (pp.31–32) becomes a callout
+  and splits the checklist into a second banner-less box — it is a sub-banner whatever
+  its shade family (pp.17, 33, 46 same construct is right).
+- **Instruction colour** (`semantics`): two green prompts ("add other physical
+  considerations…" p.50; "list considerations for supportive care at end of life…" p.70)
+  are instruction-marked bullets while their sibling rows are `guidance`; a lone
+  punctuation run (the "." after the p.28 placeholder) is classified as instruction.
+- **Placeholders** (`inline`): one highlight becomes several chips where Word split the
+  run at underline boundaries ("liquid biopsy/circulating tumour DNA (ctDNA)." p.27 →
+  four; "Immunotherapy and precision medicine" p.36 → three) — coalesce adjacent
+  highlighted runs; a superscript citation inside a highlight (p.28 "[Insert scale/s …
+  (ECOG) scale²⁵]") terminates the placeholder and leaves the "]" outside it.
+- **Hard return inside a cell** (`text`, still live): "…within the expected timeframe ⏎
+  Document this instruction in the patient record" (p.23) runs into one sentence.
+- **Inline typed cross-reference** (`inline`): "…are listed in section 6.5.
+  <hyperlink to be added>" in body prose (p.63) is plain text; it is the See-also
+  link-placeholder class.
+- **Minor**: heading-only sections (5.3, 6.3, 7.1, 7.2, find-out-more parents,
+  references) carry one empty paragraph; bold runs keep their trailing space inside the
+  mark ("**routine surveillance: **detected", p.56); "eviQ Referral Guidelines" (p.27) is
+  a `file:///` link on the page and has underline only in the seed (normalise entry says
+  it should become the public URL — confirm the drop is deliberate).
+- **Render** (`render`): a one-line guidance nested in a list item ("Add sub-categories
+  if required", p.36) renders as a full-width panel between list items; placeholder chips
+  push the following punctuation away ("supportive care ."); two section-level paragraphs
+  render with no gap (p.40); citation groups show a doubled comma.
+- **Not defects** (source faults, normalise candidates): "metsastatic" (p.64), "vascular
+  access devicesfor" (p.76), "clinicans" (p.77), "<Complete this section of the ACNNP
+  includes a funded NGO…>" (pp.22, 31, 47, 55, 64, 70), Tele-Trial href duplicating the
+  previous entry's (p.77), "Available at Accessed July 2026" (refs 39, 43), "Step 6: …
+  Step 7: …" as one See-also paragraph (p.41), p.72 two-column college list (reading
+  order preserved).
+- **Verified right**: p.37 care points (decision 51); 34,35,36 and 40,41 marker runs;
+  every "Or" group, stopwatch row, key table and nested check item pp.13–88; references
+  1–89 numbered and textually faithful; the p.36 4.3.1 nested list.
+
 ## Normalise (decision 45) — every deliberate departure from the printed document
 
 - p.3 Endorsement: "Optimal Care athway" → "Optimal Care Pathway".

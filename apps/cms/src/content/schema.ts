@@ -111,6 +111,9 @@ export interface BoxAttrs {
 	icon: string
 	/** A theme colour family overriding the kind's own (a tile's shading); '' = the kind's. */
 	family: string
+	/** How a callout paints its family (ui-solid's colour treatment): 'soft' for a pale
+	 *  tile, 'solid' for a dark tile printed with light text. */
+	variant: 'soft' | 'solid'
 }
 
 /** The theme's colour families a block may name (ui-solid's `colorBase` values). */
@@ -193,6 +196,7 @@ export const boxAttrsOf = (attrs: Record<string, unknown>): BoxAttrs => ({
 	kind: typeof attrs.kind === 'string' && isBoxKind(attrs.kind) ? attrs.kind : 'callout',
 	icon: typeof attrs.icon === 'string' ? attrs.icon : '',
 	family: typeof attrs.family === 'string' ? attrs.family : '',
+	variant: attrs.variant === 'solid' ? 'solid' : 'soft',
 })
 
 /** The family a box paints in: its own, else its kind's (decision 60). */
@@ -240,6 +244,7 @@ const defineBox = () =>
 			kind: { default: 'callout', validate: 'string' },
 			icon: { default: '', validate: 'string' },
 			family: { default: '', validate: 'string' },
+			variant: { default: 'soft', validate: 'string' },
 		},
 		parseDOM: [
 			{
@@ -248,6 +253,7 @@ const defineBox = () =>
 					kind: attr(element, 'data-kind'),
 					icon: attr(element, 'data-icon'),
 					family: attr(element, 'data-family'),
+					variant: attr(element, 'data-variant') === 'solid' ? 'solid' : 'soft',
 				}),
 			},
 		],
@@ -255,6 +261,7 @@ const defineBox = () =>
 			const kind = String(node.attrs.kind)
 			const own = String(node.attrs.family)
 			const family = isColorFamily(own) ? own : isBoxKind(kind) ? BOX_FAMILY[kind] : 'info'
+			const variant = node.attrs.variant === 'solid' ? 'solid' : 'soft'
 			return [
 				'section',
 				{
@@ -262,7 +269,8 @@ const defineBox = () =>
 					'data-kind': kind,
 					'data-icon': String(node.attrs.icon),
 					'data-family': own,
-					...ui(family, kind === 'callout' ? 'soft' : 'outline'),
+					'data-variant': variant,
+					...ui(family, kind === 'callout' ? variant : 'outline'),
 				},
 				0,
 			]
@@ -514,6 +522,17 @@ const defineInstruction = () =>
 		toDOM: () => ['span', { 'data-ocp': 'instruction' }, 0],
 	})
 
+/** An editorial aside set in a colour of its own — the Principles' purple notes on what
+ *  population-based developers add ("*Developed by Population-based OCP developers"). */
+const defineNote = () =>
+	defineMarkSpec({
+		name: 'note',
+		inclusive: false,
+		excludes: 'note',
+		parseDOM: [{ tag: 'span[data-ocp="note"]' }],
+		toDOM: () => ['span', { 'data-ocp': 'note' }, 0],
+	})
+
 /** Figures carry their alternative text (ProseKit's image node has only src and size). */
 const defineImageAlt = () =>
 	defineNodeAttr<'image', 'alt', string>({
@@ -533,6 +552,17 @@ const definePointOfCare = () =>
 		splittable: true,
 		toDOM: (value) => (value ? ['data-point-of-care', 'true'] : null),
 		parseDOM: (element) => element.getAttribute('data-point-of-care') === 'true',
+	})
+
+/** A check row marked with a cross in the source ("Do not …"): what NOT to do. */
+const defineNegated = () =>
+	defineNodeAttr<'list', 'negated', boolean>({
+		type: 'list',
+		attr: 'negated',
+		default: false,
+		splittable: true,
+		toDOM: (value) => (value ? ['data-negated', 'true'] : null),
+		parseDOM: (element) => element.getAttribute('data-negated') === 'true',
 	})
 
 const definePlaceholder = () =>
@@ -628,6 +658,7 @@ export function defineContentSchema() {
 		defineCellBackground('tableHeaderCell'),
 		defineListSpec(),
 		definePointOfCare(),
+		defineNegated(),
 		defineListIcon(),
 		definePageBreak(),
 		defineMentionSpec(),
@@ -656,6 +687,7 @@ export function defineContentSchema() {
 		defineFootnote(),
 		definePlaceholder(),
 		defineInstruction(),
+		defineNote(),
 		defineSectionLink(),
 		defineParagraphSpec(), // last, so first in the schema (see above)
 		defineTextAlignAttr('paragraph'),

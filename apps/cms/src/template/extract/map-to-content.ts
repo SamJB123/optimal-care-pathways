@@ -59,6 +59,9 @@ interface Grammar {
 	instruction: Set<string>
 	/** Colours body prose is set in. */
 	body: Set<string>
+	/** Colours of editorial asides — whole paragraphs set in a colour of their own that is
+	 *  neither body, instruction nor a link (the Principles' purple notes). */
+	note: Set<string>
 	/** Where each section's heading sits, for resolving internal links to the nearest one. */
 	headings: { page: number; y: number; address: string }[]
 	referenceId: (number: number) => string
@@ -193,7 +196,7 @@ const luminance = (hex: string): number => {
  *  document (at least three times its overall share, and not the dominant text colour) is
  *  the instruction colour. Body colours are then the frequent colours that are not
  *  instruction. */
-function learnGrammar(model: ExtractedDocument): Pick<Grammar, 'instruction' | 'body'> {
+function learnGrammar(model: ExtractedDocument): Pick<Grammar, 'instruction' | 'body' | 'note'> {
 	const blocks = [...model.front, ...allBlocks(model.sections)]
 	const overall = new Map<string, number>()
 	for (const p of allParagraphs(blocks))
@@ -231,7 +234,40 @@ function learnGrammar(model: ExtractedDocument): Pick<Grammar, 'instruction' | '
 		body.add(colour)
 		covered += w
 	}
-	return { instruction, body }
+	// A note colour sets whole paragraphs (two or more) and nothing else: not body, not an
+	// instruction, not a link's blue, not a heading's navy.
+	const wholeParagraphs = new Map<string, { all: number; prose: number }>()
+	const linked = new Set<string>()
+	for (const p of allParagraphs(blocks)) {
+		const inked = p.runs.filter((r) => r.text.trim() !== '')
+		for (const r of inked) if (r.link) linked.add(r.colour)
+		const colour = inked[0]?.colour
+		if (!colour || !inked.every((r) => r.colour === colour)) continue
+		const entry = wholeParagraphs.get(colour) ?? { all: 0, prose: 0 }
+		entry.all++
+		// A box title ("Find out more") is a whole paragraph in its colour too, but bold
+		// throughout; a note is prose.
+		if (!inked.every((r) => r.bold)) entry.prose++
+		wholeParagraphs.set(colour, entry)
+	}
+	const note = new Set<string>()
+	for (const [colour, { all, prose }] of wholeParagraphs) {
+		if (prose < 2 || prose * 2 < all) continue
+		if (body.has(colour) || instruction.has(colour) || linked.has(colour)) continue
+		// A note is set in a COLOUR; grey text (a diagram's muted labels) is a shade of the
+		// body's black.
+		if (luminance(colour) > 0.6 || luminance(colour) < 0.08 || isGrey(colour)) continue
+		note.add(colour)
+	}
+	return { instruction, body, note }
+}
+
+/** A colour with no hue to speak of: its channels within a few steps of each other. */
+const isGrey = (hex: string): boolean => {
+	const r = Number.parseInt(hex.slice(1, 3), 16)
+	const g = Number.parseInt(hex.slice(3, 5), 16)
+	const b = Number.parseInt(hex.slice(5, 7), 16)
+	return Math.max(r, g, b) - Math.min(r, g, b) < 30
 }
 
 // ---------------------------------------------------------------------------
@@ -270,11 +306,17 @@ function normalisePlaceholders(runs: TextRun[]): TextRun[] {
 			i++
 			continue
 		}
+		// A note marker inside the highlight ("…(ECOG) scale²⁵]") does not end the token:
+		// the span runs on past it to the closing bracket.
 		let end = i
-		while (out[end + 1]?.background === first.background) end++
+		while (out[end + 1] && (out[end + 1]?.background === first.background || isNote(out[end + 1])))
+			end++
+		while (end > i && isNote(out[end])) end--
 		const last = out[end]
 		const before = out[i - 1]
-		const after = out[end + 1]
+		let k = end + 1
+		while (out[k] && isNote(out[k])) k++
+		const after = out[k]
 		if (last) {
 			for (const [open, close] of BRACKET_PAIRS) {
 				const closes = last.text.trimEnd().endsWith(close) || after?.text.startsWith(close) === true
@@ -303,12 +345,14 @@ function normalisePlaceholders(runs: TextRun[]): TextRun[] {
 		i = end + 1
 	}
 	// One token, one run: highlighted runs the drawing split (at a line break, at a glyph
-	// run boundary) but that carry the same marks are the same placeholder.
+	// run boundary, where an underline or bold begins inside the token — "liquid biopsy/
+	// circulating tumour DNA (ctDNA)") are the same placeholder: its label is its text,
+	// and marks inside it mean nothing.
 	const merged: TextRun[] = []
 	for (const r of out) {
 		if (r.text === '' && r.footnote === null && r.endnote === null) continue
 		const last = merged.at(-1)
-		if (last && r.background !== null && sameMarks(last, r)) last.text += r.text
+		if (last && r.background !== null && samePlaceholder(last, r)) last.text += r.text
 		else merged.push(r)
 	}
 	// The token is the highlighted WORDS: Word's highlight often runs on over the space
@@ -333,19 +377,43 @@ function normalisePlaceholders(runs: TextRun[]): TextRun[] {
 	return trimmed
 }
 
-const sameMarks = (a: TextRun, b: TextRun): boolean =>
+const isNote = (r: TextRun | undefined): boolean =>
+	r !== undefined && (r.footnote !== null || r.endnote !== null)
+
+/** Two highlighted runs of one token: the same highlight and link, neither a note. */
+const samePlaceholder = (a: TextRun, b: TextRun): boolean =>
 	a.background === b.background &&
-	a.bold === b.bold &&
-	a.italic === b.italic &&
-	a.underline === b.underline &&
 	a.superscript === b.superscript &&
-	a.subscript === b.subscript &&
-	a.colour === b.colour &&
 	JSON.stringify(a.link) === JSON.stringify(b.link) &&
-	a.footnote === null &&
-	b.footnote === null &&
-	a.endnote === null &&
-	b.endnote === null
+	!isNote(a) &&
+	!isNote(b)
+
+/** Runs as the reader means them, before marks are decided:
+ *   - a run that is only punctuation takes the colour of the run before it (Word gives a
+ *     full stop after a placeholder the placeholder's colour, or a prompt's green);
+ *   - a typed token in a colour of its own whose brackets Word drew in the neighbouring
+ *     runs ("<" + "hyperlink to be added" + ">") gets its brackets back, so it reads as
+ *     the one token it is. */
+function readableRuns(runs: TextRun[], g: Grammar): TextRun[] {
+	const out = runs.map((r) => ({ ...r }))
+	for (const [i, r] of out.entries()) {
+		const previous = out[i - 1]
+		if (previous && /^\s*[.,;:!?)\]]+\s*$/.test(r.text) && r.colour !== previous.colour)
+			r.colour = previous.colour
+	}
+	for (const [i, r] of out.entries()) {
+		const previous = out[i - 1]
+		const next = out[i + 1]
+		if (!previous || !next || r.text.trim() === '') continue
+		if (g.body.has(r.colour) || g.instruction.has(r.colour) || r.background !== null) continue
+		if (previous.text.endsWith('<') && next.text.startsWith('>')) {
+			previous.text = previous.text.slice(0, -1)
+			next.text = next.text.slice(1)
+			r.text = `<${r.text.trim()}>`
+		}
+	}
+	return out
+}
 
 function inlineOf(
 	runs: TextRun[],
@@ -353,7 +421,17 @@ function inlineOf(
 	options: { instructionAsMark: boolean },
 ): JsonNode[] {
 	const out: JsonNode[] = []
-	for (const r of normalisePlaceholders(runs)) {
+	const readable = normalisePlaceholders(readableRuns(runs, g))
+	for (const [index, r] of readable.entries()) {
+		// The separator Word printed between two markers of one raised run ("34,35,36")
+		// is the renderer's to draw: one comma, not the printed one and the drawn one.
+		if (
+			r.superscript &&
+			/^[,–-]$/.test(r.text.trim()) &&
+			out.at(-1)?.type === 'citation' &&
+			isNote(readable[index + 1])
+		)
+			continue
 		if (r.footnote !== null) {
 			const note = g.footnotes[r.footnote]
 			if (note) {
@@ -397,6 +475,8 @@ function inlineOf(
 			marks.push({ type: 'placeholder', attrs: { label: trimmed } })
 		} else if (options.instructionAsMark && g.instruction.has(r.colour)) {
 			marks.push({ type: 'instruction' })
+		} else if (g.note.has(r.colour)) {
+			marks.push({ type: 'note' })
 		}
 		// A '\n' in a run is a hard line break the author typed.
 		const pieces = r.text.split('\n')
@@ -411,6 +491,32 @@ function inlineOf(
 				if (link) g.stats.links++
 				if (placeholder) g.stats.placeholders++
 				out.push(text(piece, marks))
+			}
+		}
+	}
+	// A space belongs to neither mark: Word's bold and link runs carry their trailing or
+	// leading space ("**routine surveillance: **detected", "The[ Australian…]"); it moves
+	// to the plain run beside it.
+	for (const [i, node] of out.entries()) {
+		if (node.type !== 'text' || !node.text) continue
+		const next = out[i + 1]
+		if ((node.marks?.length ?? 0) > 0 && next?.type === 'text' && (next.marks?.length ?? 0) === 0) {
+			const trail = /\s+$/.exec(node.text)?.[0]
+			if (trail && node.text.trim() !== '') {
+				node.text = node.text.slice(0, -trail.length)
+				next.text = `${trail}${next.text ?? ''}`
+			}
+		}
+		const previous = out[i - 1]
+		if (
+			(node.marks?.length ?? 0) > 0 &&
+			previous?.type === 'text' &&
+			(previous.marks?.length ?? 0) === 0
+		) {
+			const lead = /^\s+/.exec(node.text)?.[0]
+			if (lead && node.text.trim() !== '') {
+				node.text = node.text.slice(lead.length)
+				previous.text = `${previous.text ?? ''}${lead}`
 			}
 		}
 	}
@@ -452,8 +558,14 @@ const isInstructionParagraph = (p: Paragraph, g: Grammar) =>
 // Blocks
 // ---------------------------------------------------------------------------
 
-const paragraphNode = (p: Paragraph, g: Grammar): JsonNode | null => {
-	const content = inlineOf(p.runs, g, { instructionAsMark: !isInstructionParagraph(p, g) })
+const paragraphNode = (
+	p: Paragraph,
+	g: Grammar,
+	options: { markInstruction?: boolean } = {},
+): JsonNode | null => {
+	const content = inlineOf(p.runs, g, {
+		instructionAsMark: options.markInstruction || !isInstructionParagraph(p, g),
+	})
 	if (content.length === 0) return null
 	return p.align === 'left'
 		? { type: 'paragraph', content }
@@ -463,6 +575,12 @@ const paragraphNode = (p: Paragraph, g: Grammar): JsonNode | null => {
 function listNode(list: List, g: Grammar): JsonNode[] {
 	// ProseKit's flat list: each item is a `list` node; a nested list is a child node.
 	const nodes: JsonNode[] = []
+	// A list wholly in the instruction colour folds into guidance outside; inside a mixed
+	// list an item wholly in it keeps the colour as a mark, so a purple tick row stays a
+	// tick row (the page prints the prompt as one of the rows).
+	const whollyInstruction = list.items.every((i) =>
+		allParagraphs(i.blocks).every((p) => isInstructionParagraph(p, g)),
+	)
 	for (const item of list.items) {
 		const kind =
 			item.marker === 'check' || item.marker === 'cross'
@@ -474,7 +592,7 @@ function listNode(list: List, g: Grammar): JsonNode[] {
 		let first = true
 		for (const b of item.blocks) {
 			if (first && b.kind === 'paragraph') {
-				const p = paragraphNode(b, g)
+				const p = paragraphNode(b, g, { markInstruction: !whollyInstruction })
 				if (p) content.push(p)
 				first = false
 				continue
@@ -485,11 +603,14 @@ function listNode(list: List, g: Grammar): JsonNode[] {
 		if (content.length === 0) continue
 		if (content[0]?.type !== 'paragraph') content.unshift({ type: 'paragraph' })
 		if (kind === 'check') g.stats.checkItems++
-		nodes.push({
-			type: 'list',
-			attrs: kind === 'check' ? { kind, pointOfCare: false } : { kind },
-			content,
-		})
+		// A cross-marked row ("Do not …") is a check item that says what not to do.
+		const attrs: NonNullable<JsonNode['attrs']> =
+			kind === 'check'
+				? item.marker === 'cross'
+					? { kind, pointOfCare: false, negated: true }
+					: { kind, pointOfCare: false }
+				: { kind }
+		nodes.push({ type: 'list', attrs, content })
 	}
 	return nodes
 }
@@ -716,13 +837,18 @@ function tableNode(rows: ClassifiedRow[], g: Grammar, mode: 'box' | 'real' = 'bo
 const isGroupHeader = (r: ClassifiedRow, rows: ClassifiedRow[]): boolean => {
 	const cell = r.cells[0]
 	if (!cell || r.kind !== 'content' || cell.background === null) return false
-	if (!rows.some((x) => x.kind === 'band' || x.kind === 'icon-band')) return false
+	// Under any heading row — a band, or an icon row (a Find out more box's grey
+	// "Guidelines and frameworks" rows are its group headers).
+	if (!rows.some(isHeadingRow)) return false
+	// Its shade is its own: a box whose every content row is shaded (a Find out more box
+	// filled pale blue) has no header among them.
+	const contentRows = rows.filter((x) => x.kind === 'content' && x.cells.length === 1)
+	if (contentRows.every((x) => x.cells[0]?.background === cell.background)) return false
 	const paragraphs = cell.blocks.filter((b): b is Paragraph => b.kind === 'paragraph')
 	if (paragraphs.length !== 1 || cell.blocks.length !== 1) return false
-	const words = plainText(paragraphs[0]?.runs ?? [])
-		.trim()
-		.split(/\s+/).length
-	return words <= 14
+	const text = plainText(paragraphs[0]?.runs ?? []).trim()
+	// A header names a group; a statement ends in a full stop.
+	return text.split(/\s+/).length <= 14 && !/[.!?]$/.test(text)
 }
 
 /** Find out more / See also entries (decision 64): a paragraph's leading bold or linked
@@ -735,14 +861,35 @@ const linkUrl = (g: Grammar, run: TextRun): string | null => {
 	return address ? `#${address}` : ''
 }
 
-/** A printed "<hyperlink …>" is the author's note of a link to add (or the link's own
- *  address again); the resource's url carries what it says. */
-const HYPERLINK_NOTE = /<\s*hyperlink\b/i
+/** A printed "<hyperlink …>" — or a bare "<https://…>" — is the author's note of a link
+ *  to add (or the link's own address again); the resource's url carries what it says. */
+const HYPERLINK_NOTE = /<\s*(?:hyperlink\b|https?:\/\/)/i
 const isHyperlinkNote = (run: TextRun): boolean => HYPERLINK_NOTE.test(run.text)
+
+/** The address inside a hyperlink note, for an entry whose note is the only place its
+ *  address appears (Word set it as plain text, not a link). */
+const urlInNotes = (paragraphs: Paragraph[]): string | null => {
+	const text = plainText(paragraphs.flatMap((p) => p.runs))
+	const match = text.match(/<\s*(?:hyperlink\b[^>]*?)?(https?:\/\/[^\s>]+)/i)
+	return match?.[1] ?? null
+}
+
+const nodeText = (node: JsonNode): string =>
+	node.type === 'text' ? (node.text ?? '') : (node.content ?? []).map(nodeText).join('')
 
 /** The runs without their hyperlink notes, which Word splits over several runs when the
  *  address inside is itself a link: "<hyperlink:", " ", "https://…", ">". */
-function withoutHyperlinkNotes(runs: TextRun[]): TextRun[] {
+function withoutHyperlinkNotes(source: TextRun[]): TextRun[] {
+	// The note's opening bracket may end the run before it ("…referral <" | "hyperlink
+	// <https://…>"): it belongs with the word it opens.
+	const runs = source.map((r) => ({ ...r }))
+	for (const [i, run] of runs.entries()) {
+		const next = runs[i + 1]
+		if (next && /<\s*$/.test(run.text) && /^\s*(?:hyperlink\b|https?:\/\/)/i.test(next.text)) {
+			run.text = run.text.replace(/<\s*$/, '')
+			next.text = `<${next.text.trimStart()}`
+		}
+	}
 	const out: TextRun[] = []
 	for (let i = 0; i < runs.length; i++) {
 		const run = runs[i]
@@ -775,23 +922,58 @@ const opensResource = (p: Paragraph): boolean => {
 	return first !== undefined && (first.bold || first.link !== null) && !isHyperlinkNote(first)
 }
 
+/** A row that is one short plain line and not a lead-in ("Resources for practical and
+ *  social support", set without its link) is an entry with no address. */
+const isBareTitleRow = (blocks: Block[]): boolean => {
+	const [only, ...rest] = blocks.filter(
+		(b) => b.kind !== 'paragraph' || plainText(b.runs).trim() !== '',
+	)
+	if (!only || rest.length > 0 || only.kind !== 'paragraph') return false
+	const text = plainText(withoutHyperlinkNotes(only.runs)).trim()
+	return text !== '' && text.split(/\s+/).length <= 12 && !/[:.]$/.test(text)
+}
+
 function resourceNode(paragraphs: Paragraph[], g: Grammar): JsonNode {
 	const [lead, ...more] = paragraphs
 	const runs = (lead?.runs ?? []).filter(
 		(r) => r.text !== '' || r.footnote !== null || r.endnote !== null,
 	)
 	// Title = the leading run(s) that are bold or linked, stopping at a placeholder or
-	// instruction token or a hyperlink note.
+	// instruction token or a hyperlink note. A highlighted run that keeps the title's
+	// bold or link ("Guide to Best Cancer Care for people with [cancer type]") is part of
+	// the title.
 	const isToken = (r: TextRun) =>
-		r.background !== null ||
+		(r.background !== null && !(r.bold || r.link !== null)) ||
 		g.instruction.has(r.colour) ||
 		ANGLE_TOKEN.test(r.text.trim()) ||
 		isHyperlinkNote(r)
 	let titleEnd = 0
+	while (titleEnd < runs.length && runs[titleEnd]?.text.trim() === '') titleEnd++
+	const titleStart = titleEnd
 	while (titleEnd < runs.length) {
 		const run = runs[titleEnd]
 		if (!run || !(run.bold || run.link !== null) || isToken(run)) break
 		titleEnd++
+	}
+	// A row set without bold or link ("Resources for practical and social support") is
+	// titled by its whole line, less any note.
+	if (titleEnd === titleStart) {
+		const plain = withoutHyperlinkNotes(runs).filter((r) => !isToken(r))
+		titleEnd = runs.length
+		const title = plainText(plain).replace(/\s+/g, ' ').trim()
+		const description: JsonNode[] = []
+		for (const p of more) {
+			const content = inlineOf(withoutHyperlinkNotes(p.runs), g, { instructionAsMark: true })
+			if (content.length > 0) description.push({ type: 'paragraph', content })
+		}
+		const url =
+			paragraphs
+				.flatMap((p) => p.runs)
+				.map((r) => linkUrl(g, r))
+				.find((u): u is string => u !== null) ??
+			urlInNotes(paragraphs) ??
+			''
+		return { type: 'resource', attrs: { title, url }, content: description }
 	}
 	const title = plainText(runs.slice(0, titleEnd)).replace(/\s+/g, ' ').trim()
 	const rest = runs.slice(titleEnd)
@@ -802,13 +984,21 @@ function resourceNode(paragraphs: Paragraph[], g: Grammar): JsonNode {
 		const content = inlineOf(withoutHyperlinkNotes(p.runs), g, { instructionAsMark: true })
 		if (content.length > 0) description.push({ type: 'paragraph', content })
 	}
-	// The url is the first link anywhere in the entry.
+	// The title's own full stop, which Word set outside the bold run, is not a
+	// description ("Surgery." → description "."); nor does a description open with it.
+	const kept = description.filter((p) => !/^[\s.,;:]*$/.test(nodeText(p)))
+	const opening = kept[0]?.content?.[0]
+	if (opening?.type === 'text' && opening.text)
+		opening.text = opening.text.replace(/^[.,;:]\s*/, '')
+	// The url is the first link anywhere in the entry, else the address its note names.
 	const url =
 		paragraphs
 			.flatMap((p) => p.runs)
 			.map((r) => linkUrl(g, r))
-			.find((u): u is string => u !== null) ?? ''
-	return { type: 'resource', attrs: { title, url }, content: description }
+			.find((u): u is string => u !== null) ??
+		urlInNotes(paragraphs) ??
+		''
+	return { type: 'resource', attrs: { title, url }, content: kept }
 }
 
 function boxContent(rows: ClassifiedRow[], g: Grammar, kind: string = 'plain'): JsonNode[] {
@@ -852,10 +1042,26 @@ function boxContent(rows: ClassifiedRow[], g: Grammar, kind: string = 'plain'): 
 		}
 		// The box's heading row ("Find out more" beside its icon) is a title, not an entry.
 		if ((kind === 'resources' || kind === 'seeAlso') && r.kind === 'content' && r.icon === null) {
+			// Every row starts afresh (a link-less title row is an entry, a lead-in line is
+			// a paragraph); within a row, plain paragraphs after a title continue it.
+			flushEntry()
 			for (const b of cell.blocks) {
+				if (b.kind === 'list') {
+					// Entries set as a bulleted list (the regional trial networks): an item
+					// that leads with a title is an entry like any other row.
+					for (const item of b.items) {
+						const paragraphs = item.blocks.filter((x): x is Paragraph => x.kind === 'paragraph')
+						const lead = paragraphs[0]
+						flushEntry()
+						if (lead && opensResource(lead) && !isInstructionParagraph(lead, g)) entry = paragraphs
+						else out.push(...blockNodes([{ ...b, items: [item] }], g))
+					}
+					flushEntry()
+					continue
+				}
 				const prose =
 					b.kind === 'paragraph' && !isInstructionParagraph(b, g) && plainText(b.runs).trim() !== ''
-				if (prose && opensResource(b)) {
+				if (prose && (opensResource(b) || isBareTitleRow(cell.blocks))) {
 					flushEntry()
 					entry = [b]
 				} else if (prose && entry) entry.push(b)
@@ -870,15 +1076,16 @@ function boxContent(rows: ClassifiedRow[], g: Grammar, kind: string = 'plain'): 
 		const nodes = blockNodes(cell.blocks, g)
 		for (const node of nodes) {
 			const last = out.at(-1)
-			// Adjacent check lists from consecutive rows are one list.
-			if (
-				node.type === 'list' &&
+			// A row without a check marker after a check row ending in a colon is that
+			// row's nested content ("…including:" then "[insert cancer-specific symptoms]",
+			// which Word set as a row of its own after the page break).
+			const opensNested =
 				last?.type === 'list' &&
-				node.attrs?.kind === 'check' &&
-				last.attrs?.kind === 'check'
-			) {
-				out.push(node)
-			} else out.push(node)
+				last.attrs?.kind === 'check' &&
+				/:$/.test(nodeText(last).trim()) &&
+				(node.type === 'paragraph' || (node.type === 'list' && node.attrs?.kind !== 'check'))
+			if (opensNested && last) last.content = [...(last.content ?? []), node]
+			else out.push(node)
 		}
 	}
 	flushEntry()
@@ -1033,7 +1240,20 @@ function tableNodes(table: Table, g: Grammar): JsonNode[] {
 		if (heads || segments.length === 0) segments.push([r])
 		else segments.at(-1)?.push(r)
 	}
-	return segments.flatMap((segment) => boxSegmentNodes(segment, g))
+	// A pen row with nothing but instructions under it heads the box that follows
+	// ("Complete the box" over a Find out more or a Key actions box, one bordered table
+	// on the page): it is that box's guidance, not an empty developer box of its own.
+	const merged: ClassifiedRow[][] = []
+	for (const segment of segments) {
+		const previous = merged.at(-1)
+		const penOnly =
+			previous?.every(
+				(r) => r.kind === 'instruction' && (r.icon === null || r.icon.icon === 'pen'),
+			) ?? false
+		if (previous && penOnly) merged[merged.length - 1] = [...previous, ...segment]
+		else merged.push(segment)
+	}
+	return merged.flatMap((segment) => boxSegmentNodes(segment, g))
 }
 
 /** One box's rows (heading row first): a timeframe box, a box with a callout stacked
@@ -1050,7 +1270,21 @@ function boxSegmentNodes(rows: ClassifiedRow[], g: Grammar): JsonNode[] {
 				rows.indexOf(r) < rows.findIndex((x) => x.icon?.icon === 'stopwatch'),
 		)
 		const rest = rows.filter((r) => !before.includes(r))
-		return [...boxContent(before, g), ...timeframeNodes(rest, g)]
+		const guidance = boxContent(before, g)
+		const timeframes = timeframeNodes(rest, g)
+		// The pen row and the stopwatch rows are ONE bordered developer box on the page
+		// ("Complete the timeframe" over the timeframe rows): the box wraps both.
+		if (before.some((r) => r.icon?.icon === 'pen')) {
+			g.stats.boxes++
+			return [
+				{
+					type: 'box',
+					attrs: { kind: 'developer', icon: 'pen', family: '' },
+					content: [...guidance, ...timeframes],
+				},
+			]
+		}
+		return [...guidance, ...timeframes]
 	}
 
 	// Under an icon heading, the box's rows are unshaded or share the heading's colour. A
@@ -1061,16 +1295,23 @@ function boxSegmentNodes(rows: ClassifiedRow[], g: Grammar): JsonNode[] {
 	const shadedRows = (colour: string) =>
 		rows.filter((r) => r.cells[0]?.background === colour).length
 	const isCallout = (r: ClassifiedRow) => {
-		const background = r.cells[0]?.background ?? null
+		const cell = r.cells[0]
+		const background = cell?.background ?? null
 		if (
 			!heading ||
 			heading.icon === null ||
 			r === heading ||
 			r.kind !== 'content' ||
 			r.icon !== null ||
-			background === null
+			background === null ||
+			!cell
 		)
 			return false
+		// A row that carries a prompt is the developer box's own (a fill change inside one
+		// bordered table is not a second box); a short header row is a sub-band, not a
+		// statement.
+		if (allParagraphs(cell.blocks).some((p) => isInstructionParagraph(p, g))) return false
+		if (isGroupHeader(r, rows)) return false
 		return (
 			background !== headingBackground &&
 			luminance(background) >= 0.45 &&
@@ -1099,7 +1340,8 @@ function boxSegmentNodes(rows: ClassifiedRow[], g: Grammar): JsonNode[] {
 /** A box: its kind from the first icon; without one, a plain box when a banner heads it
  *  and a callout when it is shaded statements alone. */
 function boxNodes(rows: ClassifiedRow[], icons: (typeof ICONS)[number][], g: Grammar): JsonNode[] {
-	const first = icons[0]
+	// The box's kind is its own icon's; a pen row heading it only adds guidance.
+	const first = icons.find((i) => i.icon !== 'pen') ?? icons[0]
 	const banded = rows.some((r) => r.kind === 'band')
 	const kind = first ? first.kind : banded ? 'plain' : 'callout'
 	const icon = first?.icon ?? ''
@@ -1133,12 +1375,20 @@ function boxNodes(rows: ClassifiedRow[], icons: (typeof ICONS)[number][], g: Gra
 	// A callout keeps the shade it was printed in, as a theme family: the shade of its own
 	// full-width row, never of a tile in a columns row (p.6 holds two tiles inside a
 	// pale-blue box).
-	const shade =
-		kind === 'callout'
-			? (rows.find((r) => r.cells.length === 1)?.cells[0]?.background ?? null)
-			: null
+	const shadedCell =
+		kind === 'callout' ? rows.find((r) => r.cells.length === 1)?.cells[0] : undefined
+	const shade = shadedCell?.background ?? null
 	const family = shade ? (familyOf(shade) ?? '') : ''
-	return [{ type: 'box', attrs: { kind, icon, family }, content }]
+	return [
+		{
+			type: 'box',
+			attrs:
+				kind === 'callout'
+					? calloutAttrs(family, shadedCell)
+					: { kind, icon, family, variant: 'soft' },
+			content,
+		},
+	]
 }
 
 /** Rows of [icon | text] (decision 59): a list whose items carry the icon. Only when
@@ -1319,8 +1569,20 @@ function diagramCell(cell: TableCell, g: Grammar): JsonNode[] {
 	const family = cell.background ? familyOf(cell.background) : null
 	if (!family) return blocks
 	g.stats.boxes++
-	return [{ type: 'box', attrs: { kind: 'callout', icon: '', family }, content: blocks }]
+	return [{ type: 'box', attrs: calloutAttrs(family, cell), content: blocks }]
 }
+
+/** A shaded tile's attributes: its family, and ui-solid's `solid` treatment when the
+ *  source printed it dark with light text (the p.4 "Considerations for delivery" tile). */
+const calloutAttrs = (
+	family: string,
+	cell: TableCell | undefined,
+): NonNullable<JsonNode['attrs']> => ({
+	kind: 'callout',
+	icon: '',
+	family,
+	variant: cell && cellIsBand(cell) ? 'solid' : 'soft',
+})
 
 const wordsOf = (cell: TableCell): number =>
 	allParagraphs(cell.blocks).reduce(
@@ -1358,11 +1620,7 @@ function tileColumns(rows: TableRow[], g: Grammar): JsonNode[] | null {
 				const family = cell.background ? familyOf(cell.background) : null
 				if (family) {
 					g.stats.boxes++
-					const tile: JsonNode = {
-						type: 'box',
-						attrs: { kind: 'callout', icon: '', family },
-						content,
-					}
+					const tile: JsonNode = { type: 'box', attrs: calloutAttrs(family, cell), content }
 					return { type: 'column', content: [tile] }
 				}
 				return { type: 'column', content }
@@ -1587,6 +1845,11 @@ export function mapTemplate(input: MapInput): SeedResult {
 			icon: p.section.icon
 				? figureUrl(template.key, p.section.icon.page, g.figureIndex.get(p.section.icon) ?? 0)
 				: null,
+			titleCitations: p.section.heading.flatMap((r) => {
+				if (r.endnote === null) return []
+				g.stats.citations++
+				return [g.referenceId(r.endnote)]
+			}),
 		}
 	})
 

@@ -46,6 +46,8 @@ export interface SectionRow {
 	sourcePages: string
 	/** The heading's icon as a served URL, or null. */
 	icon: string | null
+	/** Reference ids cited on the heading itself, in printed order. */
+	titleCitations: string[]
 }
 
 export interface ReferenceRow {

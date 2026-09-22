@@ -15,9 +15,11 @@
  */
 
 import type { DocHandle, DocRoomClient } from '@aicolab/app-kit/doc-room/client'
-import { createSignal, onSettled, Show, untrack, useContext } from 'solid-js'
+import { createSignal, For, onSettled, Show, untrack, useContext } from 'solid-js'
+import { CitationInline, DerivedContext } from '#/content/blocks.tsx'
 import { RenderedBody } from '#/content/render.tsx'
 import type { JsonNode } from '#/content/schema.ts'
+import { numberLabel } from '#/lib/labels.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { pathwayClientFor } from '#/lib/ocp-client.ts'
 import { DocumentContext } from '#/routes/d.$documentId.tsx'
@@ -29,11 +31,12 @@ export function SectionView(props: { section: SectionWireRow; depth: number }) {
 		<section class="ocp-section" data-address={props.section.address}>
 			<div class="ocp-section-heading">
 				<Show when={props.section.printedNumber}>
-					{(n) => <span class="ocp-section-number">{n()}</span>}
+					{(n) => <span class="ocp-section-number">{numberLabel(n())}</span>}
 				</Show>
 				<span class="ocp-section-title" data-depth={props.depth}>
 					{props.section.title ?? props.section.address}
 				</span>
+				<TitleCitations ids={props.section.titleCitations} />
 			</div>
 			<Show
 				when={props.section.ownership === 'owned'}
@@ -42,6 +45,20 @@ export function SectionView(props: { section: SectionWireRow; depth: number }) {
 				<OwnedBody sectionId={props.section.id} />
 			</Show>
 		</section>
+	)
+}
+
+/** The markers a heading carries in print ("…care⁵²"), numbered with the section's. */
+function TitleCitations(props: { ids: string[] }) {
+	const workspace = useContext(DocumentContext)
+	return (
+		<Show when={props.ids.length > 0}>
+			<DerivedContext value={() => workspace.derived}>
+				<span class="ocp-section-citations">
+					<For each={props.ids}>{(id) => <CitationInline referenceId={id} />}</For>
+				</span>
+			</DerivedContext>
+		</Show>
 	)
 }
 

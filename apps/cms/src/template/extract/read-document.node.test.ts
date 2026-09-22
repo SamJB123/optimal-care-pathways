@@ -8,7 +8,7 @@
 
 import { join } from 'node:path'
 import { beforeAll, describe, expect, it } from 'vitest'
-import type { Block, ExtractedDocument, Paragraph, Section, TextRun } from './model.ts'
+import type { Block, ExtractedDocument, ListItem, Paragraph, Section, TextRun } from './model.ts'
 import { plainText } from './model.ts'
 import { openPdf, readPage } from './pdf-page.ts'
 import { readDocument } from './read-document.ts'
@@ -324,8 +324,159 @@ describe('stage one: the cancer template read from its PDF', () => {
 		expect(labels.map((p) => p.align)).toEqual(['center', 'center', 'center'])
 	})
 
+	it('keeps every reference link, including on the pages whose Links Word left empty (pp.84, 88)', () => {
+		// The first and last reference pages carry all their text in one marked content and
+		// their Link elements hold nothing; the link annotations still say where the links
+		// are. Refs 1–10 and 85–89 are titles linked in print.
+		for (const n of [1, 2, 5, 10, 21, 22, 85, 89]) {
+			const note = model.endnotes.find((e) => e.number === n)
+			expect(
+				note?.runs.some((r) => r.link !== null && 'url' in r.link),
+				`reference ${n}`,
+			).toBe(true)
+		}
+		// A linked title is one run, not one run per word: the spaces inside it carry the link.
+		const first = model.endnotes.find((e) => e.number === 1)
+		const linked = first?.runs.filter((r) => r.link !== null) ?? []
+		expect(
+			linked.some((r) => r.text.includes('Health Equity in National Cancer Control Plans')),
+		).toBe(true)
+	})
+
+	it('reads a table rule under a line as a rule, not an underline (pp.70, 76)', () => {
+		// The last line of a cell sits on the table's rule; the rule runs past the text at
+		// both ends. "for use by Australian haematology teams." has no underline in print.
+		const runs = allRuns().filter((r) => /for use by Australian haematology teams/.test(r.text))
+		expect(runs.length).toBeGreaterThan(0)
+		expect(runs.every((r) => !r.underline)).toBe(true)
+		const acnnp = allRuns().filter((r) => /Specialist Support Service NGO/.test(r.text))
+		expect(acnnp.length).toBeGreaterThan(0)
+	})
+
+	it('keeps a hard return inside a cell as a line break, and carries a row over a page break (pp.23, 70–71)', () => {
+		const instructions = allParagraphs().find(
+			(p) =>
+				/expected timeframe/.test(plainText(p.runs)) &&
+				/Document this instruction/.test(plainText(p.runs)),
+		)
+		expect(instructions).toBeDefined()
+		// The break is a '\n' in the runs (it may share a run with the text that follows).
+		expect(instructions?.runs.some((r) => r.text.includes('\n'))).toBe(true)
+		// The ACNNP funded-NGO row of Step 7's checklist runs over pp.70–71: its second
+		// sentence stays in the item, never a bullet of its own.
+		const step7 = allSections(model.sections).find((s) => s.number === 'Step 7')
+		const lists = (blocks: Block[]): Block[] =>
+			blocks.flatMap((b) => {
+				if (b.kind === 'list') return [b, ...b.items.flatMap((i) => lists(i.blocks))]
+				if (b.kind === 'table')
+					return b.rows.flatMap((r) => r.cells.flatMap((c) => lists(c.blocks)))
+				return []
+			})
+		const step7Items = (step7 ? [step7, ...allSections(step7.children)] : [])
+			.flatMap((s) => lists(s.blocks))
+			.flatMap((l) => (l.kind === 'list' ? l.items : []))
+		const ngo = step7Items.find((i) =>
+			/funded to provide support for/.test(plainText(paragraphs(i.blocks).flatMap((p) => p.runs))),
+		)
+		expect(ngo).toBeDefined()
+		expect(plainText(paragraphs(ngo?.blocks ?? []).flatMap((p) => p.runs))).toMatch(
+			/Referrals can be made to/,
+		)
+	})
+
 	it('is deterministic', async () => {
 		const again = await readDocument(doc, SOURCE)
 		expect(JSON.stringify(again)).toBe(JSON.stringify(model))
 	}, 60_000)
+})
+
+const PRINCIPLES = 'Attachment-A-Principles-for-Optimal-Cancer-Care_1784775997.pdf'
+const principlesPath = join(
+	import.meta.dirname,
+	'..',
+	'..',
+	'..',
+	'template',
+	'2026',
+	'source',
+	PRINCIPLES,
+)
+
+describe('stage one: the Principles document read from its PDF', () => {
+	let principles: ExtractedDocument
+
+	beforeAll(async () => {
+		const pdf = await openPdf(principlesPath)
+		principles = await readDocument(pdf, PRINCIPLES)
+	}, 60_000)
+
+	const everyParagraph = (): Paragraph[] =>
+		allSections(principles.sections).flatMap((s) => paragraphs(s.blocks))
+
+	it('attaches a run of markers that wrapped onto its own line, once each (p.11)', () => {
+		// "• use of AI⁴⁴˒⁴⁵˒⁴⁶˒⁴⁷˒⁴⁸": five Links whose digits are the only text on their
+		// drawn line, so neither the line nor the element (which they outweigh) can say
+		// what full size is. "…(PREMs) ³⁹" is one marker, not two.
+		const ai = everyParagraph().find((p) => plainText(p.runs).startsWith('use of AI'))
+		expect(ai?.runs.filter((r) => r.endnote !== null).map((r) => r.endnote)).toEqual([
+			44, 45, 46, 47, 48,
+		])
+		const prems = everyParagraph().find((p) =>
+			plainText(p.runs).startsWith('Patient-reported experience measures (PREMs)'),
+		)
+		expect(prems?.runs.filter((r) => r.endnote !== null).map((r) => r.endnote)).toEqual([39])
+	})
+
+	it('keeps a heading’s own citation on the heading (pp.13, 26)', () => {
+		const mdt = allSections(principles.sections).find((s) =>
+			/^Principles of multidisciplinary care/.test(s.headingText),
+		)
+		expect(mdt?.heading.filter((r) => r.endnote !== null).map((r) => r.endnote)).toEqual([52])
+		const research = allSections(principles.sections).find((s) =>
+			/^Types of research relevant to cancer care/.test(s.headingText),
+		)
+		expect(research?.heading.filter((r) => r.endnote !== null).map((r) => r.endnote)).toEqual([72])
+	})
+
+	it('keeps the links of references 1–43 (pp.37–38, the tagless pages)', () => {
+		for (const n of [1, 12, 30, 43, 44, 73]) {
+			const note = principles.endnotes.find((e) => e.number === n)
+			expect(
+				note?.runs.some((r) => r.link !== null && 'url' in r.link),
+				`reference ${n}`,
+			).toBe(true)
+		}
+	})
+
+	it('reads the cross-marked "Do not" rows as crosses (pp.25, 27)', () => {
+		const items = (blocks: Block[]): ListItem[] =>
+			blocks.flatMap((b) => {
+				if (b.kind === 'list') return b.items.flatMap((i) => [i, ...items(i.blocks)])
+				if (b.kind === 'table')
+					return b.rows.flatMap((r) => r.cells.flatMap((c) => items(c.blocks)))
+				return []
+			})
+		const doNot = allSections(principles.sections)
+			.flatMap((s) => items(s.blocks))
+			.filter((i) => /^Do not /.test(plainText(paragraphs(i.blocks).flatMap((p) => p.runs))))
+		expect(doNot.length).toBeGreaterThanOrEqual(5)
+		expect(doNot.every((i) => i.marker === 'cross')).toBe(true)
+	})
+
+	it('joins a row Word repeated after the page break back into its row (pp.21–22)', () => {
+		const sources = allSections(principles.sections).find((s) =>
+			/^Sources of navigation and care coordination support/.test(s.headingText),
+		)
+		const text = plainText(paragraphs(sources?.blocks ?? []).flatMap((p) => p.runs))
+		expect(text).toMatch(
+			/impacted by any cancer\. Services include navigation and emotional support/,
+		)
+		// No label-less two-cell row remains: the repeated row was folded into its own.
+		const cellIsBlank = (cell: { blocks: Block[] }) =>
+			cell.blocks.every((b) => b.kind === 'paragraph' && plainText(b.runs).trim() === '')
+		const rows = (sources?.blocks ?? []).flatMap((b) => (b.kind === 'table' ? b.rows : []))
+		expect(
+			rows.filter((r) => r.cells.length === 2 && cellIsBlank(r.cells[0] ?? { blocks: [] })),
+		).toEqual([])
+	})
 })

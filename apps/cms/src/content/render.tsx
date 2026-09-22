@@ -33,6 +33,12 @@ import {
 } from './blocks.tsx'
 import { type DerivedView, emptyDerived } from './derived.ts'
 import { boxAttrsOf, type JsonMark, type JsonNode } from './schema.ts'
+// The body's own styles travel with the renderer: a page that renders a body (the
+// review page, the hub) gets them without mounting an editor. The list sheet is the
+// one the editor uses (prosekit's, which draws the bullet itself), never the flat-list
+// stock sheet beside it: both at once draw two bullets.
+import '@prosekit/extensions/list/style.css'
+import '#/editors/section.css'
 
 /** A body, rendered. `derived` is the page's derived view; without it citations show
  *  '?' and the snapshot is empty. */
@@ -197,6 +203,7 @@ function ListBlock(props: { node: JsonNode }) {
 			data-list-order={order() === null ? undefined : String(order())}
 			data-list-collapsable={(props.node.content?.length ?? 0) >= 2 ? '' : undefined}
 			data-point-of-care={attrs().pointOfCare === true ? 'true' : undefined}
+			data-negated={attrs().negated === true ? 'true' : undefined}
 			style={style()}
 		>
 			<div class="list-marker list-marker-click-target" contenteditable="false" />
@@ -300,6 +307,9 @@ function Marked(props: { marks: JsonMark[]; index: number; text: string }) {
 						>
 							{inner()}
 						</mark>
+					</Match>
+					<Match when={m().type === 'note'}>
+						<span data-ocp="note">{inner()}</span>
 					</Match>
 					<Match when={m().type === 'instruction'}>
 						<span data-ocp="instruction">{inner()}</span>

@@ -66,6 +66,67 @@ applies here unchanged; this ledger records only what is specific to Attachment 
 - The instruction colour is per document; a purple word inside black body prose that is
   NOT an instruction (none found so far) would be misread as one.
 
+## Visual pass 2026-09-23, pp.15–91 (delegated page-by-page read; RESOLVED 2026-09-23)
+
+Resolution, verified on the rendered review page and the editor (worker version
+fe2ac61c): stopwatch boxes — a pen row followed by a stopwatch row is one developer box
+wrapping the timeframe. Wholly purple check rows — a list whose every item is
+instruction-coloured is an instruction list. Superscripts — the colour test ignores
+superscript runs. A fill change inside one bordered table — the box's extent is the
+stroked rectangle, not the shading. Shaded group header — sub-banner inside the
+checklist. Continuation shell nesting — a nested list continues across the shell join.
+Hard return — `hardBreak` inside the paragraph. Title cut at the placeholder — the title
+runs through the highlight. Runs split mid-word — same-style adjacent runs merge.
+Render — as the cancer ledger. The shared rules the cancer ledger lists were all fixed
+as general Word rules and verified here on pp.72, 75–82.
+
+The cancer ledger's pass lists the shared rules (page-break continuations, rule-as-
+underline, resource-list refinements, "Step N:" colon, note variants, chip and paragraph
+spacing); the same defects show here on pp.72, 75–82 and are not repeated. Specific to
+this template:
+
+- **Stopwatch boxes lose their pen wrapper** (`structure`, every one: 2.1, 2.2, 2.3, 3.1.1,
+  3.5.1, 4.3.1 — pp.22–24, 29, 33, 41): the PDF draws one bordered developer box whose
+  rows are the lavender pen row and the pink stopwatch row; the seed emits the guidance
+  at top level and the `⏱` node as a second sibling, so the render shows a bare guidance
+  slab and a detached timeframe card. The box detector stops at the stopwatch row.
+- **Wholly purple check rows are not instructions** (`semantics`, p.24 2.3): "list
+  information / test results to include in referrals…" and "list population-specific
+  factors that would influence the requirement for urgent referral" are purple italic
+  tick rows, emitted as plain black check items (p.31 and p.34 equivalents are genuinely
+  black and correctly plain).
+- **Superscripts defeat the instruction test** (`semantics`, p.74): "List members of
+  working group involved in 1ˢᵗ edition if this is 2ⁿᵈ edition" is purple italic like
+  its siblings but its superscript runs break the colour test; it is body italic.
+- **A fill change inside one bordered table ends the box** (`structure`, p.72
+  7/supportive-care): the sixth row (lavender) of the "Supportive care considerations at
+  end-of-life" box is emitted as a separate callout; the identical final rows on pp.56
+  and 65 (pale blue) stay inside.
+- **Shaded group header splits the checklist** (`structure`, p.36 3/supportive-care):
+  "For people diagnosed with advanced cancer" — as the cancer ledger's pp.31–32.
+- **Continuation shell loses nesting** (`structure`, pp.46–47 4.6): of the seven nested
+  bullets under "Two-way communication should cover:", only the first stays nested; the
+  six on the next page are promoted to top-level items.
+- **Hard return inside a cell** (`text`, p.27 2/supportive-care): as the cancer p.23.
+- **Title cut at the placeholder** (`text`, p.38): "Guide to Best Cancer Care for
+  [population group]" — title ends at "[", description begins "population group]".
+- **Runs split mid-word** (`inline`, minor, p.29): "influenc" + "e " + "the" — adjacent
+  runs with identical effective style are not merged.
+- **Render**: section-level paragraphs without vertical gap (pp.15, 30, 46); placeholder
+  chip spacing before punctuation (throughout).
+- **Not defects** (source, normalise candidates): p.42 banner "Population-specific
+  considerations for chemotherapy" on the Systemic therapy box; p.45 "specific to this
+  cancer" in a population template; p.41 "treatment ."; p.43 mid-sentence
+  "Immunotherapy"; p.45 complementary-therapies prose without its own heading (filed at
+  the end of 4.5.4, correctly); p.56 "assessed" doubled; p.58 "on of"; p.64 See-also
+  "Step 6: End-of-life care"; p.66 stray "Supportive care considerations" bullet; p.79
+  Tele-Trial URL; p.70 upright guidance bullet (the print is right); p.74 two-column
+  list. p.43 heading "personalised medicine" glossary underline: titles are plain by
+  design.
+- **Verified right**: 4.7 → 4.10 gap kept as printed; p.40 4.3.1 fully nested; the
+  p.45 "3839" marker pair; every "Or" group, stopwatch row, key table pp.49–79;
+  references 1–85; all find-out-more entries pp.83–85.
+
 ## Normalise (decision 45)
 
 - None beyond the cancer template's list; the 4.7 → 4.10 gap is kept as printed.

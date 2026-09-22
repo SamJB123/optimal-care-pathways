@@ -95,6 +95,7 @@ export type SectionWireRow = {
 	pointOfCare: boolean
 	sourcePages: string | null
 	icon: string | null
+	titleCitations: string[]
 	updatedAt: number | null
 	updatedBy: string | null
 }
@@ -119,6 +120,7 @@ export function sectionWireRow(row: SectionRow): SectionWireRow {
 		pointOfCare: row.pointOfCare,
 		sourcePages: row.sourcePages,
 		icon: row.icon,
+		titleCitations: row.titleCitations ?? [],
 		updatedAt: row.updatedAt?.getTime() ?? null,
 		updatedBy: row.updatedBy,
 	}

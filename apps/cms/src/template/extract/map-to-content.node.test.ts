@@ -70,7 +70,8 @@ describe('stage two: the cancer template mapped to the content schema', () => {
 		// p.11: every "Complete the box" line is guidance, the key table keeps its labels.
 		const epidemiology = body('about-this-cancer/epidemiology-and-burden-of-disease')
 		const [box] = find(epidemiology, 'box')
-		expect(box?.attrs).toEqual({ kind: 'developer', icon: 'pen', family: '' })
+		// `variant` (2026-09-23): a box's ui-solid treatment, 'soft' unless printed dark.
+		expect(box?.attrs).toEqual({ kind: 'developer', icon: 'pen', family: '', variant: 'soft' })
 		expect(textOf(find(box ? [box] : [], 'guidance').slice(0, 1))).toMatch(/^Complete the boxes/)
 		const [table] = find(epidemiology, 'table')
 		expect(table?.content?.length).toBe(6)
@@ -176,12 +177,13 @@ describe('stage two: the cancer template mapped to the content schema', () => {
 	it('keeps footnotes and citations as atoms, with the prose spacing intact (p.13)', () => {
 		const [first] = body('1.1.1')
 		expect(first?.type).toBe('paragraph')
+		// "include:¹¹˒¹²": the printed comma between two markers is the renderer's to draw
+		// (decision 2026-09-23), so the two citations sit side by side.
 		expect(first?.content?.map((n) => n.type)).toEqual([
 			'text',
 			'footnote',
 			'text',
 			'citation',
-			'text',
 			'citation',
 		])
 		expect(first?.content?.[2]?.text).toBe(' risk factors for cancer include:')
@@ -211,6 +213,69 @@ describe('stage two: the cancer template mapped to the content schema', () => {
 		// The label under the icons carries the page's centring.
 		expect(first.at(-1)?.attrs?.textAlign).toBe('center')
 		expect(textOf([first.at(-1) ?? { type: 'paragraph' }])).toBe('Health professionals')
+	})
+
+	it('reads the Find out more apparatus as the page prints it (pp.24, 34, 77)', () => {
+		// Grey group-header rows inside a resource box are sub-banners, not url-less entries.
+		const trials = body('find-out-more/step-4-treatment/clinical-trials')
+		const banners = find(trials, 'banner').filter((n) => n.attrs?.tone === 'sub')
+		expect(banners.map((n) => textOf([n]))).toEqual(
+			expect.arrayContaining([
+				'Teletrials and decentralised trials',
+				'Interpreters and clinical trials',
+			]),
+		)
+		expect(
+			find(trials, 'resource').some(
+				(n) => n.attrs?.title === 'Teletrials and decentralised trials',
+			),
+		).toBe(false)
+		// Entries set as a bulleted list are entries; a title cut by its placeholder keeps it;
+		// a link-less title row is an entry of its own.
+		expect(find(trials, 'resource').map((n) => n.attrs?.title)).toEqual(
+			expect.arrayContaining([
+				'NSW Regional Cancer Research Network',
+				'Regional Trials Network Victoria',
+			]),
+		)
+		const supportive3 = body('3/supportive-care')
+		expect(find(supportive3, 'resource').map((n) => n.attrs?.title)).toContain(
+			'Guide to Best Cancer Care for people with [cancer type]',
+		)
+		const supportive2 = body('2/supportive-care')
+		expect(find(supportive2, 'resource').map((n) => n.attrs?.title)).toContain(
+			'Resources for practical and social support',
+		)
+	})
+
+	it('keeps the pen row with the box it heads, and wraps the timeframe rows in their developer box (pp.14, 35)', () => {
+		// "Complete the box" over a Find out more box is that box's guidance, not an empty
+		// developer box before it; "Complete the timeframe" and the stopwatch rows are one
+		// bordered developer box.
+		const step4 = body('4')
+		const boxes = find(step4, 'box')
+		const emptyPen = boxes.filter(
+			(b) => b.attrs?.kind === 'developer' && (b.content ?? []).every((c) => c.type === 'guidance'),
+		)
+		expect(emptyPen).toHaveLength(0)
+		const signs = body('2.1')
+		const timeframeBoxes = find(signs, 'box').filter(
+			(b) => find(b.content ?? [], 'timeframe').length > 0,
+		)
+		expect(timeframeBoxes.length).toBeGreaterThan(0)
+		expect(timeframeBoxes.every((b) => b.attrs?.kind === 'developer')).toBe(true)
+		expect(find(signs, 'timeframe').length).toBe(find(timeframeBoxes, 'timeframe').length)
+	})
+
+	it('reads one highlight as one placeholder, notes and all (pp.27, 28)', () => {
+		const genomic = body('3.2.2')
+		const chips = marked(genomic, 'placeholder')
+		expect(chips).toContain('liquid biopsy/circulating tumour DNA (ctDNA).')
+		const performance = body('3.4')
+		expect(marked(performance, 'placeholder')).toContain(
+			'[Insert scale/s relevant to [cancer type] such as the Eastern Cooperative Oncology Group (ECOG) scale]',
+		)
+		expect(marked(performance, 'instruction')).not.toContain('.')
 	})
 
 	it('emits valid, non-empty bodies for every section', () => {

@@ -11,22 +11,38 @@
 	line-height: 1.55;
 }
 
+/* An editorial aside the source set in its own colour (the Principles' purple notes). */
+.ocp-body span[data-ocp="note"] {
+	color: var(--color-accent);
+	font-style: italic;
+}
+
 /* Inline developer instruction inside core text ("<Delete if not relevant>"). */
 .ocp-body span[data-ocp="instruction"] {
 	color: var(--color-success);
 	font-style: italic;
 }
 
+/* The chip's surface spreads past the glyphs through a shadow, not padding, so the
+   punctuation that follows the slot stays where the text puts it. */
 .ocp-body mark[data-ocp="placeholder"] {
 	background: var(--ui-surface);
 	color: var(--ui-ink);
 	border-radius: 0.2em;
-	padding: 0 0.15em;
-	box-shadow: inset 0 -1px 0 var(--ui-border);
+	padding: 0;
+	box-shadow:
+		0 0 0 0.12em var(--ui-surface),
+		0 1px 0 0.12em var(--ui-border);
 }
 
-/* The number is derived at render (decision 15): the citation carries data-number. */
-.ocp-body sup[data-ocp="citation"]::before {
+/* Section-level paragraphs read as paragraphs: the print spaces them. */
+.ocp-body p {
+	margin-block: 0.55em;
+}
+
+/* The number is derived at render (decision 15): the citation carries data-number. A
+   heading's own citation sits outside the body, so the rule is not scoped to it. */
+sup[data-ocp="citation"]::before {
 	content: attr(data-number);
 	font-size: 0.75em;
 	color: var(--color-primary);
@@ -112,10 +128,27 @@
 	list-style: none;
 }
 
+/* The tick sits in the gutter the list leaves for its marker (prosemirror-flat-list
+   positions only its own task marker there). */
+.ocp-body .prosemirror-flat-list[data-list-kind="check"] > .list-marker {
+	position: absolute;
+	right: 100%;
+	width: 1lh;
+	text-align: center;
+}
+
 .ocp-body .prosemirror-flat-list[data-list-kind="check"] > .list-marker::before {
 	content: "✓";
 	color: var(--color-primary);
 	font-weight: 700;
+}
+
+/* A cross-marked row: what not to do. */
+.ocp-body
+	.prosemirror-flat-list[data-list-kind="check"][data-negated="true"]
+	> .list-marker::before {
+	content: "✗";
+	color: var(--color-error);
 }
 
 .ocp-body

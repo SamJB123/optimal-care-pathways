@@ -164,6 +164,10 @@ export const sections = sqliteTable(
 		/** The glyph printed beside the heading (a principle's icon), as a URL the app
 		 *  serves; null for most sections (decision 65). */
 		icon: text('icon'),
+		/** Reference ids cited ON the heading itself ("Principles of multidisciplinary
+		 *  care⁵²"): a title is plain text, so its markers live here and render after it,
+		 *  counted first in the section's citation order. */
+		titleCitations: text('title_citations', { mode: 'json' }).$type<string[]>(),
 		updatedAt: timestampMs('updated_at'),
 		updatedBy: text('updated_by'),
 	},

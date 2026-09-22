@@ -202,11 +202,30 @@ async function derivedFor(
 			address: r.address,
 			printedNumber: r.printedNumber,
 			title: r.title,
+			titleCitations: r.titleCitations ?? [],
 			body:
 				r.ownership === 'shared' && r.coreSectionId
 					? (coreBodies.get(r.coreSectionId) ?? null)
 					: (r.bodyJson ?? null),
 		}))
+	// A heading's own citations come first in its section's citation order.
+	const cited = ordered.map((s): JsonNode | null =>
+		s.titleCitations.length === 0
+			? s.body
+			: {
+					type: 'doc',
+					content: [
+						{
+							type: 'paragraph',
+							content: s.titleCitations.map((id) => ({
+								type: 'citation',
+								attrs: { referenceId: id },
+							})),
+						},
+						...(s.body?.content ?? []),
+					],
+				},
+	)
 	const topology = TEMPLATES.find((t) => t.templateId === document.templateId)?.map ?? null
 	const resolvedBody = (r: SectionRow) =>
 		r.ownership === 'shared' && r.coreSectionId
@@ -233,7 +252,7 @@ async function derivedFor(
 			})
 		: null
 	return {
-		referenceNumbers: citationNumbers(ordered.map((s) => s.body)),
+		referenceNumbers: citationNumbers(cited),
 		timeframes: timeframeRows(ordered),
 		map,
 	}

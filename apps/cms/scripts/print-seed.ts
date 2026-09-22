@@ -64,6 +64,8 @@ const wrapMark = (t: string, mark: JsonMark): string => {
 			return `~${t}~`
 		case 'link':
 			return `[${t}](${String(mark.attrs?.href ?? '')})`
+		case 'note':
+			return `‹${t}›`
 		case 'placeholder':
 			return `⟦${t}⟧`
 		case 'instruction':
@@ -114,7 +116,7 @@ function block(node: JsonNode, indent: number): void {
 		case 'box':
 			emit(
 				indent,
-				`▣ ${String(node.attrs?.kind ?? '')}${node.attrs?.icon ? `/${String(node.attrs.icon)}` : ''}`,
+				`▣ ${String(node.attrs?.kind ?? '')}${node.attrs?.icon ? `/${String(node.attrs.icon)}` : ''}${node.attrs?.variant === 'solid' ? ' (solid)' : ''}`,
 			)
 			for (const c of node.content ?? []) block(c, indent + 1)
 			return
@@ -157,7 +159,15 @@ function block(node: JsonNode, indent: number): void {
 		case 'list': {
 			const kind = String(node.attrs?.kind ?? 'bullet')
 			const marker =
-				kind === 'check' ? (node.attrs?.pointOfCare ? '☑' : '☐') : kind === 'ordered' ? '1.' : '•'
+				kind === 'check'
+					? node.attrs?.negated
+						? '☒'
+						: node.attrs?.pointOfCare
+							? '☑'
+							: '☐'
+					: kind === 'ordered'
+						? '1.'
+						: '•'
 			const [first, ...more] = node.content ?? []
 			const icon = node.attrs?.icon ? `[icon ${String(node.attrs.icon).split('/').pop()}] ` : ''
 			emit(indent, `${marker} ${icon}${first?.type === 'paragraph' ? inline(first.content) : ''}`)
@@ -216,7 +226,7 @@ for (const [index, s] of result.sections.entries()) {
 	lines.push('')
 	emit(
 		0,
-		`${'#'.repeat(Math.min(6, depth(s) + 1))} [${s.address}] ${s.icon ? '⌾ ' : ''}${s.printedNumber ? `${s.printedNumber} ` : ''}${s.title ?? ''}  (${s.pathwayOwnership}${s.apparatus ? ', apparatus' : ''}${s.canonical ? ', canonical' : ''}, H${s.headingLevel}${page ? `, p.${page}` : ''})`,
+		`${'#'.repeat(Math.min(6, depth(s) + 1))} [${s.address}] ${s.icon ? '⌾ ' : ''}${s.printedNumber ? `${s.printedNumber} ` : ''}${s.title ?? ''}${s.titleCitations.map((id) => `[^${referenceNumber.get(id) ?? '?'}]`).join('')}  (${s.pathwayOwnership}${s.apparatus ? ', apparatus' : ''}${s.canonical ? ', canonical' : ''}, H${s.headingLevel}${page ? `, p.${page}` : ''})`,
 	)
 	for (const c of s.bodyJson.content ?? []) block(c, 0)
 }

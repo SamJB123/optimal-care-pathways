@@ -645,6 +645,11 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 		(id) => id !== '<none>' && !claimed.has(id),
 	)
 
+	// A fill as wide as the page is the page's own tint (the supportive care pages sit on
+	// pale blue), never a cell's shading, a highlight or an underline: it is not a path
+	// the content reads.
+	const contentPaths = paths.filter((p) => !(p.kind === 'fill' && p.box.width > width * 0.92))
+
 	return {
 		pageNumber,
 		width,
@@ -653,7 +658,7 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 		textByMcid,
 		spansByMcid,
 		textRuns,
-		paths,
+		paths: contentPaths,
 		links,
 		linksById,
 		fonts,
