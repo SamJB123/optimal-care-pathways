@@ -323,6 +323,12 @@ function Marked(props: { marks: JsonMark[]; index: number; text: string }) {
 							{inner()}
 						</a>
 					</Match>
+					<Match when={m().type === 'insertion'}>
+						<ins data-ocp="insertion">{inner()}</ins>
+					</Match>
+					<Match when={m().type === 'deletion'}>
+						<del data-ocp="deletion">{inner()}</del>
+					</Match>
 				</Switch>
 			)}
 		</Show>

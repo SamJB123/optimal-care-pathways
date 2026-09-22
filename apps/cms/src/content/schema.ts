@@ -533,6 +533,29 @@ const defineNote = () =>
 		toDOM: () => ['span', { 'data-ocp': 'note' }, 0],
 	})
 
+/**
+ * Review marks (decision 96): a body annotated against the published version carries
+ * insertions and deletions as marks, painted by the renderer. They are defined in the
+ * schema so an annotated body is a valid body; the editor never writes them.
+ */
+const defineInsertion = () =>
+	defineMarkSpec({
+		name: 'insertion',
+		inclusive: false,
+		excludes: 'insertion deletion',
+		parseDOM: [{ tag: 'ins[data-ocp="insertion"]' }],
+		toDOM: () => ['ins', { 'data-ocp': 'insertion' }, 0],
+	})
+
+const defineDeletion = () =>
+	defineMarkSpec({
+		name: 'deletion',
+		inclusive: false,
+		excludes: 'deletion insertion',
+		parseDOM: [{ tag: 'del[data-ocp="deletion"]' }],
+		toDOM: () => ['del', { 'data-ocp': 'deletion' }, 0],
+	})
+
 /** Figures carry their alternative text (ProseKit's image node has only src and size). */
 const defineImageAlt = () =>
 	defineNodeAttr<'image', 'alt', string>({
@@ -689,6 +712,8 @@ export function defineContentSchema() {
 		defineInstruction(),
 		defineNote(),
 		defineSectionLink(),
+		defineInsertion(),
+		defineDeletion(),
 		defineParagraphSpec(), // last, so first in the schema (see above)
 		defineTextAlignAttr('paragraph'),
 		defineTextAlignAttr('heading'),

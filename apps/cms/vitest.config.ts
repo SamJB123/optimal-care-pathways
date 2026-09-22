@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { cloudflareTest } from '@cloudflare/vitest-pool-workers'
+import solidPlugin from '@solidjs/vite-plugin'
 import { defineConfig } from 'vitest/config'
 
 // The content database's migrations, read from ./drizzle and handed to the workerd
@@ -53,6 +54,10 @@ export default defineConfig({
 				},
 			},
 			{
+				// Solid compiled for the SERVER here, so the published-HTML renderer (Solid's
+				// renderToString over the body components) is proven where it runs: outside a DOM.
+				plugins: [solidPlugin({ ssr: true })],
+				resolve: { alias: { 'solid-js/web': '@solidjs/web', 'solid-js/h': '@solidjs/h' } },
 				test: {
 					name: 'node',
 					environment: 'node',

@@ -51,8 +51,6 @@ export type DocumentWireRow = {
 	title: string
 	subject: string
 	audience: DocumentRow['audience']
-	status: DocumentRow['status']
-	publishedVersionNo: number
 	createdAt: number
 	updatedAt: number | null
 }
@@ -68,8 +66,6 @@ export function documentWireRow(row: DocumentRow): DocumentWireRow {
 		title: row.title,
 		subject: row.subject,
 		audience: row.audience,
-		status: row.status,
-		publishedVersionNo: row.publishedVersionNo,
 		createdAt: row.createdAt.getTime(),
 		updatedAt: row.updatedAt?.getTime() ?? null,
 	}

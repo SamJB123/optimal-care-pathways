@@ -128,8 +128,10 @@ function Documents(props: { snapshot: Awaited<ReturnType<typeof documentsSnapsho
 											{doc.title}
 										</ButtonLink>
 										<span class="ocp-document-meta">
-											{doc.status}
-											{doc.publishedVersionNo > 0 ? ` · v${doc.publishedVersionNo}` : ''}
+											{props.snapshot?.states[doc.id]?.reviewOpen ? 'In review' : 'Draft'}
+											{props.snapshot?.states[doc.id]?.publishedVersionNo
+												? ` · published v${props.snapshot.states[doc.id]?.publishedVersionNo}`
+												: ' · not yet published'}
 										</span>
 									</li>
 								)}

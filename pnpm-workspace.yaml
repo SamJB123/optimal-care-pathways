@@ -126,6 +126,8 @@ catalog:
   # (pathways) The flat-list model under @prosekit/extensions/list, imported directly for
   # the one list kind ProseKit's types do not name ('check'). Same version as prosekit.
   prosemirror-flat-list: 0.7.1
+  # (pathways) the review diff: a draft body annotated against the published body (decision 96).
+  prosemirror-changeset: 2.4.3
   # (pathways) the template extractor (Node script) and the audit review page (browser)
   # read the 2026 template PDFs: structure tree + marked content + fonts.
   # pdf.js renders template figures through its own optional `@napi-rs/canvas`; the app

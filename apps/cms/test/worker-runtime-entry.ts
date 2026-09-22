@@ -24,6 +24,9 @@ const parseMember = (userId: string): { role: string; orgId: string } | null => 
 	return at > 0 ? { role: userId.slice(0, at), orgId: userId.slice(at + 1) } : null
 }
 
+/** Every notification the fixture was asked to send, for assertions. */
+export const sentMail: { to: string[]; subject: string; text: string }[] = []
+
 export class TestAuth extends WorkerEntrypoint {
 	/** The `/api/ws` upgrade's cookie check (serveCapnweb) and the root's `whoami`
 	 *  probe: the cookie IS the user id in this fixture, so a browser socket dialled
@@ -34,6 +37,21 @@ export class TestAuth extends WorkerEntrypoint {
 
 	async getUsersByIds(userIds: string[]) {
 		return Object.fromEntries(userIds.map((id) => [id, { name: id }]))
+	}
+
+	async getUserById(userId: string) {
+		return { id: userId, name: userId, email: `${userId}.test`, emailVerified: true }
+	}
+
+	/** The fixture knows no roster: an organisation's members are the callers a test
+	 *  has named. Tests that need recipients read `sentMail` instead. */
+	async listOrgMembers(_organizationId: string, _namespace?: string) {
+		return []
+	}
+
+	async sendNotification(mail: { to: string[]; subject: string; text: string }) {
+		sentMail.push(mail)
+		return { sent: mail.to.length }
 	}
 
 	async getOrgMembershipById(userId: string, orgId: string, _namespace: string) {

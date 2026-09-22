@@ -50,3 +50,16 @@
 	color: var(--color-base-content-muted);
 	font-size: 0.9em;
 }
+
+.ocp-hub-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem;
+	margin-block-start: 0.75rem;
+}
+
+.ocp-hub-release-notes {
+	margin: 0.75rem 0 0;
+	white-space: pre-wrap;
+}

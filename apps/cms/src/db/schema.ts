@@ -19,23 +19,33 @@
  * only yjs state, replaceable from this row at any time. Nothing here is written by a DO
  * except that column and its `updated_*` pair.
  *
- * WHAT A VERSION IS. A snapshot row plus one row per section with the body RESOLVED (a
- * shared section's core body as it was at that moment) and rendered to HTML and Markdown.
- * Publish snapshots carry a version number and an optional edition label; review
- * snapshots carry none. `last_changed_version_no` on a snapshot section is the partner
- * site's per-section "last updated".
+ * WHAT A VERSION IS (decisions 115–117). Every document has, at any time, exactly one
+ * DRAFT version (whose content is the live `sections` rows), at most one PUBLISHED
+ * version and any number of ARCHIVED ones. Publishing freezes the draft's sections —
+ * body RESOLVED (a shared section's core body as published) and rendered to HTML and
+ * Markdown — into `version_sections`, marks the draft published, archives the incumbent
+ * and opens the next draft. `last_changed_version_no` on a version section is the
+ * partner site's per-section "last updated". A review is of the draft version and pins
+ * each reviewed section's body hash; decisions live per section and roll up in a view.
+ *
+ * SHARED CONTENT IS STORED ONCE (decision 118). A shared section holds no body; a
+ * citation names a reference row by id wherever that row lives, so a pathway's
+ * references list is the union of the rows its resolved bodies cite. Nothing of the
+ * core is copied into a pathway except the template scaffold of the sections the
+ * template hands to the pathway to write.
  *
  * Timestamps are epoch-ms integers. Ids are UUIDs. Every user reference is a better-auth
  * user id; membership and roles live in the auth worker, keyed by `documents.org_id`.
  */
 
-import { sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import {
 	index,
 	integer,
 	primaryKey,
 	real,
 	sqliteTable,
+	sqliteView,
 	text,
 	uniqueIndex,
 } from 'drizzle-orm/sqlite-core'
@@ -77,10 +87,6 @@ export type DocumentKind = (typeof DOCUMENT_KINDS)[number]
 export const AUDIENCES = ['cancer', 'population', 'principles'] as const
 export type Audience = (typeof AUDIENCES)[number]
 
-/** The draft's workflow state. Published versions are snapshots, not a state. */
-export const DOCUMENT_STATUSES = ['draft', 'in_review', 'approved'] as const
-export type DocumentStatus = (typeof DOCUMENT_STATUSES)[number]
-
 export const documents = sqliteTable(
 	'documents',
 	{
@@ -102,9 +108,6 @@ export const documents = sqliteTable(
 		 *  Substituted into shared prose at render time. */
 		subject: text('subject').notNull(),
 		audience: text('audience').$type<Audience>().notNull(),
-		status: text('status').$type<DocumentStatus>().notNull().default('draft'),
-		/** The latest published version number; 0 = never published. */
-		publishedVersionNo: integer('published_version_no').notNull().default(0),
 		createdAt: createdAt(),
 		updatedAt: timestampMs('updated_at'),
 	},
@@ -202,44 +205,56 @@ export const references = sqliteTable(
 )
 
 // ---------------------------------------------------------------------------
-// Snapshots — review checkpoints and published versions
+// Versions — draft, published, archived (decisions 115–117)
 // ---------------------------------------------------------------------------
 
-export const SNAPSHOT_KINDS = ['review', 'publish'] as const
-export type SnapshotKind = (typeof SNAPSHOT_KINDS)[number]
+export const VERSION_STATUSES = ['draft', 'published', 'archived'] as const
+export type VersionStatus = (typeof VERSION_STATUSES)[number]
 
-export const snapshots = sqliteTable(
-	'snapshots',
+/**
+ * One row per version of a document. Exactly one 'draft' per document at any time (its
+ * content is the live `sections`); at most one 'published' (publishing archives the
+ * incumbent in the same batch); the rest 'archived'. `version_no` is assigned when the
+ * draft is opened (the incumbent's number plus one), so a draft is "Version 3 (draft)".
+ */
+export const versions = sqliteTable(
+	'versions',
 	{
 		id: text('id').primaryKey(),
 		documentId: text('document_id')
 			.notNull()
 			.references(() => documents.id, { onDelete: 'cascade' }),
-		kind: text('kind').$type<SnapshotKind>().notNull(),
-		/** Publish snapshots only: 1, 2, 3… per document. */
-		versionNo: integer('version_no'),
-		/** Publish snapshots only: an edition label such as 'Second edition'. */
+		status: text('status').$type<VersionStatus>().notNull().default('draft'),
+		versionNo: integer('version_no').notNull(),
+		/** An edition label such as 'Second edition'; set at publish. */
 		label: text('label'),
-		/** For a pathway: the core document's publish snapshot its shared sections were
-		 *  resolved against. */
-		coreSnapshotId: text('core_snapshot_id'),
+		/** What changed in this version, written for readers of the published document
+		 *  (public release notes); set at publish. */
+		releaseNotes: text('release_notes'),
+		/** For a pathway: the core document's PUBLISHED version its shared sections were
+		 *  resolved against at publish. */
+		coreVersionId: text('core_version_id'),
 		createdAt: createdAt(),
 		createdBy: text('created_by').notNull(),
-		note: text('note'),
+		publishedAt: timestampMs('published_at'),
+		publishedBy: text('published_by'),
 	},
 	(t) => [
-		index('snapshots_document').on(t.documentId),
-		uniqueIndex('snapshots_document_version').on(t.documentId, t.versionNo),
+		index('versions_document').on(t.documentId),
+		uniqueIndex('versions_document_no').on(t.documentId, t.versionNo),
+		index('versions_status').on(t.documentId, t.status),
 	],
 )
 
-/** One row per section as it stood in the snapshot, body resolved and rendered. */
-export const snapshotSections = sqliteTable(
-	'snapshot_sections',
+/** One row per section as it stood when the version was published: body RESOLVED (a
+ *  shared section's core body as published) and rendered. Written only at publish; a
+ *  draft's sections are the live `sections` rows. */
+export const versionSections = sqliteTable(
+	'version_sections',
 	{
-		snapshotId: text('snapshot_id')
+		versionId: text('version_id')
 			.notNull()
-			.references(() => snapshots.id, { onDelete: 'cascade' }),
+			.references(() => versions.id, { onDelete: 'cascade' }),
 		sectionId: text('section_id').notNull(),
 		parentAddress: text('parent_address'),
 		address: text('address').notNull(),
@@ -249,27 +264,33 @@ export const snapshotSections = sqliteTable(
 		ownership: text('ownership').$type<Ownership>().notNull(),
 		hidden: bool('hidden').notNull(),
 		pointOfCare: bool('point_of_care').notNull(),
-		/** The resolved body: the section's own, or the core section's at that moment. */
 		bodyJson: text('body_json', { mode: 'json' }).$type<JsonNode>(),
 		html: text('html'),
 		markdown: text('markdown'),
-		/** The publish version in which this section's resolved body last changed — the
-		 *  partner site's per-section "last updated". Null on review snapshots. */
-		lastChangedVersionNo: integer('last_changed_version_no'),
+		/** The version in which this section's resolved body last changed — the partner
+		 *  site's per-section "last updated". */
+		lastChangedVersionNo: integer('last_changed_version_no').notNull(),
 	},
 	(t) => [
-		primaryKey({ columns: [t.snapshotId, t.sectionId] }),
-		index('snapshot_sections_address').on(t.snapshotId, t.address),
+		primaryKey({ columns: [t.versionId, t.sectionId] }),
+		index('version_sections_address').on(t.versionId, t.address),
 	],
 )
 
 // ---------------------------------------------------------------------------
-// Reviews — a reviewer's decision on a review snapshot
+// Reviews — decisions per section on the draft, rolled up in a view (decision 95, 119)
 // ---------------------------------------------------------------------------
 
-export const REVIEW_DECISIONS = ['approved', 'changes_requested'] as const
-export type ReviewDecision = (typeof REVIEW_DECISIONS)[number]
+export const SECTION_DECISIONS = ['approved', 'changes_requested'] as const
+export type SectionDecision = (typeof SECTION_DECISIONS)[number]
 
+/**
+ * A review is of the DRAFT version and covers everything that changed since the
+ * published version (decision 112: review cycles are publish cycles). It stores no
+ * decision of its own: `review_state` derives it from the sections. A later request on
+ * the same draft supersedes an earlier one (the latest review per draft is the one that
+ * counts).
+ */
 export const reviews = sqliteTable(
 	'reviews',
 	{
@@ -277,17 +298,169 @@ export const reviews = sqliteTable(
 		documentId: text('document_id')
 			.notNull()
 			.references(() => documents.id, { onDelete: 'cascade' }),
-		snapshotId: text('snapshot_id')
+		versionId: text('version_id')
 			.notNull()
-			.references(() => snapshots.id, { onDelete: 'cascade' }),
+			.references(() => versions.id, { onDelete: 'cascade' }),
 		requestedBy: text('requested_by').notNull(),
 		requestedAt: createdAt(),
-		decidedBy: text('decided_by'),
-		decidedAt: timestampMs('decided_at'),
-		decision: text('decision').$type<ReviewDecision>(),
 		note: text('note'),
 	},
-	(t) => [index('reviews_document').on(t.documentId)],
+	(t) => [index('reviews_document').on(t.documentId), index('reviews_version').on(t.versionId)],
+)
+
+/**
+ * One row per section the review must decide — the sections whose resolved body differs
+ * from the published version — pinning the body's hash at request time (decision 120):
+ * publishing requires every pinned hash to still match, so what was approved is what is
+ * published. Decision null until a reviewer decides.
+ */
+export const reviewSections = sqliteTable(
+	'review_sections',
+	{
+		reviewId: text('review_id')
+			.notNull()
+			.references(() => reviews.id, { onDelete: 'cascade' }),
+		sectionId: text('section_id').notNull(),
+		bodyHash: text('body_hash').notNull(),
+		decision: text('decision').$type<SectionDecision>(),
+		note: text('note'),
+		decidedBy: text('decided_by'),
+		decidedAt: timestampMs('decided_at'),
+	},
+	(t) => [primaryKey({ columns: [t.reviewId, t.sectionId] })],
+)
+
+// ---------------------------------------------------------------------------
+// Comments — threads per section, at every stage (decision 99, 110)
+// ---------------------------------------------------------------------------
+
+/** A comment on a section, or — on a SHARED section — a suggested change addressed to
+ *  the central organisation, which lists suggestions on the core document (decision 26). */
+export const COMMENT_KINDS = ['comment', 'suggestion'] as const
+export type CommentKind = (typeof COMMENT_KINDS)[number]
+
+export const comments = sqliteTable(
+	'comments',
+	{
+		id: text('id').primaryKey(),
+		documentId: text('document_id')
+			.notNull()
+			.references(() => documents.id, { onDelete: 'cascade' }),
+		sectionId: text('section_id')
+			.notNull()
+			.references(() => sections.id, { onDelete: 'cascade' }),
+		kind: text('kind').$type<CommentKind>().notNull().default('comment'),
+		body: text('body').notNull(),
+		authorId: text('author_id').notNull(),
+		authorName: text('author_name').notNull(),
+		createdAt: createdAt(),
+		resolvedAt: timestampMs('resolved_at'),
+		resolvedBy: text('resolved_by'),
+	},
+	(t) => [index('comments_section').on(t.sectionId), index('comments_document').on(t.documentId)],
+)
+
+// ---------------------------------------------------------------------------
+// Views — "currently published" and the review roll-up, one shape for every reader
+// ---------------------------------------------------------------------------
+
+/**
+ * The published version of every document that has one (decision 98): the document row
+ * beside its 'published' version row. Publishing archives the incumbent in the same
+ * batch, so there is at most one such row per document and no "latest" to pick. The
+ * public API, the composed view and a pathway's publish (which resolves shared sections
+ * against the core's published version) read this and never re-derive "current".
+ */
+export const publishedVersions = sqliteView('published_versions').as((qb) =>
+	qb
+		.select({
+			// Both tables have an `id`; a view's columns must be distinct, so each is aliased.
+			documentId: sql<string>`${documents.id}`.as('document_id'),
+			kind: documents.kind,
+			templateId: documents.templateId,
+			orgId: documents.orgId,
+			slug: documents.slug,
+			partnerSlug: documents.partnerSlug,
+			title: documents.title,
+			subject: documents.subject,
+			audience: documents.audience,
+			versionId: sql<string>`${versions.id}`.as('version_id'),
+			versionNo: versions.versionNo,
+			label: versions.label,
+			releaseNotes: versions.releaseNotes,
+			coreVersionId: versions.coreVersionId,
+			publishedAt: versions.publishedAt,
+			publishedBy: versions.publishedBy,
+		})
+		.from(versions)
+		.innerJoin(documents, eq(documents.id, versions.documentId))
+		.where(eq(versions.status, 'published')),
+)
+
+/** The sections of every published version, resolved and rendered, hidden ones left out. */
+export const publishedSections = sqliteView('published_sections').as((qb) =>
+	qb
+		.select({
+			documentId: versions.documentId,
+			versionId: versionSections.versionId,
+			versionNo: versions.versionNo,
+			sectionId: versionSections.sectionId,
+			parentAddress: versionSections.parentAddress,
+			address: versionSections.address,
+			title: versionSections.title,
+			printedNumber: versionSections.printedNumber,
+			orderIndex: versionSections.orderIndex,
+			ownership: versionSections.ownership,
+			pointOfCare: versionSections.pointOfCare,
+			bodyJson: versionSections.bodyJson,
+			html: versionSections.html,
+			markdown: versionSections.markdown,
+			lastChangedVersionNo: versionSections.lastChangedVersionNo,
+		})
+		.from(versionSections)
+		.innerJoin(versions, eq(versions.id, versionSections.versionId))
+		.where(and(eq(versions.status, 'published'), eq(versionSections.hidden, false))),
+)
+
+/**
+ * A review's state, derived from its sections (decision 119): how many sections it
+ * covers, how many are decided, and the roll-up — 'changes_requested' as soon as any
+ * section says so, 'approved' once every section is approved, null while open.
+ * `superseded` is true when a later review exists on the same draft.
+ */
+export const reviewState = sqliteView('review_state').as((qb) =>
+	qb
+		.select({
+			reviewId: reviews.id,
+			documentId: reviews.documentId,
+			versionId: reviews.versionId,
+			requestedBy: reviews.requestedBy,
+			requestedAt: reviews.requestedAt,
+			note: reviews.note,
+			total: sql<number>`count(${reviewSections.sectionId})`.as('total'),
+			decided: sql<number>`count(${reviewSections.decision})`.as('decided'),
+			approved:
+				sql<number>`coalesce(sum(case when ${reviewSections.decision} = 'approved' then 1 else 0 end), 0)`.as(
+					'approved',
+				),
+			changesRequested:
+				sql<number>`coalesce(sum(case when ${reviewSections.decision} = 'changes_requested' then 1 else 0 end), 0)`.as(
+					'changes_requested',
+				),
+			decision: sql<SectionDecision | null>`case
+				when coalesce(sum(case when ${reviewSections.decision} = 'changes_requested' then 1 else 0 end), 0) > 0 then 'changes_requested'
+				when count(${reviewSections.sectionId}) > 0 and count(${reviewSections.decision}) = count(${reviewSections.sectionId}) then 'approved'
+				else null end`.as('decision'),
+			// SQLite has no boolean: 1 when a later review exists on the same draft, else 0.
+			superseded: sql<number>`exists (
+				select 1 from ${reviews} later
+				where later.version_id = ${reviews.versionId}
+				and later.created_at > ${reviews.requestedAt}
+			)`.as('superseded'),
+		})
+		.from(reviews)
+		.leftJoin(reviewSections, eq(reviewSections.reviewId, reviews.id))
+		.groupBy(reviews.id),
 )
 
 // ---------------------------------------------------------------------------

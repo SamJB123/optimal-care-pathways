@@ -101,11 +101,19 @@ export const bootstrapCentral = createServerFn({ method: 'POST' }).handler(async
 	return { organizationId: org.id, adoptedCoreDocuments: adopted.length }
 })
 
+/** Where a document stands, for a list: its published version and whether a review is open. */
+export type DocumentListState = { publishedVersionNo: number | null; reviewOpen: boolean }
+
 /** The caller's documents for first paint; the live documents topic takes over. */
 export const documentsSnapshot = createServerFn({ method: 'GET' }).handler(
 	async ({
 		context,
-	}): Promise<{ documents: DocumentWireRow[]; central: boolean; roles: Record<string, Role> }> => {
+	}): Promise<{
+		documents: DocumentWireRow[]
+		central: boolean
+		roles: Record<string, Role>
+		states: Record<string, DocumentListState>
+	}> => {
 		const userId = requireUser(context.userId)
 		const { env, d } = await envOf()
 		const memberships = await env.AUTH.listUserOrgs(userId, OCP_NAMESPACE)
@@ -125,10 +133,35 @@ export const documentsSnapshot = createServerFn({ method: 'GET' }).handler(
 			const role = roleByOrg.get(row.orgId) ?? (isCentral ? 'admin' : null)
 			if (role) roleEntries.push([row.id, role])
 		}
+		const published = await d
+			.select({
+				documentId: schema.publishedVersions.documentId,
+				versionNo: schema.publishedVersions.versionNo,
+			})
+			.from(schema.publishedVersions)
+		const openReviews = await d
+			.select({ documentId: schema.reviewState.documentId })
+			.from(schema.reviewState)
+			.innerJoin(schema.versions, eq(schema.versions.id, schema.reviewState.versionId))
+			.where(
+				and(
+					eq(schema.versions.status, 'draft'),
+					isNull(schema.reviewState.decision),
+					eq(schema.reviewState.superseded, 0),
+				),
+			)
+		const open = new Set(openReviews.map((r) => r.documentId))
+		const publishedNo = new Map(published.map((p) => [p.documentId, p.versionNo]))
 		return {
 			documents: rows.map(documentWireRow),
 			central: isCentral,
 			roles: Object.fromEntries(roleEntries),
+			states: Object.fromEntries(
+				rows.map((row) => [
+					row.id,
+					{ publishedVersionNo: publishedNo.get(row.id) ?? null, reviewOpen: open.has(row.id) },
+				]),
+			),
 		}
 	},
 )
@@ -297,36 +330,67 @@ export const sectionsSnapshot = createServerFn({ method: 'GET' })
 	)
 
 /** The resting body of a section the caller may read: its own, or, for a shared
- *  section, the core section it renders. */
+ *  section, the core section's body as PUBLISHED (its draft while the core has never
+ *  published — decision 98). */
 export const sectionBody = createServerFn({ method: 'GET' })
 	.inputValidator(z.object({ sectionId: z.string().min(1).max(64) }))
-	.handler(async ({ data, context }): Promise<{ body: JsonNode | null; resolvedFrom: string }> => {
-		const userId = requireUser(context.userId)
-		const { d } = await envOf()
-		const section = (
-			await d.select().from(schema.sections).where(eq(schema.sections.id, data.sectionId)).limit(1)
-		)[0]
-		if (!section) throw new Error('Section not found.')
-		const document = (
-			await d
-				.select()
-				.from(schema.documents)
-				.where(eq(schema.documents.id, section.documentId))
-				.limit(1)
-		)[0]
-		if (!document || !(await roleOn(userId, document.orgId)))
-			throw new Error('You are not a member of this document.')
-		if (section.ownership === 'owned' || !section.coreSectionId)
-			return { body: section.bodyJson ?? null, resolvedFrom: section.id }
-		const core = (
-			await d
-				.select()
-				.from(schema.sections)
-				.where(eq(schema.sections.id, section.coreSectionId))
-				.limit(1)
-		)[0]
-		return { body: core?.bodyJson ?? null, resolvedFrom: section.coreSectionId }
-	})
+	.handler(
+		async ({
+			data,
+			context,
+		}): Promise<{
+			body: JsonNode | null
+			resolvedFrom: string
+			coreSource: 'published' | 'draft' | null
+		}> => {
+			const userId = requireUser(context.userId)
+			const { d } = await envOf()
+			const section = (
+				await d
+					.select()
+					.from(schema.sections)
+					.where(eq(schema.sections.id, data.sectionId))
+					.limit(1)
+			)[0]
+			if (!section) throw new Error('Section not found.')
+			const document = (
+				await d
+					.select()
+					.from(schema.documents)
+					.where(eq(schema.documents.id, section.documentId))
+					.limit(1)
+			)[0]
+			if (!document || !(await roleOn(userId, document.orgId)))
+				throw new Error('You are not a member of this document.')
+			if (section.ownership === 'owned' || !section.coreSectionId)
+				return { body: section.bodyJson ?? null, resolvedFrom: section.id, coreSource: null }
+			const published = (
+				await d
+					.select({ bodyJson: schema.publishedSections.bodyJson })
+					.from(schema.publishedSections)
+					.where(eq(schema.publishedSections.sectionId, section.coreSectionId))
+					.limit(1)
+			)[0]
+			if (published)
+				return {
+					body: published.bodyJson ?? null,
+					resolvedFrom: section.coreSectionId,
+					coreSource: 'published',
+				}
+			const core = (
+				await d
+					.select()
+					.from(schema.sections)
+					.where(eq(schema.sections.id, section.coreSectionId))
+					.limit(1)
+			)[0]
+			return {
+				body: core?.bodyJson ?? null,
+				resolvedFrom: section.coreSectionId,
+				coreSource: 'draft',
+			}
+		},
+	)
 
 /** A section as the review page shows it: the outline row with its resting body. */
 export type ReviewSectionRow = SectionWireRow & { body: JsonNode | null }
@@ -389,13 +453,8 @@ export const reviewSnapshot = createServerFn({ method: 'GET' })
 		},
 	)
 
-/** A review awaiting a decision, as the hub lists it. */
-export type OpenReviewRow = {
-	id: string
-	requestedBy: string
-	requestedAt: number
-	note: string | null
-}
+/** What an event records beside its kind: plain JSON values. */
+export type EventDetail = Record<string, string | number | boolean | null>
 
 /** An activity line, as the hub's feed shows it. */
 export type ActivityRow = {
@@ -403,56 +462,53 @@ export type ActivityRow = {
 	kind: string
 	actorName: string
 	at: number
+	detail: EventDetail | null
+}
+
+const eventDetail = (value: unknown): EventDetail | null => {
+	if (typeof value !== 'object' || value === null || Array.isArray(value)) return null
+	const out: EventDetail = {}
+	for (const [key, v] of Object.entries(value))
+		if (v === null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean')
+			out[key] = v
+	return out
 }
 
 /**
- * The hub's live state beside the map (decision 78): the document's status and
- * version come with the outline snapshot; this adds the open reviews and the latest
- * activity. Members of the document only.
+ * The hub's activity beside the map (decision 78); the document's versions and review
+ * come from `documentState` (lifecycle-fns.ts). Members of the document only.
  */
 export const hubSnapshot = createServerFn({ method: 'GET' })
 	.inputValidator(z.object({ documentId: z.string().min(1).max(64) }))
-	.handler(
-		async ({ data, context }): Promise<{ reviews: OpenReviewRow[]; activity: ActivityRow[] }> => {
-			const userId = requireUser(context.userId)
-			const { d } = await envOf()
-			const document = (
-				await d
-					.select({ orgId: schema.documents.orgId })
-					.from(schema.documents)
-					.where(eq(schema.documents.id, data.documentId))
-					.limit(1)
-			)[0]
-			if (!document) throw new Error('Document not found.')
-			if (!(await roleOn(userId, document.orgId)))
-				throw new Error('You are not a member of this document.')
-			const reviews = await d
-				.select()
-				.from(schema.reviews)
-				.where(and(eq(schema.reviews.documentId, data.documentId), isNull(schema.reviews.decision)))
-				.orderBy(desc(schema.reviews.requestedAt))
-			const activity = await d
-				.select()
-				.from(schema.events)
-				.where(eq(schema.events.documentId, data.documentId))
-				.orderBy(desc(schema.events.at))
-				.limit(30)
-			return {
-				reviews: reviews.map((r) => ({
-					id: r.id,
-					requestedBy: r.requestedBy,
-					requestedAt: r.requestedAt.getTime(),
-					note: r.note,
-				})),
-				activity: activity.map((e) => ({
-					id: e.id,
-					kind: e.kind,
-					actorName: e.actorName,
-					at: e.at.getTime(),
-				})),
-			}
-		},
-	)
+	.handler(async ({ data, context }): Promise<{ activity: ActivityRow[] }> => {
+		const userId = requireUser(context.userId)
+		const { d } = await envOf()
+		const document = (
+			await d
+				.select({ orgId: schema.documents.orgId })
+				.from(schema.documents)
+				.where(eq(schema.documents.id, data.documentId))
+				.limit(1)
+		)[0]
+		if (!document) throw new Error('Document not found.')
+		if (!(await roleOn(userId, document.orgId)))
+			throw new Error('You are not a member of this document.')
+		const activity = await d
+			.select()
+			.from(schema.events)
+			.where(eq(schema.events.documentId, data.documentId))
+			.orderBy(desc(schema.events.at))
+			.limit(30)
+		return {
+			activity: activity.map((e) => ({
+				id: e.id,
+				kind: e.kind,
+				actorName: e.actorName,
+				at: e.at.getTime(),
+				detail: eventDetail(e.detail),
+			})),
+		}
+	})
 
 /** Depth-first reading order over the section tree. */
 function outlineOrder<T extends { id: string; parentId: string | null; orderIndex: number }>(
@@ -514,20 +570,9 @@ export const createPathway = createServerFn({ method: 'POST' })
 
 		const documentId = crypto.randomUUID()
 
-		// The copied bodies point at the copied references, so the ids are minted first.
-		const coreReferences = await d
-			.select()
-			.from(schema.references)
-			.where(eq(schema.references.documentId, core.id))
-		const referenceIds = new Map(coreReferences.map((r) => [r.id, crypto.randomUUID()]))
-		const referenceRows = coreReferences.map((r) => ({
-			id: referenceIds.get(r.id) ?? r.id,
-			documentId,
-			citation: r.citation,
-			url: r.url,
-			printedNumber: r.printedNumber,
-		}))
-
+		// Shared content is stored once (decision 118): the pathway copies NO references —
+		// its bodies cite the core's rows by id — and no shared body. The only copy is the
+		// template scaffold of the sections the template hands the pathway to write.
 		const coreSections = (
 			await d.select().from(schema.sections).where(eq(schema.sections.documentId, core.id))
 		).filter((s) => !s.apparatus)
@@ -548,11 +593,11 @@ export const createPathway = createServerFn({ method: 'POST' })
 				ownership: shared ? ('shared' as const) : ('owned' as const),
 				coreSectionId: shared ? s.id : null,
 				pointOfCare: s.pointOfCare,
-				bodyJson: shared || !s.bodyJson ? null : remapCitations(s.bodyJson, referenceIds),
+				bodyJson: shared ? null : (s.bodyJson ?? null),
 			}
 		})
-		// One atomic D1 batch: the document, its references, its sections — all or nothing.
-		// D1 binds at most 100 parameters per statement, so rows go in small groups.
+		// One atomic D1 batch: the document, its first draft version, its sections — all or
+		// nothing. D1 binds at most 100 parameters per statement, so rows go in small groups.
 		const chunk = <T>(items: T[], size: number): T[][] => {
 			const out: T[][] = []
 			for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size))
@@ -573,7 +618,13 @@ export const createPathway = createServerFn({ method: 'POST' })
 						audience: data.kind,
 					})
 					.returning(),
-				...chunk(referenceRows, 16).map((group) => d.insert(schema.references).values(group)),
+				d.insert(schema.versions).values({
+					id: crypto.randomUUID(),
+					documentId,
+					status: 'draft',
+					versionNo: 1,
+					createdBy: userId,
+				}),
 				...chunk(rows, 6).map((group) => d.insert(schema.sections).values(group)),
 			])
 			.then(([first]) => first)
@@ -581,15 +632,3 @@ export const createPathway = createServerFn({ method: 'POST' })
 		if (document) void publishDocumentRows([document])
 		return { documentId, organizationId: created.organizationId }
 	})
-
-function remapCitations(node: JsonNode, referenceIds: ReadonlyMap<string, string>): JsonNode {
-	const attrs =
-		node.type === 'citation' && typeof node.attrs?.referenceId === 'string'
-			? {
-					...node.attrs,
-					referenceId: referenceIds.get(node.attrs.referenceId) ?? node.attrs.referenceId,
-				}
-			: node.attrs
-	const content = node.content?.map((child) => remapCitations(child, referenceIds))
-	return { ...node, ...(attrs ? { attrs } : {}), ...(content ? { content } : {}) }
-}

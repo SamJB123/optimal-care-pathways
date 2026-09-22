@@ -45,6 +45,7 @@
 		"better-auth": "catalog:",
 		"capnweb-experimental-hibernation": "catalog:",
 		"pdfjs-dist": "catalog:",
+		"prosemirror-changeset": "catalog:",
 		"prosemirror-flat-list": "catalog:",
 		"solid-js": "catalog:",
 		"zod": "catalog:"

@@ -1,27 +1,21 @@
 /**
- * The document's hub (decisions 67, 78): the pathway map as the landing view with live
- * state on its nodes, then the document's status and version, the reviews awaiting a
- * decision and the latest activity.
+ * The document's hub (decisions 67, 78, 88): the pathway map as the landing view with
+ * live state on its nodes, then where the document stands — its published and draft
+ * versions, the review under way, the changes waiting — and the latest activity.
  */
 
-import { ActivityFeed, EmptyState, Notice, Panel } from '@aicolab/ui-solid'
+import { ActivityFeed, Button, EmptyState, Notice, Panel } from '@aicolab/ui-solid'
 import { createFileRoute } from '@tanstack/solid-router'
-import { For, Show, useContext } from 'solid-js'
+import { Show, useContext } from 'solid-js'
 import { PathwayMap } from '#/content/blocks.tsx'
-import { hubSnapshot } from '#/server/documents.ts'
-import { DocumentContext } from './d.$documentId.tsx'
+import { type ActivityRow, hubSnapshot } from '#/server/documents.ts'
+import { atLeast, DocumentContext } from '#/lifecycle/workspace.ts'
 import './hub.css'
 
 export const Route = createFileRoute('/d/$documentId/')({
 	loader: async ({ params }) => hubSnapshot({ data: { documentId: params.documentId } }),
 	component: HubPage,
 })
-
-const STATUS_LABEL: Record<string, string> = {
-	draft: 'Draft',
-	in_review: 'In review',
-	approved: 'Approved',
-}
 
 const when = (ms: number) =>
 	new Date(ms).toLocaleString('en-AU', {
@@ -32,10 +26,34 @@ const when = (ms: number) =>
 		minute: '2-digit',
 	})
 
+/** The activity line for an event, in words. */
+function describe(event: ActivityRow): string {
+	const d = event.detail ?? {}
+	switch (event.kind) {
+		case 'review.requested':
+			return `requested a review of ${d.sections ?? '?'} changed section${d.sections === 1 ? '' : 's'}`
+		case 'review.decided':
+			return d.decision === 'approved'
+				? 'approved the review in full'
+				: 'asked for changes in the review'
+		case 'version.published':
+			return `published version ${d.versionNo ?? '?'}${d.label ? ` (${d.label})` : ''}`
+		case 'section.diverged':
+			return `took an own copy of section ${d.address ?? ''}`
+		case 'section.reverted':
+			return `returned section ${d.address ?? ''} to the shared version`
+		case 'suggestion.made':
+			return 'suggested a change to shared content'
+		default:
+			return event.kind.replace(/[._]/g, ' ')
+	}
+}
+
 function HubPage() {
 	const hub = Route.useLoaderData()
 	const workspace = useContext(DocumentContext)
 	const document = () => workspace.document
+	const state = () => workspace.state()
 	return (
 		<div class="ocp-hub">
 			<Show
@@ -49,37 +67,85 @@ function HubPage() {
 				{(map) => <PathwayMap map={map()} class="ocp-hub-map" />}
 			</Show>
 			<div class="ocp-hub-panels">
-				<Panel title="Status" kicker={document().title} variant="soft">
+				<Panel title="Versions" kicker={document().title} variant="soft">
 					<dl class="ocp-hub-facts">
-						<dt>State</dt>
-						<dd>{STATUS_LABEL[document().status] ?? document().status}</dd>
-						<dt>Published version</dt>
+						<dt>Published</dt>
 						<dd>
-							{document().publishedVersionNo > 0
-								? `Version ${document().publishedVersionNo}`
-								: 'Not yet published'}
+							<Show when={state().published} fallback="Not yet published">
+								{(p) => (
+									<>
+										Version {p().versionNo}
+										{p().label ? ` · ${p().label}` : ''}
+										<Show when={p().publishedAt}>
+											{(at) => <span class="ocp-muted"> · {when(at())}</span>}
+										</Show>
+									</>
+								)}
+							</Show>
+						</dd>
+						<dt>Draft</dt>
+						<dd>
+							Version {state().draft.versionNo} · {state().changes.length} section
+							{state().changes.length === 1 ? '' : 's'} changed
 						</dd>
 						<dt>Last change</dt>
 						<dd>{document().updatedAt ? when(document().updatedAt ?? 0) : 'No changes yet'}</dd>
 					</dl>
+					<Show when={state().published?.releaseNotes}>
+						{(notes) => (
+							<p class="ocp-hub-release-notes">
+								<strong>What changed:</strong> {notes()}
+							</p>
+						)}
+					</Show>
+					<Show when={state().central}>
+						<div class="ocp-hub-actions">
+							<Button variant="solid" colorBase="primary" onClick={() => workspace.openPublish()}>
+								Publish…
+							</Button>
+						</div>
+					</Show>
 				</Panel>
-				<Panel title="Open reviews" variant="soft">
+				<Panel title="Review" variant="soft">
 					<Show
-						when={hub().reviews.length > 0}
-						fallback={<EmptyState title="No reviews awaiting a decision" pad="1.25rem" />}
+						when={state().review}
+						fallback={
+							<EmptyState
+								title={
+									state().changes.length > 0
+										? 'Changes are waiting for a review request'
+										: 'Nothing has changed since the published version'
+								}
+								pad="1.25rem"
+							/>
+						}
 					>
-						<ul class="ocp-hub-reviews">
-							<For each={hub().reviews}>
-								{(review) => (
-									<li>
-										<span>Requested {when(review.requestedAt)}</span>
-										<Show when={review.note}>
-											<span class="ocp-hub-review-note">{review.note}</span>
-										</Show>
-									</li>
-								)}
-							</For>
-						</ul>
+						{(review) => (
+							<dl class="ocp-hub-facts">
+								<dt>State</dt>
+								<dd>
+									{review().decision === 'approved'
+										? 'Approved in full'
+										: review().decision === 'changes_requested'
+											? 'Changes requested'
+											: `Open · ${review().decided} of ${review().total} decided`}
+								</dd>
+								<dt>Requested</dt>
+								<dd>{when(review().requestedAt)}</dd>
+								<dt>Note</dt>
+								<dd class="ocp-hub-review-note">{review().note ?? 'No note'}</dd>
+							</dl>
+						)}
+					</Show>
+					<Show when={state().changes.length > 0}>
+						<div class="ocp-hub-actions">
+							<Button variant="outline" onClick={() => workspace.setMode('review')}>
+								Read the changes
+							</Button>
+							<Show when={atLeast(workspace.role, 'admin') && state().review?.decision === null}>
+								<span class="ocp-muted">Decide each section from its inspector.</span>
+							</Show>
+						</div>
 					</Show>
 				</Panel>
 				<Panel title="Activity" variant="soft">
@@ -88,9 +154,10 @@ function HubPage() {
 						items={hub().activity.map((event) => ({
 							key: event.id,
 							glyph: '•',
-							line: (
+							// A lazy slot: the feed creates the markup under its own <For> (hydration).
+							line: () => (
 								<>
-									<strong>{event.actorName}</strong> {event.kind.replace(/[._]/g, ' ')}
+									<strong>{event.actorName}</strong> {describe(event)}
 								</>
 							),
 							time: when(event.at),

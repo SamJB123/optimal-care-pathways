@@ -17,7 +17,9 @@
 	// core documents are adopted by it. Comma-separated. Set per deployment (`wrangler
 	// deploy --var` or this file); locally in `.dev.vars`.
 	"vars": {
-		"ADMIN_EMAILS": "sambide@gmail.com"
+		"ADMIN_EMAILS": "sambide@gmail.com",
+		// Where the site is reached, for the links notification mail carries.
+		"PUBLIC_ORIGIN": "https://ocp-cms.aicolab.workers.dev"
 	},
 
 	// The only binding to another worker: this repo's own auth worker (apps/auth).

@@ -21,6 +21,7 @@
 		"@solidjs/h": "catalog:",
 		"@solidjs/web": "catalog:",
 		"better-auth": "catalog:",
+		"resend": "catalog:",
 		"solid-js": "catalog:"
 	},
 	"devDependencies": {

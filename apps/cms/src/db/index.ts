@@ -11,24 +11,27 @@ export const relations = defineRelations(schema, (r) => ({
 			optional: false,
 		}),
 		sections: r.many.sections({ from: r.documents.id, to: r.sections.documentId }),
-		snapshots: r.many.snapshots({ from: r.documents.id, to: r.snapshots.documentId }),
+		versions: r.many.versions({ from: r.documents.id, to: r.versions.documentId }),
 		references: r.many.references({ from: r.documents.id, to: r.references.documentId }),
 	},
 	sections: {
 		document: r.one.documents({ from: r.sections.documentId, to: r.documents.id, optional: false }),
 		core: r.one.sections({ from: r.sections.coreSectionId, to: r.sections.id }),
 		origins: r.many.sectionOrigins({ from: r.sections.id, to: r.sectionOrigins.sectionId }),
+		comments: r.many.comments({ from: r.sections.id, to: r.comments.sectionId }),
 	},
-	snapshots: {
+	versions: {
 		document: r.one.documents({
-			from: r.snapshots.documentId,
+			from: r.versions.documentId,
 			to: r.documents.id,
 			optional: false,
 		}),
-		sections: r.many.snapshotSections({ from: r.snapshots.id, to: r.snapshotSections.snapshotId }),
+		sections: r.many.versionSections({ from: r.versions.id, to: r.versionSections.versionId }),
+		reviews: r.many.reviews({ from: r.versions.id, to: r.reviews.versionId }),
 	},
 	reviews: {
-		snapshot: r.one.snapshots({ from: r.reviews.snapshotId, to: r.snapshots.id, optional: false }),
+		version: r.one.versions({ from: r.reviews.versionId, to: r.versions.id, optional: false }),
+		sections: r.many.reviewSections({ from: r.reviews.id, to: r.reviewSections.reviewId }),
 	},
 	legacyDocuments: {
 		sections: r.many.legacySections({
