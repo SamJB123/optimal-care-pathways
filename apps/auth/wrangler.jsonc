@@ -1,0 +1,42 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "ocp-auth",
+	"main": "src/worker.ts",
+	"compatibility_date": "2026-05-08",
+	"compatibility_flags": ["nodejs_compat"],
+	"observability": {
+		"enabled": true
+	},
+	// This deployment's own sign-in service. It binds to nothing outside this repo:
+	// its own D1, its own secrets (BETTER_AUTH_SECRET, RESEND_API_KEY, Google OAuth
+	// client — `wrangler secret put`), its own pages under ./ui. The cms worker
+	// reaches it only through the AUTH service binding.
+	"workers_dev": true,
+	"d1_databases": [
+		{
+			"binding": "AUTH_DB",
+			"database_name": "ocp-auth-d1",
+			// Placeholder until `wrangler d1 create ocp-auth-d1` has run on the target
+			// account; local dev accepts any id. Replace with the id it prints.
+			"database_id": "00000000-0000-0000-0000-000000000000",
+			"migrations_dir": "./node_modules/@aicolab/better-auth/cloudflare/d1/migrations"
+		}
+	],
+	"vars": {
+		// The canonical auth origin: cookie scoping and the default OAuth callback host.
+		// Local dev rewrites this to the request origin (see the package's worker).
+		"BETTER_AUTH_URL": "https://ocp-auth.aicolab.workers.dev",
+		"CORS_ORIGIN": "https://ocp-cms.aicolab.workers.dev",
+		"TRUSTED_ORIGINS": "https://ocp-cms.aicolab.workers.dev,https://ocp-auth.aicolab.workers.dev,http://localhost:3100,http://localhost:3104",
+		// Transactional mail (email OTP codes, verification) via Resend. The sending
+		// domain must be verified in the Resend account the RESEND_API_KEY belongs to.
+		"EMAIL_FROM_ADDRESS": "Optimal Care Pathways <noreply@aicolab.org>"
+	},
+	// The worker's own /sign-in and /consent pages, built by `vite build` from ./ui
+	// with the shared Solid components. Static assets are served first; every other
+	// path falls through to the better-auth API.
+	"assets": {
+		"directory": "./dist/ui",
+		"binding": "ASSETS"
+	}
+}

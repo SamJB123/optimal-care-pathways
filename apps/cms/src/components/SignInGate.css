@@ -1,0 +1,6 @@
+@scope (.ocp-signin) {
+	.ocp-signin-panel {
+		max-width: 28rem;
+		margin-inline: auto;
+	}
+}

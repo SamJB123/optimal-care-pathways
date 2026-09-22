@@ -1,0 +1,36 @@
+{
+	"name": "@ocp/auth",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"imports": {
+		"#/*": "./src/*"
+	},
+	"scripts": {
+		"dev": "wrangler dev --port 3104",
+		"build": "vite build",
+		"deploy": "pnpm run build && wrangler deploy",
+		"check-types": "tsc --noEmit && tsc --noEmit -p tsconfig.ui.json",
+		"cf-typegen": "wrangler types",
+		"db:migrate:local": "wrangler d1 migrations apply ocp-auth-d1 --local",
+		"db:migrate:remote": "wrangler d1 migrations apply ocp-auth-d1 --remote"
+	},
+	"dependencies": {
+		"@aicolab/better-auth": "workspace:^",
+		"@aicolab/ui-solid": "workspace:^",
+		"@solidjs/h": "catalog:",
+		"@solidjs/web": "catalog:",
+		"better-auth": "catalog:",
+		"solid-js": "catalog:"
+	},
+	"devDependencies": {
+		"@aicolab/biome-config": "workspace:^",
+		"@aicolab/tsconfig": "workspace:^",
+		"@biomejs/biome": "catalog:",
+		"@solidjs/vite-plugin": "catalog:",
+		"@types/node": "catalog:",
+		"typescript": "catalog:",
+		"vite": "catalog:",
+		"wrangler": "catalog:"
+	}
+}

@@ -1,0 +1,5 @@
+# Copy to `.dev.vars` (gitignored) for local `vite dev`.
+# room-service encrypts hibernatable capnweb session snapshots with this key.
+# Any non-empty string locally; the real secret in prod via
+# `wrangler secret put CAPNWEB_SNAPSHOT_ENCRYPTION_KEY`.
+CAPNWEB_SNAPSHOT_ENCRYPTION_KEY="set-me-locally"

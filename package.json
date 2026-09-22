@@ -1,0 +1,42 @@
+{
+	"name": "optimal-care-pathways",
+	"private": true,
+	"type": "module",
+	"packageManager": "pnpm@11.5.2",
+	"engines": {
+		"node": ">=22"
+	},
+	"scripts": {
+		"build": "turbo build",
+		"check-types": "turbo check-types",
+		"dev": "turbo dev",
+		"test": "turbo test",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"format": "biome format --write .",
+		"deps:lint": "syncpack lint",
+		"deps:fix": "syncpack fix",
+		"cms:dev": "pnpm --filter @ocp/cms dev",
+		"cms:build": "pnpm --filter @ocp/cms build",
+		"cms:deploy": "pnpm --filter @ocp/cms deploy",
+		"cms:cf-typegen": "pnpm --filter @ocp/cms cf-typegen",
+		"auth:dev": "pnpm --filter @ocp/auth dev",
+		"auth:deploy": "pnpm --filter @ocp/auth deploy",
+		"auth:cf-typegen": "pnpm --filter @ocp/auth cf-typegen",
+		"auth:db:migrate:local": "pnpm --filter @ocp/auth db:migrate:local",
+		"auth:db:migrate:remote": "pnpm --filter @ocp/auth db:migrate:remote"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "catalog:",
+		"syncpack": "catalog:",
+		"turbo": "catalog:",
+		"tsx": "catalog:",
+		"typescript": "catalog:",
+		"wrangler": "catalog:"
+	},
+	"dependencies": {
+		"@solidjs/web": "catalog:",
+		"drizzle-orm": "catalog:",
+		"solid-js": "catalog:"
+	}
+}

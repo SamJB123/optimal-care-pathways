@@ -1,0 +1,35 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.11/schema.json",
+	"extends": ["./tooling/biome-config/biome.json"],
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"includes": [
+			"**",
+			"!**/node_modules",
+			"!**/dist",
+			"!**/.output",
+			"!**/.tanstack",
+			"!**/.wrangler",
+			"!**/.turbo",
+			"!**/worker-configuration.d.ts",
+			"!**/routeTree.gen.ts",
+			"!**/pnpm-lock.yaml"
+		]
+	},
+	"overrides": [
+		{
+			"includes": ["tooling/tsconfig/*.json"],
+			"json": { "parser": { "allowComments": true } }
+		},
+		{
+			"includes": ["packages/**"],
+			"linter": { "enabled": false },
+			"formatter": { "enabled": false },
+			"assist": { "enabled": false }
+		}
+	]
+}

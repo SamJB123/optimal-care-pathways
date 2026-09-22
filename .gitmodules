@@ -1,0 +1,18 @@
+[submodule "packages/better-auth"]
+	path = packages/better-auth
+	url = https://github.com/SamJB123/aicolab-better-auth.git
+[submodule "packages/cloudflare"]
+	path = packages/cloudflare
+	url = https://github.com/SamJB123/aicolab-cloudflare.git
+[submodule "packages/room-service"]
+	path = packages/room-service
+	url = https://github.com/SamJB123/aicolab-room-service.git
+[submodule "packages/solid"]
+	path = packages/solid
+	url = https://github.com/SamJB123/aicolab-solid.git
+[submodule "packages/ui"]
+	path = packages/ui
+	url = https://github.com/SamJB123/aicolab-ui.git
+[submodule "packages/ui-solid"]
+	path = packages/ui-solid
+	url = https://github.com/SamJB123/aicolab-ui-solid.git

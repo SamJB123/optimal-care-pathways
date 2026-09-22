@@ -1,0 +1,94 @@
+/* Auth worker pages — the ui-solid system, house palette. Composition only. */
+@import "@aicolab/ui-solid/styles.css";
+
+html,
+body,
+#app {
+	min-height: 100%;
+}
+
+body {
+	margin: 0;
+	background: var(--color-base-100);
+	color: var(--color-base-content);
+	font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+}
+
+.au-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	max-width: 40rem;
+	margin: 0 auto;
+	padding: 0.8rem 1rem;
+}
+
+.au-brand {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.6rem;
+	text-decoration: none;
+	color: inherit;
+}
+
+.au-brand-mark {
+	inline-size: 2rem;
+	block-size: 2rem;
+	border-radius: 0.5rem;
+	background: var(--color-primary);
+	color: var(--color-primary-content, white);
+	display: grid;
+	place-items: center;
+	font-weight: 700;
+	font-size: 0.8rem;
+}
+
+.au-brand-name {
+	font-weight: 700;
+}
+
+.au-brand-sub {
+	font-size: 0.8rem;
+	color: var(--color-base-content-muted);
+}
+
+.au-main {
+	max-width: 40rem;
+	margin: 0 auto;
+	padding: 1rem 1rem 4rem;
+}
+
+.au-card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.6rem;
+	text-align: center;
+	padding-block: 2rem;
+}
+
+.au-card .auth-panel {
+	text-align: left;
+	margin-block-start: 1rem;
+}
+
+.au-eyebrow {
+	margin: 0;
+	font-size: 0.75rem;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--color-base-content-muted);
+}
+
+.au-title {
+	margin: 0;
+	font-size: 1.8rem;
+}
+
+.au-lede {
+	margin: 0;
+	max-width: 32rem;
+	color: var(--color-base-content-muted);
+	text-wrap: pretty;
+}

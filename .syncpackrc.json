@@ -1,0 +1,20 @@
+{
+	"$schema": "./node_modules/syncpack/schema.json",
+	"indent": "\t",
+	"semverGroups": [
+		{
+			"label": "Use caret (^) ranges in package.json dependencies",
+			"dependencyTypes": ["prod", "dev", "peer"],
+			"range": "^"
+		}
+	],
+	"versionGroups": [
+		{
+			"label": "Apps must source third-party deps from the pnpm catalog",
+			"packages": ["@ocp/*"],
+			"dependencies": ["!$LOCAL"],
+			"dependencyTypes": ["prod", "dev"],
+			"policy": "catalog"
+		}
+	]
+}

@@ -1,0 +1,19 @@
+{
+	// Wrangler config for the workerd TEST pool only (vitest.config.ts). Mirrors the
+	// real wrangler.jsonc's runtime settings but self-binds AUTH to the test entry's
+	// stub: miniflare cannot resolve a service that is not running in the pool.
+	// `main` is a Durable-Object-only entry, because src/worker.ts imports TanStack
+	// Start's build-only server entry, which the pool cannot load.
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "ocp-cms-test",
+	"main": "test/worker-runtime-entry.ts",
+	"compatibility_date": "2026-05-08",
+	"compatibility_flags": ["nodejs_compat"],
+	"services": [
+		{
+			"binding": "AUTH",
+			"service": "ocp-cms-test",
+			"entrypoint": "TestAuth"
+		}
+	]
+}

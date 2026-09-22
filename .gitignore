@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.output/
+.tanstack/
+*.tsbuildinfo
+
+# Environment and secrets
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# Wrangler local state
+.wrangler/
+
+# Turbo
+.turbo/
+
+# Generated
+worker-configuration.d.ts
+routeTree.gen.ts
+
+# Local tooling
+.claude/settings.local.json
+.DS_Store
+*.log

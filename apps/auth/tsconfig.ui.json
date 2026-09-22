@@ -1,0 +1,7 @@
+{
+	"extends": "@aicolab/tsconfig/solid",
+	"include": ["ui/**/*.ts", "ui/**/*.tsx"],
+	"compilerOptions": {
+		"noEmit": true
+	}
+}

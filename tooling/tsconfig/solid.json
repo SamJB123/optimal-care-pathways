@@ -1,0 +1,21 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"display": "Solid + Vite",
+	"extends": "./base.json",
+	"compilerOptions": {
+		"lib": ["ES2024", "DOM", "DOM.Iterable"],
+		"jsx": "preserve",
+		"jsxImportSource": "@solidjs/web",
+		"types": ["vite/client"],
+		"allowImportingTsExtensions": true,
+		"noUncheckedSideEffectImports": true,
+		// The Solid apps in this repo import workspace packages that ship RAW .ts
+		// (@aicolab/room-service, @aicolab/cloudflare, @aicolab/kolo). tsc type-checks
+		// that source under the CONSUMER's options, and it isn't written to satisfy
+		// these three — so enabling them (as base.json does) flags dependency source,
+		// not your code. Every Solid app here compiles without them; keep parity.
+		"noUnusedLocals": false,
+		"noUnusedParameters": false,
+		"noUncheckedIndexedAccess": false
+	}
+}

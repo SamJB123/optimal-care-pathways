@@ -1,0 +1,10 @@
+{
+	"extends": "@aicolab/tsconfig/solid",
+	"include": ["**/*.ts", "**/*.tsx"],
+	"compilerOptions": {
+		"paths": {
+			"#/*": ["./src/*"]
+		},
+		"types": ["./worker-configuration.d.ts", "node", "vite/client"]
+	}
+}

@@ -1,0 +1,115 @@
+diff --git a/dist/dev.js b/dist/dev.js
+index ced85ea83b0f1e15224409541f5fd0d6e5f04e4c..025655dd16f147ea498caeca243d3c0f5fb99c86 100644
+--- a/dist/dev.js
++++ b/dist/dev.js
+@@ -1469,10 +1469,17 @@ class GlobalQueue extends Queue {
+           // as the ambient batch — late registrations during finalization live
+           // there and must survive to the next flush.
+           const fresh = createBatch();
+-          fresh._pendingNodes = batch._pendingNodes;
+-          fresh._optimisticNodes = batch._optimisticNodes;
+-          fresh._affectsNodes = batch._affectsNodes;
+-          fresh._optimisticStores = batch._optimisticStores;
++          // PATCHED (aicolab): COPY the containers instead of aliasing them.
++          // Aliasing left the dead transition and the fresh batch sharing
++          // ONE array; if a late async settle re-initiated the dead
++          // transition, initTransition's adoption loop pushed the shared
++          // array into itself — an unbounded self-append that ran until
++          // Array.push threw "Invalid array length" (2^32 cap) and poisoned
++          // every subsequent write.
++          fresh._pendingNodes.push(...batch._pendingNodes);
++          fresh._optimisticNodes.push(...batch._optimisticNodes);
++          fresh._affectsNodes.push(...batch._affectsNodes);
++          for (const store of batch._optimisticStores) fresh._optimisticStores.add(store);
+           currentBatch = this._batch = fresh;
+         }
+       } else {
+@@ -1569,12 +1576,14 @@ class GlobalQueue extends Queue {
+       // must not entangle unrelated writes to it; the same rule holds one hop
+       // downstream: propagation never queues pended subscribers as pending
+       // nodes, see propagateAffectsMark, #2893.
+-      for (let i = 0; i < batch._pendingNodes.length; i++) {
++      // PATCHED (aicolab): snapshot the lengths so an aliased array can
++      // never turn adoption into an infinite self-append.
++      for (let i = 0, len = batch._pendingNodes.length; i < len; i++) {
+         const node = batch._pendingNodes[i];
+         node._transition = activeTransition;
+         activeTransition._pendingNodes.push(node);
+       }
+-      for (let i = 0; i < batch._optimisticNodes.length; i++) {
++      for (let i = 0, len = batch._optimisticNodes.length; i < len; i++) {
+         const node = batch._optimisticNodes[i];
+         node._transition = activeTransition;
+         activeTransition._optimisticNodes.push(node);
+diff --git a/dist/node.cjs b/dist/node.cjs
+index d801ca971aaf92a507e35a050d16f7ab8f46e05d..2e5ca6eedaabd0653bb7f4a2e5b6c550d6f601fb 100644
+--- a/dist/node.cjs
++++ b/dist/node.cjs
+@@ -773,10 +773,11 @@ class GlobalQueue extends Queue {
+                     // as the ambient batch — late registrations during finalization live
+                     // there and must survive to the next flush.
+                     const e = createBatch();
+-                    e.Y = n.Y;
+-                    e.H = n.H;
+-                    e.W = n.W;
+-                    e.j = n.j;
++                    // PATCHED (aicolab): copy, never alias — see dev.js note.
++                    e.Y.push(...n.Y);
++                    e.H.push(...n.H);
++                    e.W.push(...n.W);
++                    for (const s of n.j) e.j.add(s);
+                     currentBatch = this.L = e;
+                 }
+             } else {
+@@ -855,12 +856,13 @@ class GlobalQueue extends Queue {
+             // must not entangle unrelated writes to it; the same rule holds one hop
+             // downstream: propagation never queues pended subscribers as pending
+             // nodes, see propagateAffectsMark, #2893.
+-            for (let e = 0; e < t.Y.length; e++) {
++            // PATCHED (aicolab): snapshot lengths — see dev.js note.
++            for (let e = 0, len = t.Y.length; e < len; e++) {
+                 const n = t.Y[e];
+                 n.T = activeTransition;
+                 activeTransition.Y.push(n);
+             }
+-            for (let e = 0; e < t.H.length; e++) {
++            for (let e = 0, len = t.H.length; e < len; e++) {
+                 const n = t.H[e];
+                 n.T = activeTransition;
+                 activeTransition.H.push(n);
+diff --git a/dist/prod/core/scheduler.js b/dist/prod/core/scheduler.js
+index 907cdf37fce7831996a76aef335e29fc58dfdb1a..f5e1220af3c75bc69b3bff0c86af126877f9f64f 100644
+--- a/dist/prod/core/scheduler.js
++++ b/dist/prod/core/scheduler.js
+@@ -410,10 +410,11 @@ class GlobalQueue extends Queue {
+                     // as the ambient batch — late registrations during finalization live
+                     // there and must survive to the next flush.
+                     const e = createBatch();
+-                    e.yt = i.yt;
+-                    e.Ke = i.Ke;
+-                    e.m = i.m;
+-                    e.cn = i.cn;
++                    // PATCHED (aicolab): copy, never alias — see dev.js note.
++                    e.yt.push(...i.yt);
++                    e.Ke.push(...i.Ke);
++                    e.m.push(...i.m);
++                    for (const s of i.cn) e.cn.add(s);
+                     currentBatch = this.k = e;
+                 }
+             } else {
+@@ -492,12 +493,13 @@ class GlobalQueue extends Queue {
+             // must not entangle unrelated writes to it; the same rule holds one hop
+             // downstream: propagation never queues pended subscribers as pending
+             // nodes, see propagateAffectsMark, #2893.
+-            for (let e = 0; e < t.yt.length; e++) {
++            // PATCHED (aicolab): snapshot lengths — see dev.js note.
++            for (let e = 0, len = t.yt.length; e < len; e++) {
+                 const i = t.yt[e];
+                 i._e = activeTransition;
+                 activeTransition.yt.push(i);
+             }
+-            for (let e = 0; e < t.Ke.length; e++) {
++            for (let e = 0, len = t.Ke.length; e < len; e++) {
+                 const i = t.Ke[e];
+                 i._e = activeTransition;
+                 activeTransition.Ke.push(i);

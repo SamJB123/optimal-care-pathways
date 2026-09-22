@@ -1,0 +1,31 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "ocp-cms",
+	"main": "src/worker.ts",
+	"compatibility_date": "2026-05-08",
+	"compatibility_flags": ["nodejs_compat"],
+	"observability": {
+		"enabled": true
+	},
+	"workers_dev": true,
+
+	// The only binding to another worker: this repo's own auth worker (apps/auth).
+	// `env.AUTH.verifySession` turns the session cookie into a user; the room DOs
+	// verify one-time tokens through the same service. In local dev the cloudflare
+	// vite plugin spawns apps/auth alongside (vite.config.ts → auxiliaryWorkers).
+	"services": [
+		{
+			"binding": "AUTH",
+			"service": "ocp-auth",
+			"entrypoint": "AuthService"
+		}
+	]
+
+	// Still to come, each with its own migration tag: the D1 content database, the
+	// section rooms (Durable Objects on room-service doc-sync), the change bell
+	// (d1-sync), R2 for images and the legacy PDFs, and Browser Rendering for PDF.
+	//
+	// Secrets (`wrangler secret put`, not committed):
+	//   CAPNWEB_SNAPSHOT_ENCRYPTION_KEY — room-service's hibernatable session
+	//     snapshots. Any high-entropy string; locally in `.dev.vars`.
+}

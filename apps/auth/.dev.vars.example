@@ -1,0 +1,12 @@
+# Copy to .dev.vars and fill in real values for local development.
+# .dev.vars is git-ignored; never commit secrets.
+
+# 32+ random chars. Generate with: openssl rand -base64 32
+BETTER_AUTH_SECRET=replace-me-with-a-32-byte-random-secret
+
+# Local sign-in is email + password (Google OAuth cannot complete on localhost).
+ENABLE_EMAIL_PASSWORD=true
+
+# In local dev these match localhost ports; in production they come from wrangler.jsonc.
+BETTER_AUTH_URL=http://localhost:3104
+CORS_ORIGIN=http://localhost:3100

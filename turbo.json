@@ -1,0 +1,31 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"ui": "tui",
+	"tasks": {
+		"build": {
+			"dependsOn": ["^build"],
+			"inputs": ["$TURBO_DEFAULT$", ".env*", ".dev.vars*", "wrangler.jsonc"],
+			"outputs": ["dist/**", ".output/**", ".tanstack/**"]
+		},
+		"check-types": {
+			"dependsOn": ["^check-types"],
+			"inputs": ["$TURBO_DEFAULT$", "tsconfig*.json"]
+		},
+		"test": {
+			"dependsOn": ["^build"]
+		},
+		"dev": {
+			"cache": false,
+			"persistent": true
+		},
+		"deploy": {
+			"dependsOn": ["build"],
+			"cache": false
+		},
+		"cf-typegen": {
+			"cache": false,
+			"inputs": ["wrangler.jsonc"],
+			"outputs": ["worker-configuration.d.ts"]
+		}
+	}
+}
