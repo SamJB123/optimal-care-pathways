@@ -53,7 +53,7 @@ export function partsOf(sections: SectionWireRow[]): Part[] {
 		.map((root) => ({
 			key: root.address,
 			label: root.printedNumber
-				? `Step ${root.printedNumber}: ${root.title ?? ''}`
+				? `${root.printedNumber}: ${root.title ?? ''}`
 				: (root.title ?? root.address),
 			root,
 		}))
@@ -75,11 +75,10 @@ function DocumentShell() {
 			const unsubscribe = next.sections.subscribeChanges(() => {
 				if (next.ready()) setLive([...next.sections.values()])
 			})
+			// No signal writes in a cleanup (see SectionView): the next apply overwrites.
 			return () => {
 				unsubscribe.unsubscribe()
 				next.close()
-				setClient(null)
-				setLive(null)
 			}
 		},
 	)

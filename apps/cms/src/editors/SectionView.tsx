@@ -43,10 +43,10 @@ function OwnedBody(props: { sectionId: string }) {
 			if (!client) return
 			const opened = client.room.openDoc(props.sectionId)
 			setHandle(opened)
-			return () => {
-				opened.close()
-				setHandle(null)
-			}
+			// No signal write in a cleanup: Solid 2 disposes the owner first and a write then
+			// throws, which arms the router's error boundary and starts the remount storm
+			// (memory: hive-doc-reopen-storm). The next apply overwrites the handle.
+			return () => opened.close()
 		},
 	)
 	// One value for the flow component, so its callback reads nothing at the top.

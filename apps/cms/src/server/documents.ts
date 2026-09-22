@@ -224,37 +224,20 @@ export const createPathway = createServerFn({ method: 'POST' })
 			throw new Error(`Could not create the pathway's organisation: ${created.error}.`)
 
 		const documentId = crypto.randomUUID()
-		const [document] = await d
-			.insert(schema.documents)
-			.values({
-				id: documentId,
-				kind: 'pathway',
-				templateId: core.templateId,
-				orgId: created.organizationId,
-				slug: data.slug,
-				title: data.title,
-				subject: data.subject,
-				audience: data.kind,
-			})
-			.returning()
 
-		// References first, so the copied bodies can point at the new rows.
+		// The copied bodies point at the copied references, so the ids are minted first.
 		const coreReferences = await d
 			.select()
 			.from(schema.references)
 			.where(eq(schema.references.documentId, core.id))
 		const referenceIds = new Map(coreReferences.map((r) => [r.id, crypto.randomUUID()]))
-		if (coreReferences.length > 0) {
-			await d.insert(schema.references).values(
-				coreReferences.map((r) => ({
-					id: referenceIds.get(r.id) ?? r.id,
-					documentId,
-					citation: r.citation,
-					url: r.url,
-					printedNumber: r.printedNumber,
-				})),
-			)
-		}
+		const referenceRows = coreReferences.map((r) => ({
+			id: referenceIds.get(r.id) ?? r.id,
+			documentId,
+			citation: r.citation,
+			url: r.url,
+			printedNumber: r.printedNumber,
+		}))
 
 		const coreSections = (
 			await d.select().from(schema.sections).where(eq(schema.sections.documentId, core.id))
@@ -279,9 +262,32 @@ export const createPathway = createServerFn({ method: 'POST' })
 				bodyJson: shared || !s.bodyJson ? null : remapCitations(s.bodyJson, referenceIds),
 			}
 		})
-		// D1 bounds a statement's size; the bodies are large, so insert in small batches.
-		for (let i = 0; i < rows.length; i += 10)
-			await d.insert(schema.sections).values(rows.slice(i, i + 10))
+		// One atomic D1 batch: the document, its references, its sections — all or nothing.
+		// D1 binds at most 100 parameters per statement, so rows go in small groups.
+		const chunk = <T>(items: T[], size: number): T[][] => {
+			const out: T[][] = []
+			for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size))
+			return out
+		}
+		const [document] = await d
+			.batch([
+				d
+					.insert(schema.documents)
+					.values({
+						id: documentId,
+						kind: 'pathway',
+						templateId: core.templateId,
+						orgId: created.organizationId,
+						slug: data.slug,
+						title: data.title,
+						subject: data.subject,
+						audience: data.kind,
+					})
+					.returning(),
+				...chunk(referenceRows, 16).map((group) => d.insert(schema.references).values(group)),
+				...chunk(rows, 6).map((group) => d.insert(schema.sections).values(group)),
+			])
+			.then(([first]) => first)
 
 		if (document) void publishDocumentRows([document])
 		return { documentId, organizationId: created.organizationId }
