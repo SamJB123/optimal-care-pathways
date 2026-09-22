@@ -34,6 +34,16 @@ describe('content schema (workerd)', () => {
 			expect(contentSchema.marks[name], name).toBeDefined()
 	})
 
+	it('puts paragraph first, so empty containers fill without recursing', () => {
+		const firstBlock = Object.values(contentSchema.nodes).find(
+			(node) => node.isBlock && node.name !== 'doc',
+		)
+		expect(firstBlock?.name).toBe('paragraph')
+		expect(contentSchema.topNodeType.createAndFill()?.firstChild?.type.name).toBe('paragraph')
+		expect(contentSchema.nodes.guidance?.createAndFill()?.firstChild?.type.name).toBe('paragraph')
+		expect(contentSchema.nodes.tableCell?.createAndFill()?.firstChild?.type.name).toBe('paragraph')
+	})
+
 	it('gives the list node the point-of-care attribute', () => {
 		expect(contentSchema.nodes.list?.spec.attrs?.pointOfCare?.default).toBe(false)
 	})

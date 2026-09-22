@@ -4,7 +4,7 @@
  */
 import { createAppSocket } from '@aicolab/app-kit/ws'
 import { authClient } from '#/lib/auth-client.ts'
-import type { CoreRpcRoot } from '#/worker.ts'
+import type { CoreRpcRoot } from '#/lib/rpc-root.ts'
 
 export type { WsStatus } from '@aicolab/app-kit/ws'
 

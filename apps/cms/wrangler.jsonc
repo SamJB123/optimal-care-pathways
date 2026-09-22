@@ -35,11 +35,20 @@
 			"migrations_dir": "./drizzle",
 			"migrations_pattern": "drizzle/*/migration.sql"
 		}
-	]
+	],
 
-	// Still to come, each with its own migration tag: the section rooms (Durable Objects
-	// on the app-kit DocRoom), the change bell (d1-sync), R2 for images and the legacy
-	// PDFs, and Browser Rendering for PDF.
+	// The Durable Objects: one DocumentRoom per document (live section bodies, presence)
+	// and one OcpBell per reactive-D1 topic (data-less fan-out). Both on SQLite storage.
+	"durable_objects": {
+		"bindings": [
+			{ "name": "DOCUMENT_ROOM", "class_name": "DocumentRoom" },
+			{ "name": "OCP_BELL", "class_name": "OcpBell" }
+		]
+	},
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["DocumentRoom", "OcpBell"] }]
+
+	// Still to come, each with its own migration tag: R2 for images and the legacy PDFs,
+	// and Browser Rendering for PDF.
 	//
 	// Secrets (`wrangler secret put`, not committed):
 	//   CAPNWEB_SNAPSHOT_ENCRYPTION_KEY — room-service's hibernatable session

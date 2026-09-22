@@ -15,5 +15,21 @@
 			"service": "ocp-cms-test",
 			"entrypoint": "TestAuth"
 		}
-	]
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "ocp-cms-d1",
+			"database_id": "ocp-cms-d1-test",
+			"migrations_dir": "./drizzle",
+			"migrations_pattern": "drizzle/*/migration.sql"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{ "name": "DOCUMENT_ROOM", "class_name": "DocumentRoom" },
+			{ "name": "OCP_BELL", "class_name": "OcpBell" }
+		]
+	},
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["DocumentRoom", "OcpBell"] }]
 }

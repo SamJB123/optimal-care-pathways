@@ -4,13 +4,46 @@
 // websocket upgrade path can be exercised without the auth worker.
 // biome-ignore lint/correctness/noUnresolvedImports: provided by the Workers runtime
 import { WorkerEntrypoint } from 'cloudflare:workers'
+import { OcpBell } from '#/lib/rpc-root.ts'
+import { DocumentRoom } from '#/rooms/document-room.ts'
+
+export { DocumentRoom, OcpBell }
 
 const issued = new Map<string, string>()
 let tokenSequence = 0
 
+/**
+ * Membership without state: a test user id is `<role>@<orgId>` ('member@org-a' is a
+ * drafter of org-a and of nothing else; 'nobody' belongs nowhere). Every membership
+ * method reads the id, so a test never has to set anything up.
+ */
+const parseMember = (userId: string): { role: string; orgId: string } | null => {
+	const at = userId.indexOf('@')
+	return at > 0 ? { role: userId.slice(0, at), orgId: userId.slice(at + 1) } : null
+}
+
 export class TestAuth extends WorkerEntrypoint {
 	async getUsersByIds(userIds: string[]) {
 		return Object.fromEntries(userIds.map((id) => [id, { name: id }]))
+	}
+
+	async getOrgMembershipById(userId: string, orgId: string, _namespace: string) {
+		const member = parseMember(userId)
+		return member && member.orgId === orgId ? { organizationId: orgId, role: member.role } : null
+	}
+
+	async listUserOrgs(userId: string, _namespace?: string) {
+		const member = parseMember(userId)
+		return member
+			? [
+					{
+						organizationId: member.orgId,
+						role: member.role,
+						slug: member.orgId,
+						name: member.orgId,
+					},
+				]
+			: []
 	}
 
 	async generateOneTimeToken(userId: string): Promise<string> {

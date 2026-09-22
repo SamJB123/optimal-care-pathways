@@ -40,6 +40,8 @@
 		"@tanstack/router-plugin": "catalog:",
 		"@tanstack/solid-router": "catalog:",
 		"@tanstack/solid-start": "catalog:",
+		"@y/prosemirror": "catalog:",
+		"@y/y": "catalog:",
 		"better-auth": "catalog:",
 		"capnweb-experimental-hibernation": "catalog:",
 		"solid-js": "catalog:",

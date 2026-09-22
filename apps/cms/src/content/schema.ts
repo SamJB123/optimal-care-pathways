@@ -199,12 +199,19 @@ const defineSectionLink = () =>
 // The schema extension
 // ---------------------------------------------------------------------------
 
-/** Spec-only. The editor adds behaviour; the server adds nothing. */
+/**
+ * Spec-only. The editor adds behaviour; the server adds nothing.
+ *
+ * ORDER MATTERS: ProseKit gives the LATEST definition the highest priority, so the
+ * schema lists nodes in reverse of this union. ProseMirror fills an empty container
+ * (`doc`, a table cell, a guidance box) with the FIRST block type in the schema, and
+ * recurses without end if that type itself holds blocks. Paragraph is therefore
+ * defined last, so it comes first. `schema.test.ts` pins this.
+ */
 export function defineContentSchema() {
 	return union(
 		defineDoc(),
 		defineText(),
-		defineParagraphSpec(),
 		defineHeadingSpec(),
 		defineBlockquoteSpec(),
 		defineHorizontalRuleSpec(),
@@ -229,6 +236,7 @@ export function defineContentSchema() {
 		defineCitation(),
 		definePlaceholder(),
 		defineSectionLink(),
+		defineParagraphSpec(), // last, so first in the schema (see above)
 	)
 }
 
