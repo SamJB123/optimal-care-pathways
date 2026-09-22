@@ -352,28 +352,55 @@ importers:
       '@aicolab/better-auth':
         specifier: workspace:^
         version: link:../better-auth
+      '@aicolab/cloudflare':
+        specifier: workspace:^
+        version: link:../cloudflare
       '@aicolab/room-service':
         specifier: workspace:^
         version: link:../room-service
       '@aicolab/ui-solid':
         specifier: workspace:^
         version: link:../ui-solid
+      '@prosekit/core':
+        specifier: 'catalog:'
+        version: 0.13.3(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.1)
+      '@prosekit/extensions':
+        specifier: 'catalog:'
+        version: 0.18.3(@shikijs/types@4.4.3)(@types/hast@3.0.5)(highlight.js@11.12.0)(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.1)(prosemirror-view@1.42.5)
+      '@prosekit/pm':
+        specifier: 'catalog:'
+        version: 0.1.20
       '@tanstack/solid-router':
         specifier: 'catalog:'
         version: 2.0.0-rc.8(@solidjs/web@2.0.0-rc.8(solid-js@2.0.0-rc.8))(solid-js@2.0.0-rc.8)
       '@tanstack/solid-start':
         specifier: 'catalog:'
         version: 2.0.0-rc.8(@solidjs/web@2.0.0-rc.8(solid-js@2.0.0-rc.8))(@tanstack/react-router@1.170.38(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(esbuild@0.28.2)(rolldown@1.2.9)(solid-js@2.0.0-rc.8)(vite-plugin-solid@3.0.0-next.27(@solidjs/web@2.0.0-rc.8(solid-js@2.0.0-rc.8))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.2)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.0(@noble/hashes@2.4.0))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))))(solid-js@2.0.0-rc.8)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+      '@y/prosemirror':
+        specifier: 'catalog:'
+        version: 2.0.0-6(patch_hash=a490d76e7813c5c4968cc5fb6c3391d26c6196642d925a8dd14dd23a6eb27165)(@y/protocols@1.0.6-rc.1(@y/y@14.0.0-rc.24))(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.5)
+      '@y/y':
+        specifier: 14.0.0-rc.24
+        version: 14.0.0-rc.24
       capnweb-experimental-hibernation:
         specifier: 'catalog:'
         version: 0.12.0-hibernation-cbor.1(cbor-x@1.6.6)
+      lib0:
+        specifier: 1.0.0-rc.22
+        version: 1.0.0-rc.22
     devDependencies:
       '@aicolab/tsconfig':
         specifier: workspace:^
         version: link:../../tooling/tsconfig
+      '@cloudflare/workers-types':
+        specifier: 'catalog:'
+        version: 5.20260921.1
       '@solidjs/web':
         specifier: 'catalog:'
         version: 2.0.0-rc.8(solid-js@2.0.0-rc.8)
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 1.0.0-rc.4(@cloudflare/workers-types@5.20260921.1)(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(@types/sql.js@1.4.11)(pg@8.23.0)(sql.js@1.14.2)(valibot@1.2.0(typescript@7.0.2))(zod@4.6.5)
       solid-js:
         specifier: 'catalog:'
         version: 2.0.0-rc.8
