@@ -508,37 +508,33 @@ function buildBody(
 
 		if (role === 'LBody') {
 			closeTimeframe()
+			// ProseKit's flat list: every item is a `list` node, siblings form the list, a
+			// child `list` node is one level down.
 			const kind: 'bullet' | 'check' = checkItems.has(b.entryId) ? 'check' : 'bullet'
 			const nested = /^[–]/.test(content) && list !== null
 			const runs = runsOf(b, true)
-			if (nested && list) {
-				// A '–' row continues the item before it, one level down.
-				const items = list.node.content ?? []
-				const parent = items[items.length - 1]
-				if (parent) {
-					parent.content ??= []
-					let sub = parent.content.find((n) => n.type === 'bulletList')
-					if (!sub) {
-						sub = { type: 'bulletList', content: [] }
-						parent.content.push(sub)
-					}
-					sub.content ??= []
-					const item: JsonNode = { type: 'listItem', content: [paragraph(runs)] }
-					sub.content.push(item)
-					lastParagraph = item.content?.[0] ?? null
-					continue
-				}
-			}
-			if (!list || list.kind !== kind) {
-				const node: JsonNode = { type: kind === 'check' ? 'checklist' : 'bulletList', content: [] }
-				target().push(node)
-				list = { node, kind }
-			}
 			const item: JsonNode =
 				kind === 'check'
-					? { type: 'checkItem', attrs: { pointOfCare: false }, content: [paragraph(runs)] }
-					: { type: 'listItem', content: [paragraph(runs)] }
-			list.node.content?.push(item)
+					? {
+							type: 'list',
+							attrs: { kind: 'check', pointOfCare: false },
+							content: [paragraph(runs)],
+						}
+					: { type: 'list', attrs: { kind: 'bullet' }, content: [paragraph(runs)] }
+			if (nested && list) {
+				// A '–' row continues the item before it, one level down.
+				const sub: JsonNode = {
+					type: 'list',
+					attrs: { kind: 'bullet' },
+					content: [paragraph(runs)],
+				}
+				list.node.content ??= []
+				list.node.content.push(sub)
+				lastParagraph = sub.content?.[0] ?? null
+				continue
+			}
+			target().push(item)
+			list = { node: item, kind }
 			if (kind === 'check') stats.checkItems++
 			lastParagraph = item.content?.[0] ?? null
 			continue

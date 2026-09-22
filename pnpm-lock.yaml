@@ -279,6 +279,12 @@ importers:
       '@fontsource-variable/inter':
         specifier: ^5.2.8
         version: 5.3.0
+      '@prosekit/core':
+        specifier: 'catalog:'
+        version: 0.13.3(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.1)
+      '@prosekit/extensions':
+        specifier: 'catalog:'
+        version: 0.18.3(@shikijs/types@4.4.3)(@types/hast@3.0.5)(highlight.js@11.12.0)(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.1)(prosemirror-view@1.42.5)
       '@prosekit/pm':
         specifier: 'catalog:'
         version: 0.1.20

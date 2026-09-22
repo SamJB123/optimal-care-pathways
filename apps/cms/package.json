@@ -32,6 +32,8 @@
 		"@aicolab/ui-solid": "workspace:^",
 		"@cloudflare/vite-plugin": "catalog:",
 		"@fontsource-variable/inter": "^5.2.8",
+		"@prosekit/core": "catalog:",
+		"@prosekit/extensions": "catalog:",
 		"@prosekit/pm": "catalog:",
 		"@solidjs/h": "catalog:",
 		"@solidjs/web": "catalog:",

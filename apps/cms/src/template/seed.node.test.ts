@@ -79,7 +79,10 @@ describe.each(['cancer-template', 'population-template', 'principles'])('%s', (d
 	})
 
 	it('keeps every verified tick row as a check item', () => {
-		expect(count(result, 'checkItem')).toBe(canonical.checklistItems.length)
+		let checks = 0
+		for (const s of result.sections)
+			walk(s.bodyJson, (n) => n.type === 'list' && n.attrs?.kind === 'check' && checks++)
+		expect(checks).toBe(canonical.checklistItems.length)
 	})
 
 	it('keeps every endnote as a reference and every marker as a citation', () => {

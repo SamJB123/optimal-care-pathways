@@ -1,17 +1,23 @@
 /**
- * The content schema — what a section body is made of. Defined ONCE, here, as plain
- * ProseMirror node and mark specs; the editor wraps these same specs into its ProseKit
- * extension, the server parses and renders with the Schema built from them, and the seed
- * builds JSON that must satisfy them.
+ * The content schema — what a section body is made of. Defined ONCE, here, as a ProseKit
+ * extension made of SPEC-ONLY definitions: the editor unions it with commands, keymaps
+ * and plugins; the server builds the ProseMirror Schema from it to parse, validate and
+ * render; the seed builds JSON that must satisfy it.
  *
- * The vocabulary is the 2026 template's own, read off the three template PDFs:
+ * Everything an author of a clinical document uses, from ProseKit's own definitions:
  *
- *   paragraph                   prose
+ *   paragraph, heading (h1–h6 inside a section), blockquote, horizontalRule, hardBreak,
+ *   image (the pathways' figures), table / tableRow / tableCell / tableHeaderCell,
+ *   list — ProseKit's flat list (`kind`: bullet, ordered, task, toggle) plus this
+ *   system's own kind, 'check': the template's tick rows, "actionable items for each
+ *   step". A check item carries `pointOfCare`, from which the quick reference guide is
+ *   derived.
+ *   marks: bold, italic, underline, strike, superscript, subscript (units and
+ *   footnote-style text), link.
+ *
+ * And the 2026 template's own blocks, which no general editor has:
+ *
  *   banner                      the title band of a box ("Signs and symptoms of cancer")
- *   bulletList / listItem       a plain bulleted list
- *   checklist / checkItem       the tick rows: "actionable items for each step". A check
- *                               item may be tagged point-of-care, which is what the quick
- *                               reference guide is derived from
  *   timeframe                   a timeframe box: a care point ("Timeframe for referral to a
  *                               cancer specialist") and its statement. The template offers
  *                               alternatives; an author keeps one
@@ -19,78 +25,85 @@
  *                               never published
  *   citation (inline atom)      a reference to a row of the document's references table.
  *                               Its number is derived at render, so it cannot go stale
- *
- * marks: bold, italic, link(href), placeholder(label) for the template's editable slots
- * ("[cancer type]", "[insert timeframe]") and sectionLink(address) for a typed cross-
- * reference to another section of the same document.
- *
- * Names follow ProseKit's where the concept is the same (bold, italic, link), so its
- * commands and keymaps apply unchanged.
+ *   placeholder (mark)          the template's editable slots ("[cancer type]")
+ *   sectionLink (mark)          a typed cross-reference to another section, by address
  */
 
-import { type MarkSpec, type NodeSpec, Node as PmNode, Schema } from '@prosekit/pm/model'
+import {
+	defineMarkSpec,
+	defineNodeAttr,
+	defineNodeSpec,
+	type ExtractMarks,
+	type ExtractNodes,
+	union,
+} from '@prosekit/core'
+import { defineBlockquoteSpec } from '@prosekit/extensions/blockquote'
+import { defineBoldSpec } from '@prosekit/extensions/bold'
+import { defineDoc } from '@prosekit/extensions/doc'
+import { defineHardBreakSpec } from '@prosekit/extensions/hard-break'
+import { defineHeadingSpec } from '@prosekit/extensions/heading'
+import { defineHorizontalRuleSpec } from '@prosekit/extensions/horizontal-rule'
+import { defineImageSpec } from '@prosekit/extensions/image'
+import { defineItalicSpec } from '@prosekit/extensions/italic'
+import { defineLinkSpec } from '@prosekit/extensions/link'
+import { defineListSpec } from '@prosekit/extensions/list'
+import { defineParagraphSpec } from '@prosekit/extensions/paragraph'
+import { defineStrikeSpec } from '@prosekit/extensions/strike'
+import { defineSubscriptSpec } from '@prosekit/extensions/subscript'
+import { defineSuperscriptSpec } from '@prosekit/extensions/superscript'
+import {
+	defineTableCellSpec,
+	defineTableHeaderCellSpec,
+	defineTableRowSpec,
+	defineTableSpec,
+} from '@prosekit/extensions/table'
+import { defineText } from '@prosekit/extensions/text'
+import { defineUnderlineSpec } from '@prosekit/extensions/underline'
+import { Node as PmNode, type Schema } from '@prosekit/pm/model'
 
-const attr = (element: HTMLElement | string, name: string) =>
-	typeof element === 'string' ? null : element.getAttribute(name)
+// ---------------------------------------------------------------------------
+// The template's own blocks
+// ---------------------------------------------------------------------------
 
-export const nodeSpecs = {
-	doc: { content: 'block+' },
-	paragraph: {
-		content: 'inline*',
-		group: 'block',
-		parseDOM: [{ tag: 'p:not([data-ocp])' }],
-		toDOM: () => ['p', 0],
-	},
-	banner: {
+export interface TimeframeAttrs {
+	carePoint: string
+}
+
+export interface CitationAttrs {
+	referenceId: string
+}
+
+export interface PlaceholderAttrs {
+	label: string
+}
+
+export interface SectionLinkAttrs {
+	address: string
+}
+
+const attr = (element: HTMLElement, name: string) => element.getAttribute(name) ?? ''
+
+const defineBanner = () =>
+	defineNodeSpec({
+		name: 'banner',
 		content: 'inline*',
 		group: 'block',
 		defining: true,
 		parseDOM: [{ tag: 'p[data-ocp="banner"]' }],
 		toDOM: () => ['p', { 'data-ocp': 'banner' }, 0],
-	},
-	bulletList: {
-		content: 'listItem+',
-		group: 'block',
-		parseDOM: [{ tag: 'ul:not([data-ocp])' }],
-		toDOM: () => ['ul', 0],
-	},
-	listItem: {
-		content: 'paragraph block*',
-		defining: true,
-		parseDOM: [{ tag: 'li:not([data-ocp])' }],
-		toDOM: () => ['li', 0],
-	},
-	checklist: {
-		content: 'checkItem+',
-		group: 'block',
-		parseDOM: [{ tag: 'ul[data-ocp="checklist"]' }],
-		toDOM: () => ['ul', { 'data-ocp': 'checklist' }, 0],
-	},
-	checkItem: {
-		content: 'paragraph block*',
-		defining: true,
-		attrs: { pointOfCare: { default: false } },
-		parseDOM: [
-			{
-				tag: 'li[data-ocp="check"]',
-				getAttrs: (element) => ({ pointOfCare: attr(element, 'data-point-of-care') === 'true' }),
-			},
-		],
-		toDOM: (node) => [
-			'li',
-			{ 'data-ocp': 'check', 'data-point-of-care': String(node.attrs.pointOfCare) },
-			0,
-		],
-	},
-	timeframe: {
+	})
+
+const defineTimeframe = () =>
+	defineNodeSpec<'timeframe', TimeframeAttrs>({
+		name: 'timeframe',
 		content: 'paragraph+',
 		group: 'block',
 		defining: true,
-		attrs: { carePoint: { default: '' } },
+		attrs: { carePoint: { default: '', validate: 'string' } },
 		parseDOM: [
 			{
 				tag: 'aside[data-ocp="timeframe"]',
-				getAttrs: (element) => ({ carePoint: attr(element, 'data-care-point') ?? '' }),
+				getAttrs: (element) => ({ carePoint: attr(element, 'data-care-point') }),
 			},
 		],
 		toDOM: (node) => [
@@ -98,62 +111,59 @@ export const nodeSpecs = {
 			{ 'data-ocp': 'timeframe', 'data-care-point': String(node.attrs.carePoint) },
 			0,
 		],
-	},
-	guidance: {
+	})
+
+const defineGuidance = () =>
+	defineNodeSpec({
+		name: 'guidance',
 		content: 'block+',
 		group: 'block',
 		defining: true,
 		parseDOM: [{ tag: 'aside[data-ocp="guidance"]' }],
 		toDOM: () => ['aside', { 'data-ocp': 'guidance' }, 0],
-	},
-	citation: {
+	})
+
+const defineCitation = () =>
+	defineNodeSpec<'citation', CitationAttrs>({
+		name: 'citation',
 		inline: true,
 		group: 'inline',
 		atom: true,
 		selectable: true,
-		attrs: { referenceId: {} },
+		attrs: { referenceId: { validate: 'string' } },
 		parseDOM: [
 			{
 				tag: 'sup[data-ocp="citation"]',
-				getAttrs: (element) => ({ referenceId: attr(element, 'data-reference-id') ?? '' }),
+				getAttrs: (element) => ({ referenceId: attr(element, 'data-reference-id') }),
 			},
 		],
 		toDOM: (node) => [
 			'sup',
 			{ 'data-ocp': 'citation', 'data-reference-id': String(node.attrs.referenceId) },
 		],
-	},
-	text: { group: 'inline' },
-} satisfies Record<string, NodeSpec>
+	})
 
-export const markSpecs = {
-	bold: {
-		parseDOM: [{ tag: 'strong' }, { tag: 'b' }],
-		toDOM: () => ['strong', 0],
-	},
-	italic: {
-		parseDOM: [{ tag: 'em' }, { tag: 'i' }],
-		toDOM: () => ['em', 0],
-	},
-	link: {
-		attrs: { href: {} },
-		inclusive: false,
-		parseDOM: [
-			{
-				tag: 'a[href]:not([data-ocp])',
-				getAttrs: (element) => ({ href: attr(element, 'href') ?? '' }),
-			},
-		],
-		toDOM: (mark) => ['a', { href: String(mark.attrs.href), rel: 'noopener' }, 0],
-	},
-	placeholder: {
-		attrs: { label: {} },
+/** Tick rows: ProseKit's list node with kind 'check' and a point-of-care flag. */
+const definePointOfCare = () =>
+	defineNodeAttr<'list', 'pointOfCare', boolean>({
+		type: 'list',
+		attr: 'pointOfCare',
+		default: false,
+		splittable: true,
+		toDOM: (value) => (value ? ['data-point-of-care', 'true'] : null),
+		parseDOM: (element) => element.getAttribute('data-point-of-care') === 'true',
+	})
+
+const definePlaceholder = () =>
+	defineMarkSpec<'placeholder', PlaceholderAttrs>({
+		name: 'placeholder',
+		attrs: { label: { validate: 'string' } },
 		inclusive: false,
 		excludes: 'placeholder',
 		parseDOM: [
 			{
 				tag: 'mark[data-ocp="placeholder"]',
-				getAttrs: (element) => ({ label: attr(element, 'data-label') ?? '' }),
+				getAttrs: (element) => ({ label: attr(element, 'data-label') }),
 			},
 		],
 		toDOM: (mark) => [
@@ -161,14 +171,17 @@ export const markSpecs = {
 			{ 'data-ocp': 'placeholder', 'data-label': String(mark.attrs.label) },
 			0,
 		],
-	},
-	sectionLink: {
-		attrs: { address: {} },
+	})
+
+const defineSectionLink = () =>
+	defineMarkSpec<'sectionLink', SectionLinkAttrs>({
+		name: 'sectionLink',
+		attrs: { address: { validate: 'string' } },
 		inclusive: false,
 		parseDOM: [
 			{
 				tag: 'a[data-ocp="section"]',
-				getAttrs: (element) => ({ address: attr(element, 'data-address') ?? '' }),
+				getAttrs: (element) => ({ address: attr(element, 'data-address') }),
 			},
 		],
 		toDOM: (mark) => [
@@ -180,28 +193,77 @@ export const markSpecs = {
 			},
 			0,
 		],
-	},
-} satisfies Record<string, MarkSpec>
+	})
 
-export type NodeName = keyof typeof nodeSpecs
-export type MarkName = keyof typeof markSpecs
+// ---------------------------------------------------------------------------
+// The schema extension
+// ---------------------------------------------------------------------------
+
+/** Spec-only. The editor adds behaviour; the server adds nothing. */
+export function defineContentSchema() {
+	return union(
+		defineDoc(),
+		defineText(),
+		defineParagraphSpec(),
+		defineHeadingSpec(),
+		defineBlockquoteSpec(),
+		defineHorizontalRuleSpec(),
+		defineHardBreakSpec(),
+		defineImageSpec(),
+		defineTableSpec(),
+		defineTableRowSpec(),
+		defineTableCellSpec(),
+		defineTableHeaderCellSpec(),
+		defineListSpec(),
+		definePointOfCare(),
+		defineBoldSpec(),
+		defineItalicSpec(),
+		defineUnderlineSpec(),
+		defineStrikeSpec(),
+		defineSuperscriptSpec(),
+		defineSubscriptSpec(),
+		defineLinkSpec(),
+		defineBanner(),
+		defineTimeframe(),
+		defineGuidance(),
+		defineCitation(),
+		definePlaceholder(),
+		defineSectionLink(),
+	)
+}
+
+export type ContentExtension = ReturnType<typeof defineContentSchema>
+export type NodeName = keyof ExtractNodes<ContentExtension> & string
+export type MarkName = keyof ExtractMarks<ContentExtension> & string
 
 /** The block node names that carry durable identity in the editor. */
 export const BLOCK_NODE_NAMES = [
 	'paragraph',
+	'heading',
+	'blockquote',
+	'horizontalRule',
+	'image',
+	'table',
+	'list',
 	'banner',
-	'bulletList',
-	'checklist',
 	'timeframe',
 	'guidance',
 ] as const satisfies readonly NodeName[]
 
-export const contentSchema = new Schema({ nodes: nodeSpecs, marks: markSpecs })
+function buildSchema(): Schema {
+	const schema = defineContentSchema().schema
+	if (!schema) throw new Error('[content] the content extension declares no schema')
+	return schema
+}
+
+/** The ProseMirror schema, for the server and the seed. The editor never uses this
+ *  directly: it unions `defineContentSchema()` into its own extension. */
+export const contentSchema: Schema = buildSchema()
 
 /** The JSON form of a node, as stored in `sections.body_json` and served by the API. */
 export interface JsonNode {
 	type: NodeName
-	attrs?: Record<string, string | number | boolean>
+	attrs?: Record<string, string | number | boolean | null>
 	content?: JsonNode[]
 	text?: string
 	marks?: JsonMark[]
@@ -209,7 +271,7 @@ export interface JsonNode {
 
 export interface JsonMark {
 	type: MarkName
-	attrs?: Record<string, string | number | boolean>
+	attrs?: Record<string, string | number | boolean | null>
 }
 
 /** Parses stored JSON into a node and checks it against the schema; throws if malformed. */
