@@ -52,7 +52,10 @@ interface Seeded {
 /** One pathway with a step and three owned sections, in its own room. */
 async function seedDocument(label: string): Promise<Seeded> {
 	const documentId = `doc-${crypto.randomUUID()}`
-	const owned = ['2.1', '2.2', '2.3'].map((address) => ({ id: `sec-${crypto.randomUUID()}`, address }))
+	const owned = ['2.1', '2.2', '2.3'].map((address) => ({
+		id: `sec-${crypto.randomUUID()}`,
+		address,
+	}))
 	const d = db(env.DB)
 	await d
 		.insert(schema.templates)
