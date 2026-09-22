@@ -74,7 +74,9 @@ catalog:
   '@vitejs/plugin-react': ^6.0.2
   '@vitejs/plugin-rsc': 0.5.27
   astro: 7.0.0-alpha.1
-  better-auth: ^1.7.2
+  # Exact: the monorepo runs 1.7.2 and its D1 schema is validated against it; 1.7.5
+  # adds a stricter schema check. Bump together with the package's migrations.
+  better-auth: 1.7.2
   capnweb-experimental-hibernation: 0.12.0-hibernation-cbor.1
   convex: ^1.45.0
   crashcat: ^0.0.5
@@ -182,6 +184,21 @@ overrides:
   '@solidjs/signals': 2.0.0-rc.3
   '@solidjs/compiler': 2.0.0-rc.3
   '@solidjs/babel-plugin': 2.0.0-rc.3
+  # packages/better-auth ranges its @better-auth/* plugins at ^1.7.2 and third-party
+  # adapters range better-auth itself; hold the whole family at the version the
+  # monorepo runs. Two better-auth copies break its plugin types (the monorepo's
+  # "duplicate @better-auth/core" trap), so `pnpm dedupe` after any change here.
+  'better-auth': 1.7.2
+  '@better-auth/api-key': 1.7.2
+  '@better-auth/core': 1.7.2
+  '@better-auth/drizzle-adapter': 1.7.2
+  '@better-auth/kysely-adapter': 1.7.2
+  '@better-auth/memory-adapter': 1.7.2
+  '@better-auth/mongo-adapter': 1.7.2
+  '@better-auth/oauth-provider': 1.7.2
+  '@better-auth/passkey': 1.7.2
+  '@better-auth/prisma-adapter': 1.7.2
+  '@better-auth/telemetry': 1.7.2
 
 # @convex-dev/better-auth (a dependency of packages/better-auth this repo never
 # calls) still peers on better-auth <1.7. Allowed explicitly, as in the monorepo.

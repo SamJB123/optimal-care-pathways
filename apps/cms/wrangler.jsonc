@@ -1,6 +1,9 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "ocp-cms",
+	// The deploying account (AI CoLab's, during development). This login reaches more
+	// than one account, so wrangler needs it named. On handover this is the line to change.
+	"account_id": "e964cc4da3985d45b51d110e9ebbdda5",
 	"main": "src/worker.ts",
 	"compatibility_date": "2026-05-08",
 	"compatibility_flags": ["nodejs_compat"],

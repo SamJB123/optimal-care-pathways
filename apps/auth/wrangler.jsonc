@@ -1,6 +1,9 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "ocp-auth",
+	// The deploying account (AI CoLab's, during development). This login reaches more
+	// than one account, so wrangler needs it named. On handover this is the line to change.
+	"account_id": "e964cc4da3985d45b51d110e9ebbdda5",
 	"main": "src/worker.ts",
 	"compatibility_date": "2026-05-08",
 	"compatibility_flags": ["nodejs_compat"],
@@ -16,9 +19,9 @@
 		{
 			"binding": "AUTH_DB",
 			"database_name": "ocp-auth-d1",
-			// Placeholder until `wrangler d1 create ocp-auth-d1` has run on the target
-			// account; local dev accepts any id. Replace with the id it prints.
-			"database_id": "00000000-0000-0000-0000-000000000000",
+			// Created 2026-09-22 on the account above (region OC). A new account needs
+			// `wrangler d1 create ocp-auth-d1` and this id replaced with the one it prints.
+			"database_id": "ae4465c3-757b-4c1c-beed-2d67a2f013ca",
 			"migrations_dir": "./node_modules/@aicolab/better-auth/cloudflare/d1/migrations"
 		}
 	],
