@@ -1,11 +1,8 @@
 -- Empties the content database so the regenerated initial migration can be applied
 -- afresh. Development only, while nothing lives in the remote database:
 --
---   pnpm exec wrangler d1 execute ocp-cms-d1 --remote --command "$(grep -v '^--' scripts/reset-remote-d1.sql | tr '\n' ' ')"
+--   pnpm exec wrangler d1 execute ocp-cms-d1 --remote --yes --file=scripts/reset-remote-d1.sql
 --   pnpm db:migrate:remote
---
--- As a --command, not --file: the file form goes through D1's import endpoint, which the
--- wrangler OAuth login is not scoped for ("Authentication error [code: 10000]").
 --
 -- Once real content exists this file is obsolete: schema changes then go through
 -- further migrations, never a reset.
