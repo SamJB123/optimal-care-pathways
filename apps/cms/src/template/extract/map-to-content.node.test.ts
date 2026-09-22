@@ -21,7 +21,12 @@ let result: ReturnType<typeof mapTemplate>
 beforeAll(async () => {
 	const doc = await openPdf(path)
 	const model = await readDocument(doc, SOURCE)
-	result = mapTemplate({ model, template: templateByKey('cancer-template'), orgId: 'test-org', id: (kind, key) => `${kind}:${key}` })
+	result = mapTemplate({
+		model,
+		template: templateByKey('cancer-template'),
+		orgId: 'test-org',
+		id: (kind, key) => `${kind}:${key}`,
+	})
 }, 60_000)
 
 const section = (address: string) => {
@@ -89,7 +94,9 @@ describe('stage two: the cancer template mapped to the content schema', () => {
 		expect(riskBox?.content?.map((n) => n.type)).toEqual(['guidance', 'banner', 'variants'])
 		expect(variants?.content?.length).toBe(2)
 		expect(variants?.content?.[0]?.content?.map((n) => n.type)).toEqual(['guidance'])
-		expect(textOf(variants?.content?.[1]?.content ?? [])).toBe('The causes of [cancer type] are not fully understood.')
+		expect(textOf(variants?.content?.[1]?.content ?? [])).toBe(
+			'The causes of [cancer type] are not fully understood.',
+		)
 		// 1.1.3: three alternatives, the third headed by its own banner.
 		const [geneticBox] = find(body('1.1.3'), 'box')
 		const [geneticVariants] = find(geneticBox ? [geneticBox] : [], 'variants')
@@ -111,7 +118,9 @@ describe('stage two: the cancer template mapped to the content schema', () => {
 		expect(summaryPlaceholders).toContain('[cancer type]')
 		expect(summaryPlaceholders.some((p) => p.startsWith('Select from the list'))).toBe(false)
 		// The pen box guidance is guidance, not a placeholder.
-		expect(textOf(find(summary, 'guidance'))).toContain('Select from the list of treatment modalities')
+		expect(textOf(find(summary, 'guidance'))).toContain(
+			'Select from the list of treatment modalities',
+		)
 	})
 
 	it('keeps a callout Word stacked under a developer box as a box of its own (p.12)', () => {
@@ -132,17 +141,29 @@ describe('stage two: the cancer template mapped to the content schema', () => {
 		const [prehabBox] = find(prehab, 'box').filter((b) => b.attrs?.kind === 'developer')
 		const [alternatives] = find(prehabBox ? [prehabBox] : [], 'variants')
 		expect(alternatives?.content?.length).toBe(2)
-		expect(textOf(alternatives?.content?.[1]?.content ?? [])).toBe('Prehabilitation is not relevant for [cancer type].')
+		expect(textOf(alternatives?.content?.[1]?.content ?? [])).toBe(
+			'Prehabilitation is not relevant for [cancer type].',
+		)
 	})
 
 	it('reads the stopwatch rows as timeframes, one per care point, over a merged icon cell (p.37)', () => {
 		const timeframes = find(body('4.3.1'), 'timeframe')
-		const carePoints = timeframes.map((t) => t.content?.[0]).filter((n): n is JsonNode => n !== undefined)
+		const carePoints = timeframes
+			.map((t) => t.content?.[0])
+			.filter((n): n is JsonNode => n !== undefined)
 		expect(carePoints.map((c) => c.type)).toEqual(['carePoint', 'carePoint'])
-		expect(carePoints.map((c) => textOf([c]))).toEqual(['Timeframe for treatment', 'Timeframe for [treatment modality]'])
+		expect(carePoints.map((c) => textOf([c]))).toEqual([
+			'Timeframe for treatment',
+			'Timeframe for [treatment modality]',
+		])
 		// The second care point's placeholder survives as a mark, not flattened text.
-		expect(marked(carePoints[1] ? [carePoints[1]] : [], 'placeholder')).toEqual(['[treatment modality]'])
-		expect(marked(timeframes[0] ? [timeframes[0]] : [], 'placeholder')).toEqual(['[timeframe]', '[specialist referral, multidisciplinary team meeting]'])
+		expect(marked(carePoints[1] ? [carePoints[1]] : [], 'placeholder')).toEqual([
+			'[treatment modality]',
+		])
+		expect(marked(timeframes[0] ? [timeframes[0]] : [], 'placeholder')).toEqual([
+			'[timeframe]',
+			'[specialist referral, multidisciplinary team meeting]',
+		])
 	})
 
 	it('replaces the snapshot schematic with the derived node and keeps its notes (p.12)', () => {
@@ -155,11 +176,22 @@ describe('stage two: the cancer template mapped to the content schema', () => {
 	it('keeps footnotes and citations as atoms, with the prose spacing intact (p.13)', () => {
 		const [first] = body('1.1.1')
 		expect(first?.type).toBe('paragraph')
-		expect(first?.content?.map((n) => n.type)).toEqual(['text', 'footnote', 'text', 'citation', 'text', 'citation'])
+		expect(first?.content?.map((n) => n.type)).toEqual([
+			'text',
+			'footnote',
+			'text',
+			'citation',
+			'text',
+			'citation',
+		])
 		expect(first?.content?.[2]?.text).toBe(' risk factors for cancer include:')
-		expect(first?.content?.[1]?.attrs?.text).toBe('Not all risk factors are relevant for all cancer types')
+		expect(first?.content?.[1]?.attrs?.text).toBe(
+			'Not all risk factors are relevant for all cancer types',
+		)
 		expect(result.references.length).toBe(89)
-		expect(result.references.find((r) => r.printedNumber === 22)?.citation).toMatch(/^Royal Australian College of General Practitioners\./)
+		expect(result.references.find((r) => r.printedNumber === 22)?.citation).toMatch(
+			/^Royal Australian College of General Practitioners\./,
+		)
 	})
 
 	it('emits valid, non-empty bodies for every section', () => {

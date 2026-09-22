@@ -26,7 +26,10 @@ const from = range?.[0] ?? 1
 const to = range?.[1] ?? range?.[0] ?? Number.POSITIVE_INFINITY
 
 const model: ExtractedDocument = JSON.parse(
-	readFileSync(join(import.meta.dirname, '..', 'template', '2026', 'extracted', `${name}.model.json`), 'utf8'),
+	readFileSync(
+		join(import.meta.dirname, '..', 'template', '2026', 'extracted', `${name}.model.json`),
+		'utf8',
+	),
 )
 
 const BODY_COLOURS = new Set(['#000000', '#414042', '#0f1e64'])
@@ -57,7 +60,16 @@ function block(b: Block, indent: number): void {
 			return
 		case 'list':
 			for (const item of b.items) {
-				const marker = item.marker === 'check' ? '☑' : item.marker === 'cross' ? '☒' : item.marker === 'dash' ? '–' : item.marker === 'number' ? item.label : '•'
+				const marker =
+					item.marker === 'check'
+						? '☑'
+						: item.marker === 'cross'
+							? '☒'
+							: item.marker === 'dash'
+								? '–'
+								: item.marker === 'number'
+									? item.label
+									: '•'
 				const [first, ...more] = item.blocks
 				if (first?.kind === 'paragraph') emit(indent, `${marker} ${runs(first.runs)}`)
 				else {
@@ -94,7 +106,10 @@ function section(s: Section): void {
 	const inRange = s.page >= from && s.page <= to
 	if (inRange) {
 		lines.push('')
-		emit(0, `${'#'.repeat(s.level)} ${s.number ? `${s.number} ` : ''}${runs(s.heading)}  (${s.id}, p.${s.page})`)
+		emit(
+			0,
+			`${'#'.repeat(s.level)} ${s.number ? `${s.number} ` : ''}${runs(s.heading)}  (${s.id}, p.${s.page})`,
+		)
 		for (const b of s.blocks) block(b, 0)
 	}
 	for (const c of s.children) section(c)

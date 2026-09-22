@@ -15,7 +15,12 @@ import { type JsonNode, parseBody } from './schema.ts'
 import { bodyFromRoot, hydrateRoot } from './yjs.ts'
 
 const readModel = (key: string): ExtractedDocument =>
-	JSON.parse(readFileSync(new URL(`../../template/2026/extracted/${key}.model.json`, import.meta.url), 'utf8'))
+	JSON.parse(
+		readFileSync(
+			new URL(`../../template/2026/extracted/${key}.model.json`, import.meta.url),
+			'utf8',
+		),
+	)
 
 const roundTrip = (body: JsonNode): JsonNode => {
 	const doc = new Doc()
@@ -36,13 +41,21 @@ describe('yjs round trip', () => {
 						{ type: 'banner', content: [{ type: 'text', text: 'Signs and symptoms' }] },
 						{
 							type: 'guidance',
-							content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Complete the timeframe' }] }],
+							content: [
+								{ type: 'paragraph', content: [{ type: 'text', text: 'Complete the timeframe' }] },
+							],
 						},
 						{
 							type: 'variants',
 							content: [
-								{ type: 'variant', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Option one' }] }] },
-								{ type: 'variant', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Option two' }] }] },
+								{
+									type: 'variant',
+									content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Option one' }] }],
+								},
+								{
+									type: 'variant',
+									content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Option two' }] }],
+								},
 							],
 						},
 					],
@@ -61,7 +74,10 @@ describe('yjs round trip', () => {
 									marks: [{ type: 'placeholder', attrs: { label: '[timeframe]' } }],
 								},
 								{ type: 'citation', attrs: { referenceId: 'ref-7' } },
-								{ type: 'footnote', attrs: { text: 'Not all risk factors are relevant for all cancer types' } },
+								{
+									type: 'footnote',
+									attrs: { text: 'Not all risk factors are relevant for all cancer types' },
+								},
 							],
 						},
 					],
@@ -103,7 +119,10 @@ describe('yjs round trip', () => {
 						},
 					],
 				},
-				{ type: 'image', attrs: { src: '/template-figures/cancer-template/p9-1.png', alt: 'Steps of the pathway' } },
+				{
+					type: 'image',
+					attrs: { src: '/template-figures/cancer-template/p9-1.png', alt: 'Steps of the pathway' },
+				},
 				{
 					type: 'paragraph',
 					content: [
@@ -130,7 +149,12 @@ describe('yjs round trip', () => {
 		it('keeps every seeded section body', () => {
 			const template = TEMPLATES.find((t) => t.key === key)
 			if (!template) throw new Error(key)
-			const { sections } = mapTemplate({ model: readModel(key), template, orgId: 'org-test', id: deterministicId })
+			const { sections } = mapTemplate({
+				model: readModel(key),
+				template,
+				orgId: 'org-test',
+				id: deterministicId,
+			})
 			const mismatches: string[] = []
 			for (const section of sections) {
 				const expected = parseBody(section.bodyJson).toJSON()

@@ -20,7 +20,9 @@ import { TEMPLATES, templateByKey } from '../src/template/templates.ts'
 
 const key = process.argv[2]
 if (!key) {
-	console.error(`usage: tsx scripts/extract-template.ts <${TEMPLATES.map((t) => t.key).join('|')}> [--no-figures]`)
+	console.error(
+		`usage: tsx scripts/extract-template.ts <${TEMPLATES.map((t) => t.key).join('|')}> [--no-figures]`,
+	)
 	process.exit(2)
 }
 const template = templateByKey(key)
@@ -34,7 +36,15 @@ mkdirSync(outDir, { recursive: true })
 const target = join(outDir, `${template.key}.model.json`)
 writeFileSync(target, `${JSON.stringify(model, null, '\t')}\n`)
 
-const counts = { sections: 0, paragraphs: 0, lists: 0, listItems: 0, tables: 0, cells: 0, figures: 0 }
+const counts = {
+	sections: 0,
+	paragraphs: 0,
+	lists: 0,
+	listItems: 0,
+	tables: 0,
+	cells: 0,
+	figures: 0,
+}
 const countBlocks = (blocks: Block[]) => {
 	for (const b of blocks) {
 		if (b.kind === 'paragraph') counts.paragraphs++
@@ -46,10 +56,11 @@ const countBlocks = (blocks: Block[]) => {
 			}
 		} else if (b.kind === 'table') {
 			counts.tables++
-			for (const row of b.rows) for (const cell of row.cells) {
-				counts.cells++
-				countBlocks(cell.blocks)
-			}
+			for (const row of b.rows)
+				for (const cell of row.cells) {
+					counts.cells++
+					countBlocks(cell.blocks)
+				}
 		} else counts.figures++
 	}
 }

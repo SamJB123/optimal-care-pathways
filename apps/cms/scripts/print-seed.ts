@@ -27,7 +27,10 @@ if (!key) {
 }
 const template = templateByKey(key)
 const model: ExtractedDocument = JSON.parse(
-	readFileSync(join(import.meta.dirname, '..', 'template', '2026', 'extracted', `${key}.model.json`), 'utf8'),
+	readFileSync(
+		join(import.meta.dirname, '..', 'template', '2026', 'extracted', `${key}.model.json`),
+		'utf8',
+	),
 )
 const result = mapTemplate({ model, template, orgId: 'audit', id: deterministicId })
 const referenceNumber = new Map(result.references.map((r) => [r.id, r.printedNumber]))
@@ -76,7 +79,8 @@ const inline = (nodes: JsonNode[] | undefined): string =>
 	(nodes ?? [])
 		.map((n) => {
 			if (n.type === 'text') return (n.marks ?? []).reduce(wrapMark, n.text ?? '')
-			if (n.type === 'citation') return `[^${referenceNumber.get(String(n.attrs?.referenceId ?? '')) ?? '?'}]`
+			if (n.type === 'citation')
+				return `[^${referenceNumber.get(String(n.attrs?.referenceId ?? '')) ?? '?'}]`
 			if (n.type === 'footnote') return `[fn: ${String(n.attrs?.text ?? '')}]`
 			if (n.type === 'hardBreak') return ' ⏎ '
 			return `<${n.type}>`
@@ -102,7 +106,10 @@ function block(node: JsonNode, indent: number): void {
 			for (const c of node.content ?? []) block(c, indent + 1)
 			return
 		case 'box':
-			emit(indent, `▣ ${String(node.attrs?.kind ?? '')}${node.attrs?.icon ? `/${String(node.attrs.icon)}` : ''}`)
+			emit(
+				indent,
+				`▣ ${String(node.attrs?.kind ?? '')}${node.attrs?.icon ? `/${String(node.attrs.icon)}` : ''}`,
+			)
 			for (const c of node.content ?? []) block(c, indent + 1)
 			return
 		case 'variants':
@@ -123,7 +130,8 @@ function block(node: JsonNode, indent: number): void {
 			return
 		case 'list': {
 			const kind = String(node.attrs?.kind ?? 'bullet')
-			const marker = kind === 'check' ? (node.attrs?.pointOfCare ? '☑' : '☐') : kind === 'ordered' ? '1.' : '•'
+			const marker =
+				kind === 'check' ? (node.attrs?.pointOfCare ? '☑' : '☐') : kind === 'ordered' ? '1.' : '•'
 			const [first, ...more] = node.content ?? []
 			emit(indent, `${marker} ${first?.type === 'paragraph' ? inline(first.content) : ''}`)
 			if (first && first.type !== 'paragraph') block(first, indent + 1)
@@ -162,10 +170,16 @@ function block(node: JsonNode, indent: number): void {
 }
 
 const byId = new Map(result.sections.map((s) => [s.id, s]))
-const depth = (s: (typeof result.sections)[number]): number => (s.parentId ? 1 + depth(byId.get(s.parentId) ?? s) : 0)
+const depth = (s: (typeof result.sections)[number]): number =>
+	s.parentId ? 1 + depth(byId.get(s.parentId) ?? s) : 0
 for (const [index, s] of result.sections.entries()) {
 	const page = modelSections[index]?.page ?? 0
-	if (range && page && (page < (range[0] ?? 0) || page > (range[1] ?? range[0] ?? Number.POSITIVE_INFINITY))) continue
+	if (
+		range &&
+		page &&
+		(page < (range[0] ?? 0) || page > (range[1] ?? range[0] ?? Number.POSITIVE_INFINITY))
+	)
+		continue
 	lines.push('')
 	emit(
 		0,
@@ -176,7 +190,8 @@ for (const [index, s] of result.sections.entries()) {
 if (!range) {
 	lines.push('')
 	emit(0, `=== references (${result.references.length})`)
-	for (const r of result.references) emit(0, `[^${r.printedNumber}] ${r.citation}${r.url ? `  <${r.url}>` : ''}`)
+	for (const r of result.references)
+		emit(0, `[^${r.printedNumber}] ${r.citation}${r.url ? `  <${r.url}>` : ''}`)
 	lines.push('')
 	emit(0, `=== stats ${JSON.stringify(result.stats)}`)
 }

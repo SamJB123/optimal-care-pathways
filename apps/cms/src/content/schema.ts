@@ -142,12 +142,19 @@ const defineBox = () =>
 		parseDOM: [
 			{
 				tag: 'section[data-ocp="box"]',
-				getAttrs: (element) => ({ kind: attr(element, 'data-kind'), icon: attr(element, 'data-icon') }),
+				getAttrs: (element) => ({
+					kind: attr(element, 'data-kind'),
+					icon: attr(element, 'data-icon'),
+				}),
 			},
 		],
 		toDOM: (node) => [
 			'section',
-			{ 'data-ocp': 'box', 'data-kind': String(node.attrs.kind), 'data-icon': String(node.attrs.icon) },
+			{
+				'data-ocp': 'box',
+				'data-kind': String(node.attrs.kind),
+				'data-icon': String(node.attrs.icon),
+			},
 			0,
 		],
 	})

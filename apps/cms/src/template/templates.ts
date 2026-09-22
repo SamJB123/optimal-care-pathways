@@ -24,7 +24,10 @@ export interface TemplateInfo {
 	derived: readonly { address: string; node: 'timeframeSnapshot' }[]
 }
 
-const TIMEFRAME_SNAPSHOT = { address: 'snapshot-of-optimal-timeframes', node: 'timeframeSnapshot' } as const
+const TIMEFRAME_SNAPSHOT = {
+	address: 'snapshot-of-optimal-timeframes',
+	node: 'timeframeSnapshot',
+} as const
 
 export const TEMPLATES: readonly TemplateInfo[] = [
 	{
@@ -40,7 +43,8 @@ export const TEMPLATES: readonly TemplateInfo[] = [
 	{
 		key: 'cancer-template',
 		kind: 'cancer',
-		sourceFile: 'Attachment-B-Optimal-Care-Pathway-for-people-with-x-cancer-template_1784776024.pdf',
+		sourceFile:
+			'Attachment-B-Optimal-Care-Pathway-for-people-with-x-cancer-template_1784776024.pdf',
 		issuedOn: '20 July 2026',
 		templateId: 'cancer-2026-07',
 		coreSlug: 'core-cancer',
@@ -50,7 +54,8 @@ export const TEMPLATES: readonly TemplateInfo[] = [
 	{
 		key: 'population-template',
 		kind: 'population',
-		sourceFile: 'Attachment-C-Optimal-care-pathway-for-X-population-group-with-cancer-template_1784776049.pdf',
+		sourceFile:
+			'Attachment-C-Optimal-care-pathway-for-X-population-group-with-cancer-template_1784776049.pdf',
 		issuedOn: '20 July 2026',
 		templateId: 'population-2026-07',
 		coreSlug: 'core-population',
@@ -61,7 +66,8 @@ export const TEMPLATES: readonly TemplateInfo[] = [
 
 export function templateByKey(key: string): TemplateInfo {
 	const found = TEMPLATES.find((t) => t.key === key)
-	if (!found) throw new Error(`unknown template '${key}'; one of ${TEMPLATES.map((t) => t.key).join(', ')}`)
+	if (!found)
+		throw new Error(`unknown template '${key}'; one of ${TEMPLATES.map((t) => t.key).join(', ')}`)
 	return found
 }
 

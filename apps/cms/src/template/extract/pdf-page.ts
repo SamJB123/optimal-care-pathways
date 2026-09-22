@@ -144,7 +144,10 @@ export async function openPdf(path: string): Promise<PDFDocumentProxy> {
 	}).promise
 }
 
-const hex = (v: number): string => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, '0')
+const hex = (v: number): string =>
+	Math.round(Math.max(0, Math.min(1, v)) * 255)
+		.toString(16)
+		.padStart(2, '0')
 const rgb = (r: number, g: number, b: number): string => `#${hex(r)}${hex(g)}${hex(b)}`
 
 /** A finite number from an operator argument, or the fallback: a single NaN in the text
@@ -174,7 +177,8 @@ function mcidOf(props: unknown, pageObjId: string): string | null {
 	if (props === null || props === undefined) return null
 	if (typeof props === 'number') return `${pageObjId}_mc${props}`
 	if (typeof props !== 'object') return null
-	if ('id' in props && typeof props.id === 'string') return props.id.includes('_mc') ? props.id : `${pageObjId}_mc${props.id}`
+	if ('id' in props && typeof props.id === 'string')
+		return props.id.includes('_mc') ? props.id : `${pageObjId}_mc${props.id}`
 	if ('get' in props && typeof props.get === 'function') {
 		const id: unknown = props.get('MCID')
 		return id === undefined || id === null ? null : `${pageObjId}_mc${String(id)}`
@@ -190,14 +194,29 @@ function isNumberList(value: unknown): value is ArrayLike<number> {
 /** A six-number matrix from operator arguments, which pdf.js hands either as six numbers
  *  or as one typed array. */
 function matrixOf(args: unknown[], fallback: number[]): number[] {
-	const source = args.length === 1 && isNumberList(args[0]) ? Array.from(args[0], Number) : args.map(Number)
+	const source =
+		args.length === 1 && isNumberList(args[0]) ? Array.from(args[0], Number) : args.map(Number)
 	if (source.length !== 6 || !source.every(Number.isFinite)) return fallback
 	return source
 }
 
 /** The paint operators a `constructPath` ends with, by kind. */
-const FILL_OPS = new Set<number>([OPS.fill, OPS.eoFill, OPS.fillStroke, OPS.eoFillStroke, OPS.closeFillStroke, OPS.closeEOFillStroke])
-const STROKE_OPS = new Set<number>([OPS.stroke, OPS.closeStroke, OPS.fillStroke, OPS.eoFillStroke, OPS.closeFillStroke, OPS.closeEOFillStroke])
+const FILL_OPS = new Set<number>([
+	OPS.fill,
+	OPS.eoFill,
+	OPS.fillStroke,
+	OPS.eoFillStroke,
+	OPS.closeFillStroke,
+	OPS.closeEOFillStroke,
+])
+const STROKE_OPS = new Set<number>([
+	OPS.stroke,
+	OPS.closeStroke,
+	OPS.fillStroke,
+	OPS.eoFillStroke,
+	OPS.closeFillStroke,
+	OPS.closeEOFillStroke,
+])
 
 /** The font face behind a pdf.js alias, from the font object's own descriptor. */
 async function fontFace(page: PDFPageProxy, alias: string): Promise<FontFace> {
@@ -223,7 +242,12 @@ async function fontFace(page: PDFPageProxy, alias: string): Promise<FontFace> {
 function boxOf(minMax: number[], ctm: number[]): Box {
 	const [ax, ay] = applyTransform([minMax[0] ?? 0, minMax[1] ?? 0], ctm)
 	const [bx, by] = applyTransform([minMax[2] ?? 0, minMax[3] ?? 0], ctm)
-	return { x: Math.min(ax, bx), y: Math.min(ay, by), width: Math.abs(bx - ax), height: Math.abs(by - ay) }
+	return {
+		x: Math.min(ax, bx),
+		y: Math.min(ay, by),
+		width: Math.abs(bx - ax),
+		height: Math.abs(by - ay),
+	}
 }
 
 export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promise<PdfPage> {
@@ -310,7 +334,13 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 		const spans = spansByMcid.get(mcid) ?? []
 		const last = spans.at(-1)
 		const face = fontAlias
-		if (last && last.font === face && last.size === fontSize && last.fill === fill && last.rise === rise) {
+		if (
+			last &&
+			last.font === face &&
+			last.size === fontSize &&
+			last.fill === fill &&
+			last.rise === rise
+		) {
 			last.text += text
 			last.advances.push(...advances)
 		} else {
@@ -342,13 +372,22 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 				if (glyph < -150) {
 					text += ' '
 					advances.push(shift)
-				} else if (advances.length > 0) advances[advances.length - 1] = (advances.at(-1) ?? 0) + shift
+				} else if (advances.length > 0)
+					advances[advances.length - 1] = (advances.at(-1) ?? 0) + shift
 				continue
 			}
-			if (glyph && typeof glyph === 'object' && 'unicode' in glyph && typeof glyph.unicode === 'string') {
+			if (
+				glyph &&
+				typeof glyph === 'object' &&
+				'unicode' in glyph &&
+				typeof glyph.unicode === 'string'
+			) {
 				const width = 'width' in glyph ? finite(glyph.width, 500) : 500
 				const isSpace = 'isSpace' in glyph && glyph.isSpace === true
-				const advance = finite(((width / 1000) * fontSize + charSpacing + (isSpace ? wordSpacing : 0)) * hScale * scale, fontSize * 0.5)
+				const advance = finite(
+					((width / 1000) * fontSize + charSpacing + (isSpace ? wordSpacing : 0)) * hScale * scale,
+					fontSize * 0.5,
+				)
 				// A multi-character unicode (a ligature) shares its advance across its characters.
 				const chars = [...glyph.unicode]
 				for (const ch of chars) {
@@ -368,11 +407,34 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 		const args: unknown[] = (argsArray[i] as unknown[]) ?? []
 		switch (fn) {
 			case OPS.save:
-				stateStack.push({ ctm, fill, stroke, fontAlias, fontSize, rise, leading, charSpacing, wordSpacing, hScale })
+				stateStack.push({
+					ctm,
+					fill,
+					stroke,
+					fontAlias,
+					fontSize,
+					rise,
+					leading,
+					charSpacing,
+					wordSpacing,
+					hScale,
+				})
 				break
 			case OPS.restore: {
 				const saved = stateStack.pop()
-				if (saved) ({ ctm, fill, stroke, fontAlias, fontSize, rise, leading, charSpacing, wordSpacing, hScale } = saved)
+				if (saved)
+					({
+						ctm,
+						fill,
+						stroke,
+						fontAlias,
+						fontSize,
+						rise,
+						leading,
+						charSpacing,
+						wordSpacing,
+						hScale,
+					} = saved)
 				break
 			}
 			case OPS.transform:
@@ -380,12 +442,35 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 				break
 			case OPS.paintFormXObjectBegin:
 				// A form's content is drawn under its own matrix; it ends with the matching End.
-				stateStack.push({ ctm, fill, stroke, fontAlias, fontSize, rise, leading, charSpacing, wordSpacing, hScale })
+				stateStack.push({
+					ctm,
+					fill,
+					stroke,
+					fontAlias,
+					fontSize,
+					rise,
+					leading,
+					charSpacing,
+					wordSpacing,
+					hScale,
+				})
 				ctm = Util.transform(ctm, matrixOf([args[0]], [1, 0, 0, 1, 0, 0]))
 				break
 			case OPS.paintFormXObjectEnd: {
 				const saved = stateStack.pop()
-				if (saved) ({ ctm, fill, stroke, fontAlias, fontSize, rise, leading, charSpacing, wordSpacing, hScale } = saved)
+				if (saved)
+					({
+						ctm,
+						fill,
+						stroke,
+						fontAlias,
+						fontSize,
+						rise,
+						leading,
+						charSpacing,
+						wordSpacing,
+						hScale,
+					} = saved)
 				break
 			}
 			case OPS.beginMarkedContentProps:
@@ -426,12 +511,26 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 				lineMatrix = [...textMatrix]
 				break
 			case OPS.moveText:
-				lineMatrix = Util.transform(lineMatrix, [1, 0, 0, 1, finite(args[0], 0), finite(args[1], 0)])
+				lineMatrix = Util.transform(lineMatrix, [
+					1,
+					0,
+					0,
+					1,
+					finite(args[0], 0),
+					finite(args[1], 0),
+				])
 				textMatrix = [...lineMatrix]
 				break
 			case OPS.setLeadingMoveText:
 				leading = -finite(args[1], 0)
-				lineMatrix = Util.transform(lineMatrix, [1, 0, 0, 1, finite(args[0], 0), finite(args[1], 0)])
+				lineMatrix = Util.transform(lineMatrix, [
+					1,
+					0,
+					0,
+					1,
+					finite(args[0], 0),
+					finite(args[1], 0),
+				])
 				textMatrix = [...lineMatrix]
 				break
 			case OPS.nextLine:
@@ -476,13 +575,15 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 				if (isNumberList(buffers) || Array.isArray(buffers)) {
 					for (const buffer of Array.from(buffers as ArrayLike<unknown>)) {
 						if (!isNumberList(buffer)) continue
-						for (const code of Array.from(buffer, Number)) if (code === 0 || code === 1 || code === 4) segments += 1
+						for (const code of Array.from(buffer, Number))
+							if (code === 0 || code === 1 || code === 4) segments += 1
 					}
 				}
 				const box = boxOf(minMax, ctm)
 				const mcid = opMcStack.findLast((id) => id !== null) ?? null
 				if (FILL_OPS.has(paintOp)) paths.push({ box, kind: 'fill', colour: fill, segments, mcid })
-				if (STROKE_OPS.has(paintOp)) paths.push({ box, kind: 'stroke', colour: stroke, segments, mcid })
+				if (STROKE_OPS.has(paintOp))
+					paths.push({ box, kind: 'stroke', colour: stroke, segments, mcid })
 				break
 			}
 			default:
@@ -524,7 +625,8 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 			},
 		}
 		if (typeof annotation.url === 'string') link.url = annotation.url
-		else if (annotation.dest !== undefined && annotation.dest !== null) link.dest = JSON.stringify(annotation.dest)
+		else if (annotation.dest !== undefined && annotation.dest !== null)
+			link.dest = JSON.stringify(annotation.dest)
 		links.push(link)
 		linksById.set(link.id, link)
 	}

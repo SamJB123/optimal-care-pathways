@@ -197,7 +197,8 @@ function markRaised(ctx: Context, segs: Seg[]): void {
 	for (const line of lines) {
 		// The baseline is where the body-sized text sits.
 		const body = line.segs.filter((s) => s.size >= bodySize * 0.9)
-		const baseline = body.length > 0 ? body.reduce((sum, s) => sum + s.y, 0) / body.length : line.baseline
+		const baseline =
+			body.length > 0 ? body.reduce((sum, s) => sum + s.y, 0) / body.length : line.baseline
 		for (const seg of line.segs) {
 			const small = seg.size <= bodySize * 0.78
 			seg.superscript = small && seg.y > baseline + 0.5
@@ -295,7 +296,8 @@ function segsOf(ctx: Context, mcid: string): Seg[] {
 			const before = segs.slice(0, i).findLast((s) => !isSpace(s.text))
 			const after = segs.slice(i + 1).find((s) => !isSpace(s.text))
 			seg.underline = !!before && !!after && before.underline && after.underline
-			seg.background = before && after && before.background === after.background ? before.background : null
+			seg.background =
+				before && after && before.background === after.background ? before.background : null
 		}
 		for (const seg of segs) {
 			const last = out.at(-1)
@@ -320,7 +322,10 @@ function segFor(ctx: Context, ch: string, span: StyleSpan | null, box: Box, body
 		subscript: false,
 		size,
 		colour: span?.fill ?? '#000000',
-		background: isSpace(ch) && box.width === 0 ? null : highlightBehind(ctx.page.paths, box, size, ctx.element),
+		background:
+			isSpace(ch) && box.width === 0
+				? null
+				: highlightBehind(ctx.page.paths, box, size, ctx.element),
 		link: ctx.link ? linkTarget(ctx, ctx.link) : null,
 		footnote: null,
 		endnote: null,
@@ -372,7 +377,12 @@ function hasUnderline(paths: PaintedPath[], box: Box): boolean {
  *     per line, and somewhere in the stack a line's text stops short of the fill (a ragged
  *     or centred line, or an empty one) — a highlight ends where its text ends;
  *   - a lone fill that overruns the line's text at both ends is a shaded single line. */
-function highlightBehind(paths: PaintedPath[], box: Box, size: number, element: ElementGeometry | null): string | null {
+function highlightBehind(
+	paths: PaintedPath[],
+	box: Box,
+	size: number,
+	element: ElementGeometry | null,
+): string | null {
 	const midY = box.y + size * 0.35
 	const covers = (p: PaintedPath): boolean => {
 		if (midY < p.box.y || midY > p.box.y + p.box.height) return false
@@ -387,7 +397,8 @@ function highlightBehind(paths: PaintedPath[], box: Box, size: number, element: 
 	if (beneath && beneath.colour === top.colour) return null
 	if (top.box.height > size * 1.3) return null
 	const lines = element?.lines ?? []
-	const lineOf = (p: PaintedPath) => lines.find((l) => l.y >= p.box.y - 1 && l.y <= p.box.y + p.box.height + 1) ?? null
+	const lineOf = (p: PaintedPath) =>
+		lines.find((l) => l.y >= p.box.y - 1 && l.y <= p.box.y + p.box.height + 1) ?? null
 	const overruns = (p: PaintedPath, side: 'left' | 'right' | 'both'): boolean => {
 		const line = lineOf(p)
 		if (!line) return true
@@ -396,7 +407,8 @@ function highlightBehind(paths: PaintedPath[], box: Box, size: number, element: 
 		return side === 'both' ? left && right : left || right
 	}
 	const chain = fillStack(paths, top)
-	if (chain.length > 1) return chain.some((p) => overruns(p, 'left') || overruns(p, 'right')) ? null : top.colour
+	if (chain.length > 1)
+		return chain.some((p) => overruns(p, 'left') || overruns(p, 'right')) ? null : top.colour
 	return overruns(top, 'both') && lines.length > 0 ? null : top.colour
 }
 
@@ -413,7 +425,8 @@ function fillStack(paths: PaintedPath[], seed: PaintedPath): PaintedPath[] {
 	)
 	const chain = [seed]
 	const touching = (a: PaintedPath, b: PaintedPath) =>
-		Math.abs(a.box.y - (b.box.y + b.box.height)) < 1.5 || Math.abs(b.box.y - (a.box.y + a.box.height)) < 1.5
+		Math.abs(a.box.y - (b.box.y + b.box.height)) < 1.5 ||
+		Math.abs(b.box.y - (a.box.y + a.box.height)) < 1.5
 	let grew = true
 	while (grew) {
 		grew = false
@@ -439,7 +452,16 @@ function shadingBehind(paths: PaintedPath[], lines: Line[]): string | null {
 		if (p.kind !== 'fill' || p.box.height < 6) continue
 		const extendsBeyond = p.box.x < x0 - 4 || p.box.x + p.box.width > x1 + 4
 		if (!extendsBeyond) continue
-		if (!lines.every((l) => p.box.y <= l.y + 1 && p.box.y + p.box.height >= l.y - 1 && p.box.x < l.x1 && p.box.x + p.box.width > l.x0)) continue
+		if (
+			!lines.every(
+				(l) =>
+					p.box.y <= l.y + 1 &&
+					p.box.y + p.box.height >= l.y - 1 &&
+					p.box.x < l.x1 &&
+					p.box.x + p.box.width > l.x0,
+			)
+		)
+			continue
 		top = p
 	}
 	return top === null || top.colour === '#ffffff' ? null : top.colour
@@ -451,9 +473,19 @@ function linkTarget(ctx: Context, link: LinkAnnotation): TextRun['link'] {
 		try {
 			// An explicit destination: [pageRef, {name: 'XYZ'|'FitH'|…}, x?, y?, zoom?].
 			const parsed: unknown = JSON.parse(link.dest)
-			if (Array.isArray(parsed) && parsed[0] && typeof parsed[0] === 'object' && 'num' in parsed[0]) {
+			if (
+				Array.isArray(parsed) &&
+				parsed[0] &&
+				typeof parsed[0] === 'object' &&
+				'num' in parsed[0]
+			) {
 				const page = ctx.pageOfRef.get(Number(parsed[0].num))
-				const y = typeof parsed[3] === 'number' ? parsed[3] : typeof parsed[2] === 'number' && parsed[1]?.name === 'FitH' ? parsed[2] : null
+				const y =
+					typeof parsed[3] === 'number'
+						? parsed[3]
+						: typeof parsed[2] === 'number' && parsed[1]?.name === 'FitH'
+							? parsed[2]
+							: null
 				if (page) return { page, y }
 			}
 		} catch {
@@ -494,7 +526,9 @@ function inlineSegs(ctx: Context, node: TreeNode | StructTreeContent, into: Seg[
 	if (node.role === 'Link') {
 		const annotationLeaf = (node.children ?? []).find((c) => isLeaf(c) && c.type === 'annotation')
 		const link =
-			annotationLeaf && isLeaf(annotationLeaf) ? (ctx.page.linksById.get(annotationIdOf(annotationLeaf)) ?? null) : null
+			annotationLeaf && isLeaf(annotationLeaf)
+				? (ctx.page.linksById.get(annotationIdOf(annotationLeaf)) ?? null)
+				: null
 		const previous = ctx.link
 		ctx.link = link
 		const notes: TreeNode[] = []
@@ -511,7 +545,13 @@ function inlineSegs(ctx: Context, node: TreeNode | StructTreeContent, into: Seg[
 		}
 		const label = plainText(markerSegs).trim()
 		const target = link ? linkTarget(ctx, link) : null
-		if (/^\d{1,3}$/.test(label) && target && 'page' in target && target.page !== ctx.pageNumber && markerSegs.every((s) => s.superscript || s.size < s.lineSize * 0.8)) {
+		if (
+			/^\d{1,3}$/.test(label) &&
+			target &&
+			'page' in target &&
+			target.page !== ctx.pageNumber &&
+			markerSegs.every((s) => s.superscript || s.size < s.lineSize * 0.8)
+		) {
 			const trailing = detachTrailingSpace(markerSegs)
 			for (const seg of markerSegs) {
 				seg.endnote = Number(label)
@@ -557,7 +597,17 @@ function detachTrailingSpace(markerSegs: Seg[]): Seg[] {
 	const last = markerSegs.at(-1)
 	if (!last || last.text.trim() === '' || !/\s$/.test(last.text)) return []
 	last.text = last.text.replace(/\s+$/, '')
-	return [{ ...last, text: ' ', superscript: false, subscript: false, link: null, footnote: null, endnote: null }]
+	return [
+		{
+			...last,
+			text: ' ',
+			superscript: false,
+			subscript: false,
+			link: null,
+			footnote: null,
+			endnote: null,
+		},
+	]
 }
 
 /** A line that begins a note: its first token is a small integer in its own run (the
@@ -568,9 +618,13 @@ function noteNumberAt(line: Line): { number: number; consumed: number } | null {
 	if (!first) return null
 	const text = plainText(line.segs).trimStart()
 	const own = first.text.trim().match(/^(\d{1,3})$/)
-	if (own && (first.size < line.size * 0.9 || first.superscript)) return { number: Number(own[1]), consumed: first.text.trimStart().length }
+	if (own && (first.size < line.size * 0.9 || first.superscript))
+		return { number: Number(own[1]), consumed: first.text.trimStart().length }
 	const inline = text.match(/^\s*(\d{1,3})(?![\d.,;:])[.)]?\s+(?=\S)/)
-	if (inline?.[1] && (first.size < line.size * 0.9 || first.superscript || /^\d{1,3}$/.test(first.text.trim()))) {
+	if (
+		inline?.[1] &&
+		(first.size < line.size * 0.9 || first.superscript || /^\d{1,3}$/.test(first.text.trim()))
+	) {
 		return { number: Number(inline[1]), consumed: inline[0].length }
 	}
 	return null
@@ -590,11 +644,20 @@ function fileEndnoteLines(ctx: Context, lines: Line[]): void {
 		const start = noteNumberAt(line)
 		if (start) {
 			flush()
-			current = { number: start.number, page: ctx.pageNumber, lines: [line], consumed: start.consumed }
+			current = {
+				number: start.number,
+				page: ctx.pageNumber,
+				lines: [line],
+				consumed: start.consumed,
+			}
 		} else if (current) current.lines.push(line)
 		else {
 			const text = plainText(line.segs).trim()
-			if (text) ctx.warnings.push({ page: ctx.pageNumber, message: `unnumbered note text: "${text.slice(0, 60)}"` })
+			if (text)
+				ctx.warnings.push({
+					page: ctx.pageNumber,
+					message: `unnumbered note text: "${text.slice(0, 60)}"`,
+				})
 		}
 	}
 	flush()
@@ -611,12 +674,21 @@ function fileEndnotes(ctx: Context, blocks: Block[]): void {
 		if (block.kind !== 'paragraph') continue
 		const text = plainText(block.runs)
 		const m = text.match(/^\s*(\d{1,3})(?![\d.])[.)]?\s*/)
-		if (m?.[1]) ctx.endnotes.push({ number: Number(m[1]), page: block.page, runs: stripPrefix(block.runs, m[0].length) })
+		if (m?.[1])
+			ctx.endnotes.push({
+				number: Number(m[1]),
+				page: block.page,
+				runs: stripPrefix(block.runs, m[0].length),
+			})
 		else {
 			const last = ctx.endnotes.at(-1)
 			const spacer = block.runs[0]
 			if (last && spacer) last.runs.push({ ...spacer, text: ' ' }, ...block.runs)
-			else ctx.warnings.push({ page: block.page, message: `unnumbered note text: "${text.slice(0, 60)}"` })
+			else
+				ctx.warnings.push({
+					page: block.page,
+					message: `unnumbered note text: "${text.slice(0, 60)}"`,
+				})
 		}
 	}
 }
@@ -660,7 +732,9 @@ function linesOf(segs: Seg[]): Line[] {
 	for (const seg of segs) {
 		const last = lines.at(-1)
 		const small = seg.superscript || seg.subscript || seg.size <= seg.lineSize * 0.78
-		const tolerance = small ? Math.max(3, last?.size ?? seg.lineSize) * 0.8 : Math.max(2, (last?.size ?? seg.lineSize) * 0.45)
+		const tolerance = small
+			? Math.max(3, last?.size ?? seg.lineSize) * 0.8
+			: Math.max(2, (last?.size ?? seg.lineSize) * 0.45)
 		if (last && Math.abs(last.y - seg.y) < tolerance) {
 			last.segs.push(seg)
 			last.x0 = Math.min(last.x0, seg.x0)
@@ -779,10 +853,19 @@ function trimRuns(runs: TextRun[]): void {
 	if (last) last.text = last.text.replace(/\s+$/, '')
 }
 
-function paragraphFromLines(ctx: Context, lines: Line[], context: Line[] = lines): Paragraph | null {
+function paragraphFromLines(
+	ctx: Context,
+	lines: Line[],
+	context: Line[] = lines,
+): Paragraph | null {
 	const runs = runsFromLines(lines, context)
 	if (runs.length === 0) return null
-	return { kind: 'paragraph', runs, page: ctx.pageNumber, background: shadingBehind(ctx.page.paths, lines) }
+	return {
+		kind: 'paragraph',
+		runs,
+		page: ctx.pageNumber,
+		background: shadingBehind(ctx.page.paths, lines),
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -861,7 +944,12 @@ function learnHeadingStyles(pages: PdfPage[], pageOfRef: Map<number, number>): H
  *  learned heading style. When two levels share a style, the element's own tag decides,
  *  then the level that continues the current outline (the next level down, or the
  *  shallowest match). */
-function headingLevelOf(ctx: Context, line: Line, tagged: number | null = null, currentLevel = 0): number | null {
+function headingLevelOf(
+	ctx: Context,
+	line: Line,
+	tagged: number | null = null,
+	currentLevel = 0,
+): number | null {
 	const text = plainText(line.segs).trim()
 	if (text === '' || text.length > 160) return null
 	const s = lineStyle(line)
@@ -881,7 +969,8 @@ function headingLevelOf(ctx: Context, line: Line, tagged: number | null = null, 
 function markerKind(label: string, font: string | undefined): ListMarker {
 	const l = label.trim()
 	if (/^\d+[.)]?$/.test(l) || /^[a-z][.)]$/i.test(l)) return 'number'
-	if (l === '•' || l === '' || l === '' || l === '○' || l === '▪' || l === '■' || l === '·') return 'bullet'
+	if (l === '•' || l === '' || l === '' || l === '○' || l === '▪' || l === '■' || l === '·')
+		return 'bullet'
 	if (l === '–' || l === '-' || l === '—') return 'dash'
 	if (l === '✓' || l === '✔' || l === '' || l === 'ü') return 'check'
 	if (l === '☒' || l === '✗' || l === '✘' || l === 'û' || l === 'ý') return 'cross'
@@ -921,7 +1010,8 @@ function listOf(ctx: Context, node: TreeNode): List | null {
 				inlineSegs(ctx, part, segs)
 				label = plainText(segs).trim()
 				const leaf = (part.children ?? []).find(isLeaf)
-				labelFont = leaf && leaf.type === 'content' ? ctx.page.spansByMcid.get(leaf.id)?.[0]?.font : undefined
+				labelFont =
+					leaf && leaf.type === 'content' ? ctx.page.spansByMcid.get(leaf.id)?.[0]?.font : undefined
 			} else blockChildren(ctx, part, blocks)
 		}
 		// Word often writes the marker as the first glyph of the body's text ("• Surgery"),
@@ -1088,7 +1178,13 @@ interface Outline {
 	next: number
 }
 
-function openSection(outline: Outline, level: number, heading: TextRun[], page: number, y: number): Section {
+function openSection(
+	outline: Outline,
+	level: number,
+	heading: TextRun[],
+	page: number,
+	y: number,
+): Section {
 	const headingText = plainText(heading).replace(/\s+/g, ' ').trim()
 	const numbered = headingText.match(NUMBERED)
 	const step = headingText.match(STEP)
@@ -1103,7 +1199,8 @@ function openSection(outline: Outline, level: number, heading: TextRun[], page: 
 		blocks: [],
 		children: [],
 	}
-	while (outline.stack.length > 0 && (outline.stack.at(-1)?.level ?? 0) >= level) outline.stack.pop()
+	while (outline.stack.length > 0 && (outline.stack.at(-1)?.level ?? 0) >= level)
+		outline.stack.pop()
 	const parent = outline.stack.at(-1)
 	if (parent) parent.children.push(section)
 	else outline.sections.push(section)
@@ -1115,7 +1212,12 @@ const currentBlocks = (outline: Outline): Block[] => outline.stack.at(-1)?.block
 
 /** Emit a paragraph-like element into the document flow: heading-styled line groups open
  *  sections (whatever the element's tag), the rest become paragraphs of the current one. */
-function flowParagraphs(ctx: Context, outline: Outline, node: TreeNode | StructTreeContent, taggedLevel: number | null): void {
+function flowParagraphs(
+	ctx: Context,
+	outline: Outline,
+	node: TreeNode | StructTreeContent,
+	taggedLevel: number | null,
+): void {
 	const segs: Seg[] = []
 	inlineSegs(ctx, node, segs)
 	const lines = linesOf(segs)
@@ -1174,7 +1276,21 @@ function walkFlow(ctx: Context, outline: Outline, node: TreeNode): void {
 			walkFlow(ctx, outline, child)
 			continue
 		}
-		if (['Document', 'Sect', 'Part', 'Div', 'Art', 'THead', 'TBody', 'TR', 'TD', 'TH', 'NonStruct'].includes(child.role)) {
+		if (
+			[
+				'Document',
+				'Sect',
+				'Part',
+				'Div',
+				'Art',
+				'THead',
+				'TBody',
+				'TR',
+				'TD',
+				'TH',
+				'NonStruct',
+			].includes(child.role)
+		) {
 			walkFlow(ctx, outline, child)
 			continue
 		}
@@ -1189,7 +1305,10 @@ function walkFlow(ctx: Context, outline: Outline, node: TreeNode): void {
 // The document
 // ---------------------------------------------------------------------------
 
-export async function readDocument(doc: PDFDocumentProxy, source: string): Promise<ExtractedDocument> {
+export async function readDocument(
+	doc: PDFDocumentProxy,
+	source: string,
+): Promise<ExtractedDocument> {
 	const pages: PdfPage[] = []
 	for (let n = 1; n <= doc.numPages; n++) pages.push(await readPage(doc, n))
 
@@ -1230,14 +1349,19 @@ export async function readDocument(doc: PDFDocumentProxy, source: string): Promi
 				.map((t) => t.text)
 				.join('')
 				.trim()
-			if (text) warnings.push({ page: page.pageNumber, message: `untagged text not placed: "${text.slice(0, 80)}"` })
+			if (text)
+				warnings.push({
+					page: page.pageNumber,
+					message: `untagged text not placed: "${text.slice(0, 80)}"`,
+				})
 		}
 	}
 
 	endnotes.sort((a, b) => a.number - b.number)
 	const seen = new Set<number>()
 	for (const e of endnotes) {
-		if (seen.has(e.number)) warnings.push({ page: e.page, message: `endnote ${e.number} appears more than once` })
+		if (seen.has(e.number))
+			warnings.push({ page: e.page, message: `endnote ${e.number} appears more than once` })
 		seen.add(e.number)
 	}
 
@@ -1251,7 +1375,16 @@ export async function readDocument(doc: PDFDocumentProxy, source: string): Promi
 	normaliseSections(outline.sections)
 
 	const title = plainText(outline.sections.find((s) => s.level === 1)?.heading ?? []) || source
-	return { source, pages: doc.numPages, title, front, sections: outline.sections, footnotes, endnotes, warnings }
+	return {
+		source,
+		pages: doc.numPages,
+		title,
+		front,
+		sections: outline.sections,
+		footnotes,
+		endnotes,
+		warnings,
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -1265,8 +1398,18 @@ function normaliseBlocks(blocks: Block[]): Block[] {
 }
 
 function descend(block: Block): Block {
-	if (block.kind === 'list') return nestMixedMarkers({ ...block, items: block.items.map((i) => ({ ...i, blocks: normaliseBlocks(i.blocks) })) })
-	if (block.kind === 'table') return { ...block, rows: block.rows.map((r) => ({ cells: r.cells.map((c) => ({ ...c, blocks: normaliseBlocks(c.blocks) })) })) }
+	if (block.kind === 'list')
+		return nestMixedMarkers({
+			...block,
+			items: block.items.map((i) => ({ ...i, blocks: normaliseBlocks(i.blocks) })),
+		})
+	if (block.kind === 'table')
+		return {
+			...block,
+			rows: block.rows.map((r) => ({
+				cells: r.cells.map((c) => ({ ...c, blocks: normaliseBlocks(c.blocks) })),
+			})),
+		}
 	return block
 }
 
@@ -1309,7 +1452,13 @@ function nestTrailingLists(blocks: Block[]): Block[] {
 	for (const b of blocks) {
 		const last = out.at(-1)
 		const tail = last?.kind === 'list' ? last.items.at(-1) : undefined
-		if (b.kind === 'list' && last?.kind === 'list' && tail && b.items[0]?.marker !== tail.marker && /:$/.test(lastParagraphText(tail.blocks))) {
+		if (
+			b.kind === 'list' &&
+			last?.kind === 'list' &&
+			tail &&
+			b.items[0]?.marker !== tail.marker &&
+			/:$/.test(lastParagraphText(tail.blocks))
+		) {
 			const items = [...last.items.slice(0, -1), { ...tail, blocks: [...tail.blocks, b] }]
 			out[out.length - 1] = { ...last, items }
 			continue
@@ -1320,7 +1469,13 @@ function nestTrailingLists(blocks: Block[]): Block[] {
 }
 
 const cellHasContent = (cell: TableCell): boolean =>
-	cell.blocks.some((b) => b.kind === 'figure' || (b.kind === 'table' && b.rows.length > 0) || (b.kind === 'list' && b.items.length > 0) || (b.kind === 'paragraph' && plainText(b.runs).trim() !== ''))
+	cell.blocks.some(
+		(b) =>
+			b.kind === 'figure' ||
+			(b.kind === 'table' && b.rows.length > 0) ||
+			(b.kind === 'list' && b.items.length > 0) ||
+			(b.kind === 'paragraph' && plainText(b.runs).trim() !== ''),
+	)
 
 /** The structure tree is delivered page by page, so a table that runs over a page break
  *  arrives twice: on each page the whole table, with every cell whose content sits on the
@@ -1354,11 +1509,19 @@ function joinTables(a: Table, b: Table): Table | null {
 			if (inA && inB) {
 				shared++
 				if (shared > 1) return null
-				cells.push({ ...cellA, header: cellA.header || cellB.header, blocks: continueBlocks(cellA.blocks, cellB.blocks) })
+				cells.push({
+					...cellA,
+					header: cellA.header || cellB.header,
+					blocks: continueBlocks(cellA.blocks, cellB.blocks),
+				})
 				continue
 			}
 			const filled = inB ? cellB : cellA
-			cells.push({ ...filled, header: cellA.header || cellB.header, background: filled.background ?? cellA.background ?? cellB.background })
+			cells.push({
+				...filled,
+				header: cellA.header || cellB.header,
+				background: filled.background ?? cellA.background ?? cellB.background,
+			})
 		}
 		rows.push({ cells })
 	}
@@ -1376,9 +1539,19 @@ function continueBlocks(before: Block[], after: Block[]): Block[] {
 		const rest = [...first.items]
 		const carried = rest[0]
 		const tail = items.at(-1)
-		if (carried && tail && carried.blocks.every((b) => b.kind !== 'paragraph' || plainText(b.runs).trim() === '')) {
+		if (
+			carried &&
+			tail &&
+			carried.blocks.every((b) => b.kind !== 'paragraph' || plainText(b.runs).trim() === '')
+		) {
 			rest.shift()
-			items[items.length - 1] = { ...tail, blocks: continueBlocks(tail.blocks, carried.blocks.filter((b) => b.kind !== 'paragraph')) }
+			items[items.length - 1] = {
+				...tail,
+				blocks: continueBlocks(
+					tail.blocks,
+					carried.blocks.filter((b) => b.kind !== 'paragraph'),
+				),
+			}
 		}
 		return [...before.slice(0, -1), { ...last, items: [...items, ...rest] }, ...after.slice(1)]
 	}
@@ -1388,7 +1561,11 @@ function continueBlocks(before: Block[], after: Block[]): Block[] {
 		const base = last.runs.at(-1) ?? first.runs[0]
 		if (base && endText !== '' && !/[.!?:;]$/.test(endText) && /^[a-z(]/.test(startText)) {
 			const joiner: TextRun = { ...base, text: ' ' }
-			return [...before.slice(0, -1), { ...last, runs: [...last.runs, joiner, ...first.runs] }, ...after.slice(1)]
+			return [
+				...before.slice(0, -1),
+				{ ...last, runs: [...last.runs, joiner, ...first.runs] },
+				...after.slice(1),
+			]
 		}
 	}
 	return [...before, ...after]

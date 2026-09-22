@@ -67,7 +67,10 @@ function walk(node: TreeNode | StructTreeContent, depth: number): void {
 		if (node.type === 'content' && node.id) describeLeaf(node.id, depth)
 		else if (node.type === 'annotation') {
 			const link = page.linksById.get(annotationIdOf(node))
-			emit(depth, `→ ${link ? (link.url ?? `dest ${link.dest ?? '?'}`) : `annotation ${node.id} (not a link)`}`)
+			emit(
+				depth,
+				`→ ${link ? (link.url ?? `dest ${link.dest ?? '?'}`) : `annotation ${node.id} (not a link)`}`,
+			)
 		} else emit(depth, `<${node.type}${node.id ? ` ${node.id}` : ''}>`)
 		return
 	}
@@ -105,10 +108,12 @@ for (const p of page.paths) {
 	const key = `${p.kind} ${p.colour}`
 	byColour.set(key, (byColour.get(key) ?? 0) + 1)
 }
-for (const [key, count] of [...byColour.entries()].sort((a, b) => b[1] - a[1])) emit(1, `${key} ×${count}`)
+for (const [key, count] of [...byColour.entries()].sort((a, b) => b[1] - a[1]))
+	emit(1, `${key} ×${count}`)
 emit(0, 'stroked rectangles (borders):')
 for (const p of page.paths) {
-	if (p.kind === 'stroke' && p.segments >= 4 && p.box.width > 100 && p.colour !== '#ffffff') emit(1, `${p.colour} ${boxStr(p.box)}`)
+	if (p.kind === 'stroke' && p.segments >= 4 && p.box.width > 100 && p.colour !== '#ffffff')
+		emit(1, `${p.colour} ${boxStr(p.box)}`)
 }
 emit(0, 'links:')
 for (const l of page.links) emit(1, `${l.id} ${boxStr(l.box)} ${l.url ?? `dest ${l.dest ?? '?'}`}`)

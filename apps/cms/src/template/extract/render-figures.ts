@@ -38,12 +38,18 @@ const isCanvasFactory = (value: unknown): value is CanvasFactory =>
 
 function canvasFactoryOf(doc: PDFDocumentProxy): CanvasFactory {
 	const factory: unknown = doc.canvasFactory
-	if (!isCanvasFactory(factory)) throw new Error('pdf.js exposed no canvas factory; is @napi-rs/canvas installed?')
+	if (!isCanvasFactory(factory))
+		throw new Error('pdf.js exposed no canvas factory; is @napi-rs/canvas installed?')
 	return factory
 }
 
 /** Render every content figure of `model` to `${outDir}/p<page>-<index>.png`. */
-export async function renderFigures(doc: PDFDocumentProxy, model: ExtractedDocument, outDir: string, scale = 2): Promise<number> {
+export async function renderFigures(
+	doc: PDFDocumentProxy,
+	model: ExtractedDocument,
+	outDir: string,
+	scale = 2,
+): Promise<number> {
 	mkdirSync(outDir, { recursive: true })
 	const factory = canvasFactoryOf(doc)
 	const byPage = new Map<number, { index: number; bbox: [number, number, number, number] }[]>()
@@ -66,7 +72,17 @@ export async function renderFigures(doc: PDFDocumentProxy, model: ExtractedDocum
 			const width = Math.max(1, Math.round(x1 - x0))
 			const height = Math.max(1, Math.round(y1 - y0))
 			const crop = factory.create(width, height)
-			crop.context.drawImage(full.canvas, Math.round(x0), Math.round(y0), width, height, 0, 0, width, height)
+			crop.context.drawImage(
+				full.canvas,
+				Math.round(x0),
+				Math.round(y0),
+				width,
+				height,
+				0,
+				0,
+				width,
+				height,
+			)
 			const dataUrl = crop.canvas.toDataURL('image/png')
 			const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1)
 			writeFileSync(join(outDir, `p${pageNumber}-${index}.png`), Buffer.from(base64, 'base64'))

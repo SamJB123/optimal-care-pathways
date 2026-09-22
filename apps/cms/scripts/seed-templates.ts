@@ -30,7 +30,8 @@ if (!orgId) {
 }
 
 const dataDir = join(import.meta.dirname, '..', 'template', '2026', 'extracted')
-const read = (key: string): ExtractedDocument => JSON.parse(readFileSync(join(dataDir, `${key}.model.json`), 'utf8'))
+const read = (key: string): ExtractedDocument =>
+	JSON.parse(readFileSync(join(dataDir, `${key}.model.json`), 'utf8'))
 
 const q = (value: string | number | boolean | null): string => {
 	if (value === null) return 'NULL'

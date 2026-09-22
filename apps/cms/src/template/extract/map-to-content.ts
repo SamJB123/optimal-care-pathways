@@ -27,7 +27,18 @@ import type { JsonMark, JsonNode } from '#/content/schema.ts'
 import type { Ownership } from '#/db/schema.ts'
 import type { DocumentRow, ReferenceRow, SectionRow, SeedResult, TemplateRow } from '../rows.ts'
 import { figureUrl, type TemplateInfo } from '../templates.ts'
-import type { Block, ExtractedDocument, Figure, List, Paragraph, Section, Table, TableCell, TableRow, TextRun } from './model.ts'
+import type {
+	Block,
+	ExtractedDocument,
+	Figure,
+	List,
+	Paragraph,
+	Section,
+	Table,
+	TableCell,
+	TableRow,
+	TextRun,
+} from './model.ts'
 import { plainText } from './model.ts'
 
 export interface MapInput {
@@ -62,14 +73,22 @@ interface Grammar {
  *  "Right pointing backhand index", "Stopwatch", "Clipboard Checked", "Chat", "Open hand"
  *  in the 2026 templates). Word-bounded, so "Open" is not a pen and "backhand" is not an
  *  open hand. */
-const ICONS: { test: RegExp; icon: string; kind: JsonNode['attrs'] extends infer _ ? string : never }[] = [
+const ICONS: {
+	test: RegExp
+	icon: string
+	kind: JsonNode['attrs'] extends infer _ ? string : never
+}[] = [
 	{ test: /\bpen\b|pencil|calligraphy/i, icon: 'pen', kind: 'developer' },
 	{ test: /information|\binfo\b/i, icon: 'info', kind: 'resources' },
 	{ test: /pointing|\bindex\b|backhand/i, icon: 'hand', kind: 'seeAlso' },
 	{ test: /stopwatch|clock|timer/i, icon: 'stopwatch', kind: 'timeframe' },
 	{ test: /clipboard|checklist|\btasks?\b/i, icon: 'clipboard', kind: 'actions' },
 	{ test: /speech|comment|bubble|\bchat\b/i, icon: 'speech', kind: 'communication' },
-	{ test: /\bopen hand\b|\bhands\b|\bcare\b|\bheart\b|\bsupport\b/i, icon: 'care', kind: 'considerations' },
+	{
+		test: /\bopen hand\b|\bhands\b|\bcare\b|\bheart\b|\bsupport\b/i,
+		icon: 'care',
+		kind: 'considerations',
+	},
 ]
 
 const iconOf = (figure: Figure) => ICONS.find((i) => i.test.test(figure.alt)) ?? null
@@ -86,7 +105,8 @@ function allParagraphs(blocks: Block[], into: Paragraph[] = []): Paragraph[] {
 	for (const b of blocks) {
 		if (b.kind === 'paragraph') into.push(b)
 		else if (b.kind === 'list') for (const item of b.items) allParagraphs(item.blocks, into)
-		else if (b.kind === 'table') for (const row of b.rows) for (const cell of row.cells) allParagraphs(cell.blocks, into)
+		else if (b.kind === 'table')
+			for (const row of b.rows) for (const cell of row.cells) allParagraphs(cell.blocks, into)
 	}
 	return into
 }
@@ -112,7 +132,8 @@ export function contentFigures(model: ExtractedDocument): { figure: Figure; inde
 				perPage.set(b.page, index)
 				out.push({ figure: b, index })
 			} else if (b.kind === 'list') for (const item of b.items) visit(item.blocks)
-			else if (b.kind === 'table') for (const row of b.rows) for (const cell of row.cells) visit(cell.blocks)
+			else if (b.kind === 'table')
+				for (const row of b.rows) for (const cell of row.cells) visit(cell.blocks)
 		}
 	}
 	visit(model.front)
@@ -141,7 +162,9 @@ const luminance = (hex: string): number => {
 function learnGrammar(model: ExtractedDocument): Pick<Grammar, 'instruction' | 'body'> {
 	const blocks = [...model.front, ...allBlocks(model.sections)]
 	const overall = new Map<string, number>()
-	for (const p of allParagraphs(blocks)) for (const r of p.runs) overall.set(r.colour, (overall.get(r.colour) ?? 0) + r.text.trim().length)
+	for (const p of allParagraphs(blocks))
+		for (const r of p.runs)
+			overall.set(r.colour, (overall.get(r.colour) ?? 0) + r.text.trim().length)
 	const total = [...overall.values()].reduce((n, w) => n + w, 0)
 	const dominant = [...overall.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
 
@@ -151,7 +174,9 @@ function learnGrammar(model: ExtractedDocument): Pick<Grammar, 'instruction' | '
 		for (const row of b.rows) {
 			for (const cell of row.cells) {
 				if (!cell.blocks.some((c) => c.kind === 'figure' && iconOf(c)?.icon === 'pen')) continue
-				for (const p of allParagraphs(cell.blocks)) for (const r of p.runs) inPen.set(r.colour, (inPen.get(r.colour) ?? 0) + r.text.trim().length)
+				for (const p of allParagraphs(cell.blocks))
+					for (const r of p.runs)
+						inPen.set(r.colour, (inPen.get(r.colour) ?? 0) + r.text.trim().length)
 			}
 		}
 	}
@@ -201,7 +226,8 @@ function normalisePlaceholders(runs: TextRun[]): TextRun[] {
 		if (r.background !== null || r.text.trim() !== '') continue
 		const before = out[i - 1]
 		const after = out[i + 1]
-		if (before && after && before.background !== null && before.background === after.background) r.background = before.background
+		if (before && after && before.background !== null && before.background === after.background)
+			r.background = before.background
 	}
 	let i = 0
 	while (i < out.length) {
@@ -218,11 +244,23 @@ function normalisePlaceholders(runs: TextRun[]): TextRun[] {
 		if (last) {
 			for (const [open, close] of BRACKET_PAIRS) {
 				const closes = last.text.trimEnd().endsWith(close) || after?.text.startsWith(close) === true
-				if (before && before.background === null && before.text.endsWith(open) && !first.text.startsWith(open) && closes) {
+				if (
+					before &&
+					before.background === null &&
+					before.text.endsWith(open) &&
+					!first.text.startsWith(open) &&
+					closes
+				) {
 					before.text = before.text.slice(0, -1)
 					first.text = `${open}${first.text}`
 				}
-				if (after && after.background === null && after.text.startsWith(close) && !last.text.trimEnd().endsWith(close) && first.text.startsWith(open)) {
+				if (
+					after &&
+					after.background === null &&
+					after.text.startsWith(close) &&
+					!last.text.trimEnd().endsWith(close) &&
+					first.text.startsWith(open)
+				) {
 					after.text = after.text.slice(1)
 					last.text = `${last.text.trimEnd()}${close}`
 				}
@@ -256,14 +294,21 @@ const sameMarks = (a: TextRun, b: TextRun): boolean =>
 	a.endnote === null &&
 	b.endnote === null
 
-function inlineOf(runs: TextRun[], g: Grammar, options: { instructionAsMark: boolean }): JsonNode[] {
+function inlineOf(
+	runs: TextRun[],
+	g: Grammar,
+	options: { instructionAsMark: boolean },
+): JsonNode[] {
 	const out: JsonNode[] = []
 	for (const r of normalisePlaceholders(runs)) {
 		if (r.footnote !== null) {
 			const note = g.footnotes[r.footnote]
 			if (note) {
 				g.stats.footnotes++
-				out.push({ type: 'footnote', attrs: { text: plainText(allParagraphs(note.blocks).flatMap((p) => p.runs)).trim() } })
+				out.push({
+					type: 'footnote',
+					attrs: { text: plainText(allParagraphs(note.blocks).flatMap((p) => p.runs)).trim() },
+				})
 			}
 			continue
 		}
@@ -291,7 +336,10 @@ function inlineOf(runs: TextRun[], g: Grammar, options: { instructionAsMark: boo
 			}
 		}
 		const trimmed = r.text.trim()
-		if (r.background !== null || (ANGLE_TOKEN.test(trimmed) && !g.body.has(r.colour) && !g.instruction.has(r.colour))) {
+		if (
+			r.background !== null ||
+			(ANGLE_TOKEN.test(trimmed) && !g.body.has(r.colour) && !g.instruction.has(r.colour))
+		) {
 			placeholder = true
 			marks.push({ type: 'placeholder', attrs: { label: trimmed } })
 		} else if (options.instructionAsMark && g.instruction.has(r.colour)) {
@@ -303,7 +351,8 @@ function inlineOf(runs: TextRun[], g: Grammar, options: { instructionAsMark: boo
 			if (index > 0) out.push({ type: 'hardBreak' })
 			if (piece === '') continue
 			const last = out.at(-1)
-			if (last?.type === 'text' && JSON.stringify(last.marks ?? []) === JSON.stringify(marks)) last.text = `${last.text}${piece}`
+			if (last?.type === 'text' && JSON.stringify(last.marks ?? []) === JSON.stringify(marks))
+				last.text = `${last.text}${piece}`
 			else {
 				// Counted per node, not per drawn run: one link or slot however many runs drew it.
 				if (link) g.stats.links++
@@ -327,17 +376,24 @@ function inlineOf(runs: TextRun[], g: Grammar, options: { instructionAsMark: boo
 function sectionAt(g: Grammar, page: number, y: number | null): string | null {
 	const onPage = g.headings.filter((h) => h.page === page)
 	if (onPage.length === 0) {
-		const before = g.headings.filter((h) => h.page < page).sort((a, b) => b.page - a.page || a.y - b.y)[0]
+		const before = g.headings
+			.filter((h) => h.page < page)
+			.sort((a, b) => b.page - a.page || a.y - b.y)[0]
 		return before?.address ?? null
 	}
 	if (y === null) return [...onPage].sort((a, b) => b.y - a.y)[0]?.address ?? null
 	const below = onPage.filter((h) => h.y <= y + 20).sort((a, b) => b.y - a.y)
-	return (below[0] ?? [...onPage].sort((a, b) => Math.abs(a.y - y) - Math.abs(b.y - y))[0])?.address ?? null
+	return (
+		(below[0] ?? [...onPage].sort((a, b) => Math.abs(a.y - y) - Math.abs(b.y - y))[0])?.address ??
+		null
+	)
 }
 
-const isInstructionRun = (r: TextRun, g: Grammar) => r.text.trim() === '' || g.instruction.has(r.colour)
+const isInstructionRun = (r: TextRun, g: Grammar) =>
+	r.text.trim() === '' || g.instruction.has(r.colour)
 const isInstructionParagraph = (p: Paragraph, g: Grammar) =>
-	p.runs.some((r) => r.text.trim() !== '') && p.runs.every((r) => isInstructionRun(r, g) || r.footnote !== null || r.endnote !== null)
+	p.runs.some((r) => r.text.trim() !== '') &&
+	p.runs.every((r) => isInstructionRun(r, g) || r.footnote !== null || r.endnote !== null)
 
 // ---------------------------------------------------------------------------
 // Blocks
@@ -352,7 +408,12 @@ function listNode(list: List, g: Grammar): JsonNode[] {
 	// ProseKit's flat list: each item is a `list` node; a nested list is a child node.
 	const nodes: JsonNode[] = []
 	for (const item of list.items) {
-		const kind = item.marker === 'check' || item.marker === 'cross' ? 'check' : item.marker === 'number' ? 'ordered' : 'bullet'
+		const kind =
+			item.marker === 'check' || item.marker === 'cross'
+				? 'check'
+				: item.marker === 'number'
+					? 'ordered'
+					: 'bullet'
 		const content: JsonNode[] = []
 		let first = true
 		for (const b of item.blocks) {
@@ -368,7 +429,11 @@ function listNode(list: List, g: Grammar): JsonNode[] {
 		if (content.length === 0) continue
 		if (content[0]?.type !== 'paragraph') content.unshift({ type: 'paragraph' })
 		if (kind === 'check') g.stats.checkItems++
-		nodes.push({ type: 'list', attrs: kind === 'check' ? { kind, pointOfCare: false } : { kind }, content })
+		nodes.push({
+			type: 'list',
+			attrs: kind === 'check' ? { kind, pointOfCare: false } : { kind },
+			content,
+		})
 	}
 	return nodes
 }
@@ -390,7 +455,8 @@ function foldGuidance(nodes: { node: JsonNode; instruction: boolean }[], g: Gram
 }
 
 /** A box's heading row: an icon row or a band. Every box begins with one. */
-const isHeadingRow = (row: ClassifiedRow): boolean => row.icon !== null || row.kind === 'band' || row.kind === 'icon-band'
+const isHeadingRow = (row: ClassifiedRow): boolean =>
+	row.icon !== null || row.kind === 'band' || row.kind === 'icon-band'
 
 /** Every box begins with a heading row, so a table that begins without one — an "Or", a
  *  statement, guidance, check items — directly after a box continues that box: Word saved
@@ -404,7 +470,9 @@ function joinButtedTables(blocks: Block[], g: Grammar): Block[] {
 			const lastRows = last.rows.map((r) => classifyRow(r, g, { collapseEmpty: true }))
 			const lastIsBox = lastRows.some(isHeadingRow) && !lastRows.every((r) => r.kind === 'columns')
 			// A real table (every row in columns) stands on its own, heading row or not.
-			const realTable = b.rows.every((r) => classifyRow(r, g, { collapseEmpty: false }).kind === 'columns')
+			const realTable = b.rows.every(
+				(r) => classifyRow(r, g, { collapseEmpty: false }).kind === 'columns',
+			)
 			if (first && !isHeadingRow(first) && lastIsBox && !realTable) {
 				out[out.length - 1] = { ...last, rows: [...last.rows, ...b.rows] }
 				continue
@@ -425,7 +493,9 @@ function blockNodes(blocks: Block[], g: Grammar): JsonNode[] {
 				break
 			}
 			case 'list': {
-				const everyInstruction = b.items.every((i) => allParagraphs(i.blocks).every((p) => isInstructionParagraph(p, g)))
+				const everyInstruction = b.items.every((i) =>
+					allParagraphs(i.blocks).every((p) => isInstructionParagraph(p, g)),
+				)
 				for (const node of listNode(b, g)) staged.push({ node, instruction: everyInstruction })
 				break
 			}
@@ -436,7 +506,13 @@ function blockNodes(blocks: Block[], g: Grammar): JsonNode[] {
 				if (isIcon(b)) break
 				g.stats.figures++
 				const index = g.figureIndex.get(b) ?? 0
-				staged.push({ node: { type: 'image', attrs: { src: figureUrl(g.templateKey, b.page, index), alt: b.alt } }, instruction: false })
+				staged.push({
+					node: {
+						type: 'image',
+						attrs: { src: figureUrl(g.templateKey, b.page, index), alt: b.alt },
+					},
+					instruction: false,
+				})
 				break
 			}
 		}
@@ -458,14 +534,21 @@ interface ClassifiedRow {
 	cells: TableCell[]
 }
 
-const cellText = (cell: TableCell) => plainText(allParagraphs(cell.blocks).flatMap((p) => p.runs)).trim()
-const cellFigures = (cell: TableCell): Figure[] => cell.blocks.flatMap((b) => (b.kind === 'figure' ? [b] : []))
-const cellIsIconOnly = (cell: TableCell) => cellText(cell) === '' && cellFigures(cell).length > 0 && cellFigures(cell).every(isIcon)
+const cellText = (cell: TableCell) =>
+	plainText(allParagraphs(cell.blocks).flatMap((p) => p.runs)).trim()
+const cellFigures = (cell: TableCell): Figure[] =>
+	cell.blocks.flatMap((b) => (b.kind === 'figure' ? [b] : []))
+const cellIsIconOnly = (cell: TableCell) =>
+	cellText(cell) === '' && cellFigures(cell).length > 0 && cellFigures(cell).every(isIcon)
 const cellIsBand = (cell: TableCell): boolean => {
 	const paragraphs = allParagraphs(cell.blocks)
 	if (paragraphs.length === 0 || cell.background === null) return false
 	const runs = paragraphs.flatMap((p) => p.runs).filter((r) => r.text.trim() !== '')
-	return luminance(cell.background) < 0.45 && runs.length > 0 && runs.every((r) => luminance(r.colour) > 0.8)
+	return (
+		luminance(cell.background) < 0.45 &&
+		runs.length > 0 &&
+		runs.every((r) => luminance(r.colour) > 0.8)
+	)
 }
 
 const cellIsEmpty = (cell: TableCell) => cellText(cell) === '' && cellFigures(cell).length === 0
@@ -473,9 +556,19 @@ const cellIsEmpty = (cell: TableCell) => cellText(cell) === '' && cellFigures(ce
 /** In a box, an empty cell is the continuation of a cell merged from the row above (the
  *  icon cell beside a stack of statements) and is not a column of its own; in a real table
  *  an empty cell is a cell, so it is kept. */
-function classifyRow(row: TableRow, g: Grammar, options: { collapseEmpty: boolean }): ClassifiedRow {
-	const cells = row.cells.filter((c) => !cellIsIconOnly(c) && !(options.collapseEmpty && cellIsEmpty(c)))
-	const icons = row.cells.flatMap(cellFigures).filter(isIcon).map(iconOf).filter((i): i is (typeof ICONS)[number] => i !== null)
+function classifyRow(
+	row: TableRow,
+	g: Grammar,
+	options: { collapseEmpty: boolean },
+): ClassifiedRow {
+	const cells = row.cells.filter(
+		(c) => !cellIsIconOnly(c) && !(options.collapseEmpty && cellIsEmpty(c)),
+	)
+	const icons = row.cells
+		.flatMap(cellFigures)
+		.filter(isIcon)
+		.map(iconOf)
+		.filter((i): i is (typeof ICONS)[number] => i !== null)
 	const icon = icons[0] ?? null
 	if (cells.length === 0) return { row, kind: 'icon-band', icon, cells }
 	if (cells.length >= 2) return { row, kind: 'columns', icon, cells }
@@ -485,7 +578,11 @@ function classifyRow(row: TableRow, g: Grammar, options: { collapseEmpty: boolea
 	const textOnly = cellText(only)
 	if (/^or$/i.test(textOnly)) return { row, kind: 'or', icon, cells }
 	if (cellIsBand(only)) return { row, kind: icon ? 'icon-band' : 'band', icon, cells }
-	if (paragraphs.length > 0 && paragraphs.every((p) => isInstructionParagraph(p, g)) && !only.blocks.some((b) => b.kind === 'list' && b.items.some((i) => i.marker === 'check'))) {
+	if (
+		paragraphs.length > 0 &&
+		paragraphs.every((p) => isInstructionParagraph(p, g)) &&
+		!only.blocks.some((b) => b.kind === 'list' && b.items.some((i) => i.marker === 'check'))
+	) {
 		return { row, kind: 'instruction', icon, cells }
 	}
 	return { row, kind: 'content', icon, cells }
@@ -493,7 +590,11 @@ function classifyRow(row: TableRow, g: Grammar, options: { collapseEmpty: boolea
 
 const bannerNode = (cell: TableCell, g: Grammar): JsonNode => ({
 	type: 'banner',
-	content: inlineOf(allParagraphs(cell.blocks).flatMap((p) => p.runs), g, { instructionAsMark: false }),
+	content: inlineOf(
+		allParagraphs(cell.blocks).flatMap((p) => p.runs),
+		g,
+		{ instructionAsMark: false },
+	),
 })
 
 /** A real table: rows of several columns; shaded or TH label cells are header cells. */
@@ -504,7 +605,10 @@ function tableNode(rows: ClassifiedRow[], g: Grammar): JsonNode {
 		content: rows.map((r) => ({
 			type: 'tableRow',
 			content: r.cells.map((cell) => {
-				const blocks = blockNodes(cell.blocks.filter((b) => !(b.kind === 'figure' && isIcon(b))), g)
+				const blocks = blockNodes(
+					cell.blocks.filter((b) => !(b.kind === 'figure' && isIcon(b))),
+					g,
+				)
 				const header = cell.header && cell.background !== null && luminance(cell.background) < 0.97
 				return {
 					type: header ? 'tableHeaderCell' : 'tableCell',
@@ -541,7 +645,12 @@ function boxContent(rows: ClassifiedRow[], g: Grammar): JsonNode[] {
 		for (const node of nodes) {
 			const last = out.at(-1)
 			// Adjacent check lists from consecutive rows are one list.
-			if (node.type === 'list' && last?.type === 'list' && node.attrs?.kind === 'check' && last.attrs?.kind === 'check') {
+			if (
+				node.type === 'list' &&
+				last?.type === 'list' &&
+				node.attrs?.kind === 'check' &&
+				last.attrs?.kind === 'check'
+			) {
 				out.push(node)
 			} else out.push(node)
 		}
@@ -570,12 +679,23 @@ function timeframeNodes(rows: ClassifiedRow[], g: Grammar): JsonNode[] {
 		g.stats.timeframes++
 		const statements: JsonNode[] =
 			current.alternatives.length > 1
-				? [{ type: 'variants', content: current.alternatives.map((blocks) => ({ type: 'variant', content: blocks })) }]
+				? [
+						{
+							type: 'variants',
+							content: current.alternatives.map((blocks) => ({ type: 'variant', content: blocks })),
+						},
+					]
 				: (current.alternatives[0] ?? [{ type: 'paragraph' }])
 		if (current.alternatives.length > 1) g.stats.variants++
-		const carePoint: JsonNode = current.carePoint.length > 0 ? { type: 'carePoint', content: current.carePoint } : { type: 'carePoint' }
+		const carePoint: JsonNode =
+			current.carePoint.length > 0
+				? { type: 'carePoint', content: current.carePoint }
+				: { type: 'carePoint' }
 		const empty: JsonNode[] = [{ type: 'paragraph' }]
-		out.push({ type: 'timeframe', content: [carePoint, ...(statements.length > 0 ? statements : empty)] })
+		out.push({
+			type: 'timeframe',
+			content: [carePoint, ...(statements.length > 0 ? statements : empty)],
+		})
 		current = null
 	}
 	for (const r of rows) {
@@ -588,29 +708,52 @@ function timeframeNodes(rows: ClassifiedRow[], g: Grammar): JsonNode[] {
 		const paragraphs = cell.blocks.filter((b): b is Paragraph => b.kind === 'paragraph')
 		const lead = paragraphs[0]
 		const isLead = lead?.runs.filter((x) => x.text.trim()).every((x) => x.bold)
-		if (isLead && (r.icon?.icon === 'stopwatch' || current === null || current.alternatives.at(-1)?.length !== 0)) {
+		if (
+			isLead &&
+			(r.icon?.icon === 'stopwatch' ||
+				current === null ||
+				current.alternatives.at(-1)?.length !== 0)
+		) {
 			// A new care point (a bold lead), unless we are mid-alternative awaiting a statement.
 			if (!(current && current.alternatives.at(-1)?.length === 0)) {
 				flush()
 				// The care point keeps its marks: the template prints placeholders in it.
-				current = { carePoint: inlineOf(lead.runs, g, { instructionAsMark: true }), alternatives: [[]] }
-				const rest = blockNodes(cell.blocks.filter((b) => b !== lead && !(b.kind === 'figure' && isIcon(b))), g)
+				current = {
+					carePoint: inlineOf(lead.runs, g, { instructionAsMark: true }),
+					alternatives: [[]],
+				}
+				const rest = blockNodes(
+					cell.blocks.filter((b) => b !== lead && !(b.kind === 'figure' && isIcon(b))),
+					g,
+				)
 				current.alternatives[0]?.push(...rest)
 				continue
 			}
 		}
 		if (!current) current = { carePoint: [], alternatives: [[]] }
-		current.alternatives.at(-1)?.push(...blockNodes(cell.blocks.filter((b) => !(b.kind === 'figure' && isIcon(b))), g))
+		current.alternatives.at(-1)?.push(
+			...blockNodes(
+				cell.blocks.filter((b) => !(b.kind === 'figure' && isIcon(b))),
+				g,
+			),
+		)
 	}
 	flush()
 	return out
 }
 
 /** A real table: every row has columns and none is a band, an icon row or an "Or". */
-const isRealTable = (table: Table, g: Grammar): boolean => table.rows.every((r) => classifyRow(r, g, { collapseEmpty: false }).kind === 'columns')
+const isRealTable = (table: Table, g: Grammar): boolean =>
+	table.rows.every((r) => classifyRow(r, g, { collapseEmpty: false }).kind === 'columns')
 
 function tableNodes(table: Table, g: Grammar): JsonNode[] {
-	if (isRealTable(table, g)) return [tableNode(table.rows.map((r) => classifyRow(r, g, { collapseEmpty: false })), g)]
+	if (isRealTable(table, g))
+		return [
+			tableNode(
+				table.rows.map((r) => classifyRow(r, g, { collapseEmpty: false })),
+				g,
+			),
+		]
 
 	const rows = table.rows.map((r) => classifyRow(r, g, { collapseEmpty: true }))
 	// An icon row heads a box (the stopwatch heads a care point inside one), so a table
@@ -634,7 +777,11 @@ function boxSegmentNodes(rows: ClassifiedRow[], g: Grammar): JsonNode[] {
 
 	// A timeframe box: stopwatch rows (with an optional instruction row above them).
 	if (stopwatch) {
-		const before = rows.filter((r) => r.kind === 'instruction' && rows.indexOf(r) < rows.findIndex((x) => x.icon?.icon === 'stopwatch'))
+		const before = rows.filter(
+			(r) =>
+				r.kind === 'instruction' &&
+				rows.indexOf(r) < rows.findIndex((x) => x.icon?.icon === 'stopwatch'),
+		)
 		const rest = rows.filter((r) => !before.includes(r))
 		return [...boxContent(before, g), ...timeframeNodes(rest, g)]
 	}
@@ -644,11 +791,24 @@ function boxSegmentNodes(rows: ClassifiedRow[], g: Grammar): JsonNode[] {
 	// that Word stacked into the same table: it becomes a box of its own beside this one.
 	const heading = rows[0]
 	const headingBackground = heading?.cells[0]?.background ?? null
-	const shadedRows = (colour: string) => rows.filter((r) => r.cells[0]?.background === colour).length
+	const shadedRows = (colour: string) =>
+		rows.filter((r) => r.cells[0]?.background === colour).length
 	const isCallout = (r: ClassifiedRow) => {
 		const background = r.cells[0]?.background ?? null
-		if (!heading || heading.icon === null || r === heading || r.kind !== 'content' || r.icon !== null || background === null) return false
-		return background !== headingBackground && luminance(background) >= 0.45 && shadedRows(background) === 1
+		if (
+			!heading ||
+			heading.icon === null ||
+			r === heading ||
+			r.kind !== 'content' ||
+			r.icon !== null ||
+			background === null
+		)
+			return false
+		return (
+			background !== headingBackground &&
+			luminance(background) >= 0.45 &&
+			shadedRows(background) === 1
+		)
 	}
 	if (rows.some(isCallout)) {
 		const out: JsonNode[] = []
@@ -745,8 +905,10 @@ function placeSections(model: ExtractedDocument): Placed[] {
 	const visit = (sections: Section[], parent: Placed | null) => {
 		sections.forEach((section, index) => {
 			const step = section.number?.match(/^Step (\d+)$/)
-			const numbered = section.number && /^\d+(\.\d+)*$/.test(section.number) ? section.number : null
-			const rootIsStep = parent === null ? step !== null : (parent.stepNumber !== null && parent.canonical)
+			const numbered =
+				section.number && /^\d+(\.\d+)*$/.test(section.number) ? section.number : null
+			const rootIsStep =
+				parent === null ? step !== null : parent.stepNumber !== null && parent.canonical
 			let address: string
 			let canonical = false
 			let stepNumber: number | null = parent?.stepNumber ?? null
@@ -759,7 +921,12 @@ function placeSections(model: ExtractedDocument): Placed[] {
 				canonical = true
 				stepNumber = Number(numbered.split('.')[0])
 			} else {
-				const slug = slugify(section.headingText.replace(/^Step \d+:?\s*/i, (m) => `${m.trim().replace(/:$/, '').toLowerCase()} `))
+				const slug = slugify(
+					section.headingText.replace(
+						/^Step \d+:?\s*/i,
+						(m) => `${m.trim().replace(/:$/, '').toLowerCase()} `,
+					),
+				)
 				address = parent ? `${parent.address}/${slug}` : slug
 			}
 			address = unique(address)
@@ -777,7 +944,9 @@ const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\
 /** The heading without its printed number ("1.1 Prevention" → "Prevention", "Step 1:
  *  Treatment" → "Treatment"); the number is kept on the row's own column. */
 function titleOf(headingText: string, number: string | null): string | null {
-	const title = number ? headingText.replace(new RegExp(`^${escapeRegExp(number)}:?\\s*`), '') : headingText
+	const title = number
+		? headingText.replace(new RegExp(`^${escapeRegExp(number)}:?\\s*`), '')
+		: headingText
 	return title.trim() || null
 }
 
@@ -785,8 +954,18 @@ function titleOf(headingText: string, number: string | null): string | null {
  *  an instruction. Otherwise its text is shared across pathways. */
 function ownershipOf(section: Section, g: Grammar): Ownership {
 	const paragraphs = allParagraphs(section.blocks)
-	const hasInstruction = paragraphs.some((p) => p.runs.some((r) => r.text.trim() !== '' && (g.instruction.has(r.colour) || r.background !== null)))
-	const hasPen = section.blocks.some((b) => b.kind === 'table' && b.rows.some((r) => r.cells.some((c) => cellFigures(c).some((f) => iconOf(f)?.icon === 'pen'))))
+	const hasInstruction = paragraphs.some((p) =>
+		p.runs.some(
+			(r) => r.text.trim() !== '' && (g.instruction.has(r.colour) || r.background !== null),
+		),
+	)
+	const hasPen = section.blocks.some(
+		(b) =>
+			b.kind === 'table' &&
+			b.rows.some((r) =>
+				r.cells.some((c) => cellFigures(c).some((f) => iconOf(f)?.icon === 'pen')),
+			),
+	)
 	return hasInstruction || hasPen ? 'owned' : 'shared'
 }
 
@@ -843,7 +1022,10 @@ export function mapTemplate(input: MapInput): SeedResult {
 
 	const sectionId = (p: Placed) => id('section', `${template.templateId}:${p.address}`)
 	const sections: SectionRow[] = placed.map((p) => {
-		const apparatus = APPARATUS.test(p.address) || APPARATUS_SUBTREE.test(p.address) || p.parent?.address === 'contents'
+		const apparatus =
+			APPARATUS.test(p.address) ||
+			APPARATUS_SUBTREE.test(p.address) ||
+			p.parent?.address === 'contents'
 		// The contents page is a derived view of the section tree, never content; a
 		// template-declared derived section keeps its prose and boxes but its printed table
 		// (the snapshot schematic) is replaced by the node the CMS renders from the document.
@@ -852,7 +1034,13 @@ export function mapTemplate(input: MapInput): SeedResult {
 			p.address === 'contents'
 				? []
 				: derived
-					? [...blockNodes(p.section.blocks.filter((b) => !(b.kind === 'table' && isRealTable(b, g))), g), { type: derived.node }]
+					? [
+							...blockNodes(
+								p.section.blocks.filter((b) => !(b.kind === 'table' && isRealTable(b, g))),
+								g,
+							),
+							{ type: derived.node },
+						]
 					: blockNodes(p.section.blocks, g)
 		const number = p.section.number
 		return {
