@@ -17,15 +17,24 @@
  *
  * And the 2026 template's own blocks, which no general editor has:
  *
+ *   box                         a bordered or shaded box: `kind` says what it is for
+ *                               (developer, resources, seeAlso, actions, communication,
+ *                               considerations, callout, plain) and `icon` names the
+ *                               glyph on its band; holds a banner and the box's content
  *   banner                      the title band of a box ("Signs and symptoms of cancer")
+ *   variants / variant          mutually exclusive alternatives the template offers
+ *                               ("Or" rows); an author keeps one
  *   timeframe                   a timeframe box: a care point ("Timeframe for referral to a
- *                               cancer specialist") and its statement. The template offers
- *                               alternatives; an author keeps one
- *   guidance                    a green/purple developer box: instruction to the author,
+ *                               cancer specialist") and its statement, or variants of it
+ *   guidance                    a green/purple developer instruction to the author,
  *                               never published
  *   citation (inline atom)      a reference to a row of the document's references table.
  *                               Its number is derived at render, so it cannot go stale
+ *   footnote (inline atom)      a note printed at the foot of the page in the source,
+ *                               carried with its marker
  *   placeholder (mark)          the template's editable slots ("[cancer type]")
+ *   instruction (mark)          a developer instruction INSIDE a core sentence ("<for
+ *                               prostate cancer OCP only add: …>"), never published
  *   sectionLink (mark)          a typed cross-reference to another section, by address
  */
 
@@ -69,12 +78,39 @@ export interface TimeframeAttrs {
 	carePoint: string
 }
 
+/** What a box is for, read off the template's icons and shading. */
+export const BOX_KINDS = [
+	'developer',
+	'resources',
+	'seeAlso',
+	'actions',
+	'communication',
+	'considerations',
+	/** A shaded statement with no heading band. */
+	'callout',
+	/** A bordered box headed by a banner, with no icon of its own. */
+	'plain',
+] as const
+export type BoxKind = (typeof BOX_KINDS)[number]
+
+export interface BoxAttrs {
+	kind: BoxKind
+	/** The glyph on the band, as the template names it: pen, info, hand, clipboard,
+	 *  speech, care, stopwatch; empty when there is none. */
+	icon: string
+}
+
 export interface CitationAttrs {
 	referenceId: string
 }
 
 export interface PlaceholderAttrs {
 	label: string
+}
+
+export interface FootnoteAttrs {
+	/** The note's text, as printed at the foot of the source page. */
+	text: string
 }
 
 export interface SectionLinkAttrs {
@@ -93,10 +129,52 @@ const defineBanner = () =>
 		toDOM: () => ['p', { 'data-ocp': 'banner' }, 0],
 	})
 
+const defineBox = () =>
+	defineNodeSpec<'box', BoxAttrs>({
+		name: 'box',
+		content: 'block+',
+		group: 'block',
+		defining: true,
+		attrs: {
+			kind: { default: 'callout', validate: 'string' },
+			icon: { default: '', validate: 'string' },
+		},
+		parseDOM: [
+			{
+				tag: 'section[data-ocp="box"]',
+				getAttrs: (element) => ({ kind: attr(element, 'data-kind'), icon: attr(element, 'data-icon') }),
+			},
+		],
+		toDOM: (node) => [
+			'section',
+			{ 'data-ocp': 'box', 'data-kind': String(node.attrs.kind), 'data-icon': String(node.attrs.icon) },
+			0,
+		],
+	})
+
+const defineVariants = () =>
+	defineNodeSpec({
+		name: 'variants',
+		content: 'variant+',
+		group: 'block',
+		defining: true,
+		parseDOM: [{ tag: 'div[data-ocp="variants"]' }],
+		toDOM: () => ['div', { 'data-ocp': 'variants' }, 0],
+	})
+
+const defineVariant = () =>
+	defineNodeSpec({
+		name: 'variant',
+		content: 'block+',
+		defining: true,
+		parseDOM: [{ tag: 'div[data-ocp="variant"]' }],
+		toDOM: () => ['div', { 'data-ocp': 'variant' }, 0],
+	})
+
 const defineTimeframe = () =>
 	defineNodeSpec<'timeframe', TimeframeAttrs>({
 		name: 'timeframe',
-		content: 'paragraph+',
+		content: 'block+',
 		group: 'block',
 		defining: true,
 		attrs: { carePoint: { default: '', validate: 'string' } },
@@ -141,6 +219,42 @@ const defineCitation = () =>
 			'sup',
 			{ 'data-ocp': 'citation', 'data-reference-id': String(node.attrs.referenceId) },
 		],
+	})
+
+const defineFootnote = () =>
+	defineNodeSpec<'footnote', FootnoteAttrs>({
+		name: 'footnote',
+		inline: true,
+		group: 'inline',
+		atom: true,
+		selectable: true,
+		attrs: { text: { validate: 'string' } },
+		parseDOM: [
+			{
+				tag: 'sup[data-ocp="footnote"]',
+				getAttrs: (element) => ({ text: attr(element, 'data-text') }),
+			},
+		],
+		toDOM: (node) => ['sup', { 'data-ocp': 'footnote', 'data-text': String(node.attrs.text) }],
+	})
+
+const defineInstruction = () =>
+	defineMarkSpec({
+		name: 'instruction',
+		inclusive: false,
+		excludes: 'instruction',
+		parseDOM: [{ tag: 'span[data-ocp="instruction"]' }],
+		toDOM: () => ['span', { 'data-ocp': 'instruction' }, 0],
+	})
+
+/** Figures carry their alternative text (ProseKit's image node has only src and size). */
+const defineImageAlt = () =>
+	defineNodeAttr<'image', 'alt', string>({
+		type: 'image',
+		attr: 'alt',
+		default: '',
+		toDOM: (value) => (value ? ['alt', value] : null),
+		parseDOM: (element) => element.getAttribute('alt') ?? '',
 	})
 
 /** Tick rows: ProseKit's list node with kind 'check' and a point-of-care flag. */
@@ -217,6 +331,7 @@ export function defineContentSchema() {
 		defineHorizontalRuleSpec(),
 		defineHardBreakSpec(),
 		defineImageSpec(),
+		defineImageAlt(),
 		defineTableSpec(),
 		defineTableRowSpec(),
 		defineTableCellSpec(),
@@ -230,11 +345,16 @@ export function defineContentSchema() {
 		defineSuperscriptSpec(),
 		defineSubscriptSpec(),
 		defineLinkSpec(),
+		defineBox(),
+		defineVariants(),
+		defineVariant(),
 		defineBanner(),
 		defineTimeframe(),
 		defineGuidance(),
 		defineCitation(),
+		defineFootnote(),
 		definePlaceholder(),
+		defineInstruction(),
 		defineSectionLink(),
 		defineParagraphSpec(), // last, so first in the schema (see above)
 	)
@@ -253,6 +373,8 @@ export const BLOCK_NODE_NAMES = [
 	'image',
 	'table',
 	'list',
+	'box',
+	'variants',
 	'banner',
 	'timeframe',
 	'guidance',

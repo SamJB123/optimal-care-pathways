@@ -7,14 +7,15 @@
 import { readFileSync } from 'node:fs'
 import { Doc } from '@y/y'
 import { describe, expect, it } from 'vitest'
-import type { CanonicalTemplate, InlineRuns } from '#/template/canonical.ts'
-import { seedTemplate } from '#/template/seed.ts'
+import { mapTemplate } from '#/template/extract/map-to-content.ts'
+import type { ExtractedDocument } from '#/template/extract/model.ts'
+import { TEMPLATES } from '#/template/templates.ts'
 import { deterministicId } from '../../scripts/ids.ts'
 import { type JsonNode, parseBody } from './schema.ts'
 import { bodyFromRoot, hydrateRoot } from './yjs.ts'
 
-const read = <T>(name: string): T =>
-	JSON.parse(readFileSync(new URL(`../../template/2026/${name}`, import.meta.url), 'utf8')) as T
+const readModel = (key: string): ExtractedDocument =>
+	JSON.parse(readFileSync(new URL(`../../template/2026/extracted/${key}.model.json`, import.meta.url), 'utf8'))
 
 const roundTrip = (body: JsonNode): JsonNode => {
 	const doc = new Doc()
@@ -28,11 +29,22 @@ describe('yjs round trip', () => {
 			type: 'doc',
 			content: [
 				{ type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Staging' }] },
-				{ type: 'banner', content: [{ type: 'text', text: 'Signs and symptoms' }] },
 				{
-					type: 'guidance',
+					type: 'box',
+					attrs: { kind: 'developer', icon: 'pen' },
 					content: [
-						{ type: 'paragraph', content: [{ type: 'text', text: 'Complete the timeframe' }] },
+						{ type: 'banner', content: [{ type: 'text', text: 'Signs and symptoms' }] },
+						{
+							type: 'guidance',
+							content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Complete the timeframe' }] }],
+						},
+						{
+							type: 'variants',
+							content: [
+								{ type: 'variant', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Option one' }] }] },
+								{ type: 'variant', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Option two' }] }] },
+							],
+						},
 					],
 				},
 				{
@@ -49,6 +61,7 @@ describe('yjs round trip', () => {
 									marks: [{ type: 'placeholder', attrs: { label: '[timeframe]' } }],
 								},
 								{ type: 'citation', attrs: { referenceId: 'ref-7' } },
+								{ type: 'footnote', attrs: { text: 'Not all risk factors are relevant for all cancer types' } },
 							],
 						},
 					],
@@ -62,6 +75,7 @@ describe('yjs round trip', () => {
 							content: [
 								{ type: 'text', text: 'Refer ', marks: [{ type: 'bold' }] },
 								{ type: 'text', text: 'promptly' },
+								{ type: 'text', text: ' <for one OCP only>', marks: [{ type: 'instruction' }] },
 							],
 						},
 						{
@@ -89,6 +103,7 @@ describe('yjs round trip', () => {
 						},
 					],
 				},
+				{ type: 'image', attrs: { src: '/template-figures/cancer-template/p9-1.png', alt: 'Steps of the pathway' } },
 				{
 					type: 'paragraph',
 					content: [
@@ -111,16 +126,11 @@ describe('yjs round trip', () => {
 		expect(roundTrip(body)).toEqual(parseBody(body).toJSON())
 	})
 
-	describe.each(['cancer-template', 'population-template', 'principles'])('%s', (doc) => {
+	describe.each(TEMPLATES.map((t) => t.key))('%s', (key) => {
 		it('keeps every seeded section body', () => {
-			const canonical = read<CanonicalTemplate>(`${doc}.tagged-canonical.json`)
-			const inline = read<InlineRuns>(`${doc}.inline.json`)
-			const { sections } = seedTemplate({
-				canonical,
-				inline,
-				orgId: 'org-test',
-				id: deterministicId,
-			})
+			const template = TEMPLATES.find((t) => t.key === key)
+			if (!template) throw new Error(key)
+			const { sections } = mapTemplate({ model: readModel(key), template, orgId: 'org-test', id: deterministicId })
 			const mismatches: string[] = []
 			for (const section of sections) {
 				const expected = parseBody(section.bodyJson).toJSON()

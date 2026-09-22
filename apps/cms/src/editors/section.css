@@ -71,6 +71,146 @@
 	margin: 0.2em 0;
 }
 
+/* Boxes: the template's bordered units. The kind sets the border and heading colours the
+   printed templates use (green developer input, blue resource / cross-reference bands,
+   navy-banded action and consideration tables, a shaded callout); the icon glyph sits in
+   the top-left corner where the template prints it. */
+.ocp-body section[data-ocp="box"] {
+	position: relative;
+	margin: 1em 0;
+	padding: 0.7em 0.9em 0.7em 2.6em;
+	border: 1px solid var(--ocp-box-border, #004c97);
+	border-radius: 0.4em;
+	background: var(--ocp-box-bg, transparent);
+}
+
+.ocp-body section[data-ocp="box"]::before {
+	content: "";
+	position: absolute;
+	left: 0.75em;
+	top: 0.65em;
+	font-size: 1.1em;
+	line-height: 1;
+	color: var(--ocp-box-border, #004c97);
+}
+
+.ocp-body section[data-ocp="box"][data-icon="pen"]::before {
+	content: "✎";
+}
+.ocp-body section[data-ocp="box"][data-icon="info"]::before {
+	content: "ⓘ";
+}
+.ocp-body section[data-ocp="box"][data-icon="hand"]::before {
+	content: "☞";
+}
+.ocp-body section[data-ocp="box"][data-icon="clipboard"]::before {
+	content: "☑";
+}
+.ocp-body section[data-ocp="box"][data-icon="speech"]::before {
+	content: "🗨";
+}
+.ocp-body section[data-ocp="box"][data-icon="care"]::before {
+	content: "☜";
+}
+.ocp-body section[data-ocp="box"][data-icon=""] {
+	padding-left: 0.9em;
+}
+
+.ocp-body section[data-ocp="box"][data-kind="developer"] {
+	--ocp-box-border: #00b050;
+	--ocp-box-bg: color-mix(in srgb, #00b050 6%, transparent);
+}
+
+.ocp-body section[data-ocp="box"][data-kind="resources"],
+.ocp-body section[data-ocp="box"][data-kind="seeAlso"] {
+	--ocp-box-border: #8eaadb;
+	--ocp-box-bg: color-mix(in srgb, #c6d9f1 35%, transparent);
+}
+
+.ocp-body section[data-ocp="box"][data-kind="callout"] {
+	--ocp-box-border: transparent;
+	--ocp-box-bg: color-mix(in srgb, #c6d9f1 55%, transparent);
+}
+
+.ocp-body section[data-ocp="box"][data-kind="actions"],
+.ocp-body section[data-ocp="box"][data-kind="communication"],
+.ocp-body section[data-ocp="box"][data-kind="considerations"],
+.ocp-body section[data-ocp="box"][data-kind="plain"] {
+	--ocp-box-border: #0f1e64;
+}
+
+.ocp-body section[data-ocp="box"] > :first-child {
+	margin-top: 0;
+}
+
+.ocp-body section[data-ocp="box"] > :last-child {
+	margin-bottom: 0;
+}
+
+.ocp-body section[data-ocp="box"] p[data-ocp="banner"] {
+	margin-left: -1.7em;
+	margin-right: -0.9em;
+	border-radius: 0;
+	background: #0f1e64;
+}
+
+/* Alternatives: the template's "Or" rows. Each variant is one alternative; the author
+   keeps one. */
+.ocp-body div[data-ocp="variants"] {
+	margin: 0.6em 0;
+	border-left: 3px dotted color-mix(in srgb, CanvasText 30%, transparent);
+	padding-left: 0.8em;
+}
+
+.ocp-body div[data-ocp="variant"] + div[data-ocp="variant"]::before {
+	content: "or";
+	display: block;
+	font-style: italic;
+	font-weight: 600;
+	color: #00b050;
+	margin: 0.4em 0;
+}
+
+/* Inline developer instruction inside core text ("<Delete if not relevant>"). */
+.ocp-body span[data-ocp="instruction"] {
+	color: #00b050;
+	font-style: italic;
+}
+
+.ocp-body sup[data-ocp="footnote"]::before {
+	content: "†";
+	font-size: 0.7em;
+	color: #004c97;
+	cursor: help;
+}
+
+.ocp-body img {
+	max-width: 100%;
+	height: auto;
+	display: block;
+	margin: 0.6em 0;
+}
+
+.ocp-body table {
+	border-collapse: collapse;
+	width: 100%;
+	margin: 0.8em 0;
+	font-size: 0.95em;
+}
+
+.ocp-body th,
+.ocp-body td {
+	border: 1px solid color-mix(in srgb, CanvasText 25%, transparent);
+	padding: 0.35em 0.6em;
+	vertical-align: top;
+	text-align: left;
+}
+
+.ocp-body th {
+	background: color-mix(in srgb, #c6d9f1 45%, transparent);
+	font-weight: 600;
+}
+
 .ocp-body mark[data-ocp="placeholder"] {
 	background: color-mix(in srgb, #ffc000 35%, transparent);
 	color: inherit;

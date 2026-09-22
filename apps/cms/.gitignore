@@ -6,3 +6,5 @@ worker-configuration.d.ts
 src/routeTree.gen.ts
 .dev.vars*
 !.dev.vars.example
+# Regenerated from template/2026/source/*.pdf by `pnpm template:extract <key>`.
+template/2026/extracted/

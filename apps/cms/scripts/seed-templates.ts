@@ -1,8 +1,8 @@
 /**
- * Seeds the three 2026 templates as core-content documents: reads
- * `template/2026/*.tagged-canonical.json` (+ `.inline.json`), builds rows with
- * `seedTemplate`, checks every body against the content schema, and writes one SQL file
- * for wrangler to apply:
+ * Seeds the three 2026 templates as core-content documents: reads the extracted models
+ * (`template/2026/extracted/<key>.model.json`, from `pnpm template:extract`), maps them
+ * to the content schema with `mapTemplate`, checks every body against the schema, and
+ * writes one SQL file for wrangler to apply:
  *
  *   pnpm exec tsx scripts/seed-templates.ts --org-id <central organisation id>
  *   → .wrangler/seed/templates-2026.sql
@@ -16,11 +16,11 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parseBody } from '../src/content/schema.ts'
-import type { CanonicalTemplate, InlineRuns } from '../src/template/canonical.ts'
-import { type SeedResult, seedTemplate } from '../src/template/seed.ts'
+import { mapTemplate } from '../src/template/extract/map-to-content.ts'
+import type { ExtractedDocument } from '../src/template/extract/model.ts'
+import type { SeedResult } from '../src/template/rows.ts'
+import { TEMPLATES } from '../src/template/templates.ts'
 import { deterministicId } from './ids.ts'
-
-const DOCS = ['principles', 'cancer-template', 'population-template'] as const
 
 const orgFlag = process.argv.indexOf('--org-id')
 const orgId = orgFlag > 0 ? process.argv[orgFlag + 1] : undefined
@@ -29,8 +29,8 @@ if (!orgId) {
 	process.exit(2)
 }
 
-const dataDir = join(import.meta.dirname, '..', 'template', '2026')
-const read = <T>(name: string): T => JSON.parse(readFileSync(join(dataDir, name), 'utf8')) as T
+const dataDir = join(import.meta.dirname, '..', 'template', '2026', 'extracted')
+const read = (key: string): ExtractedDocument => JSON.parse(readFileSync(join(dataDir, `${key}.model.json`), 'utf8'))
 
 const q = (value: string | number | boolean | null): string => {
 	if (value === null) return 'NULL'
@@ -99,16 +99,16 @@ const emit = (result: SeedResult) => {
 	}
 }
 
-for (const doc of DOCS) {
-	const canonical = read<CanonicalTemplate>(`${doc}.tagged-canonical.json`)
-	const inline = read<InlineRuns>(`${doc}.inline.json`)
-	const result = seedTemplate({ canonical, inline, orgId, id: deterministicId })
+for (const template of TEMPLATES) {
+	const model = read(template.key)
+	const result = mapTemplate({ model, template, orgId, id: deterministicId })
 	emit(result)
 	const { stats } = result
 	console.log(
-		`${doc}: ${result.sections.length} sections, ${result.references.length} references; ` +
-			`${stats.checkItems} check items, ${stats.citations} citations, ${stats.timeframes} timeframes, ` +
-			`${stats.guidance} guidance boxes, ${stats.links} links, ${stats.placeholders} placeholders`,
+		`${template.key}: ${result.sections.length} sections, ${result.references.length} references; ` +
+			`${stats.boxes} boxes, ${stats.variants} variant groups, ${stats.timeframes} timeframes, ${stats.tables} tables, ` +
+			`${stats.checkItems} check items, ${stats.guidance} guidance, ${stats.citations} citations, ${stats.footnotes} footnotes, ` +
+			`${stats.figures} figures, ${stats.links} links, ${stats.placeholders} placeholders`,
 	)
 }
 

@@ -14,10 +14,14 @@ describe('content schema (workerd)', () => {
 			'list',
 			'table',
 			'image',
+			'box',
+			'variants',
+			'variant',
 			'banner',
 			'timeframe',
 			'guidance',
 			'citation',
+			'footnote',
 		])
 			expect(contentSchema.nodes[name], name).toBeDefined()
 		for (const name of [
@@ -29,6 +33,7 @@ describe('content schema (workerd)', () => {
 			'subscript',
 			'link',
 			'placeholder',
+			'instruction',
 			'sectionLink',
 		])
 			expect(contentSchema.marks[name], name).toBeDefined()
