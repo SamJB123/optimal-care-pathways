@@ -26,6 +26,10 @@
  *                               ("Or" rows); an author keeps one
  *   timeframe                   a timeframe box: a care point ("Timeframe for referral to a
  *                               cancer specialist") and its statement, or variants of it
+ *   carePoint                   the timeframe's first child: the care point as marked text
+ *                               (the template prints placeholders inside it)
+ *   timeframeSnapshot (atom)    the "Snapshot of optimal timeframes" schematic, derived at
+ *                               render from the document's timeframe boxes (decision 50)
  *   guidance                    a green/purple developer instruction to the author,
  *                               never published
  *   citation (inline atom)      a reference to a row of the document's references table.
@@ -73,10 +77,6 @@ import { Node as PmNode, type Schema } from '@prosekit/pm/model'
 // ---------------------------------------------------------------------------
 // The template's own blocks
 // ---------------------------------------------------------------------------
-
-export interface TimeframeAttrs {
-	carePoint: string
-}
 
 /** What a box is for, read off the template's icons and shading. */
 export const BOX_KINDS = [
@@ -172,23 +172,33 @@ const defineVariant = () =>
 	})
 
 const defineTimeframe = () =>
-	defineNodeSpec<'timeframe', TimeframeAttrs>({
+	defineNodeSpec({
 		name: 'timeframe',
-		content: 'block+',
+		content: 'carePoint block+',
 		group: 'block',
 		defining: true,
-		attrs: { carePoint: { default: '', validate: 'string' } },
-		parseDOM: [
-			{
-				tag: 'aside[data-ocp="timeframe"]',
-				getAttrs: (element) => ({ carePoint: attr(element, 'data-care-point') }),
-			},
-		],
-		toDOM: (node) => [
-			'aside',
-			{ 'data-ocp': 'timeframe', 'data-care-point': String(node.attrs.carePoint) },
-			0,
-		],
+		parseDOM: [{ tag: 'aside[data-ocp="timeframe"]' }],
+		toDOM: () => ['aside', { 'data-ocp': 'timeframe' }, 0],
+	})
+
+const defineCarePoint = () =>
+	defineNodeSpec({
+		name: 'carePoint',
+		content: 'inline*',
+		defining: true,
+		parseDOM: [{ tag: 'p[data-ocp="carePoint"]' }],
+		toDOM: () => ['p', { 'data-ocp': 'carePoint' }, 0],
+	})
+
+/** The snapshot schematic is a view over the document's timeframes, never authored. */
+const defineTimeframeSnapshot = () =>
+	defineNodeSpec({
+		name: 'timeframeSnapshot',
+		group: 'block',
+		atom: true,
+		selectable: true,
+		parseDOM: [{ tag: 'div[data-ocp="timeframeSnapshot"]' }],
+		toDOM: () => ['div', { 'data-ocp': 'timeframeSnapshot' }],
 	})
 
 const defineGuidance = () =>
@@ -350,6 +360,8 @@ export function defineContentSchema() {
 		defineVariant(),
 		defineBanner(),
 		defineTimeframe(),
+		defineCarePoint(),
+		defineTimeframeSnapshot(),
 		defineGuidance(),
 		defineCitation(),
 		defineFootnote(),
@@ -377,6 +389,7 @@ export const BLOCK_NODE_NAMES = [
 	'variants',
 	'banner',
 	'timeframe',
+	'timeframeSnapshot',
 	'guidance',
 ] as const satisfies readonly NodeName[]
 

@@ -101,8 +101,10 @@ describe('stage two: the cancer template mapped to the content schema', () => {
 		const snapshot = body('snapshot-of-optimal-timeframes')
 		const placeholders = marked(snapshot, 'placeholder')
 		expect(placeholders).toContain('[insert OCP name]')
-		expect(placeholders).toContain('[insert timeframe]')
 		expect(placeholders.some((p) => p.startsWith('Shorter timeframes'))).toBe(false)
+		// p.21: "within [insert timeframe]" — the highlight started a glyph into the word
+		// in the drawing, and the bracket sat outside it.
+		expect(marked(body('2.3'), 'placeholder')).toContain('[insert timeframe]')
 		const summary = body('4.3.1')
 		const summaryPlaceholders = marked(summary, 'placeholder')
 		expect(summaryPlaceholders).toContain('Surgery')
@@ -135,8 +137,19 @@ describe('stage two: the cancer template mapped to the content schema', () => {
 
 	it('reads the stopwatch rows as timeframes, one per care point, over a merged icon cell (p.37)', () => {
 		const timeframes = find(body('4.3.1'), 'timeframe')
-		expect(timeframes.map((t) => t.attrs?.carePoint)).toEqual(['Timeframe for treatment', 'Timeframe for [treatment modality]'])
+		const carePoints = timeframes.map((t) => t.content?.[0]).filter((n): n is JsonNode => n !== undefined)
+		expect(carePoints.map((c) => c.type)).toEqual(['carePoint', 'carePoint'])
+		expect(carePoints.map((c) => textOf([c]))).toEqual(['Timeframe for treatment', 'Timeframe for [treatment modality]'])
+		// The second care point's placeholder survives as a mark, not flattened text.
+		expect(marked(carePoints[1] ? [carePoints[1]] : [], 'placeholder')).toEqual(['[treatment modality]'])
 		expect(marked(timeframes[0] ? [timeframes[0]] : [], 'placeholder')).toEqual(['[timeframe]', '[specialist referral, multidisciplinary team meeting]'])
+	})
+
+	it('replaces the snapshot schematic with the derived node and keeps its notes (p.12)', () => {
+		const snapshot = body('snapshot-of-optimal-timeframes')
+		expect(find(snapshot, 'table')).toEqual([])
+		expect(snapshot.at(-1)?.type).toBe('timeframeSnapshot')
+		expect(find(snapshot, 'box').map((b) => b.attrs?.kind)).toEqual(['developer', 'callout'])
 	})
 
 	it('keeps footnotes and citations as atoms, with the prose spacing intact (p.13)', () => {

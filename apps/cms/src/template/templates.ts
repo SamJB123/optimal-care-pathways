@@ -19,7 +19,12 @@ export interface TemplateInfo {
 	/** The core document's slug and subject placeholder. */
 	coreSlug: string
 	coreSubject: string
+	/** Sections whose printed table is a VIEW of other content (decision 50): the seed
+	 *  replaces the table with the named derived node and the CMS renders it. */
+	derived: readonly { address: string; node: 'timeframeSnapshot' }[]
 }
+
+const TIMEFRAME_SNAPSHOT = { address: 'snapshot-of-optimal-timeframes', node: 'timeframeSnapshot' } as const
 
 export const TEMPLATES: readonly TemplateInfo[] = [
 	{
@@ -30,6 +35,7 @@ export const TEMPLATES: readonly TemplateInfo[] = [
 		templateId: 'principles-2026-07',
 		coreSlug: 'principles',
 		coreSubject: 'optimal cancer care',
+		derived: [],
 	},
 	{
 		key: 'cancer-template',
@@ -39,6 +45,7 @@ export const TEMPLATES: readonly TemplateInfo[] = [
 		templateId: 'cancer-2026-07',
 		coreSlug: 'core-cancer',
 		coreSubject: '[cancer type]',
+		derived: [TIMEFRAME_SNAPSHOT],
 	},
 	{
 		key: 'population-template',
@@ -48,6 +55,7 @@ export const TEMPLATES: readonly TemplateInfo[] = [
 		templateId: 'population-2026-07',
 		coreSlug: 'core-population',
 		coreSubject: '[population group]',
+		derived: [TIMEFRAME_SNAPSHOT],
 	},
 ]
 

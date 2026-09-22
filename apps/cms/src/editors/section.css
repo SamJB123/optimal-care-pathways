@@ -49,26 +49,25 @@
 	top: 0.55em;
 }
 
-.ocp-body aside[data-ocp="timeframe"]::after {
-	content: attr(data-care-point);
-	display: block;
-	order: -1;
+.ocp-body aside[data-ocp="timeframe"] p[data-ocp="carePoint"] {
 	font-weight: 600;
 	color: #004c97;
-	margin-bottom: 0.25em;
+	margin: 0 0 0.25em;
 }
 
-.ocp-body aside[data-ocp="timeframe"] {
-	display: flex;
-	flex-direction: column;
+/* The snapshot schematic is generated from the document's timeframe boxes; the seeded
+   body holds only its marker. */
+.ocp-body div[data-ocp="timeframeSnapshot"] {
+	margin: 1em 0;
+	padding: 0.8em 1em;
+	border: 1px dashed #004c97;
+	border-radius: 0.4em;
+	color: color-mix(in srgb, #004c97 70%, CanvasText);
+	font-size: 0.95em;
 }
 
-.ocp-body aside[data-ocp="timeframe"] p + p::before {
-	content: "or";
-	display: block;
-	font-style: italic;
-	opacity: 0.6;
-	margin: 0.2em 0;
+.ocp-body div[data-ocp="timeframeSnapshot"]::before {
+	content: "Snapshot of optimal timeframes — generated from this document's timeframe boxes.";
 }
 
 /* Boxes: the template's bordered units. The kind sets the border and heading colours the

@@ -254,12 +254,15 @@ rendered pages, every class above is handled by a general rule rather than a per
 Still open (visual checks pp.6, 12, 26–27, 35–37, 49, 82 done; pp.38–48, 50–81, 83–88
 compared by structure and scans only):
 
-- **p.12 snapshot table**: Word writes no RowSpan/ColSpan attributes, so the merged step
-  cells and the two rotated side labels are flat cells; the "[xx]" in the rotated label is
-  not marked. Decision pending (derive the schematic from the timeframes vs infer spans
-  from the drawn cell rectangles).
-- **p.37 timeframe care point** "Timeframe for [treatment modality]" carries a
-  placeholder, but `timeframe.carePoint` is a string attribute. Decision pending.
+- **p.12 snapshot table** — SETTLED (decision 50): Word writes no RowSpan/ColSpan
+  attributes, so the schematic's merged cells cannot be read from the tags. The template
+  itself says the schematic is updated from the timeframe boxes, so the seed replaces the
+  printed table with a `timeframeSnapshot` node the CMS renders from the document's
+  timeframes (the notes callout and the developer guidance stay). The generated view is
+  not built yet; the node renders as a marker.
+- **p.37 timeframe care point** — SETTLED (decision 51): `carePoint` is the timeframe's
+  first child node holding marked text, so "Timeframe for [treatment modality]" keeps its
+  placeholder.
 - **p.6 Types of OCPs**: the two coloured tiles (green / purple) keep their text and bold
   titles but the table cells carry no background colour in the content schema.
 - **Principles p.8 table / p.9 schematic**: figures are rendered as images; the schematic

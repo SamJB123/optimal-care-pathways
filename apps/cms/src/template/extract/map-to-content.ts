@@ -564,16 +564,18 @@ function timeframeNodes(rows: ClassifiedRow[], g: Grammar): JsonNode[] {
 	// Each stopwatch row: a care point (the bold lead paragraph) and its statement(s);
 	// "Or" rows between statements make alternatives of one care point.
 	const out: JsonNode[] = []
-	let current: { carePoint: string; alternatives: JsonNode[][] } | null = null
+	let current: { carePoint: JsonNode[]; alternatives: JsonNode[][] } | null = null
 	const flush = () => {
 		if (!current) return
 		g.stats.timeframes++
-		const content: JsonNode[] =
+		const statements: JsonNode[] =
 			current.alternatives.length > 1
 				? [{ type: 'variants', content: current.alternatives.map((blocks) => ({ type: 'variant', content: blocks })) }]
 				: (current.alternatives[0] ?? [{ type: 'paragraph' }])
 		if (current.alternatives.length > 1) g.stats.variants++
-		out.push({ type: 'timeframe', attrs: { carePoint: current.carePoint }, content })
+		const carePoint: JsonNode = current.carePoint.length > 0 ? { type: 'carePoint', content: current.carePoint } : { type: 'carePoint' }
+		const empty: JsonNode[] = [{ type: 'paragraph' }]
+		out.push({ type: 'timeframe', content: [carePoint, ...(statements.length > 0 ? statements : empty)] })
 		current = null
 	}
 	for (const r of rows) {
@@ -590,23 +592,25 @@ function timeframeNodes(rows: ClassifiedRow[], g: Grammar): JsonNode[] {
 			// A new care point (a bold lead), unless we are mid-alternative awaiting a statement.
 			if (!(current && current.alternatives.at(-1)?.length === 0)) {
 				flush()
-				current = { carePoint: plainText(lead.runs).trim(), alternatives: [[]] }
+				// The care point keeps its marks: the template prints placeholders in it.
+				current = { carePoint: inlineOf(lead.runs, g, { instructionAsMark: true }), alternatives: [[]] }
 				const rest = blockNodes(cell.blocks.filter((b) => b !== lead && !(b.kind === 'figure' && isIcon(b))), g)
 				current.alternatives[0]?.push(...rest)
 				continue
 			}
 		}
-		if (!current) current = { carePoint: '', alternatives: [[]] }
+		if (!current) current = { carePoint: [], alternatives: [[]] }
 		current.alternatives.at(-1)?.push(...blockNodes(cell.blocks.filter((b) => !(b.kind === 'figure' && isIcon(b))), g))
 	}
 	flush()
 	return out
 }
 
+/** A real table: every row has columns and none is a band, an icon row or an "Or". */
+const isRealTable = (table: Table, g: Grammar): boolean => table.rows.every((r) => classifyRow(r, g, { collapseEmpty: false }).kind === 'columns')
+
 function tableNodes(table: Table, g: Grammar): JsonNode[] {
-	// A real table: every row has columns and none is a band, an icon row or an "Or".
-	const asTable = table.rows.map((r) => classifyRow(r, g, { collapseEmpty: false }))
-	if (asTable.every((r) => r.kind === 'columns')) return [tableNode(asTable, g)]
+	if (isRealTable(table, g)) return [tableNode(table.rows.map((r) => classifyRow(r, g, { collapseEmpty: false })), g)]
 
 	const rows = table.rows.map((r) => classifyRow(r, g, { collapseEmpty: true }))
 	// An icon row heads a box (the stopwatch heads a care point inside one), so a table
@@ -840,8 +844,16 @@ export function mapTemplate(input: MapInput): SeedResult {
 	const sectionId = (p: Placed) => id('section', `${template.templateId}:${p.address}`)
 	const sections: SectionRow[] = placed.map((p) => {
 		const apparatus = APPARATUS.test(p.address) || APPARATUS_SUBTREE.test(p.address) || p.parent?.address === 'contents'
-		// The contents page is a derived view of the section tree, never content.
-		const body = p.address === 'contents' ? [] : blockNodes(p.section.blocks, g)
+		// The contents page is a derived view of the section tree, never content; a
+		// template-declared derived section keeps its prose and boxes but its printed table
+		// (the snapshot schematic) is replaced by the node the CMS renders from the document.
+		const derived = template.derived.find((d) => d.address === p.address)
+		const body =
+			p.address === 'contents'
+				? []
+				: derived
+					? [...blockNodes(p.section.blocks.filter((b) => !(b.kind === 'table' && isRealTable(b, g))), g), { type: derived.node }]
+					: blockNodes(p.section.blocks, g)
 		const number = p.section.number
 		return {
 			id: sectionId(p),

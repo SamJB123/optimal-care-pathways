@@ -112,9 +112,14 @@ function block(node: JsonNode, indent: number): void {
 				for (const c of v.content ?? []) block(c, indent + 2)
 			})
 			return
-		case 'timeframe':
-			emit(indent, `⏱ ${String(node.attrs?.carePoint ?? '')}`)
-			for (const c of node.content ?? []) block(c, indent + 1)
+		case 'timeframe': {
+			const [carePoint, ...rest] = node.content ?? []
+			emit(indent, `⏱ ${carePoint?.type === 'carePoint' ? inline(carePoint.content) : ''}`)
+			for (const c of rest) block(c, indent + 1)
+			return
+		}
+		case 'timeframeSnapshot':
+			emit(indent, '⌗ TIMEFRAME SNAPSHOT (derived from the document’s timeframes at render)')
 			return
 		case 'list': {
 			const kind = String(node.attrs?.kind ?? 'bullet')

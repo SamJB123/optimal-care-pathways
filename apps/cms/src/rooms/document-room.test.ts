@@ -40,8 +40,8 @@ const body: JsonNode = {
 		},
 		{
 			type: 'timeframe',
-			attrs: { carePoint: 'Timeframe for treatment' },
 			content: [
+				{ type: 'carePoint', content: [{ type: 'text', text: 'Timeframe for treatment' }] },
 				{
 					type: 'paragraph',
 					content: [

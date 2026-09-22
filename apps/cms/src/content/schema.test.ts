@@ -19,6 +19,8 @@ describe('content schema (workerd)', () => {
 			'variant',
 			'banner',
 			'timeframe',
+			'carePoint',
+			'timeframeSnapshot',
 			'guidance',
 			'citation',
 			'footnote',
@@ -67,8 +69,8 @@ describe('content schema (workerd)', () => {
 					},
 					{
 						type: 'timeframe',
-						attrs: { carePoint: 'Timeframe for treatment' },
 						content: [
+							{ type: 'carePoint', content: [{ type: 'text', text: 'Timeframe for treatment' }] },
 							{
 								type: 'paragraph',
 								content: [
