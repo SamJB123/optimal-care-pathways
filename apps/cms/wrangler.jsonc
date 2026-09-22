@@ -12,6 +12,14 @@
 	},
 	"workers_dev": true,
 
+	// First-run bootstrap: a signed-in user whose email is listed here may create the
+	// central organisation (Cancer Australia) and becomes its first owner; the seeded
+	// core documents are adopted by it. Comma-separated. Set per deployment (`wrangler
+	// deploy --var` or this file); locally in `.dev.vars`.
+	"vars": {
+		"ADMIN_EMAILS": ""
+	},
+
 	// The only binding to another worker: this repo's own auth worker (apps/auth).
 	// `env.AUTH.verifySession` turns the session cookie into a user; the room DOs
 	// verify one-time tokens through the same service. In local dev the cloudflare

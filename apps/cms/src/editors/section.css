@@ -1,0 +1,135 @@
+/* The template's blocks, as they read in the editor and in the read-only view.
+   Colours follow the printed templates: black core content, green guidance, white-on-
+   blue title bands, a bordered timeframe box, ticks for check items. */
+
+.ocp-body {
+	line-height: 1.55;
+}
+
+.ocp-body p[data-ocp="banner"] {
+	margin: 1.2em 0 0.4em;
+	padding: 0.35em 0.7em;
+	background: var(--ocp-banner-bg, #004c97);
+	color: #fff;
+	font-weight: 600;
+	border-radius: 0.3em;
+}
+
+.ocp-body aside[data-ocp="guidance"] {
+	margin: 0.8em 0;
+	padding: 0.6em 0.9em;
+	border-left: 4px solid #00b050;
+	background: color-mix(in srgb, #00b050 10%, transparent);
+	color: color-mix(in srgb, #00b050 55%, CanvasText);
+	font-size: 0.95em;
+}
+
+.ocp-body aside[data-ocp="guidance"]::before {
+	content: "Drafting guidance";
+	display: block;
+	font-size: 0.75em;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	margin-bottom: 0.3em;
+}
+
+.ocp-body aside[data-ocp="timeframe"] {
+	margin: 0.8em 0;
+	padding: 0.6em 0.9em 0.6em 2.4em;
+	border: 1px solid #004c97;
+	border-radius: 0.4em;
+	position: relative;
+}
+
+.ocp-body aside[data-ocp="timeframe"]::before {
+	content: "⏱";
+	position: absolute;
+	left: 0.7em;
+	top: 0.55em;
+}
+
+.ocp-body aside[data-ocp="timeframe"]::after {
+	content: attr(data-care-point);
+	display: block;
+	order: -1;
+	font-weight: 600;
+	color: #004c97;
+	margin-bottom: 0.25em;
+}
+
+.ocp-body aside[data-ocp="timeframe"] {
+	display: flex;
+	flex-direction: column;
+}
+
+.ocp-body aside[data-ocp="timeframe"] p + p::before {
+	content: "or";
+	display: block;
+	font-style: italic;
+	opacity: 0.6;
+	margin: 0.2em 0;
+}
+
+.ocp-body mark[data-ocp="placeholder"] {
+	background: color-mix(in srgb, #ffc000 35%, transparent);
+	color: inherit;
+	border-radius: 0.2em;
+	padding: 0 0.15em;
+}
+
+.ocp-body sup[data-ocp="citation"]::before {
+	content: "[" attr(data-reference-id) "]";
+	font-size: 0.7em;
+	color: #004c97;
+}
+
+.ocp-body .prosemirror-flat-list[data-list-kind="check"] {
+	list-style: none;
+}
+
+.ocp-body .prosemirror-flat-list[data-list-kind="check"] > .list-marker::before {
+	content: "✓";
+	color: #004c97;
+	font-weight: 700;
+}
+
+.ocp-body
+	.prosemirror-flat-list[data-list-kind="check"][data-point-of-care="true"]
+	> .list-marker::after {
+	content: " ◆";
+	color: #c00000;
+	font-size: 0.7em;
+}
+
+.ocp-section-viewing {
+	margin-inline-start: 0.5rem;
+}
+
+.ocp-section {
+	margin-block: 1.5rem;
+}
+
+.ocp-section-heading {
+	display: flex;
+	align-items: baseline;
+	gap: 0.6rem;
+	margin-bottom: 0.4rem;
+}
+
+.ocp-section-number {
+	font-variant-numeric: tabular-nums;
+	opacity: 0.6;
+}
+
+.ocp-section-shared {
+	padding: 0.8rem 1rem;
+	border-radius: 0.5rem;
+	background: color-mix(in srgb, CanvasText 5%, transparent);
+}
+
+.ocp-section-shared-note {
+	font-size: 0.85em;
+	opacity: 0.7;
+	margin-bottom: 0.4rem;
+}

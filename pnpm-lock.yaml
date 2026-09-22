@@ -108,6 +108,9 @@ catalogs:
     lucide-react:
       specifier: ^1.47.0
       version: 1.47.0
+    prosemirror-flat-list:
+      specifier: 0.7.1
+      version: 0.7.1
     react:
       specifier: ^19.3.0
       version: 19.3.0
@@ -318,6 +321,9 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 1.0.0-rc.4(@cloudflare/workers-types@5.20260921.1)(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(@types/sql.js@1.4.11)(pg@8.23.0)(sql.js@1.14.2)(valibot@1.2.0(typescript@7.0.2))(zod@4.6.5)
+      prosemirror-flat-list:
+        specifier: 'catalog:'
+        version: 0.7.1
       solid-js:
         specifier: 'catalog:'
         version: 2.0.0-rc.8

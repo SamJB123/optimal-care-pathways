@@ -3,3 +3,5 @@
 # Any non-empty string locally; the real secret in prod via
 # `wrangler secret put CAPNWEB_SNAPSHOT_ENCRYPTION_KEY`.
 CAPNWEB_SNAPSHOT_ENCRYPTION_KEY="set-me-locally"
+# Who may run the first-run bootstrap (create the central organisation). Comma-separated.
+ADMIN_EMAILS="you@example.org"
