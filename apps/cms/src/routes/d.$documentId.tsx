@@ -18,7 +18,7 @@ import {
 import { createFileRoute, Outlet, useNavigate } from '@tanstack/solid-router'
 import { createContext, createEffect, createMemo, createSignal, For } from 'solid-js'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
-import { createPathwayClient, type PathwayClient } from '#/lib/ocp-client.ts'
+import { type PathwayClient, pathwayClientFor } from '#/lib/ocp-client.ts'
 import type { Role } from '#/lib/roles.ts'
 import { sectionsSnapshot } from '#/server/documents.ts'
 import './document.css'
@@ -66,20 +66,22 @@ function DocumentShell() {
 	const [client, setClient] = createSignal<PathwayClient | null>(null)
 	const [live, setLive] = createSignal<SectionWireRow[] | null>(null)
 
-	// Client-only by construction: effects never run during SSR.
+	// Client-only by construction: effects never run during SSR. The client is a
+	// page-lifetime singleton per document (lib/ocp-client.ts): this effect only
+	// subscribes the outline and unsubscribes on document switch — it never creates or
+	// closes a session (the hive's HiveShell / createCollectionSignal wiring).
 	createEffect(
 		() => params().documentId,
 		(documentId) => {
-			const next = createPathwayClient(documentId, (userId) => userId.slice(0, 8))
+			const next = pathwayClientFor(documentId)
 			setClient(next)
-			const unsubscribe = next.sections.subscribeChanges(() => {
+			const update = () => {
 				if (next.ready()) setLive([...next.sections.values()])
-			})
-			// No signal writes in a cleanup (see SectionView): the next apply overwrites.
-			return () => {
-				unsubscribe.unsubscribe()
-				next.close()
 			}
+			update()
+			const subscription = next.sections.subscribeChanges(update)
+			// The cleanup is the apply function's RETURN VALUE and writes no signal.
+			return () => subscription.unsubscribe()
 		},
 	)
 

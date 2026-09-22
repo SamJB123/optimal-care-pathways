@@ -119,14 +119,31 @@ export class DocumentRoom extends DocRoom {
 		await this.foldSection(row.id, row.bodyUpdatedAt || Date.now())
 	}
 
+	/**
+	 * Write the live body into the row ONLY when its JSON differs from what the row holds.
+	 * A body is "touched" without changing — the editor's binding on mount, a snapshot's
+	 * pre-fold, a reconnect's re-handshake — and none of those is an edit. The row's
+	 * `updated_at` is the section's per-section last-updated, which the published API
+	 * serves and Cancer Council keys its display on, so it moves only on content.
+	 */
 	async #fold(sectionId: string, at: number): Promise<JsonNode> {
 		const body = await this.readBody(sectionId, (root) => bodyFromRoot(root))
+		const where = and(
+			eq(schema.sections.id, sectionId),
+			eq(schema.sections.documentId, this.documentId()),
+		)
+		const current = (
+			await db(this.env.DB)
+				.select({ bodyJson: schema.sections.bodyJson })
+				.from(schema.sections)
+				.where(where)
+				.limit(1)
+		)[0]
+		if (current && JSON.stringify(current.bodyJson) === JSON.stringify(body)) return body
 		const updated = await db(this.env.DB)
 			.update(schema.sections)
 			.set({ bodyJson: body, updatedAt: new Date(at) })
-			.where(
-				and(eq(schema.sections.id, sectionId), eq(schema.sections.documentId, this.documentId())),
-			)
+			.where(where)
 			.returning()
 		if (updated.length > 0) void publishSectionRows(this.documentId(), updated)
 		return body

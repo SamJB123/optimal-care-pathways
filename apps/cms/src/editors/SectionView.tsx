@@ -2,13 +2,24 @@
  * One section on a step page: its heading, then either the live editor (an owned
  * section, once the room is up) or the read-only rendering of the body it renders
  * (a shared section: the core document's).
+ *
+ * The handle is opened ONCE per mount, in `onSettled` over UNTRACKED props — the hive's
+ * DocPage wiring — and closed when the view leaves. Never in a reactive effect over the
+ * section row: the row object is reallocated on every outline tick (a fold bumps the
+ * section's `updatedAt`, the topic publishes it, `rows()` recomputes), and an effect
+ * keyed on it re-opened every handle per tick. Each re-mounted editor's binding then
+ * touched the body, which folded, which ticked the outline: the one-second flip
+ * (2026-09-22). The editor slot is keyed by (section id, handle, room): a fresh object
+ * only when a different section opens, never on a role change, never on a tick. The
+ * client itself is a page-lifetime singleton and is never closed here.
  */
 
 import type { DocHandle, DocRoomClient } from '@aicolab/app-kit/doc-room/client'
 import { DOMSerializer } from '@prosekit/pm/model'
-import { createEffect, createMemo, createSignal, Show, useContext } from 'solid-js'
+import { createEffect, createSignal, onSettled, Show, untrack, useContext } from 'solid-js'
 import { contentSchema, type JsonNode, parseBody } from '#/content/schema.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
+import { pathwayClientFor } from '#/lib/ocp-client.ts'
 import { DocumentContext } from '#/routes/d.$documentId.tsx'
 import { sectionBody } from '#/server/documents.ts'
 import SectionEditor from './SectionEditor.tsx'
@@ -34,32 +45,27 @@ export function SectionView(props: { section: SectionWireRow; depth: number }) {
 	)
 }
 
+interface EditorSlot {
+	id: string
+	handle: DocHandle
+	room: DocRoomClient
+}
+
 function OwnedBody(props: { sectionId: string }) {
 	const workspace = useContext(DocumentContext)
-	const [handle, setHandle] = createSignal<DocHandle | null>(null)
-	createEffect(
-		() => workspace.client(),
-		(client) => {
-			if (!client) return
-			const opened = client.room.openDoc(props.sectionId)
-			setHandle(opened)
-			// No signal write in a cleanup: Solid 2 disposes the owner first and a write then
-			// throws, which arms the router's error boundary and starts the remount storm
-			// (memory: hive-doc-reopen-storm). The next apply overwrites the handle.
-			return () => opened.close()
-		},
-	)
-	// One value for the flow component, so its callback reads nothing at the top.
-	const live = createMemo((): { room: DocRoomClient; handle: DocHandle } | null => {
-		const client = workspace.client()
-		const h = handle()
-		return client && h ? { room: client.room, handle: h } : null
+	const [opened, setOpened] = createSignal<EditorSlot | null>(null)
+	// Once per mount, untracked (see the module doc): the page-lifetime client for this
+	// document, one handle for this section, closed when the view leaves.
+	onSettled(() => {
+		const id = untrack(() => props.sectionId)
+		const client = pathwayClientFor(untrack(() => workspace.documentId))
+		const handle = client.room.openDoc(id)
+		setOpened({ id, handle, room: client.room })
+		return () => handle.close()
 	})
 	return (
-		<Show when={live()} fallback={<StaticBody sectionId={props.sectionId} />}>
-			{(value) => (
-				<SectionEditor room={value().room} handle={value().handle} sectionId={props.sectionId} />
-			)}
+		<Show when={opened()} fallback={<StaticBody sectionId={props.sectionId} />} keyed>
+			{({ id, handle, room }) => <SectionEditor room={room} handle={handle} sectionId={id} />}
 		</Show>
 	)
 }
@@ -68,18 +74,17 @@ function OwnedBody(props: { sectionId: string }) {
  *  section shows before its room is connected. */
 function StaticBody(props: { sectionId: string }) {
 	const [body, setBody] = createSignal<JsonNode | null | undefined>(undefined)
-	createEffect(
-		() => props.sectionId,
-		(sectionId) => {
-			let cancelled = false
-			void sectionBody({ data: { sectionId } })
-				.then((result) => !cancelled && setBody(result.body))
-				.catch(() => !cancelled && setBody(null))
-			return () => {
-				cancelled = true
-			}
-		},
-	)
+	// Fetched once per mount: a resting body is static by definition, and the view is
+	// keyed by section id upstream, so a different section is a different mount.
+	onSettled(() => {
+		let cancelled = false
+		void sectionBody({ data: { sectionId: untrack(() => props.sectionId) } })
+			.then((result) => !cancelled && setBody(result.body))
+			.catch(() => !cancelled && setBody(null))
+		return () => {
+			cancelled = true
+		}
+	})
 	return (
 		<Show
 			when={body()}

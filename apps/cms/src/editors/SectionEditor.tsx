@@ -26,7 +26,7 @@ import { createEditor } from '@prosekit/core'
 import { configureYProsemirror } from '@y/prosemirror'
 import { UndoManager } from '@y/y'
 
-import { createSignal, onSettled, Show } from 'solid-js'
+import { createSignal, onSettled, Show, untrack } from 'solid-js'
 import { createSectionExtension } from './extension.ts'
 
 export default function SectionEditor(props: {
@@ -34,10 +34,18 @@ export default function SectionEditor(props: {
 	handle: DocHandle
 	sectionId: string
 }) {
-	const docKey = `doc:${props.sectionId}`
-	const open = props.handle.openBody()
+	// The slot upstream is keyed by (section, handle, room): a different section is a
+	// different mount, so these are constants of this instance, read once and untracked
+	// (a tracked top-level prop read is the STRICT_READ_UNTRACKED warning).
+	const { room, handle, sectionId } = untrack(() => ({
+		room: props.room,
+		handle: props.handle,
+		sectionId: props.sectionId,
+	}))
+	const docKey = `doc:${sectionId}`
+	const open = handle.openBody()
 	const ytype = open.doc.get('')
-	const [tier, setTier] = createSignal(props.handle.role())
+	const [tier, setTier] = createSignal(handle.role())
 	const editable = () => tier() === 'editor'
 	const [ready, setReady] = createSignal(false)
 	const updates = createEditorUpdateSource()
@@ -48,10 +56,7 @@ export default function SectionEditor(props: {
 		if (publishTimer) return
 		publishTimer = setTimeout(() => {
 			publishTimer = null
-			props.room.setCursor(
-				docKey,
-				editor.view.hasFocus() ? encodeSelectionCursor(editor.view) : null,
-			)
+			room.setCursor(docKey, editor.view.hasFocus() ? encodeSelectionCursor(editor.view) : null)
 		}, 120)
 	}
 
@@ -66,10 +71,10 @@ export default function SectionEditor(props: {
 			},
 			onFocusChange: (focus) => {
 				if (focus) publishCaret()
-				else props.room.setCursor(docKey, null)
+				else room.setCursor(docKey, null)
 			},
 			getRemoteCursors: () =>
-				props.room.cursors.for(docKey).map((rc) => ({
+				room.cursors.for(docKey).map((rc) => ({
 					userId: rc.userId,
 					name: rc.name,
 					anchor: rc.cursor.anchor,
@@ -232,7 +237,7 @@ export default function SectionEditor(props: {
 		if (!bound) console.error('[section editor] configureYProsemirror did not bind')
 		editorMounted = true
 		updates.notify()
-		const applyTier = (t: ReturnType<typeof props.handle.role>): void => {
+		const applyTier = (t: ReturnType<typeof handle.role>): void => {
 			setTier(t)
 			try {
 				editor.view.dispatch(editor.view.state.tr)
@@ -240,15 +245,15 @@ export default function SectionEditor(props: {
 				/* view mid-teardown */
 			}
 		}
-		void props.handle.ready.then(() => applyTier(props.handle.role()))
-		const offRole = props.handle.onRole((t) => {
+		void handle.ready.then(() => applyTier(handle.role()))
+		const offRole = handle.onRole((t) => {
 			applyTier(t)
 			open.reattach()
 		})
 		const notifyUndo = () => updates.notify()
 		undoManager.on('stack-item-added', notifyUndo)
 		undoManager.on('stack-item-popped', notifyUndo)
-		const unsubscribeCursors = props.room.cursors.subscribe((key) => {
+		const unsubscribeCursors = room.cursors.subscribe((key) => {
 			if (key !== docKey) return
 			try {
 				editor.view.dispatch(editor.view.state.tr.setMeta(remoteCursorsKey, true))
@@ -262,7 +267,7 @@ export default function SectionEditor(props: {
 			unsubscribeCursors()
 			offRole()
 			if (publishTimer) clearTimeout(publishTimer)
-			props.room.setCursor(docKey, null)
+			room.setCursor(docKey, null)
 			undoManager.off('stack-item-added', notifyUndo)
 			undoManager.off('stack-item-popped', notifyUndo)
 			undoManager.destroy()

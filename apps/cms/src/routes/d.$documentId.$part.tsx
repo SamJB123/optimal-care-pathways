@@ -54,7 +54,14 @@ function PartPage() {
 					</Notice>
 				}
 			>
-				<For each={rows()}>{(row) => <SectionView section={row.section} depth={row.depth} />}</For>
+				{/* Keyed by the SECTION ID — never by the row object, which `rows()` allocates
+				    afresh on every outline tick. Identity keying remounted every section view
+				    (and reopened every facet) on each live update, which the fold's own
+				    republish then re-triggered: the one-second flip. See the hive's DocPage:
+				    the editor slot is keyed by the doc, never by a projection tick. */}
+				<For each={rows()} keyed={(row) => row.section.id}>
+					{(row) => <SectionView section={row().section} depth={row().depth} />}
+				</For>
 			</Show>
 		</div>
 	)

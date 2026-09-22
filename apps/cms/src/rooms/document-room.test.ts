@@ -98,13 +98,17 @@ async function subscribeBody(facet: DocViewerFacet, sink: ReturnType<typeof make
 	return stream.subscription
 }
 
-const storedBody = async (sectionId: string) =>
+const storedRow = async (sectionId: string) =>
 	(
 		await db(env.DB)
-			.select({ bodyJson: schema.sections.bodyJson })
+			.select({ bodyJson: schema.sections.bodyJson, updatedAt: schema.sections.updatedAt })
 			.from(schema.sections)
 			.where(eq(schema.sections.id, sectionId))
-	)[0]?.bodyJson ?? null
+	)[0] ?? null
+
+const storedBody = async (sectionId: string) => (await storedRow(sectionId))?.bodyJson ?? null
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const plain = (node: JsonNode): string => node.text ?? (node.content ?? []).map(plain).join('')
 
@@ -177,6 +181,29 @@ describe('DocumentRoom (workerd, real DO over D1)', () => {
 			expect((await instance.listDocs()).map((row) => row.id)).toContain(OWNED_ID)
 			const folded = await instance.foldSection(OWNED_ID)
 			expect(folded).toEqual(parseBody(body).toJSON())
+		})
+	})
+
+	it('a fold that changes nothing leaves the row alone: last-updated moves only on content', async () => {
+		await runInDurableObject(room(), async (instance: DocumentRoom) => {
+			await instance.ready
+			// The first fold may normalise the seeded JSON into ProseMirror's own shape.
+			await instance.foldSection(OWNED_ID)
+			const settled = await storedRow(OWNED_ID)
+			await sleep(20)
+			// The body was touched (folded again) but not changed: no write, same timestamp.
+			await instance.foldSection(OWNED_ID, Date.now())
+			expect(await storedRow(OWNED_ID)).toEqual(settled)
+			// A live open and a subscribe touch the body too — the editor's binding on mount.
+			const facet = await instance
+				.createCapability(`member@${ORG}`)
+				.openDoc({ docId: OWNED_ID }, makeFacetCb().stub)
+			const client = makeClientSink()
+			const subscription = await subscribeBody(facet, client)
+			await sleep(800) // well past the 300 ms projection debounce
+			expect(await storedRow(OWNED_ID)).toEqual(settled)
+			subscription[Symbol.dispose]()
+			facet[Symbol.dispose]()
 		})
 	})
 
