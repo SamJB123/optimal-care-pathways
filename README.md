@@ -32,4 +32,22 @@ pnpm test
 Cloning: `git clone --recurse-submodules`. After a pull that moves a submodule pointer:
 `git submodule update`.
 
+## Dependencies follow the monorepo
+
+The packages under `packages/` are the aicolab-portal monorepo's, pinned to the commits it
+runs, and they are validated only against that monorepo's lockfile. A fresh resolution of the
+same catalog drifts hundreds of packages past those versions and breaks things one at a time
+(the Solid compiler, biome's rules, better-auth's schema check, a second zod).
+
+So `pnpm-lock.yaml` here is seeded from the monorepo's, and pnpm resolves only what this repo
+adds. After the monorepo does a dependency sweep and bumps the submodules:
+
+```
+cp ../aicolab-portal/pnpm-lock.yaml pnpm-lock.yaml
+rm -rf node_modules && pnpm install
+```
+
+The exact pins in `pnpm-workspace.yaml` record the traps that were hit and hold even if the
+lockfile is ever regenerated.
+
 Local sign-in uses email and password, enabled by `apps/auth/.dev.vars` (copy the example).
