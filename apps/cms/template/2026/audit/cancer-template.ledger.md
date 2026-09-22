@@ -250,6 +250,21 @@ rendered pages, every class above is handled by a general rule rather than a per
 - **Semantics**: icons name the box kind; ownership from the presence of developer input;
   the contents pages are apparatus; running headers/footers are excluded by the structure
   tree.
+- **Alignment** (2026-09-23): a paragraph is aligned within its CONTAINER's frame, never
+  its own extent — the drawn cell for table text (its shading rectangle, else the nearest
+  rule or shading edge on either side, else the table's edge widened by the column pitch
+  when Word divided it equally), a stroked text box, the list body past the marker, the
+  page's text column otherwise. A single centred line had framed itself and always read
+  as left (p.6 tile titles, p.7 "Health professionals", p.7 resource labels). Text within
+  6.5pt of a cell edge (Word's 5.4pt padding) sits on it; a single line is right-aligned
+  only when it lies in the frame's right half. The whitespace item pdf.js writes for the
+  gap between two cells' text on one line joins the text but never the geometry — it had
+  stretched the next cell's line back to the previous cell and mis-framed it.
+- **Soft return under a title line**: a first line wholly in one emphasised style and
+  colour followed by a line in another colour is a paragraph of its own (p.7 "Optimal
+  Care Pathways" over its description, tagged as one P).
+- **Figures on one line**: figures whose boxes overlap vertically become one `figureRow`
+  (p.7 the two clinician icons over "Health professionals").
 
 Still open (visual checks pp.6, 12, 26–27, 35–37, 49, 82 done; pp.38–48, 50–81, 83–88
 compared by structure and scans only):

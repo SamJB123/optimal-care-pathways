@@ -290,6 +290,18 @@ const defineColumn = () =>
 		toDOM: () => ['div', { 'data-ocp': 'column' }, 0],
 	})
 
+/** Figures the source drew on one line (the two clinician icons over "Health
+ *  professionals"): a row of images, centred. */
+const defineFigureRow = () =>
+	defineNodeSpec({
+		name: 'figureRow',
+		content: 'image+',
+		group: 'block',
+		defining: true,
+		parseDOM: [{ tag: 'div[data-ocp="figureRow"]' }],
+		toDOM: () => ['div', { 'data-ocp': 'figureRow' }, 0],
+	})
+
 /** The entries of a Find out more / See also box, as one list (a RichList in the
  *  view): consecutive entries in the source become one of these. */
 const defineResourceList = () =>
@@ -629,6 +641,7 @@ export function defineContentSchema() {
 		defineBox(),
 		defineColumns(),
 		defineColumn(),
+		defineFigureRow(),
 		defineVariants(),
 		defineVariant(),
 		defineBanner(),
@@ -666,6 +679,7 @@ export const BLOCK_NODE_NAMES = [
 	'list',
 	'box',
 	'columns',
+	'figureRow',
 	'variants',
 	'banner',
 	'timeframe',

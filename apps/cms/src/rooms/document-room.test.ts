@@ -21,7 +21,7 @@ import { RpcStub, RpcTarget } from 'capnweb-experimental-hibernation'
 import { eq } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { type JsonNode, parseBody } from '#/content/schema.ts'
-import { hydrateRoot } from '#/content/yjs.ts'
+import { bodyFromRoot, hydrateRoot } from '#/content/yjs.ts'
 import { db, schema } from '#/db/index.ts'
 import { type DocumentRoom, documentRoomName } from './document-room.ts'
 
@@ -288,6 +288,38 @@ describe('DocumentRoom (workerd, real DO over D1)', () => {
 			expect(live).not.toContain('Appended by the test')
 			const storedAfter = await storedBody(OWNED_ID)
 			expect(storedAfter && parseBody(storedAfter).toJSON()).toEqual(normalised)
+			subscription[Symbol.dispose]()
+			facet[Symbol.dispose]()
+		})
+	})
+
+	it('opening a section the room holds reconciles it with a row rewritten since (no fold in between)', async () => {
+		const reseeded: JsonNode = {
+			type: 'doc',
+			content: [
+				{ type: 'paragraph', content: [{ type: 'text', text: 'Reseeded again by the test' }] },
+			],
+		}
+		await sleep(20)
+		await db(env.DB)
+			.update(schema.sections)
+			.set({ bodyJson: reseeded, updatedAt: new Date() })
+			.where(eq(schema.sections.id, OWNED_ID))
+		await runInDurableObject(room(), async (instance: DocumentRoom) => {
+			await instance.ready
+			// No fold, no edit: the open alone must bring the live body to the row's.
+			const facet = await instance
+				.createCapability(`member@${ORG}`)
+				.openDoc({ docId: OWNED_ID }, makeFacetCb().stub)
+			const client = makeClientSink()
+			const subscription = await subscribeBody(facet, client)
+			await sleep(800)
+			const live = plain(bodyFromRoot(client.synced.doc.get('')))
+			expect(live).toContain('Reseeded again by the test')
+			expect(live).not.toContain('Reseeded by the test')
+			// The row was the truth; the open wrote nothing over it.
+			const stored = await storedBody(OWNED_ID)
+			expect(stored && parseBody(stored).toJSON()).toEqual(parseBody(reseeded).toJSON())
 			subscription[Symbol.dispose]()
 			facet[Symbol.dispose]()
 		})

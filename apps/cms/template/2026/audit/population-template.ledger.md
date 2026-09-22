@@ -25,7 +25,13 @@ applies here unchanged; this ledger records only what is specific to Attachment 
   document, so guidance and inline instructions are recognised (`semantics`, resolved).
 - **p.6–7 → About OCPs**: tiles (Cancer-specific / Population-based) as `columns` of
   callout boxes in their families (success / accent); icon grids (Using OCPs, Pathway
-  resources) as `columns` (`structure`, resolved).
+  resources) as `columns` (`structure`, resolved). Their single-line titles and labels
+  are centred as printed (alignment judged in the drawn cell — see the cancer ledger's
+  "Alignment" rule, 2026-09-23); the two clinician icons sit on one line (`figureRow`);
+  "Optimal Care Pathways" is its own title line over its description (`text`, resolved).
+  The editor had stacked every `columns` node (a node-view host element sat between the
+  grid and the columns); the node view now hands the content element to the block
+  itself (`structure`, resolved 2026-09-23).
 - **p.8–13 → Principles for Optimal Cancer Care / Population-based considerations**: one
   pen box per principle with "Population-based considerations for <principle>" banner
   boxes, "Population-based actions" checklists, and Find out more boxes whose entries are

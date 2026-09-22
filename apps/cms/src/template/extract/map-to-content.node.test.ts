@@ -194,6 +194,25 @@ describe('stage two: the cancer template mapped to the content schema', () => {
 		)
 	})
 
+	it('keeps figures drawn on one line together as a figure row, inside their column (p.7)', () => {
+		// The two clinician icons over "Health professionals" share a line on the page; the
+		// other two columns each hold one icon and stay plain images.
+		const grids = find(body('about-optimal-care-pathways/using-optimal-care-pathways'), 'columns')
+		const iconGrid = grids[0]
+		expect(iconGrid?.content).toHaveLength(3)
+		const first = iconGrid?.content?.[0]?.content ?? []
+		expect(first[0]?.type).toBe('figureRow')
+		expect(first[0]?.content?.map((n) => n.type)).toEqual(['image', 'image'])
+		expect(find(first, 'image').map((n) => n.attrs?.alt)).toEqual([
+			'Doctor male with solid fill',
+			'Doctor female with solid fill',
+		])
+		expect(iconGrid?.content?.[1]?.content?.[0]?.type).toBe('image')
+		// The label under the icons carries the page's centring.
+		expect(first.at(-1)?.attrs?.textAlign).toBe('center')
+		expect(textOf([first.at(-1) ?? { type: 'paragraph' }])).toBe('Health professionals')
+	})
+
 	it('emits valid, non-empty bodies for every section', () => {
 		for (const s of result.sections) {
 			expect(s.bodyJson.type).toBe('doc')

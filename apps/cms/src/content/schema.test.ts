@@ -17,6 +17,7 @@ describe('content schema (workerd)', () => {
 			'box',
 			'columns',
 			'column',
+			'figureRow',
 			'variants',
 			'variant',
 			'banner',

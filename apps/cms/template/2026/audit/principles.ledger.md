@@ -33,8 +33,12 @@ structure scans and the print)
   heading opens an H1 section (the same style as the document's H1) with the icon; the
   remaining rows are an ordinary table of that section (`structure`, `semantics`,
   resolved). Before this rule none of the eight opened a section.
-- **p.5 → Priority populations**: a 5 × 2 table of linked population names; kept as a real
-  table (`structure`, correct).
+- **p.5 → Priority populations**: a 5 × 2 grid of linked population names, each centred in
+  a shaded cell; now rows of two callout tiles (`columns`) once the centring is read in the
+  drawn cell (2026-09-23; it had been a plain table because single-line cells framed
+  themselves and read as left) (`structure`, resolved). The same rule centres the p.4
+  diagram labels, the p.21 People / Information / Tools table and the p.23 communication
+  diagram's single-line entries as printed.
 - **pp.16–17 → Domains of supportive care**: icon | text rows (five domains) as an icon
   list; the "Physical symptoms … Spiritual needs" boxes are icon+label lead cells spanning
   two rows with the item's list laid out in cells beneath — rows covered by the lead's

@@ -143,6 +143,11 @@ function Block(props: { node: JsonNode }) {
 					<Blocks nodes={children()} />
 				</VariantBlock>
 			</Match>
+			<Match when={props.node.type === 'figureRow'}>
+				<div data-ocp="figureRow">
+					<Blocks nodes={children()} />
+				</div>
+			</Match>
 			<Match when={props.node.type === 'columns'}>
 				<ColumnsBlock attrs={{}}>
 					<Blocks nodes={children()} />

@@ -101,6 +101,14 @@ const isIcon = (figure: Figure): boolean => {
 	return b[2] - b[0] <= 40 && b[3] - b[1] <= 40
 }
 
+/** Two figures drawn on one line: on the same page, their boxes overlapping vertically
+ *  by more than half the shorter one. */
+const sameLine = (a: Figure, b: Figure): boolean => {
+	if (a.page !== b.page || !a.bbox || !b.bbox) return false
+	const overlap = Math.min(a.bbox[3], b.bbox[3]) - Math.max(a.bbox[1], b.bbox[1])
+	return overlap > 0.5 * Math.min(a.bbox[3] - a.bbox[1], b.bbox[3] - b.bbox[1])
+}
+
 function allParagraphs(blocks: Block[], into: Paragraph[] = []): Paragraph[] {
 	for (const b of blocks) {
 		if (b.kind === 'paragraph') into.push(b)
@@ -537,7 +545,10 @@ function blockNodes(
 	options: { keepIcons?: boolean } = {},
 ): JsonNode[] {
 	const staged: { node: JsonNode; instruction: boolean }[] = []
-	for (const b of joinButtedTables(blocks, g)) {
+	const joined = joinButtedTables(blocks, g)
+	for (let i = 0; i < joined.length; i++) {
+		const b = joined[i]
+		if (!b) continue
 		switch (b.kind) {
 			case 'paragraph': {
 				const node = paragraphNode(b, g)
@@ -555,16 +566,30 @@ function blockNodes(
 				for (const node of tableNodes(b, g)) staged.push({ node, instruction: false })
 				break
 			case 'figure': {
-				// Band icons are the box's own (consumed as its `icon`); in a real table an
-				// icon is a picture in a cell and stays.
-				if (isIcon(b) && !options.keepIcons) break
-				g.stats.figures++
-				const index = g.figureIndex.get(b) ?? 0
+				// Figures the source drew on one line are one row. Band icons are the box's
+				// own (consumed as its `icon`); in a real table an icon is a picture in a
+				// cell and stays.
+				const row: Figure[] = [b]
+				while (i + 1 < joined.length) {
+					const next = joined[i + 1]
+					if (next?.kind !== 'figure' || !sameLine(b, next)) break
+					row.push(next)
+					i++
+				}
+				const images = row
+					.filter((figure) => options.keepIcons || !isIcon(figure))
+					.map((figure): JsonNode => {
+						g.stats.figures++
+						const index = g.figureIndex.get(figure) ?? 0
+						return {
+							type: 'image',
+							attrs: { src: figureUrl(g.templateKey, figure.page, index), alt: figure.alt },
+						}
+					})
+				const [first] = images
+				if (!first) break
 				staged.push({
-					node: {
-						type: 'image',
-						attrs: { src: figureUrl(g.templateKey, b.page, index), alt: b.alt },
-					},
+					node: images.length === 1 ? first : { type: 'figureRow', content: images },
 					instruction: false,
 				})
 				break

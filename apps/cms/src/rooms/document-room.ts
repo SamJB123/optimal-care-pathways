@@ -12,7 +12,9 @@
  *   - yields to the row when it moved behind the room's back: a fold that finds the
  *     row's `updated_at` later than the last body time this room wrote or hydrated
  *     re-hydrates the live doc FROM the row instead of writing over it (a reseed, a
- *     migration, an admin door — anything that writes D1 without the room);
+ *     migration, an admin door — anything that writes D1 without the room). Every open
+ *     of a section the room already holds folds first (`onDocOpened`), so an editor
+ *     never opens a live body the row has since replaced;
  *   - never creates sections: the outline (D1) does, through the worker's doors.
  *
  * ROLES come from the auth worker live, keyed by the document's organisation: a
@@ -117,6 +119,12 @@ export class DocumentRoom extends DocRoom {
 		await this.hydrateBody(row.id, (root) => hydrateRoot(root, row.bodyJson ?? emptyBody()))
 		await this.#rememberRowClock(row.id, row.updatedAt)
 		return inserted
+	}
+
+	/** A section the room already holds is opened: reconcile with its row first, so a
+	 *  row rewritten behind the room (a reseed) is what the editor opens. */
+	override async onDocOpened(sectionId: string): Promise<void> {
+		await this.#fold(sectionId, Date.now())
 	}
 
 	/**

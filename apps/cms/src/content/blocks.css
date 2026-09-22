@@ -38,11 +38,17 @@
 	padding: 0.7em 0.9em;
 }
 
-.ocp-body .ocp-box-callout > :where(:first-child, :first-child > :first-child) {
+/* Flush first and last children. In the editor a child sits behind the node view's
+   content element and, for a block with its own view, its host: up to two more levels. */
+.ocp-body
+	.ocp-box-callout
+	> :where(:first-child, :first-child > :first-child, :first-child > :first-child > :first-child) {
 	margin-top: 0;
 }
 
-.ocp-body .ocp-box-callout > :where(:last-child, :last-child > :last-child) {
+.ocp-body
+	.ocp-box-callout
+	> :where(:last-child, :last-child > :last-child, :last-child > :last-child > :last-child) {
 	margin-bottom: 0;
 }
 
@@ -55,18 +61,39 @@
 	margin: 0.8em 0;
 }
 
-.ocp-body div[data-ocp="column"] > :where(:first-child, :first-child > :first-child) {
+.ocp-body
+	div[data-ocp="column"]
+	> :where(:first-child, :first-child > :first-child, :first-child > :first-child > :first-child) {
 	margin-top: 0;
 }
 
-.ocp-body div[data-ocp="column"] > :where(:last-child, :last-child > :last-child) {
+.ocp-body
+	div[data-ocp="column"]
+	> :where(:last-child, :last-child > :last-child, :last-child > :last-child > :last-child) {
 	margin-bottom: 0;
 }
 
 .ocp-body div[data-ocp="column"] img {
-	margin-inline: auto;
 	max-height: 12em;
 	width: auto;
+}
+
+.ocp-body div[data-ocp="column"] img:not(div[data-ocp="figureRow"] *) {
+	margin-inline: auto;
+}
+
+/* Figures the source drew on one line. */
+.ocp-body div[data-ocp="figureRow"] {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	gap: 0.6em;
+	margin: 0.6em 0;
+}
+
+.ocp-body div[data-ocp="figureRow"] img {
+	margin: 0;
 }
 
 /* ── Guidance: an accordion item whose open state is the done tick ── */
@@ -151,7 +178,12 @@
 }
 
 .ocp-body .ocp-box .ui-callout-body > p[data-ocp="banner"]:first-child,
-.ocp-body .ocp-box .ui-callout-body > :first-child > p[data-ocp="banner"]:only-child {
+.ocp-body
+	.ocp-box
+	.ui-callout-body
+	> :first-child
+	> :first-child
+	> p[data-ocp="banner"]:only-child {
 	margin-top: calc(-1 * var(--_ui-callout-pad, 0.8rem));
 }
 
@@ -178,7 +210,9 @@
 }
 
 .ocp-body .ocp-box .ui-callout-body:has(> p[data-ocp="banner"]:first-child)::before,
-.ocp-body .ocp-box .ui-callout-body:has(> :first-child > p[data-ocp="banner"]:only-child)::before {
+.ocp-body
+	.ocp-box
+	.ui-callout-body:has(> :first-child > :first-child > p[data-ocp="banner"]:only-child)::before {
 	color: var(--color-secondary-content);
 	top: 1.05em;
 }

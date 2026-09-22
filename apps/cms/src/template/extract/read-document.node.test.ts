@@ -275,6 +275,55 @@ describe('stage one: the cancer template read from its PDF', () => {
 		).toBe(true)
 	})
 
+	it('aligns a paragraph within the drawn cell, the list body or the page column, never its own extent (pp.6–7)', () => {
+		// p.6: the two tiles' single-line titles are centred in their shaded cells, as their
+		// multi-line bodies are; p.7: the icon grid's labels are centred between the drawn
+		// rules ("Health professionals" is the only line in its cell).
+		const types = sectionByHeading(/^Types of Optimal Care Pathways/)
+		const using = sectionByHeading(/^Using Optimal Care Pathways/)
+		const byText = (section: Section | undefined, text: string) =>
+			paragraphs(section?.blocks ?? []).find((p) => plainText(p.runs).trim() === text)
+		expect(byText(types, 'Cancer-specific OCPs')?.align).toBe('center')
+		expect(byText(types, 'Population-based OCPs')?.align).toBe('center')
+		expect(byText(using, 'Health professionals')?.align).toBe('center')
+		expect(byText(using, 'Clinical practice guidelines')?.align).toBe('center')
+		expect(byText(using, 'eviQ protocols')?.align).toBe('center')
+		// The frame is the container's, so left-aligned prose stays left: no list item's
+		// paragraph anywhere in the document is centred or right-aligned.
+		const listParagraphs = (blocks: Block[]): Paragraph[] =>
+			blocks.flatMap((b) => {
+				if (b.kind === 'list') return b.items.flatMap((i) => paragraphs(i.blocks))
+				if (b.kind === 'table')
+					return b.rows.flatMap((r) => r.cells.flatMap((c) => listParagraphs(c.blocks)))
+				return []
+			})
+		const inLists = allSections(model.sections).flatMap((s) => listParagraphs(s.blocks))
+		expect(inLists.length).toBeGreaterThan(500)
+		expect(inLists.every((p) => p.align === 'left')).toBe(true)
+	})
+
+	it('splits a title line Word set with a soft return from the body under it (p.7)', () => {
+		// "Optimal Care Pathways" (bold, navy) and its description share one P in the
+		// tagging; on the page the title is its own centred line, like its two siblings.
+		const using = sectionByHeading(/^Using Optimal Care Pathways/)
+		const texts = paragraphs(using?.blocks ?? []).map((p) => plainText(p.runs).trim())
+		expect(texts).toContain('Optimal Care Pathways')
+		expect(texts.some((t) => t.startsWith('Nationally endorsed cancer care pathways'))).toBe(true)
+		expect(texts.some((t) => t.startsWith('Optimal Care Pathways Nationally'))).toBe(false)
+	})
+
+	it('keeps the gap between two cells out of a line’s extent (p.7)', () => {
+		// pdf.js writes the horizontal gap between adjacent cells' text as a whitespace item
+		// at the start of the next cell's content; it must not stretch that cell's line back
+		// to the previous cell, or the labels would sit off-centre in their cells.
+		const resources = sectionByHeading(/^Pathway resources/)
+		const labels = paragraphs(resources?.blocks ?? []).filter((p) =>
+			/^(Full OCP|OCP Quick Reference Guide|OCP Consumer Guide:)$/.test(plainText(p.runs).trim()),
+		)
+		expect(labels).toHaveLength(3)
+		expect(labels.map((p) => p.align)).toEqual(['center', 'center', 'center'])
+	})
+
 	it('is deterministic', async () => {
 		const again = await readDocument(doc, SOURCE)
 		expect(JSON.stringify(again)).toBe(JSON.stringify(model))

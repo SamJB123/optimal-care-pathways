@@ -121,6 +121,34 @@ interface Context {
 	inNotesPart: boolean
 	/** The element being read, while one is. */
 	element: ElementGeometry | null
+	/** The page's text column: the frame the body's paragraphs are aligned in. */
+	pageFrame: Frame
+	/** The frame of the container being read (a drawn table cell, a list item's body),
+	 *  while one is; paragraphs are aligned within it rather than within their own extent. */
+	frame: Frame | null
+}
+
+/** A horizontal extent paragraphs are aligned in. */
+interface Frame {
+	x0: number
+	x1: number
+}
+
+/** The page's text column: the left margin most runs start at, to the rightmost text. */
+function pageFrameOf(page: PdfPage): Frame {
+	const starts = new Map<number, number>()
+	let x1 = 0
+	let min = Number.POSITIVE_INFINITY
+	for (const run of page.textRuns) {
+		if (run.text.trim() === '') continue
+		const x = Math.round(run.box.x * 2) / 2
+		starts.set(x, (starts.get(x) ?? 0) + 1)
+		min = Math.min(min, x)
+		x1 = Math.max(x1, run.box.x + run.box.width)
+	}
+	const repeated = [...starts].filter(([, count]) => count >= 3).map(([x]) => x)
+	const x0 = repeated.length > 0 ? Math.min(...repeated) : min
+	return Number.isFinite(x0) ? { x0, x1 } : { x0: 0, x1: page.width }
 }
 
 const isSpace = (ch: string) => /\s/.test(ch)
@@ -228,16 +256,21 @@ function segsOf(ctx: Context, mcid: string): Seg[] {
 		const text = item.text + (item.hasEOL ? ' ' : '')
 		if (text === '') continue
 		if (text.trim() === '') {
-			// A whitespace-only item is inter-word spacing pdf.js inferred from the layout;
-			// it belongs to the run before it. At the start of a marked-content item there
-			// is no run before it yet (the space after a note marker or a link opens the
-			// next item), so it becomes a plain segment of its own.
+			// A whitespace-only item is inter-word spacing pdf.js inferred from the layout:
+			// the gap between two cells' text on one line, the space after a note marker.
+			// It joins the text but never the geometry — a gap is not ink, and a cell's line
+			// must not start where the previous cell's text ended. It belongs to the run
+			// before it; at the start of a marked-content item there is no run before it
+			// yet, so it becomes a zero-width segment where the next text begins.
 			const last = out.at(-1)
-			if (last && !last.text.endsWith(' ')) {
-				last.text += ' '
-				last.x1 = Math.max(last.x1, item.box.x + item.box.width)
-			} else if (!last) {
-				const box: Box = { x: item.box.x, y: item.box.y, width: item.box.width, height: bodySize }
+			if (last && !last.text.endsWith(' ')) last.text += ' '
+			else if (!last) {
+				const box: Box = {
+					x: item.box.x + item.box.width,
+					y: item.box.y,
+					width: 0,
+					height: bodySize,
+				}
 				out.push(segFor(ctx, ' ', current, box, bodySize))
 			}
 			continue
@@ -1082,6 +1115,10 @@ function paragraphsFromLines(ctx: Context, lines: Line[]): Line[][] {
 			if (gap > pitch * 1.55) breakHere = true
 			if (gap < -2) breakHere = true
 			if (heading !== previousHeading) breakHere = true
+			// Word's soft return under a title line: a first line wholly in one emphasised
+			// style and colour, followed by a line in another colour, is a paragraph of its
+			// own (a tile's title), not a lead-in that happened to fill the line.
+			if (current.length === 1 && titlesLine(previous, line)) breakHere = true
 		}
 		if (breakHere && current.length > 0) {
 			groups.push(current)
@@ -1092,6 +1129,18 @@ function paragraphsFromLines(ctx: Context, lines: Line[]): Line[][] {
 	}
 	if (current.length > 0) groups.push(current)
 	return groups
+}
+
+const inked = (line: Line): Seg[] => line.segs.filter((s) => s.text.trim() !== '')
+
+/** Whether `first` is a title over `next`: every run of it bold in one colour, and the
+ *  next line opening in a different colour. */
+function titlesLine(first: Line, next: Line): boolean {
+	const segs = inked(first)
+	const colour = segs[0]?.colour
+	if (colour === undefined || !segs.every((s) => s.bold && s.colour === colour)) return false
+	const nextColour = inked(next)[0]?.colour
+	return nextColour !== undefined && nextColour !== colour
 }
 
 /** Lines → runs. Lines join with a space, a margin-broken word rejoins without one, and a
@@ -1181,17 +1230,27 @@ function trimRuns(runs: TextRun[]): void {
 /** How lines sit in their element: centred when their midpoints agree and their left
  *  edges do not; right-aligned when their right edges agree and their left edges do not.
  *  A single line counts only when it sits clear of the element's left margin. */
-function alignmentOf(lines: Line[], context: Line[]): Alignment {
-	const left = Math.min(...context.map((l) => l.x0))
-	const right = Math.max(...context.map((l) => l.x1))
-	if (lines.length === 0 || right - left < 20) return 'left'
+/** How lines sit in their frame — the drawn cell, the list body or the page's text
+ *  column, never the lines' own extent (a single centred line would frame itself). Word
+ *  insets a cell's text by its padding, so a line within that of an edge sits on it. */
+function alignmentOf(lines: Line[], frame: Frame): Alignment {
+	const { x0: left, x1: right } = frame
+	const width = right - left
+	if (lines.length === 0 || width < 20) return 'left'
 	const centre = (left + right) / 2
-	const centred = lines.every((l) => Math.abs((l.x0 + l.x1) / 2 - centre) < 3)
-	const leftEdged = lines.every((l) => Math.abs(l.x0 - left) < 3)
-	const rightEdged = lines.every((l) => Math.abs(l.x1 - right) < 3)
-	const inset = lines.some((l) => l.x0 > left + 6)
+	// Word's default cell padding is 5.4pt, drawn from the cell boundary at the middle of a
+	// half-point rule: text within 6.5pt of an edge sits on it.
+	const edge = 6.5
+	const tolerance = Math.max(3, width * 0.01)
+	const centred = lines.every((l) => Math.abs((l.x0 + l.x1) / 2 - centre) < tolerance)
+	const leftEdged = lines.every((l) => l.x0 - left < edge)
+	const rightEdged = lines.every((l) => right - l.x1 < edge)
+	const inset = lines.some((l) => l.x0 > left + edge)
 	if (centred && !leftEdged && inset) return 'center'
-	if (rightEdged && !leftEdged && inset) return 'right'
+	// A single line ending at the right edge is right-aligned only when it sits in the
+	// right half; a longer one could as well be left-aligned text beside a picture.
+	const rightHalf = lines.length > 1 || lines.every((l) => l.x0 > centre)
+	if (rightEdged && !leftEdged && inset && rightHalf) return 'right'
 	return 'left'
 }
 
@@ -1207,8 +1266,26 @@ function paragraphFromLines(
 		runs,
 		page: ctx.pageNumber,
 		background: shadingBehind(ctx.page.paths, lines),
-		align: alignmentOf(lines, context),
+		align: alignmentOf(lines, ctx.frame ?? enclosingBox(ctx, lines) ?? ctx.pageFrame),
 	}
+}
+
+/** The smallest drawn box (a stroked rectangle: a text box, a bordered frame) enclosing
+ *  every line, when one does: its text is aligned within it, not within the page. */
+function enclosingBox(ctx: Context, lines: Line[]): Frame | null {
+	if (lines.length === 0) return null
+	const x0 = Math.min(...lines.map((l) => l.x0))
+	const x1 = Math.max(...lines.map((l) => l.x1))
+	const y0 = Math.min(...lines.map((l) => l.y - l.size * 0.25))
+	const y1 = Math.max(...lines.map((l) => l.y + l.size * 0.75))
+	let best: PaintedPath | null = null
+	for (const p of ctx.page.paths) {
+		if (p.kind !== 'stroke' || p.box.width < 20 || p.box.height < 6) continue
+		const { x, y, width, height } = p.box
+		if (x > x0 || x + width < x1 || y > y0 || y + height < y1) continue
+		if (!best || width * height < best.box.width * best.box.height) best = p
+	}
+	return best ? { x0: best.box.x, x1: best.box.x + best.box.width } : null
 }
 
 // ---------------------------------------------------------------------------
@@ -1248,6 +1325,8 @@ function learnHeadingStyles(pages: PdfPage[], pageOfRef: Map<number, number>): H
 			link: null,
 			inNotesPart: false,
 			element: null,
+			pageFrame: pageFrameOf(page),
+			frame: null,
 		}
 		const visit = (node: TreeNode | StructTreeContent): void => {
 			if (isLeaf(node)) return
@@ -1321,6 +1400,15 @@ function markerKind(label: string, font: string | undefined): ListMarker {
 	return 'other'
 }
 
+/** A list item's paragraphs are aligned in the item's body: from the body's own left edge
+ *  (past the marker) to the enclosing frame's right. */
+function itemFrame(ctx: Context, item: TreeNode): Frame {
+	const outer = ctx.frame ?? ctx.pageFrame
+	const body = (item.children ?? []).filter((part) => isLeaf(part) || part.role !== 'Lbl')
+	const xs = body.flatMap((part) => geometrySegs(ctx, part).map((s) => s.x0))
+	return { x0: xs.length > 0 ? Math.min(...xs) : outer.x0, x1: outer.x1 }
+}
+
 function listOf(ctx: Context, node: TreeNode): List | null {
 	const items: ListItem[] = []
 	for (const child of node.children ?? []) {
@@ -1334,6 +1422,8 @@ function listOf(ctx: Context, node: TreeNode): List | null {
 		let label = ''
 		let labelFont: string | undefined
 		const blocks: Block[] = []
+		const outerFrame = ctx.frame
+		ctx.frame = itemFrame(ctx, child)
 		for (const part of child.children ?? []) {
 			if (isLeaf(part)) {
 				// Text directly under the item (no LBody): read it as an element of its own.
@@ -1357,6 +1447,7 @@ function listOf(ctx: Context, node: TreeNode): List | null {
 					leaf && leaf.type === 'content' ? ctx.page.spansByMcid.get(leaf.id)?.[0]?.font : undefined
 			} else blockChildren(ctx, part, blocks)
 		}
+		ctx.frame = outerFrame
 		// Word often writes the marker as the first glyph of the body's text ("• Surgery"),
 		// usually in its own font, so it is its own run.
 		const first = blocks[0]
@@ -1382,9 +1473,100 @@ interface CellGeometry {
 	content: boolean
 }
 
+/** The boxes of the figures directly in a container (not those of a nested table). */
+function figureBoxes(node: TreeNode, into: Bbox[] = []): Bbox[] {
+	for (const child of node.children ?? []) {
+		if (isLeaf(child) || child.role === 'Table') continue
+		const element: TreeNode = child
+		const b = element.bbox
+		if (child.role === 'Figure') {
+			if (b && b.length === 4) into.push([b[0] ?? 0, b[1] ?? 0, b[2] ?? 0, b[3] ?? 0])
+			continue
+		}
+		figureBoxes(child, into)
+	}
+	return into
+}
+
+/** The vertical edges drawn through a table — rule lines and the sides of cell shading —
+ *  and its outer extent, for framing its cells. Word draws no cell boxes for an
+ *  unbordered layout table, so the extent falls back to the content, widened by a column
+ *  when the inner edges show one pitch (Word's equal division) and the outer columns'
+ *  content sits within that width. */
+interface TableEdges {
+	x0: number
+	x1: number
+	inner: { x: number; y0: number; y1: number }[]
+}
+
+function tableEdges(ctx: Context, segs: Seg[], figures: Bbox[]): TableEdges | null {
+	const ys = [
+		...segs.flatMap((s) => [s.y - s.lineSize * 0.25, s.y + s.lineSize * 0.75]),
+		...figures.flatMap(([, y0, , y1]) => [y0, y1]),
+	]
+	const xs = [...segs.flatMap((s) => [s.x0, s.x1]), ...figures.flatMap(([x0, , x1]) => [x0, x1])]
+	if (ys.length === 0) return null
+	const top = Math.max(...ys)
+	const bottom = Math.min(...ys)
+	const inner: TableEdges['inner'] = []
+	for (const p of ctx.page.paths) {
+		// Table drawing (shading, rules) is outside any marked content; a fill inside one
+		// is a highlight or a figure's own artwork.
+		if (p.kind !== 'fill' || p.mcid !== null || p.colour === '#ffffff' || p.box.height < 6) continue
+		if (p.box.y > top || p.box.y + p.box.height < bottom) continue
+		const span = { y0: p.box.y, y1: p.box.y + p.box.height }
+		if (p.box.width <= 1.5) inner.push({ x: p.box.x, ...span })
+		else if (p.box.width > 20)
+			inner.push({ x: p.box.x, ...span }, { x: p.box.x + p.box.width, ...span })
+	}
+	let x0 = Math.min(...xs, ...inner.map((e) => e.x))
+	let x1 = Math.max(...xs, ...inner.map((e) => e.x))
+	// Distinct inner positions (edges within a point of each other are one), in order.
+	const positions: number[] = []
+	for (const x of inner.map((e) => e.x).sort((a, b) => a - b)) {
+		if (x <= x0 + 2 || x >= x1 - 2) continue
+		const last = positions.at(-1)
+		if (last === undefined || x - last > 1) positions.push(x)
+	}
+	if (positions.length >= 2) {
+		const gaps = positions.slice(1).map((x, i) => x - (positions[i] ?? x))
+		const pitch = gaps.reduce((a, b) => a + b, 0) / gaps.length
+		if (gaps.every((gap) => Math.abs(gap - pitch) < 1.5)) {
+			const first = positions[0] ?? x0
+			const last = positions.at(-1) ?? x1
+			if (first - pitch < x0 && x0 - (first - pitch) < pitch * 0.5) x0 = first - pitch
+			if (last + pitch > x1 && last + pitch - x1 < pitch * 0.5) x1 = last + pitch
+		}
+	}
+	return { x0, x1, inner }
+}
+
+/** The frame a cell's paragraphs are aligned in: its shading when it is shaded, else the
+ *  nearest drawn edge on either side of its content, else the table's edge. */
+function cellFrame(
+	lines: Line[],
+	figures: Bbox[],
+	shade: PaintedPath | null,
+	edges: TableEdges | null,
+): Frame | null {
+	if (shade) return { x0: shade.box.x, x1: shade.box.x + shade.box.width }
+	const box = contentBox(lines, figures)
+	if (!box || !edges) return null
+	const near = edges.inner.filter((e) => e.y0 < box.y + box.height && e.y1 > box.y)
+	const lefts = near.filter((e) => e.x <= box.x + 1).map((e) => e.x)
+	const rights = near.filter((e) => e.x >= box.x + box.width - 1).map((e) => e.x)
+	return {
+		x0: lefts.length > 0 ? Math.max(...lefts) : edges.x0,
+		x1: rights.length > 0 ? Math.min(...rights) : edges.x1,
+	}
+}
+
 function tableOf(ctx: Context, node: TreeNode): Table | null {
 	const rows: TableRow[] = []
 	const geometry: CellGeometry[][] = []
+	const tableSegs = geometrySegs(ctx, node)
+	const edges = tableEdges(ctx, tableSegs, figureBoxes(node))
+	const outerFrame = ctx.frame
 	const walkRows = (n: TreeNode) => {
 		for (const child of n.children ?? []) {
 			if (isLeaf(child)) continue
@@ -1393,11 +1575,17 @@ function tableOf(ctx: Context, node: TreeNode): Table | null {
 				const geos: CellGeometry[] = []
 				for (const cellNode of child.children ?? []) {
 					if (isLeaf(cellNode) || (cellNode.role !== 'TD' && cellNode.role !== 'TH')) continue
-					const blocks: Block[] = []
-					blockChildren(ctx, cellNode, blocks)
 					const lines = linesOf(geometrySegs(ctx, cellNode))
-					const figures = blocks.flatMap((b) => (b.kind === 'figure' && b.bbox ? [b.bbox] : []))
+					const figures = figureBoxes(cellNode)
 					const shade = shadingPathBehind(ctx.page.paths, lines, figures)
+					// The cell's paragraphs are aligned within the drawn cell, not their own extent.
+					ctx.frame = cellFrame(lines, figures, shade, edges) ?? outerFrame
+					const blocks: Block[] = []
+					try {
+						blockChildren(ctx, cellNode, blocks)
+					} finally {
+						ctx.frame = outerFrame
+					}
 					cells.push({
 						header: cellNode.role === 'TH',
 						rowSpan: cellNode.rowSpan ?? 1,
@@ -1426,10 +1614,9 @@ function tableOf(ctx: Context, node: TreeNode): Table | null {
 	// shell's empty rows are the other page's, not spacers.
 	const table: Table = { kind: 'table', rows, page: ctx.pageNumber, border: null }
 	tableGeometry.set(table, geometry)
-	const segs = geometrySegs(ctx, node)
-	if (segs.length === 0) return table
-	const x0 = Math.min(...segs.map((s) => s.x0))
-	const x1 = Math.max(...segs.map((s) => s.x1))
+	if (tableSegs.length === 0) return table
+	const x0 = Math.min(...tableSegs.map((s) => s.x0))
+	const x1 = Math.max(...tableSegs.map((s) => s.x1))
 	for (const p of ctx.page.paths) {
 		if (p.kind !== 'fill' || p.box.height > 1.2 || p.box.width < (x1 - x0) * 0.6) continue
 		if (p.colour === '#ffffff') continue
@@ -1787,6 +1974,8 @@ export async function readDocument(
 			link: null,
 			inNotesPart,
 			element: null,
+			pageFrame: pageFrameOf(page),
+			frame: null,
 		}
 		if (!page.tree) {
 			warnings.push({ page: page.pageNumber, message: 'page has no structure tree' })

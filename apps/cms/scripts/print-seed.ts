@@ -185,6 +185,12 @@ function block(node: JsonNode, indent: number): void {
 		case 'image':
 			emit(indent, `[figure: ${String(node.attrs?.alt ?? '')} → ${String(node.attrs?.src ?? '')}]`)
 			return
+		case 'figureRow':
+			emit(
+				indent,
+				`[figure row: ${(node.content ?? []).map((c) => String(c.attrs?.alt ?? '')).join(' | ')}]`,
+			)
+			return
 		case 'blockquote':
 			for (const c of node.content ?? []) block(c, indent)
 			return
