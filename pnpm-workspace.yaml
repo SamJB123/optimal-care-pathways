@@ -85,7 +85,7 @@ catalog:
   '@vitejs/plugin-react': ^6.0.2
   '@vitejs/plugin-rsc': 0.5.35
   better-auth: ^1.7.5
-  capnweb-experimental-hibernation: 0.12.0-hibernation-cbor.1
+  capnweb-experimental-hibernation: 0.12.0-hibernation.3
   convex: ^1.46.0
   crashcat: ^0.0.5
   # Clean rc.4 releases (the `rc` dist-tag) — the repo previously rode
@@ -126,6 +126,11 @@ catalog:
   # (pathways) The flat-list model under @prosekit/extensions/list, imported directly for
   # the one list kind ProseKit's types do not name ('check'). Same version as prosekit.
   prosemirror-flat-list: 0.7.1
+  # (pathways) the template extractor (Node script) and the audit review page (browser)
+  # read the 2026 template PDFs: structure tree + marked content + fonts.
+  # pdf.js renders template figures through its own optional `@napi-rs/canvas`; the app
+  # declares no copy of its own — a second copy's Path2D is rejected by the first's canvas.
+  pdfjs-dist: ^6.3.289
   # Storybook: one version for ui (React) and ui-solid (Solid) so the shared
   # addons stay aligned.
   storybook: ^10.6.0
@@ -268,7 +273,6 @@ resolvePeersFromWorkspaceRoot: true
 patchedDependencies:
   # (pathways) Only what this repo installs; the monorepo also patches moq and three.
   '@tanstack/db@0.9.2': patches/@tanstack__db@0.9.2.patch
-  capnweb-experimental-hibernation@0.12.0-hibernation-cbor.1: patches/capnweb-experimental-hibernation@0.12.0-hibernation-cbor.1.patch
 
 allowBuilds:
   '@google/genai': true
