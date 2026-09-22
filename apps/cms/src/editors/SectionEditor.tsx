@@ -13,7 +13,6 @@ import '@aicolab/ui-solid/prosekit-solid/styles.css'
 import './section.css'
 
 import type { DocHandle, DocRoomClient } from '@aicolab/app-kit/doc-room/client'
-import type { DocCursor } from '@aicolab/room-service/doc-sync/presence'
 import { Button, Notice, Presence } from '@aicolab/ui-solid'
 import {
 	createEditorUi,
@@ -22,31 +21,10 @@ import {
 	EditorToolbar,
 	type ToolbarContribution,
 } from '@aicolab/ui-solid/prosekit-solid'
-import { remoteCursorsKey } from '@aicolab/ui-solid/prosekit-solid/presence'
+import { encodeSelectionCursor, remoteCursorsKey } from '@aicolab/ui-solid/prosekit-solid/presence'
 import { createEditor } from '@prosekit/core'
-import type { EditorView } from '@prosekit/pm/view'
-import {
-	absolutePositionToRelativePosition,
-	configureYProsemirror,
-	ySyncPluginKey,
-} from '@y/prosemirror'
-import { encodeRelativePosition, UndoManager } from '@y/y'
-
-/** The local selection as a content-anchored cursor, through the live binding's
- *  mapping (the counterpart of the remote-cursor plugin's resolver). Null before the
- *  binding exists. */
-function encodeSelectionCursor(view: EditorView): DocCursor | null {
-	const sync = ySyncPluginKey.getState(view.state)
-	if (!sync?.ytype) return null
-	const renderer = sync.renderer ?? null
-	const { $anchor, $head } = view.state.selection
-	return {
-		anchor: encodeRelativePosition(
-			absolutePositionToRelativePosition($anchor, sync.ytype, renderer),
-		),
-		head: encodeRelativePosition(absolutePositionToRelativePosition($head, sync.ytype, renderer)),
-	}
-}
+import { configureYProsemirror } from '@y/prosemirror'
+import { UndoManager } from '@y/y'
 
 import { createSignal, onSettled, Show } from 'solid-js'
 import { createSectionExtension } from './extension.ts'

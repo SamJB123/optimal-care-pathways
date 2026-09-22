@@ -7,24 +7,22 @@
  * doc back into the row after every debounced change. Both go through y-prosemirror's
  * own converters, so what the editor sees and what D1 holds are the same node tree.
  *
- * Server-side: ProseMirror model and state only, no DOM.
+ * Server-side: ProseMirror model only, no DOM.
  */
 
-import { EditorState } from '@prosekit/pm/state'
-import { fragmentToPm, pmToFragment } from '@y/prosemirror'
-import type { Type as YType } from '@y/y'
+import { pmnodeToDelta, ynodeToPmnode } from '@y/prosemirror'
+import type { Node as YNode } from '@y/y'
 import { contentSchema, type JsonNode, parseBody } from './schema.ts'
 
 /** Write `body` into an (empty) yjs root. */
-export function hydrateRoot(root: YType, body: JsonNode): void {
-	pmToFragment(parseBody(body), root)
+export function hydrateRoot(root: YNode, body: JsonNode): void {
+	root.applyDelta(pmnodeToDelta(parseBody(body)))
 }
 
-/** Read the yjs root as a body. The root is read without an attribution renderer, so
- *  the result is content, not history. */
-export function bodyFromRoot(root: YType): JsonNode {
-	const state = EditorState.create({ schema: contentSchema })
-	const json: unknown = fragmentToPm(root, state.tr).toJSON()
+/** Read the yjs root as a body. Read without an attribution renderer, so the result
+ *  is content, not history. */
+export function bodyFromRoot(root: YNode): JsonNode {
+	const json: unknown = ynodeToPmnode(root, contentSchema).toJSON()
 	return asJsonNode(json)
 }
 

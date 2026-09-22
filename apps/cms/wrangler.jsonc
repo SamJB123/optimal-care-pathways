@@ -17,7 +17,7 @@
 	// core documents are adopted by it. Comma-separated. Set per deployment (`wrangler
 	// deploy --var` or this file); locally in `.dev.vars`.
 	"vars": {
-		"ADMIN_EMAILS": ""
+		"ADMIN_EMAILS": "sambide@gmail.com"
 	},
 
 	// The only binding to another worker: this repo's own auth worker (apps/auth).

@@ -1,37 +1,8 @@
-diff --git a/dist/cjs/collection/index.cjs b/dist/cjs/collection/index.cjs
-index 83b1804941b005e158f11ed145dfa556a982b2da..8a6349e8d3cd0984c3b31ef4a46a27371a18fc85 100644
---- a/dist/cjs/collection/index.cjs
-+++ b/dist/cjs/collection/index.cjs
-@@ -516,11 +516,20 @@ class CollectionImpl {
- function buildCompareOptionsFromConfig(config) {
-   if (config.defaultStringCollation) {
-     const options = config.defaultStringCollation;
--    return {
--      stringSort: options.stringSort ?? `locale`,
--      locale: options.stringSort === `locale` ? options.locale : void 0,
--      localeOptions: options.stringSort === `locale` ? options.localeOptions : void 0
-+    // PATCH(aicolab): never write explicitly-undefined keys. matchesCompareOptions
-+    // (indexes/base-index) deepEquals compare-options objects, and deepEquals
-+    // counts explicitly-undefined keys (Object.keys length), so the extra
-+    // `locale: undefined` / `localeOptions: undefined` here made EVERY index on a
-+    // collection built with defaultStringCollation (all live-query collections)
-+    // unmatchable -- where-filtered reads silently full-scanned.
-+    const result = {
-+      stringSort: options.stringSort ?? `locale`
-     };
-+    if (options.stringSort === `locale`) {
-+      if (options.locale !== void 0) result.locale = options.locale;
-+      if (options.localeOptions !== void 0) result.localeOptions = options.localeOptions;
-+    }
-+    return result;
-   } else {
-     return {
-       stringSort: `locale`
 diff --git a/dist/cjs/query/live/collection-config-builder.cjs b/dist/cjs/query/live/collection-config-builder.cjs
-index c37fd1bf5d2877e5774870bd9b908ea076747ef3..a8634d9c54fc3c13f271c7b8edb4f840fb99519b 100644
+index 701e2c39abd4ea1609da2ff1415e2b6b552819e1..9a1b54ee6e595ed4c106508f2e2ddedce413cf60 100644
 --- a/dist/cjs/query/live/collection-config-builder.cjs
 +++ b/dist/cjs/query/live/collection-config-builder.cjs
-@@ -98,6 +98,12 @@ class CollectionConfigBuilder {
+@@ -97,6 +97,12 @@ class CollectionConfigBuilder {
        onUpdate: this.config.onUpdate,
        onDelete: this.config.onDelete,
        startSync: this.config.startSync,
@@ -43,7 +14,7 @@ index c37fd1bf5d2877e5774870bd9b908ea076747ef3..a8634d9c54fc3c13f271c7b8edb4f840
 +      defaultIndexType: this.config.defaultIndexType,
        singleResult: this.query.singleResult,
        utils: {
-         getRunCount: this.getRunCount.bind(this),
+         get lastSubsetError() {
 diff --git a/dist/cjs/query/live/types.d.cts b/dist/cjs/query/live/types.d.cts
 index c9468a93b4cf2a184b5c1f4f294bbf46865f9348..c2c3c5627e81c9a2c2f68b9b22b2d93bd9a4f692 100644
 --- a/dist/cjs/query/live/types.d.cts
@@ -64,40 +35,11 @@ index c9468a93b4cf2a184b5c1f4f294bbf46865f9348..c2c3c5627e81c9a2c2f68b9b22b2d93b
 +     *  the derived collection. Required when `autoIndex` is 'eager'. */
 +    defaultIndexType?: CollectionConfig<TResult>[`defaultIndexType`];
  }
-diff --git a/dist/esm/collection/index.js b/dist/esm/collection/index.js
-index 9cdd1da1ee5815a0562de17c7ef8c5662e303d56..cdf06cca1f820afb07970bebbdd2c9b29bd5d192 100644
---- a/dist/esm/collection/index.js
-+++ b/dist/esm/collection/index.js
-@@ -514,11 +514,20 @@ class CollectionImpl {
- function buildCompareOptionsFromConfig(config) {
-   if (config.defaultStringCollation) {
-     const options = config.defaultStringCollation;
--    return {
--      stringSort: options.stringSort ?? `locale`,
--      locale: options.stringSort === `locale` ? options.locale : void 0,
--      localeOptions: options.stringSort === `locale` ? options.localeOptions : void 0
-+    // PATCH(aicolab): never write explicitly-undefined keys. matchesCompareOptions
-+    // (indexes/base-index) deepEquals compare-options objects, and deepEquals
-+    // counts explicitly-undefined keys (Object.keys length), so the extra
-+    // `locale: undefined` / `localeOptions: undefined` here made EVERY index on a
-+    // collection built with defaultStringCollation (all live-query collections)
-+    // unmatchable -- where-filtered reads silently full-scanned.
-+    const result = {
-+      stringSort: options.stringSort ?? `locale`
-     };
-+    if (options.stringSort === `locale`) {
-+      if (options.locale !== void 0) result.locale = options.locale;
-+      if (options.localeOptions !== void 0) result.localeOptions = options.localeOptions;
-+    }
-+    return result;
-   } else {
-     return {
-       stringSort: `locale`
 diff --git a/dist/esm/query/live/collection-config-builder.js b/dist/esm/query/live/collection-config-builder.js
-index 25240d415a0aee7c697a3a7d1440b8d284765bcd..8a675175f070f958c3954524a9dd4cd286ed6190 100644
+index bc5dd43bb397929bedb719cdd64fb032867e2df8..aef0e1d1ff736e101d608175c623093cfa15d19c 100644
 --- a/dist/esm/query/live/collection-config-builder.js
 +++ b/dist/esm/query/live/collection-config-builder.js
-@@ -96,6 +96,12 @@ class CollectionConfigBuilder {
+@@ -95,6 +95,12 @@ class CollectionConfigBuilder {
        onUpdate: this.config.onUpdate,
        onDelete: this.config.onDelete,
        startSync: this.config.startSync,
@@ -109,7 +51,7 @@ index 25240d415a0aee7c697a3a7d1440b8d284765bcd..8a675175f070f958c3954524a9dd4cd2
 +      defaultIndexType: this.config.defaultIndexType,
        singleResult: this.query.singleResult,
        utils: {
-         getRunCount: this.getRunCount.bind(this),
+         get lastSubsetError() {
 diff --git a/dist/esm/query/live/types.d.ts b/dist/esm/query/live/types.d.ts
 index c9468a93b4cf2a184b5c1f4f294bbf46865f9348..c2c3c5627e81c9a2c2f68b9b22b2d93bd9a4f692 100644
 --- a/dist/esm/query/live/types.d.ts
