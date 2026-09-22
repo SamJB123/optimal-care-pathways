@@ -9,11 +9,23 @@
  */
 
 import { registerMcpTools, registerRest } from '@aicolab/app-kit/api'
-import { createMcpHandler, McpServer, type McpHttpHandler, ResourceTemplate } from '@modelcontextprotocol/server'
+import {
+	createMcpHandler,
+	McpServer,
+	type McpHttpHandler,
+	ResourceTemplate,
+} from '@modelcontextprotocol/server'
 import { Hono } from 'hono'
 import { db } from '#/db/index.ts'
 import { listDocuments, operations } from './operations.ts'
-import { type ApiContext, documentUrl, listPublished, sectionsOf, sectionText, versionOf } from './published.ts'
+import {
+	type ApiContext,
+	documentUrl,
+	listPublished,
+	sectionsOf,
+	sectionText,
+	versionOf,
+} from './published.ts'
 
 export const API_BASE = '/api/v1'
 export const API_TITLE = 'Optimal Care Pathways — published content'
@@ -98,14 +110,21 @@ export function createMcpServer(ctx: ApiContext): McpServer {
 				})),
 			}),
 		}),
-		{ description: 'A published document as Markdown, every section in order.', mimeType: 'text/markdown', cacheHint },
+		{
+			description: 'A published document as Markdown, every section in order.',
+			mimeType: 'text/markdown',
+			cacheHint,
+		},
 		async (uri, { slug }) => {
 			const v = await versionOf(ctx.d, String(slug))
 			const sections = await sectionsOf(ctx.d, v.versionId)
 			const text = [
 				`# ${v.title}`,
 				`Version ${v.version}${v.label ? ` — ${v.label}` : ''}`,
-				...sections.map((s) => `## ${[s.printedNumber, s.title].filter(Boolean).join(' ') || s.address}\n\n${sectionText(s)}`),
+				...sections.map(
+					(s) =>
+						`## ${[s.printedNumber, s.title].filter(Boolean).join(' ') || s.address}\n\n${sectionText(s)}`,
+				),
 			].join('\n\n')
 			return { contents: [{ uri: uri.href, mimeType: 'text/markdown', text }] }
 		},
@@ -113,10 +132,16 @@ export function createMcpServer(ctx: ApiContext): McpServer {
 	server.registerResource(
 		'section',
 		new ResourceTemplate('ocp://{slug}/{+address}', { list: undefined }),
-		{ description: 'One section of a published document as Markdown.', mimeType: 'text/markdown', cacheHint },
+		{
+			description: 'One section of a published document as Markdown.',
+			mimeType: 'text/markdown',
+			cacheHint,
+		},
 		async (uri, { slug, address }) => {
 			const v = await versionOf(ctx.d, String(slug))
-			const found = (await sectionsOf(ctx.d, v.versionId)).find((s) => s.address === String(address))
+			const found = (await sectionsOf(ctx.d, v.versionId)).find(
+				(s) => s.address === String(address),
+			)
 			if (!found) return { contents: [] }
 			return { contents: [{ uri: uri.href, mimeType: 'text/markdown', text: sectionText(found) }] }
 		},

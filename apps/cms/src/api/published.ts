@@ -37,7 +37,8 @@ export interface PublishedVersion {
 	publishedAt: Date | null
 }
 
-const slugOf = (row: { slug: string; partnerSlug: string | null }): string => row.partnerSlug ?? row.slug
+const slugOf = (row: { slug: string; partnerSlug: string | null }): string =>
+	row.partnerSlug ?? row.slug
 
 export const documentUrl = (origin: string, slug: string): string => `${origin}/p/${slug}`
 export const sectionUrl = (origin: string, slug: string, address: string): string =>
@@ -45,7 +46,10 @@ export const sectionUrl = (origin: string, slug: string, address: string): strin
 
 /** Every document with a published version, newest publish first. */
 export async function listPublished(d: Db): Promise<PublishedVersion[]> {
-	const rows = await d.select().from(schema.publishedVersions).orderBy(desc(schema.publishedVersions.publishedAt))
+	const rows = await d
+		.select()
+		.from(schema.publishedVersions)
+		.orderBy(desc(schema.publishedVersions.publishedAt))
 	return rows.map((r) => ({
 		documentId: r.documentId,
 		slug: slugOf(r),
@@ -63,7 +67,11 @@ export async function listPublished(d: Db): Promise<PublishedVersion[]> {
 
 /** The document a slug names (partner slug first), with its published version — or, when
  *  a version number is given, that published-or-archived version. */
-export async function versionOf(d: Db, slug: string, versionNo?: number): Promise<PublishedVersion> {
+export async function versionOf(
+	d: Db,
+	slug: string,
+	versionNo?: number,
+): Promise<PublishedVersion> {
 	const document = (
 		await d
 			.select()
@@ -82,7 +90,10 @@ export async function versionOf(d: Db, slug: string, versionNo?: number): Promis
 					eq(schema.versions.documentId, document.id),
 					versionNo === undefined
 						? eq(schema.versions.status, 'published')
-						: and(eq(schema.versions.versionNo, versionNo), inArray(schema.versions.status, ['published', 'archived'])),
+						: and(
+								eq(schema.versions.versionNo, versionNo),
+								inArray(schema.versions.status, ['published', 'archived']),
+							),
 				),
 			)
 			.limit(1)
@@ -115,7 +126,12 @@ export async function sectionsOf(d: Db, versionId: string): Promise<FrozenSectio
 	const rows = await d
 		.select()
 		.from(schema.versionSections)
-		.where(and(eq(schema.versionSections.versionId, versionId), eq(schema.versionSections.hidden, false)))
+		.where(
+			and(
+				eq(schema.versionSections.versionId, versionId),
+				eq(schema.versionSections.hidden, false),
+			),
+		)
 	return outlineOrder(rows)
 }
 
@@ -138,7 +154,8 @@ function outlineOrder(rows: FrozenSection[]): FrozenSection[] {
 	// A section whose parent is hidden would be orphaned; append any not reached, in order.
 	if (out.length < rows.length) {
 		const seen = new Set(out.map((r) => r.sectionId))
-		for (const row of rows.sort((a, b) => a.orderIndex - b.orderIndex)) if (!seen.has(row.sectionId)) out.push(row)
+		for (const row of rows.sort((a, b) => a.orderIndex - b.orderIndex))
+			if (!seen.has(row.sectionId)) out.push(row)
 	}
 	return out
 }
@@ -151,7 +168,10 @@ export interface NumberedReference {
 }
 
 /** The references the bodies cite, numbered in first-cited order (decision 15, 118). */
-export async function referencesFor(d: Db, bodies: (JsonNode | null)[]): Promise<NumberedReference[]> {
+export async function referencesFor(
+	d: Db,
+	bodies: (JsonNode | null)[],
+): Promise<NumberedReference[]> {
 	const numbers = citationNumbers(bodies)
 	const ids = Object.keys(numbers)
 	if (ids.length === 0) return []
@@ -178,7 +198,11 @@ export interface SearchHit {
 }
 
 /** Published sections whose text contains the query (case-insensitive), current versions only. */
-export async function searchPublished(ctx: ApiContext, query: string, limit: number): Promise<SearchHit[]> {
+export async function searchPublished(
+	ctx: ApiContext,
+	query: string,
+	limit: number,
+): Promise<SearchHit[]> {
 	const needle = query.trim().toLowerCase()
 	if (needle.length === 0) return []
 	const rows = await ctx.d
@@ -192,7 +216,10 @@ export async function searchPublished(ctx: ApiContext, query: string, limit: num
 			markdown: schema.publishedSections.markdown,
 		})
 		.from(schema.publishedSections)
-		.innerJoin(schema.publishedVersions, eq(schema.publishedVersions.versionId, schema.publishedSections.versionId))
+		.innerJoin(
+			schema.publishedVersions,
+			eq(schema.publishedVersions.versionId, schema.publishedSections.versionId),
+		)
 		.where(
 			or(
 				like(sql`lower(${schema.publishedSections.markdown})`, `%${needle}%`),
@@ -205,7 +232,9 @@ export async function searchPublished(ctx: ApiContext, query: string, limit: num
 		const text = r.markdown ?? ''
 		const at = text.toLowerCase().indexOf(needle)
 		const start = Math.max(0, at - 80)
-		const snippet = (at < 0 ? text.slice(0, 200) : text.slice(start, at + needle.length + 120)).replace(/\s+/g, ' ').trim()
+		const snippet = (at < 0 ? text.slice(0, 200) : text.slice(start, at + needle.length + 120))
+			.replace(/\s+/g, ' ')
+			.trim()
 		return {
 			slug,
 			address: r.address,

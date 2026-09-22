@@ -53,7 +53,10 @@ export interface Lifecycle {
 		): Promise<{ userId: string; role: string; name: string; email: string }[]>
 		sendNotification(mail: { to: string[]; subject: string; text: string }): Promise<unknown>
 	}
-	rooms: { get(id: DurableObjectId): { foldAll(): Promise<number> }; idFromName(name: string): DurableObjectId }
+	rooms: {
+		get(id: DurableObjectId): { foldAll(): Promise<number> }
+		idFromName(name: string): DurableObjectId
+	}
 	/** The central organisation's id (the publisher); null before bootstrap. */
 	centralOrgId(): Promise<string | null>
 	/** Where the site lives, for links in mail. */
@@ -101,7 +104,8 @@ async function requireRole(
 	what: string,
 ): Promise<Role> {
 	const role = await roleOn(lc, userId, document)
-	if (!atLeast(role, floor)) refuse(`Only a ${floor === 'member' ? 'drafter' : 'reviewer'} or above may ${what}.`)
+	if (!atLeast(role, floor))
+		refuse(`Only a ${floor === 'member' ? 'drafter' : 'reviewer'} or above may ${what}.`)
 	return role as Role
 }
 
@@ -127,7 +131,11 @@ export async function documentOf(lc: Lifecycle, documentId: string): Promise<Doc
 
 /** The document's draft version, opened now if it has none (a seeded core document, a
  *  document created before versions existed). */
-export async function ensureDraft(lc: Lifecycle, documentId: string, userId: string): Promise<VersionRow> {
+export async function ensureDraft(
+	lc: Lifecycle,
+	documentId: string,
+	userId: string,
+): Promise<VersionRow> {
 	const existing = (
 		await lc.d
 			.select()
@@ -173,9 +181,15 @@ export async function publishedVersion(lc: Lifecycle, documentId: string) {
 }
 
 /** Section id → body as published, for the document's published version. */
-async function publishedBodies(lc: Lifecycle, documentId: string): Promise<Map<string, JsonNode | null>> {
+async function publishedBodies(
+	lc: Lifecycle,
+	documentId: string,
+): Promise<Map<string, JsonNode | null>> {
 	const rows = await lc.d
-		.select({ sectionId: schema.publishedSections.sectionId, bodyJson: schema.publishedSections.bodyJson })
+		.select({
+			sectionId: schema.publishedSections.sectionId,
+			bodyJson: schema.publishedSections.bodyJson,
+		})
 		.from(schema.publishedSections)
 		.where(eq(schema.publishedSections.documentId, documentId))
 	return new Map(rows.map((r) => [r.sectionId, r.bodyJson ?? null]))
@@ -203,17 +217,29 @@ export interface ResolvedSection {
  * section's body as PUBLISHED (decision 98); while the core has never published it takes
  * the core's draft, flagged, so a pathway can be authored against a core still in work.
  */
-export async function resolveSections(lc: Lifecycle, documentId: string): Promise<ResolvedSection[]> {
+export async function resolveSections(
+	lc: Lifecycle,
+	documentId: string,
+): Promise<ResolvedSection[]> {
 	const document = await documentOf(lc, documentId)
-	const rows = await lc.d.select().from(schema.sections).where(eq(schema.sections.documentId, documentId))
-	const coreIds = rows.flatMap((r) => (r.ownership === 'shared' && r.coreSectionId ? [r.coreSectionId] : []))
+	const rows = await lc.d
+		.select()
+		.from(schema.sections)
+		.where(eq(schema.sections.documentId, documentId))
+	const coreIds = rows.flatMap((r) =>
+		r.ownership === 'shared' && r.coreSectionId ? [r.coreSectionId] : [],
+	)
 	const cores = new Map<string, { body: JsonNode | null; source: 'published' | 'draft' }>()
 	if (coreIds.length > 0) {
 		const published = await lc.d
-			.select({ sectionId: schema.publishedSections.sectionId, bodyJson: schema.publishedSections.bodyJson })
+			.select({
+				sectionId: schema.publishedSections.sectionId,
+				bodyJson: schema.publishedSections.bodyJson,
+			})
 			.from(schema.publishedSections)
 			.where(inArray(schema.publishedSections.sectionId, coreIds))
-		for (const p of published) cores.set(p.sectionId, { body: p.bodyJson ?? null, source: 'published' })
+		for (const p of published)
+			cores.set(p.sectionId, { body: p.bodyJson ?? null, source: 'published' })
 		const missing = coreIds.filter((id) => !cores.has(id))
 		if (missing.length > 0) {
 			const drafts = await lc.d
@@ -224,13 +250,18 @@ export async function resolveSections(lc: Lifecycle, documentId: string): Promis
 		}
 	}
 	return outlineOrder(rows).map((row) => {
-		const shared = row.ownership === 'shared' && row.coreSectionId ? cores.get(row.coreSectionId) : undefined
-		const body = row.ownership === 'shared' && row.coreSectionId ? (shared?.body ?? null) : (row.bodyJson ?? null)
+		const shared =
+			row.ownership === 'shared' && row.coreSectionId ? cores.get(row.coreSectionId) : undefined
+		const body =
+			row.ownership === 'shared' && row.coreSectionId
+				? (shared?.body ?? null)
+				: (row.bodyJson ?? null)
 		return {
 			row,
 			body,
 			publishable: publishBody(body, document.subject),
-			coreSource: row.ownership === 'shared' && row.coreSectionId ? (shared?.source ?? 'draft') : null,
+			coreSource:
+				row.ownership === 'shared' && row.coreSectionId ? (shared?.source ?? 'draft') : null,
 		}
 	})
 }
@@ -262,12 +293,17 @@ const sameBody = (a: JsonNode | null, b: JsonNode | null): boolean =>
 	JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
 
 /** The live sections whose resolved body differs from the published version's. */
-export async function changedSections(lc: Lifecycle, documentId: string): Promise<ResolvedSection[]> {
+export async function changedSections(
+	lc: Lifecycle,
+	documentId: string,
+): Promise<ResolvedSection[]> {
 	const [resolved, published] = await Promise.all([
 		resolveSections(lc, documentId),
 		publishedBodies(lc, documentId),
 	])
-	return resolved.filter((s) => live(s) && !sameBody(s.publishable, published.get(s.row.id) ?? null))
+	return resolved.filter(
+		(s) => live(s) && !sameBody(s.publishable, published.get(s.row.id) ?? null),
+	)
 }
 
 /** Fold every live body of the document's room into D1 before reading the draft. */
@@ -310,7 +346,10 @@ async function notify(lc: Lifecycle, to: string[], subject: string, text: string
 	try {
 		await lc.auth.sendNotification({ to, subject, text })
 	} catch (error) {
-		console.error('[lifecycle] notification failed:', error instanceof Error ? error.message : error)
+		console.error(
+			'[lifecycle] notification failed:',
+			error instanceof Error ? error.message : error,
+		)
 	}
 }
 
@@ -321,11 +360,17 @@ const documentLink = (lc: Lifecycle, documentId: string) => `${lc.origin}/d/${do
 // ---------------------------------------------------------------------------
 
 /** The latest review of the document's draft, with its derived state; null when none. */
-export async function currentReview(lc: Lifecycle, documentId: string, draftId: string): Promise<ReviewStateRow | null> {
+export async function currentReview(
+	lc: Lifecycle,
+	documentId: string,
+	draftId: string,
+): Promise<ReviewStateRow | null> {
 	const rows = await lc.d
 		.select()
 		.from(schema.reviewState)
-		.where(and(eq(schema.reviewState.documentId, documentId), eq(schema.reviewState.versionId, draftId)))
+		.where(
+			and(eq(schema.reviewState.documentId, documentId), eq(schema.reviewState.versionId, draftId)),
+		)
 		.orderBy(desc(schema.reviewState.requestedAt))
 		.limit(1)
 	return rows[0] ?? null
@@ -364,7 +409,10 @@ export async function requestReview(
 		}),
 		...chunk(pins, 25).map((group) => lc.d.insert(schema.reviewSections).values(group)),
 	])
-	await record(lc, document.id, 'review.requested', input.userId, { reviewId, sections: pins.length })
+	await record(lc, document.id, 'review.requested', input.userId, {
+		reviewId,
+		sections: pins.length,
+	})
 	await notify(
 		lc,
 		await recipients(lc, document, 'admin'),
@@ -386,7 +434,11 @@ export async function decideSection(
 	},
 ): Promise<ReviewStateRow> {
 	const review = (
-		await lc.d.select().from(schema.reviewState).where(eq(schema.reviewState.reviewId, input.reviewId)).limit(1)
+		await lc.d
+			.select()
+			.from(schema.reviewState)
+			.where(eq(schema.reviewState.reviewId, input.reviewId))
+			.limit(1)
 	)[0]
 	if (!review) refuse('Review not found.')
 	const state = review as ReviewStateRow
@@ -410,7 +462,11 @@ export async function decideSection(
 		.returning()
 	if (updated.length === 0) refuse('That section is not part of this review.')
 	const after = (
-		await lc.d.select().from(schema.reviewState).where(eq(schema.reviewState.reviewId, input.reviewId)).limit(1)
+		await lc.d
+			.select()
+			.from(schema.reviewState)
+			.where(eq(schema.reviewState.reviewId, input.reviewId))
+			.limit(1)
 	)[0] as ReviewStateRow
 	if (after.decision !== null && state.decision === null) {
 		await record(lc, document.id, 'review.decided', input.userId, {
@@ -450,7 +506,11 @@ export interface GateItem {
  * The publish gate (decision 99): what blocks, what warns, what is fine. Read by the
  * wizard's readiness step and enforced by `publish`.
  */
-export async function publishReadiness(lc: Lifecycle, documentId: string, userId: string): Promise<{
+export async function publishReadiness(
+	lc: Lifecycle,
+	documentId: string,
+	userId: string,
+): Promise<{
 	items: GateItem[]
 	blocked: boolean
 	changed: number
@@ -475,7 +535,9 @@ export async function publishReadiness(lc: Lifecycle, documentId: string, userId
 			: { key: 'placeholders', level: 'ok', message: 'No placeholder text is left.' },
 	)
 
-	const guidance = resolved.filter((s) => live(s) && s.row.ownership === 'owned' && openItemsIn(s.body) > 0)
+	const guidance = resolved.filter(
+		(s) => live(s) && s.row.ownership === 'owned' && openItemsIn(s.body) > 0,
+	)
 	items.push(
 		guidance.length > 0
 			? {
@@ -488,7 +550,11 @@ export async function publishReadiness(lc: Lifecycle, documentId: string, userId
 	)
 
 	if (changed.length === 0)
-		items.push({ key: 'changes', level: 'block', message: 'Nothing has changed since the published version.' })
+		items.push({
+			key: 'changes',
+			level: 'block',
+			message: 'Nothing has changed since the published version.',
+		})
 	else
 		items.push({
 			key: 'changes',
@@ -498,7 +564,12 @@ export async function publishReadiness(lc: Lifecycle, documentId: string, userId
 		})
 
 	const review = await currentReview(lc, documentId, draft.id)
-	if (!review) items.push({ key: 'review', level: 'block', message: 'No review has been requested for this draft.' })
+	if (!review)
+		items.push({
+			key: 'review',
+			level: 'block',
+			message: 'No review has been requested for this draft.',
+		})
 	else if (review.decision !== 'approved')
 		items.push({
 			key: 'review',
@@ -531,7 +602,11 @@ export async function publishReadiness(lc: Lifecycle, documentId: string, userId
 						message: 'The core content this pathway shares has not been published yet.',
 						sections: unpublishedCore.map((s) => s.row.address),
 					}
-				: { key: 'core', level: 'ok', message: 'Shared sections resolve to the published core content.' },
+				: {
+						key: 'core',
+						level: 'ok',
+						message: 'Shared sections resolve to the published core content.',
+					},
 		)
 	}
 
@@ -539,7 +614,11 @@ export async function publishReadiness(lc: Lifecycle, documentId: string, userId
 }
 
 /** Reviewed sections whose body no longer matches the hash the review pinned. */
-async function staleReviewSections(lc: Lifecycle, reviewId: string, resolved: ResolvedSection[]): Promise<string[]> {
+async function staleReviewSections(
+	lc: Lifecycle,
+	reviewId: string,
+	resolved: ResolvedSection[],
+): Promise<string[]> {
 	const pins = await lc.d
 		.select()
 		.from(schema.reviewSections)
@@ -593,12 +672,12 @@ export async function publish(
 		timeframes: [],
 		map: null,
 	}
-	const coreVersionId =
-		document.kind === 'pathway' ? await coreVersionFor(lc, resolved) : null
+	const coreVersionId = document.kind === 'pathway' ? await coreVersionFor(lc, resolved) : null
 	const addressOf = new Map(resolved.map((s) => [s.row.id, s.row.address]))
 	const now = new Date()
 	const rows = publishedResolved.map((s) => {
-		const unchanged = sameBody(s.body, previous.get(s.row.id) ?? null) && previousChanged.has(s.row.id)
+		const unchanged =
+			sameBody(s.body, previous.get(s.row.id) ?? null) && previousChanged.has(s.row.id)
 		return {
 			versionId: draft.id,
 			sectionId: s.row.id,
@@ -613,7 +692,9 @@ export async function publish(
 			bodyJson: s.body,
 			html: s.body ? lc.renderHtml(s.body, derived) : null,
 			markdown: s.body ? bodyToMarkdown(s.body, derived) : null,
-			lastChangedVersionNo: unchanged ? (previousChanged.get(s.row.id) ?? draft.versionNo) : draft.versionNo,
+			lastChangedVersionNo: unchanged
+				? (previousChanged.get(s.row.id) ?? draft.versionNo)
+				: draft.versionNo,
 		}
 	})
 	const nextDraftId = crypto.randomUUID()
@@ -653,11 +734,16 @@ export async function publish(
 	})
 	void publishDocumentRows([document])
 	if (lc.purge) {
-		const tags = [document.slug, ...(document.partnerSlug ? [document.partnerSlug] : [])].map((s) => `document-${s}`)
+		const tags = [document.slug, ...(document.partnerSlug ? [document.partnerSlug] : [])].map(
+			(s) => `document-${s}`,
+		)
 		try {
 			await lc.purge(tags)
 		} catch (error) {
-			console.error('[lifecycle] cache purge failed:', error instanceof Error ? error.message : error)
+			console.error(
+				'[lifecycle] cache purge failed:',
+				error instanceof Error ? error.message : error,
+			)
 		}
 	}
 	await notify(
@@ -671,7 +757,8 @@ export async function publish(
 
 /** The core's published version a pathway's shared sections were resolved against. */
 async function coreVersionFor(lc: Lifecycle, resolved: ResolvedSection[]): Promise<string | null> {
-	const coreSectionId = resolved.find((s) => s.row.ownership === 'shared' && s.row.coreSectionId)?.row.coreSectionId
+	const coreSectionId = resolved.find((s) => s.row.ownership === 'shared' && s.row.coreSectionId)
+		?.row.coreSectionId
 	if (!coreSectionId) return null
 	const core = (
 		await lc.d
@@ -722,18 +809,26 @@ export interface DocumentState {
 }
 
 /** Everything the workspace needs about where the document stands. */
-export async function documentState(lc: Lifecycle, documentId: string, userId: string): Promise<DocumentState> {
+export async function documentState(
+	lc: Lifecycle,
+	documentId: string,
+	userId: string,
+): Promise<DocumentState> {
 	const document = await documentOf(lc, documentId)
 	const role = await roleOn(lc, userId, document)
 	if (!role) refuse('You are not a member of this document.')
 	const central = await lc.centralOrgId()
 	const isCentral =
-		central !== null && (await lc.auth.getOrgMembershipById(userId, central, OCP_NAMESPACE)) !== null
+		central !== null &&
+		(await lc.auth.getOrgMembershipById(userId, central, OCP_NAMESPACE)) !== null
 	const draft = await ensureDraft(lc, documentId, userId)
 	const published = await publishedVersion(lc, documentId)
 	const review = await currentReview(lc, documentId, draft.id)
 	const decisions = review
-		? await lc.d.select().from(schema.reviewSections).where(eq(schema.reviewSections.reviewId, review.reviewId))
+		? await lc.d
+				.select()
+				.from(schema.reviewSections)
+				.where(eq(schema.reviewSections.reviewId, review.reviewId))
 		: []
 	const decisionOf = new Map(
 		decisions.map((d): [string, SectionDecisionWire] => [
@@ -794,7 +889,11 @@ export async function versionsOf(lc: Lifecycle, documentId: string) {
 // Comments and suggestions (decisions 99, 110, 120)
 // ---------------------------------------------------------------------------
 
-export async function listComments(lc: Lifecycle, documentId: string, userId: string): Promise<CommentRow[]> {
+export async function listComments(
+	lc: Lifecycle,
+	documentId: string,
+	userId: string,
+): Promise<CommentRow[]> {
 	const document = await documentOf(lc, documentId)
 	if (!(await roleOn(lc, userId, document))) refuse('You are not a member of this document.')
 	return lc.d
@@ -806,7 +905,13 @@ export async function listComments(lc: Lifecycle, documentId: string, userId: st
 
 export async function addComment(
 	lc: Lifecycle,
-	input: { documentId: string; sectionId: string; kind: 'comment' | 'suggestion'; body: string; userId: string },
+	input: {
+		documentId: string
+		sectionId: string
+		kind: 'comment' | 'suggestion'
+		body: string
+		userId: string
+	},
 ): Promise<CommentRow> {
 	const document = await documentOf(lc, input.documentId)
 	await requireRole(lc, input.userId, document, 'member', 'comment')
@@ -858,14 +963,22 @@ export async function resolveComment(
 	input: { commentId: string; userId: string; resolved: boolean },
 ): Promise<CommentRow> {
 	const comment = (
-		await lc.d.select().from(schema.comments).where(eq(schema.comments.id, input.commentId)).limit(1)
+		await lc.d
+			.select()
+			.from(schema.comments)
+			.where(eq(schema.comments.id, input.commentId))
+			.limit(1)
 	)[0]
 	if (!comment) refuse('Comment not found.')
 	const document = await documentOf(lc, (comment as CommentRow).documentId)
 	await requireRole(lc, input.userId, document, 'member', 'resolve a comment')
 	const updated = await lc.d
 		.update(schema.comments)
-		.set(input.resolved ? { resolvedAt: new Date(), resolvedBy: input.userId } : { resolvedAt: null, resolvedBy: null })
+		.set(
+			input.resolved
+				? { resolvedAt: new Date(), resolvedBy: input.userId }
+				: { resolvedAt: null, resolvedBy: null },
+		)
 		.where(eq(schema.comments.id, input.commentId))
 		.returning()
 	return updated[0] as CommentRow
@@ -888,7 +1001,9 @@ export async function suggestionsForCore(lc: Lifecycle, coreDocumentId: string, 
 		.from(schema.comments)
 		.innerJoin(schema.sections, eq(schema.sections.id, schema.comments.sectionId))
 		.innerJoin(schema.documents, eq(schema.documents.id, schema.comments.documentId))
-		.where(and(eq(schema.comments.kind, 'suggestion'), inArray(schema.sections.coreSectionId, shared)))
+		.where(
+			and(eq(schema.comments.kind, 'suggestion'), inArray(schema.sections.coreSectionId, shared)),
+		)
 		.orderBy(desc(schema.comments.createdAt))
 	return rows.map((r) => ({
 		...r.comment,
@@ -907,13 +1022,18 @@ export async function suggestionsForCore(lc: Lifecycle, coreDocumentId: string, 
  *  renders it — becomes the section's starting draft, citations intact. Revertable. */
 export async function divergeSection(lc: Lifecycle, input: { sectionId: string; userId: string }) {
 	const section = (
-		await lc.d.select().from(schema.sections).where(eq(schema.sections.id, input.sectionId)).limit(1)
+		await lc.d
+			.select()
+			.from(schema.sections)
+			.where(eq(schema.sections.id, input.sectionId))
+			.limit(1)
 	)[0]
 	if (!section) refuse('Section not found.')
 	const row = section as SectionRow
 	const document = await documentOf(lc, row.documentId)
 	await requireRole(lc, input.userId, document, 'member', 'diverge a section')
-	if (row.ownership !== 'shared' || !row.coreSectionId) refuse('This section is already the pathway’s own.')
+	if (row.ownership !== 'shared' || !row.coreSectionId)
+		refuse('This section is already the pathway’s own.')
 	const resolved = (await resolveSections(lc, document.id)).find((s) => s.row.id === row.id)
 	const updated = await lc.d
 		.update(schema.sections)
@@ -925,7 +1045,10 @@ export async function divergeSection(lc: Lifecycle, input: { sectionId: string; 
 		})
 		.where(eq(schema.sections.id, row.id))
 		.returning()
-	await record(lc, document.id, 'section.diverged', input.userId, { sectionId: row.id, address: row.address })
+	await record(lc, document.id, 'section.diverged', input.userId, {
+		sectionId: row.id,
+		address: row.address,
+	})
 	void publishSectionRows(document.id, updated)
 	return updated[0]
 }
@@ -933,19 +1056,27 @@ export async function divergeSection(lc: Lifecycle, input: { sectionId: string; 
 /** Back to the core's version: the pathway's own body is dropped. */
 export async function revertSection(lc: Lifecycle, input: { sectionId: string; userId: string }) {
 	const section = (
-		await lc.d.select().from(schema.sections).where(eq(schema.sections.id, input.sectionId)).limit(1)
+		await lc.d
+			.select()
+			.from(schema.sections)
+			.where(eq(schema.sections.id, input.sectionId))
+			.limit(1)
 	)[0]
 	if (!section) refuse('Section not found.')
 	const row = section as SectionRow
 	const document = await documentOf(lc, row.documentId)
 	await requireRole(lc, input.userId, document, 'member', 'revert a section')
-	if (row.ownership !== 'owned' || !row.coreSectionId) refuse('This section has no shared version to return to.')
+	if (row.ownership !== 'owned' || !row.coreSectionId)
+		refuse('This section has no shared version to return to.')
 	const updated = await lc.d
 		.update(schema.sections)
 		.set({ ownership: 'shared', bodyJson: null, updatedAt: new Date(), updatedBy: input.userId })
 		.where(eq(schema.sections.id, row.id))
 		.returning()
-	await record(lc, document.id, 'section.reverted', input.userId, { sectionId: row.id, address: row.address })
+	await record(lc, document.id, 'section.reverted', input.userId, {
+		sectionId: row.id,
+		address: row.address,
+	})
 	void publishSectionRows(document.id, updated)
 	return updated[0]
 }

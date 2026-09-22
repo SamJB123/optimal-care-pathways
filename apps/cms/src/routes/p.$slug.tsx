@@ -27,7 +27,9 @@ export const Route = createFileRoute('/p/$slug')({
 })
 
 const when = (iso: string | null) =>
-	iso ? new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+	iso
+		? new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
+		: ''
 
 /** Sections carry parent addresses; depth is how many ancestors a section has. */
 function depthOf(address: string, parentOf: Map<string, string | null>): number {

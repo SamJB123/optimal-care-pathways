@@ -13,7 +13,16 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import type { JsonNode } from '#/content/schema.ts'
 import { db, schema } from '#/db/index.ts'
 import * as lc from '#/server/lifecycle.ts'
-import { fetchItem, getComposed, getDocument, getDocumentFull, getSection, listDocuments, listVersions, search } from './operations.ts'
+import {
+	fetchItem,
+	getComposed,
+	getDocument,
+	getDocumentFull,
+	getSection,
+	listDocuments,
+	listVersions,
+	search,
+} from './operations.ts'
 import type { ApiContext } from './published.ts'
 import { createApiApp, createMcpServer, mcpHandler } from './server.ts'
 
@@ -69,7 +78,12 @@ async function publish(documentId: string, org: string) {
 			note: null,
 			userId: `admin@${org}`,
 		})
-	return lc.publish(lifecycle(), { documentId, userId: `owner@${CENTRAL}`, label: 'First edition', releaseNotes: 'Initial.' })
+	return lc.publish(lifecycle(), {
+		documentId,
+		userId: `owner@${CENTRAL}`,
+		label: 'First edition',
+		releaseNotes: 'Initial.',
+	})
 }
 
 beforeAll(async () => {
@@ -79,19 +93,131 @@ beforeAll(async () => {
 		.values({ id: 'cancer-test', kind: 'cancer', label: 'test', sourceFile: 'test.pdf' })
 		.onConflictDoNothing()
 	await d.insert(schema.documents).values([
-		{ id: CORE_ID, kind: 'core', templateId: 'cancer-test', orgId: CENTRAL, slug: `core-${run}`, title: 'Core content', subject: 'cancer', audience: 'cancer' },
-		{ id: CANCER_ID, kind: 'pathway', templateId: 'cancer-test', orgId: 'org-c', slug: CANCER_SLUG, partnerSlug: PARTNER_SLUG, title: 'Breast cancer', subject: 'breast cancer', audience: 'cancer' },
-		{ id: POPULATION_ID, kind: 'pathway', templateId: 'cancer-test', orgId: 'org-p', slug: POPULATION_SLUG, title: 'Older people', subject: 'older people', audience: 'population' },
+		{
+			id: CORE_ID,
+			kind: 'core',
+			templateId: 'cancer-test',
+			orgId: CENTRAL,
+			slug: `core-${run}`,
+			title: 'Core content',
+			subject: 'cancer',
+			audience: 'cancer',
+		},
+		{
+			id: CANCER_ID,
+			kind: 'pathway',
+			templateId: 'cancer-test',
+			orgId: 'org-c',
+			slug: CANCER_SLUG,
+			partnerSlug: PARTNER_SLUG,
+			title: 'Breast cancer',
+			subject: 'breast cancer',
+			audience: 'cancer',
+		},
+		{
+			id: POPULATION_ID,
+			kind: 'pathway',
+			templateId: 'cancer-test',
+			orgId: 'org-p',
+			slug: POPULATION_SLUG,
+			title: 'Older people',
+			subject: 'older people',
+			audience: 'population',
+		},
 	])
-	await d.insert(schema.references).values({ id: REF, documentId: CORE_ID, citation: 'Smith J. A reference. 2026.', url: 'https://example.org/ref' })
-	const sharedBody = doc(paragraph(text('Multidisciplinary care improves outcomes.'), { type: 'citation', attrs: { referenceId: REF } }))
+	await d
+		.insert(schema.references)
+		.values({
+			id: REF,
+			documentId: CORE_ID,
+			citation: 'Smith J. A reference. 2026.',
+			url: 'https://example.org/ref',
+		})
+	const sharedBody = doc(
+		paragraph(text('Multidisciplinary care improves outcomes.'), {
+			type: 'citation',
+			attrs: { referenceId: REF },
+		}),
+	)
 	await d.insert(schema.sections).values([
-		{ id: S_SHARED, documentId: CORE_ID, parentId: null, address: '1', canonical: true, printedNumber: '1', title: 'Principles', orderIndex: 1, ownership: 'owned', pathwayOwnership: 'shared', bodyJson: sharedBody },
-		{ id: S_OWNED, documentId: CORE_ID, parentId: null, address: '2', canonical: true, printedNumber: '2', title: 'Referral', orderIndex: 2, ownership: 'owned', pathwayOwnership: 'owned', bodyJson: doc(paragraph(text('Core referral text.'))) },
-		{ id: C_SHARED, documentId: CANCER_ID, parentId: null, address: '1', canonical: true, printedNumber: '1', title: 'Principles', orderIndex: 1, ownership: 'shared', coreSectionId: S_SHARED, bodyJson: null },
-		{ id: C_OWNED, documentId: CANCER_ID, parentId: null, address: '2', canonical: true, printedNumber: '2', title: 'Referral', orderIndex: 2, ownership: 'owned', bodyJson: doc(paragraph(text('Refer people with breast cancer to a breast surgeon promptly.'))) },
-		{ id: P_SHARED, documentId: POPULATION_ID, parentId: null, address: '1', canonical: true, printedNumber: '1', title: 'Principles', orderIndex: 1, ownership: 'shared', coreSectionId: S_SHARED, bodyJson: null },
-		{ id: P_OWNED, documentId: POPULATION_ID, parentId: null, address: '2', canonical: true, printedNumber: '2', title: 'Referral', orderIndex: 2, ownership: 'owned', bodyJson: doc(paragraph(text('Consider frailty when referring older people.'))) },
+		{
+			id: S_SHARED,
+			documentId: CORE_ID,
+			parentId: null,
+			address: '1',
+			canonical: true,
+			printedNumber: '1',
+			title: 'Principles',
+			orderIndex: 1,
+			ownership: 'owned',
+			pathwayOwnership: 'shared',
+			bodyJson: sharedBody,
+		},
+		{
+			id: S_OWNED,
+			documentId: CORE_ID,
+			parentId: null,
+			address: '2',
+			canonical: true,
+			printedNumber: '2',
+			title: 'Referral',
+			orderIndex: 2,
+			ownership: 'owned',
+			pathwayOwnership: 'owned',
+			bodyJson: doc(paragraph(text('Core referral text.'))),
+		},
+		{
+			id: C_SHARED,
+			documentId: CANCER_ID,
+			parentId: null,
+			address: '1',
+			canonical: true,
+			printedNumber: '1',
+			title: 'Principles',
+			orderIndex: 1,
+			ownership: 'shared',
+			coreSectionId: S_SHARED,
+			bodyJson: null,
+		},
+		{
+			id: C_OWNED,
+			documentId: CANCER_ID,
+			parentId: null,
+			address: '2',
+			canonical: true,
+			printedNumber: '2',
+			title: 'Referral',
+			orderIndex: 2,
+			ownership: 'owned',
+			bodyJson: doc(
+				paragraph(text('Refer people with breast cancer to a breast surgeon promptly.')),
+			),
+		},
+		{
+			id: P_SHARED,
+			documentId: POPULATION_ID,
+			parentId: null,
+			address: '1',
+			canonical: true,
+			printedNumber: '1',
+			title: 'Principles',
+			orderIndex: 1,
+			ownership: 'shared',
+			coreSectionId: S_SHARED,
+			bodyJson: null,
+		},
+		{
+			id: P_OWNED,
+			documentId: POPULATION_ID,
+			parentId: null,
+			address: '2',
+			canonical: true,
+			printedNumber: '2',
+			title: 'Referral',
+			orderIndex: 2,
+			ownership: 'owned',
+			bodyJson: doc(paragraph(text('Consider frailty when referring older people.'))),
+		},
 	])
 	await publish(CORE_ID, CENTRAL)
 	await publish(CANCER_ID, 'org-c')
@@ -117,7 +243,12 @@ describe('the operation table', () => {
 			['2', 'owned'],
 		])
 		expect(byPartner.references).toEqual([
-			{ number: 1, id: REF, citation: 'Smith J. A reference. 2026.', url: 'https://example.org/ref' },
+			{
+				number: 1,
+				id: REF,
+				citation: 'Smith J. A reference. 2026.',
+				url: 'https://example.org/ref',
+			},
 		])
 	})
 
@@ -129,7 +260,9 @@ describe('the operation table', () => {
 		expect(shared.references.map((r) => r.number)).toEqual([1])
 		const own = await getSection.handler({ slug: PARTNER_SLUG, address: '2' }, ctx())
 		expect(own.references).toEqual([])
-		await expect(getSection.handler({ slug: PARTNER_SLUG, address: '9' }, ctx())).rejects.toThrow(/no section/)
+		await expect(getSection.handler({ slug: PARTNER_SLUG, address: '9' }, ctx())).rejects.toThrow(
+			/no section/,
+		)
 	})
 
 	it('returns the whole document, lists versions and reads an archived version by number', async () => {
@@ -142,11 +275,16 @@ describe('the operation table', () => {
 		])
 		const v1 = await getDocument.handler({ slug: PARTNER_SLUG, version: 1 }, ctx())
 		expect(v1.document.version).toBe(1)
-		await expect(getDocument.handler({ slug: PARTNER_SLUG, version: 7 }, ctx())).rejects.toThrow(/version 7/)
+		await expect(getDocument.handler({ slug: PARTNER_SLUG, version: 7 }, ctx())).rejects.toThrow(
+			/version 7/,
+		)
 	})
 
 	it('composes a cancer pathway with a population pathway, shared content once', async () => {
-		const composed = await getComposed.handler({ cancer: PARTNER_SLUG, population: POPULATION_SLUG }, ctx())
+		const composed = await getComposed.handler(
+			{ cancer: PARTNER_SLUG, population: POPULATION_SLUG },
+			ctx(),
+		)
 		expect(composed.sections.map((s) => [s.address, s.source])).toEqual([
 			['1', 'shared'],
 			['2', 'cancer'],
@@ -177,7 +315,9 @@ describe('REST through chanfana', () => {
 		expect(body.documents.some((d) => d.slug === PARTNER_SLUG)).toBe(true)
 		const section = await call(`/api/v1/documents/${PARTNER_SLUG}/sections/1`)
 		expect(section.status).toBe(200)
-		expect(((await section.json()) as { section: { markdown: string } }).section.markdown).toContain('[^1]')
+		expect(
+			((await section.json()) as { section: { markdown: string } }).section.markdown,
+		).toContain('[^1]')
 		const missing = await call(`/api/v1/documents/${PARTNER_SLUG}/sections/9`)
 		expect(missing.status).toBe(404)
 		const nowhere = await call('/api/v1/documents/no-such-document')
@@ -189,7 +329,10 @@ describe('REST through chanfana', () => {
 	it('publishes an OpenAPI 3.1 document naming every operation, and a Scalar page', async () => {
 		const spec = await call('/api/v1/openapi.json')
 		expect(spec.status).toBe(200)
-		const json = (await spec.json()) as { openapi: string; paths: Record<string, Record<string, { operationId?: string }>> }
+		const json = (await spec.json()) as {
+			openapi: string
+			paths: Record<string, Record<string, { operationId?: string }>>
+		}
 		expect(json.openapi.startsWith('3.1')).toBe(true)
 		const operationIds = Object.values(json.paths).flatMap((methods) =>
 			Object.values(methods).map((op) => op.operationId),
@@ -232,7 +375,16 @@ describe('MCP', () => {
 		const payload = await responseJson(list)
 		const names = (payload.result as { tools: { name: string }[] }).tools.map((t) => t.name).sort()
 		expect(names).toEqual(
-			['fetch', 'get_composed', 'get_document', 'get_document_full', 'get_section', 'list_documents', 'list_versions', 'search'].sort(),
+			[
+				'fetch',
+				'get_composed',
+				'get_document',
+				'get_document_full',
+				'get_section',
+				'list_documents',
+				'list_versions',
+				'search',
+			].sort(),
 		)
 		expect(server).toBeDefined()
 	})
@@ -257,7 +409,10 @@ describe('MCP', () => {
 		)
 		expect(response.status).toBe(200)
 		const payload = await responseJson(response)
-		const result = payload.result as { structuredContent: { section: { address: string } }; content: { type: string; text: string }[] }
+		const result = payload.result as {
+			structuredContent: { section: { address: string } }
+			content: { type: string; text: string }[]
+		}
 		expect(result.structuredContent.section.address).toBe('1')
 		expect(result.content[0]?.text).toContain('"address":"1"')
 	})

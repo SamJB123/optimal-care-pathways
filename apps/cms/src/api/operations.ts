@@ -32,8 +32,16 @@ import {
 // Shapes
 // ---------------------------------------------------------------------------
 
-const slug = z.string().min(1).max(120).describe('The document slug (the partner slug when one is set)')
-const address = z.string().min(1).max(200).describe('The section address within the document, e.g. "3.1" or "2/supportive-care"')
+const slug = z
+	.string()
+	.min(1)
+	.max(120)
+	.describe('The document slug (the partner slug when one is set)')
+const address = z
+	.string()
+	.min(1)
+	.max(200)
+	.describe('The section address within the document, e.g. "3.1" or "2/supportive-care"')
 const version = z.coerce
 	.number()
 	.int()
@@ -59,9 +67,14 @@ const outlineEntry = z.object({
 	parentAddress: z.string().nullable(),
 	title: z.string().nullable(),
 	printedNumber: z.string().nullable(),
-	ownership: z.enum(['shared', 'owned']).describe('shared = the core document’s content, rendered by reference'),
+	ownership: z
+		.enum(['shared', 'owned'])
+		.describe('shared = the core document’s content, rendered by reference'),
 	pointOfCare: z.boolean(),
-	lastChangedVersion: z.number().int().describe('The version in which this section’s content last changed'),
+	lastChangedVersion: z
+		.number()
+		.int()
+		.describe('The version in which this section’s content last changed'),
 	url: z.string(),
 })
 
@@ -120,7 +133,11 @@ const summaryOf = (ctx: ApiContext, v: PublishedVersion): z.output<typeof docume
 	url: documentUrl(ctx.origin, v.slug),
 })
 
-const outlineOf = (ctx: ApiContext, slugValue: string, s: FrozenSection): z.output<typeof outlineEntry> => ({
+const outlineOf = (
+	ctx: ApiContext,
+	slugValue: string,
+	s: FrozenSection,
+): z.output<typeof outlineEntry> => ({
 	address: s.address,
 	parentAddress: s.parentAddress,
 	title: s.title,
@@ -131,7 +148,11 @@ const outlineOf = (ctx: ApiContext, slugValue: string, s: FrozenSection): z.outp
 	url: sectionUrl(ctx.origin, slugValue, s.address),
 })
 
-const sectionOf = (ctx: ApiContext, slugValue: string, s: FrozenSection): z.output<typeof section> => ({
+const sectionOf = (
+	ctx: ApiContext,
+	slugValue: string,
+	s: FrozenSection,
+): z.output<typeof section> => ({
 	...outlineOf(ctx, slugValue, s),
 	body: wireBody(s.bodyJson ?? null),
 	html: s.html,
@@ -177,7 +198,10 @@ export const getDocument = define({
 		return {
 			document: summaryOf(ctx, v),
 			outline: sections.map((s) => outlineOf(ctx, v.slug, s)),
-			references: await referencesFor(ctx.d, sections.map((s) => s.bodyJson ?? null)),
+			references: await referencesFor(
+				ctx.d,
+				sections.map((s) => s.bodyJson ?? null),
+			),
 		}
 	},
 })
@@ -201,7 +225,10 @@ export const getSection = define({
 		const found = sections.find((s) => s.address === addressValue)
 		if (!found) throw new NotFound(`"${v.title}" has no section "${addressValue}".`)
 		// Numbered as the whole document numbers them, filtered to what this section cites.
-		const all = await referencesFor(ctx.d, sections.map((s) => s.bodyJson ?? null))
+		const all = await referencesFor(
+			ctx.d,
+			sections.map((s) => s.bodyJson ?? null),
+		)
 		const cited = new Set(Object.keys(citationNumbers([found.bodyJson ?? null])))
 		return {
 			document: summaryOf(ctx, v),
@@ -230,7 +257,10 @@ export const getDocumentFull = define({
 		return {
 			document: summaryOf(ctx, v),
 			sections: sections.map((s) => sectionOf(ctx, v.slug, s)),
-			references: await referencesFor(ctx.d, sections.map((s) => s.bodyJson ?? null)),
+			references: await referencesFor(
+				ctx.d,
+				sections.map((s) => s.bodyJson ?? null),
+			),
 		}
 	},
 })
@@ -267,7 +297,9 @@ export const listVersions = define({
 const composedSection = section.extend({
 	source: z
 		.enum(['shared', 'cancer', 'population'])
-		.describe('shared = core content both pathways render; cancer/population = that pathway’s own section'),
+		.describe(
+			'shared = core content both pathways render; cancer/population = that pathway’s own section',
+		),
 })
 
 export const getComposed = define({
@@ -292,22 +324,36 @@ export const getComposed = define({
 		const p = await versionOf(ctx.d, population)
 		const cs = await sectionsOf(ctx.d, c.versionId)
 		const ps = await sectionsOf(ctx.d, p.versionId)
-		const populationOwned = new Map(ps.filter((s) => s.ownership === 'owned').map((s) => [s.address, s]))
-		const ordered: { section: FrozenSection; slug: string; source: 'shared' | 'cancer' | 'population' }[] = []
+		const populationOwned = new Map(
+			ps.filter((s) => s.ownership === 'owned').map((s) => [s.address, s]),
+		)
+		const ordered: {
+			section: FrozenSection
+			slug: string
+			source: 'shared' | 'cancer' | 'population'
+		}[] = []
 		for (const s of cs) {
-			ordered.push({ section: s, slug: c.slug, source: s.ownership === 'shared' ? 'shared' : 'cancer' })
+			ordered.push({
+				section: s,
+				slug: c.slug,
+				source: s.ownership === 'shared' ? 'shared' : 'cancer',
+			})
 			const own = populationOwned.get(s.address)
 			if (own) {
 				ordered.push({ section: own, slug: p.slug, source: 'population' })
 				populationOwned.delete(s.address)
 			}
 		}
-		for (const own of populationOwned.values()) ordered.push({ section: own, slug: p.slug, source: 'population' })
+		for (const own of populationOwned.values())
+			ordered.push({ section: own, slug: p.slug, source: 'population' })
 		return {
 			cancer: summaryOf(ctx, c),
 			population: summaryOf(ctx, p),
 			sections: ordered.map((o) => ({ ...sectionOf(ctx, o.slug, o.section), source: o.source })),
-			references: await referencesFor(ctx.d, ordered.map((o) => o.section.bodyJson ?? null)),
+			references: await referencesFor(
+				ctx.d,
+				ordered.map((o) => o.section.bodyJson ?? null),
+			),
 		}
 	},
 })
@@ -330,7 +376,13 @@ export const search = define({
 	tags: ['search'],
 	input: z.object({
 		query: z.string().min(1).max(200).describe('What to look for'),
-		limit: z.coerce.number().int().min(1).max(50).optional().describe('At most this many results (default 20)'),
+		limit: z.coerce
+			.number()
+			.int()
+			.min(1)
+			.max(50)
+			.optional()
+			.describe('At most this many results (default 20)'),
 	}),
 	output: z.object({ results: z.array(searchHit) }),
 	rest: { method: 'GET', path: '/search' },

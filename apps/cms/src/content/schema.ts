@@ -792,4 +792,5 @@ export const isContentNode = (value: unknown): value is JsonNode => {
 	}
 }
 
-export const contentNode = (value: unknown): JsonNode | null => (isContentNode(value) ? value : null)
+export const contentNode = (value: unknown): JsonNode | null =>
+	isContentNode(value) ? value : null

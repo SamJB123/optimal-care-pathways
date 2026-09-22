@@ -12,7 +12,9 @@ import { getDocumentFull } from './operations.ts'
 import { apiContext } from './server.ts'
 
 export const publishedDocumentFull = createServerFn({ method: 'GET' })
-	.inputValidator(z.object({ slug: z.string().min(1).max(120), version: z.number().int().positive().optional() }))
+	.inputValidator(
+		z.object({ slug: z.string().min(1).max(120), version: z.number().int().positive().optional() }),
+	)
 	.handler(async ({ data }) => {
 		const { env } = await envOf()
 		const full = await getDocumentFull.handler(data, apiContext(env))
