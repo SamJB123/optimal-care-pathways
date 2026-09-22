@@ -1,0 +1,534 @@
+diff --git a/dist/index-bun.cjs b/dist/index-bun.cjs
+--- a/dist/index-bun.cjs
++++ b/dist/index-bun.cjs
+@@ -2352,7 +2352,21 @@ var RpcSessionImpl = class {
+ 		});
+ 		this.imports.push(new ImportTableEntry(this, 0, false));
+ 		const snapshot = options.__experimental_restoreSnapshot;
+-		if (snapshot) this.restoreFromSnapshot(snapshot);
++		// PATCH (aicolab 2026-09-22): a restore that throws part-way has already dispatched the
++		// replays evaluated before the throw — their calls are in flight against the app's
++		// RpcTargets. Nothing ever disposed their results: __experimental_newHibernatable-
++		// WebSocketRpcSession catches the throw, closes the socket 1011, deletes the stored
++		// session and returns undefined, and this half-built RpcSessionImpl was simply dropped.
++		// Seen in optimal-care-pathways (apps/cms document-room-storm suite): after a DO
++		// eviction and a re-seal the room held TWO presence members — the `joinOnline` replayed
++		// by the abandoned restore plus the live one. abort() disposes every export hook, which
++		// is exactly what handleClose does for a session that restored cleanly.
++		if (snapshot) try {
++			this.restoreFromSnapshot(snapshot);
++		} catch (err) {
++			this.abort(err, false);
++			throw err;
++		}
+ 		this.readLoop().catch((err) => this.abort(err));
+ 	}
+ 	trace(phase, detail) {
+@@ -2477,6 +2491,28 @@ var RpcSessionImpl = class {
+ 				this.reverseExports.delete(entry.hook);
+ 				entry.hook.dispose();
+ 			}
++			// PATCH (aicolab 2026-09-22): importReplays was append-only. A replay whose pipeline
++			// base is a NEGATIVE export — a capability this side returned, e.g.
++			// `["pipeline", -5, ["body"], [sink]]` on the facet `openDoc` returned — can never be
++			// re-evaluated once the peer releases that export: the entry is deleted here, but the
++			// replay stayed and the next hibernation wake threw "no such entry on exports
++			// table: -5" out of the RpcSession constructor. (Positive bases are different: they
++			// live in replayBaseExprs and are re-created transiently on restore.) Found by a
++			// storm test that mounted and left three editors ten times, then evicted the DO:
++			// every cycle appended three dead body replays (snapshot +1.6 KB per cycle) and the
++			// wake failed on the first of them, six replays in.
++			// Do not prune based on producesExportIds: a call can return a releasable handle
++			// AND retain a callback independently. Releasing every returned export does not
++			// end that registration. The provenance test "keeps a retained callback registration
++			// after the returned lease is released" covers this case.
++			if (exportId < 0 && this.importReplays.length > 0) {
++				const before = this.importReplays.length;
++				this.importReplays = this.importReplays.filter((replay) => pipelineBaseId(replay.expr) !== exportId);
++				if (this.importReplays.length !== before) this.trace("releaseExport.pruneImportReplays", {
++					exportId,
++					pruned: before - this.importReplays.length
++				});
++			}
+ 		}
+ 	}
+ 	replacePositiveExport(exportId, entry) {
+@@ -3240,7 +3276,17 @@ var RpcSessionImpl = class {
+ 			else if (base.pulling) pendingPulls.push(base.id);
+ 		}
+ 		if (snapshot.importReplays && snapshot.importReplays.length > 0) {
+-			this.importReplays = snapshot.importReplays.map(cloneImportReplay);
++			// PATCH (aicolab 2026-09-22): snapshots persisted before releaseExport pruned dead
++			// replays still carry them (every long-lived room in dev and prod when this landed).
++			// A replay whose base is not on the exports table — negative exports were restored
++			// from the snapshot above, positive bases were inserted just above — is dropped and
++			// traced instead of failing the whole session: one dead replay is not a stale session.
++			this.importReplays = snapshot.importReplays.map(cloneImportReplay).filter((replay) => {
++				const baseId = pipelineBaseId(replay.expr);
++				if (baseId === void 0 || this.exports[baseId]) return true;
++				this.trace("restoreFromSnapshot.importReplay.droppedMissingBase", { baseId });
++				return false;
++			});
+ 			for (let replay of this.importReplays) {
+ 				const producesExportIds = replay.producesExportIds ?? [];
+ 				this.trace("restoreFromSnapshot.importReplay.begin", { producesExportCount: producesExportIds.length });
+@@ -3278,6 +3324,14 @@ var RpcSessionImpl = class {
+ 		return new RpcStub$1(new RpcImportHook(false, entry));
+ 	}
+ };
++// PATCH (aicolab 2026-09-22): the pipeline base of a replayable push —
++// `["pipeline"|"import"|"remap", <export id>, path, args]`. Restore evaluates every
++// importReplay against the exports table; a base that is no longer there throws
++// "no such entry on exports table" and used to abandon the whole session (see releaseExport,
++// restoreFromSnapshot and the RpcSessionImpl constructor).
++function pipelineBaseId(expr) {
++	return expr instanceof Array && expr.length >= 2 && (expr[0] === "pipeline" || expr[0] === "import" || expr[0] === "remap") && typeof expr[1] === "number" ? expr[1] : void 0;
++}
+ function collectPositiveExportBaseIds(value, out) {
+ 	if (value instanceof Array) {
+ 		if (value.length >= 2 && (value[0] === "pipeline" || value[0] === "import" || value[0] === "remap") && typeof value[1] === "number" && value[1] > 0) out.add(value[1]);
+diff --git a/dist/index-bun.js b/dist/index-bun.js
+--- a/dist/index-bun.js
++++ b/dist/index-bun.js
+@@ -2350,7 +2350,21 @@ var RpcSessionImpl = class {
+ 		});
+ 		this.imports.push(new ImportTableEntry(this, 0, false));
+ 		const snapshot = options.__experimental_restoreSnapshot;
+-		if (snapshot) this.restoreFromSnapshot(snapshot);
++		// PATCH (aicolab 2026-09-22): a restore that throws part-way has already dispatched the
++		// replays evaluated before the throw — their calls are in flight against the app's
++		// RpcTargets. Nothing ever disposed their results: __experimental_newHibernatable-
++		// WebSocketRpcSession catches the throw, closes the socket 1011, deletes the stored
++		// session and returns undefined, and this half-built RpcSessionImpl was simply dropped.
++		// Seen in optimal-care-pathways (apps/cms document-room-storm suite): after a DO
++		// eviction and a re-seal the room held TWO presence members — the `joinOnline` replayed
++		// by the abandoned restore plus the live one. abort() disposes every export hook, which
++		// is exactly what handleClose does for a session that restored cleanly.
++		if (snapshot) try {
++			this.restoreFromSnapshot(snapshot);
++		} catch (err) {
++			this.abort(err, false);
++			throw err;
++		}
+ 		this.readLoop().catch((err) => this.abort(err));
+ 	}
+ 	trace(phase, detail) {
+@@ -2475,6 +2489,28 @@ var RpcSessionImpl = class {
+ 				this.reverseExports.delete(entry.hook);
+ 				entry.hook.dispose();
+ 			}
++			// PATCH (aicolab 2026-09-22): importReplays was append-only. A replay whose pipeline
++			// base is a NEGATIVE export — a capability this side returned, e.g.
++			// `["pipeline", -5, ["body"], [sink]]` on the facet `openDoc` returned — can never be
++			// re-evaluated once the peer releases that export: the entry is deleted here, but the
++			// replay stayed and the next hibernation wake threw "no such entry on exports
++			// table: -5" out of the RpcSession constructor. (Positive bases are different: they
++			// live in replayBaseExprs and are re-created transiently on restore.) Found by a
++			// storm test that mounted and left three editors ten times, then evicted the DO:
++			// every cycle appended three dead body replays (snapshot +1.6 KB per cycle) and the
++			// wake failed on the first of them, six replays in.
++			// Do not prune based on producesExportIds: a call can return a releasable handle
++			// AND retain a callback independently. Releasing every returned export does not
++			// end that registration. The provenance test "keeps a retained callback registration
++			// after the returned lease is released" covers this case.
++			if (exportId < 0 && this.importReplays.length > 0) {
++				const before = this.importReplays.length;
++				this.importReplays = this.importReplays.filter((replay) => pipelineBaseId(replay.expr) !== exportId);
++				if (this.importReplays.length !== before) this.trace("releaseExport.pruneImportReplays", {
++					exportId,
++					pruned: before - this.importReplays.length
++				});
++			}
+ 		}
+ 	}
+ 	replacePositiveExport(exportId, entry) {
+@@ -3238,7 +3274,17 @@ var RpcSessionImpl = class {
+ 			else if (base.pulling) pendingPulls.push(base.id);
+ 		}
+ 		if (snapshot.importReplays && snapshot.importReplays.length > 0) {
+-			this.importReplays = snapshot.importReplays.map(cloneImportReplay);
++			// PATCH (aicolab 2026-09-22): snapshots persisted before releaseExport pruned dead
++			// replays still carry them (every long-lived room in dev and prod when this landed).
++			// A replay whose base is not on the exports table — negative exports were restored
++			// from the snapshot above, positive bases were inserted just above — is dropped and
++			// traced instead of failing the whole session: one dead replay is not a stale session.
++			this.importReplays = snapshot.importReplays.map(cloneImportReplay).filter((replay) => {
++				const baseId = pipelineBaseId(replay.expr);
++				if (baseId === void 0 || this.exports[baseId]) return true;
++				this.trace("restoreFromSnapshot.importReplay.droppedMissingBase", { baseId });
++				return false;
++			});
+ 			for (let replay of this.importReplays) {
+ 				const producesExportIds = replay.producesExportIds ?? [];
+ 				this.trace("restoreFromSnapshot.importReplay.begin", { producesExportCount: producesExportIds.length });
+@@ -3276,6 +3322,14 @@ var RpcSessionImpl = class {
+ 		return new RpcStub$1(new RpcImportHook(false, entry));
+ 	}
+ };
++// PATCH (aicolab 2026-09-22): the pipeline base of a replayable push —
++// `["pipeline"|"import"|"remap", <export id>, path, args]`. Restore evaluates every
++// importReplay against the exports table; a base that is no longer there throws
++// "no such entry on exports table" and used to abandon the whole session (see releaseExport,
++// restoreFromSnapshot and the RpcSessionImpl constructor).
++function pipelineBaseId(expr) {
++	return expr instanceof Array && expr.length >= 2 && (expr[0] === "pipeline" || expr[0] === "import" || expr[0] === "remap") && typeof expr[1] === "number" ? expr[1] : void 0;
++}
+ function collectPositiveExportBaseIds(value, out) {
+ 	if (value instanceof Array) {
+ 		if (value.length >= 2 && (value[0] === "pipeline" || value[0] === "import" || value[0] === "remap") && typeof value[1] === "number" && value[1] > 0) out.add(value[1]);
+diff --git a/dist/index-workers.cjs b/dist/index-workers.cjs
+--- a/dist/index-workers.cjs
++++ b/dist/index-workers.cjs
+@@ -2385,7 +2385,21 @@ var RpcSessionImpl = class {
+ 		});
+ 		this.imports.push(new ImportTableEntry(this, 0, false));
+ 		const snapshot = options.__experimental_restoreSnapshot;
+-		if (snapshot) this.restoreFromSnapshot(snapshot);
++		// PATCH (aicolab 2026-09-22): a restore that throws part-way has already dispatched the
++		// replays evaluated before the throw — their calls are in flight against the app's
++		// RpcTargets. Nothing ever disposed their results: __experimental_newHibernatable-
++		// WebSocketRpcSession catches the throw, closes the socket 1011, deletes the stored
++		// session and returns undefined, and this half-built RpcSessionImpl was simply dropped.
++		// Seen in optimal-care-pathways (apps/cms document-room-storm suite): after a DO
++		// eviction and a re-seal the room held TWO presence members — the `joinOnline` replayed
++		// by the abandoned restore plus the live one. abort() disposes every export hook, which
++		// is exactly what handleClose does for a session that restored cleanly.
++		if (snapshot) try {
++			this.restoreFromSnapshot(snapshot);
++		} catch (err) {
++			this.abort(err, false);
++			throw err;
++		}
+ 		this.readLoop().catch((err) => this.abort(err));
+ 	}
+ 	trace(phase, detail) {
+@@ -2510,6 +2524,28 @@ var RpcSessionImpl = class {
+ 				this.reverseExports.delete(entry.hook);
+ 				entry.hook.dispose();
+ 			}
++			// PATCH (aicolab 2026-09-22): importReplays was append-only. A replay whose pipeline
++			// base is a NEGATIVE export — a capability this side returned, e.g.
++			// `["pipeline", -5, ["body"], [sink]]` on the facet `openDoc` returned — can never be
++			// re-evaluated once the peer releases that export: the entry is deleted here, but the
++			// replay stayed and the next hibernation wake threw "no such entry on exports
++			// table: -5" out of the RpcSession constructor. (Positive bases are different: they
++			// live in replayBaseExprs and are re-created transiently on restore.) Found by a
++			// storm test that mounted and left three editors ten times, then evicted the DO:
++			// every cycle appended three dead body replays (snapshot +1.6 KB per cycle) and the
++			// wake failed on the first of them, six replays in.
++			// Do not prune based on producesExportIds: a call can return a releasable handle
++			// AND retain a callback independently. Releasing every returned export does not
++			// end that registration. The provenance test "keeps a retained callback registration
++			// after the returned lease is released" covers this case.
++			if (exportId < 0 && this.importReplays.length > 0) {
++				const before = this.importReplays.length;
++				this.importReplays = this.importReplays.filter((replay) => pipelineBaseId(replay.expr) !== exportId);
++				if (this.importReplays.length !== before) this.trace("releaseExport.pruneImportReplays", {
++					exportId,
++					pruned: before - this.importReplays.length
++				});
++			}
+ 		}
+ 	}
+ 	replacePositiveExport(exportId, entry) {
+@@ -3273,7 +3309,17 @@ var RpcSessionImpl = class {
+ 			else if (base.pulling) pendingPulls.push(base.id);
+ 		}
+ 		if (snapshot.importReplays && snapshot.importReplays.length > 0) {
+-			this.importReplays = snapshot.importReplays.map(cloneImportReplay);
++			// PATCH (aicolab 2026-09-22): snapshots persisted before releaseExport pruned dead
++			// replays still carry them (every long-lived room in dev and prod when this landed).
++			// A replay whose base is not on the exports table — negative exports were restored
++			// from the snapshot above, positive bases were inserted just above — is dropped and
++			// traced instead of failing the whole session: one dead replay is not a stale session.
++			this.importReplays = snapshot.importReplays.map(cloneImportReplay).filter((replay) => {
++				const baseId = pipelineBaseId(replay.expr);
++				if (baseId === void 0 || this.exports[baseId]) return true;
++				this.trace("restoreFromSnapshot.importReplay.droppedMissingBase", { baseId });
++				return false;
++			});
+ 			for (let replay of this.importReplays) {
+ 				const producesExportIds = replay.producesExportIds ?? [];
+ 				this.trace("restoreFromSnapshot.importReplay.begin", { producesExportCount: producesExportIds.length });
+@@ -3311,6 +3357,14 @@ var RpcSessionImpl = class {
+ 		return new RpcStub$1(new RpcImportHook(false, entry));
+ 	}
+ };
++// PATCH (aicolab 2026-09-22): the pipeline base of a replayable push —
++// `["pipeline"|"import"|"remap", <export id>, path, args]`. Restore evaluates every
++// importReplay against the exports table; a base that is no longer there throws
++// "no such entry on exports table" and used to abandon the whole session (see releaseExport,
++// restoreFromSnapshot and the RpcSessionImpl constructor).
++function pipelineBaseId(expr) {
++	return expr instanceof Array && expr.length >= 2 && (expr[0] === "pipeline" || expr[0] === "import" || expr[0] === "remap") && typeof expr[1] === "number" ? expr[1] : void 0;
++}
+ function collectPositiveExportBaseIds(value, out) {
+ 	if (value instanceof Array) {
+ 		if (value.length >= 2 && (value[0] === "pipeline" || value[0] === "import" || value[0] === "remap") && typeof value[1] === "number" && value[1] > 0) out.add(value[1]);
+diff --git a/dist/index-workers.js b/dist/index-workers.js
+--- a/dist/index-workers.js
++++ b/dist/index-workers.js
+@@ -2356,7 +2356,21 @@ var RpcSessionImpl = class {
+ 		});
+ 		this.imports.push(new ImportTableEntry(this, 0, false));
+ 		const snapshot = options.__experimental_restoreSnapshot;
+-		if (snapshot) this.restoreFromSnapshot(snapshot);
++		// PATCH (aicolab 2026-09-22): a restore that throws part-way has already dispatched the
++		// replays evaluated before the throw — their calls are in flight against the app's
++		// RpcTargets. Nothing ever disposed their results: __experimental_newHibernatable-
++		// WebSocketRpcSession catches the throw, closes the socket 1011, deletes the stored
++		// session and returns undefined, and this half-built RpcSessionImpl was simply dropped.
++		// Seen in optimal-care-pathways (apps/cms document-room-storm suite): after a DO
++		// eviction and a re-seal the room held TWO presence members — the `joinOnline` replayed
++		// by the abandoned restore plus the live one. abort() disposes every export hook, which
++		// is exactly what handleClose does for a session that restored cleanly.
++		if (snapshot) try {
++			this.restoreFromSnapshot(snapshot);
++		} catch (err) {
++			this.abort(err, false);
++			throw err;
++		}
+ 		this.readLoop().catch((err) => this.abort(err));
+ 	}
+ 	trace(phase, detail) {
+@@ -2481,6 +2495,28 @@ var RpcSessionImpl = class {
+ 				this.reverseExports.delete(entry.hook);
+ 				entry.hook.dispose();
+ 			}
++			// PATCH (aicolab 2026-09-22): importReplays was append-only. A replay whose pipeline
++			// base is a NEGATIVE export — a capability this side returned, e.g.
++			// `["pipeline", -5, ["body"], [sink]]` on the facet `openDoc` returned — can never be
++			// re-evaluated once the peer releases that export: the entry is deleted here, but the
++			// replay stayed and the next hibernation wake threw "no such entry on exports
++			// table: -5" out of the RpcSession constructor. (Positive bases are different: they
++			// live in replayBaseExprs and are re-created transiently on restore.) Found by a
++			// storm test that mounted and left three editors ten times, then evicted the DO:
++			// every cycle appended three dead body replays (snapshot +1.6 KB per cycle) and the
++			// wake failed on the first of them, six replays in.
++			// Do not prune based on producesExportIds: a call can return a releasable handle
++			// AND retain a callback independently. Releasing every returned export does not
++			// end that registration. The provenance test "keeps a retained callback registration
++			// after the returned lease is released" covers this case.
++			if (exportId < 0 && this.importReplays.length > 0) {
++				const before = this.importReplays.length;
++				this.importReplays = this.importReplays.filter((replay) => pipelineBaseId(replay.expr) !== exportId);
++				if (this.importReplays.length !== before) this.trace("releaseExport.pruneImportReplays", {
++					exportId,
++					pruned: before - this.importReplays.length
++				});
++			}
+ 		}
+ 	}
+ 	replacePositiveExport(exportId, entry) {
+@@ -3244,7 +3280,17 @@ var RpcSessionImpl = class {
+ 			else if (base.pulling) pendingPulls.push(base.id);
+ 		}
+ 		if (snapshot.importReplays && snapshot.importReplays.length > 0) {
+-			this.importReplays = snapshot.importReplays.map(cloneImportReplay);
++			// PATCH (aicolab 2026-09-22): snapshots persisted before releaseExport pruned dead
++			// replays still carry them (every long-lived room in dev and prod when this landed).
++			// A replay whose base is not on the exports table — negative exports were restored
++			// from the snapshot above, positive bases were inserted just above — is dropped and
++			// traced instead of failing the whole session: one dead replay is not a stale session.
++			this.importReplays = snapshot.importReplays.map(cloneImportReplay).filter((replay) => {
++				const baseId = pipelineBaseId(replay.expr);
++				if (baseId === void 0 || this.exports[baseId]) return true;
++				this.trace("restoreFromSnapshot.importReplay.droppedMissingBase", { baseId });
++				return false;
++			});
+ 			for (let replay of this.importReplays) {
+ 				const producesExportIds = replay.producesExportIds ?? [];
+ 				this.trace("restoreFromSnapshot.importReplay.begin", { producesExportCount: producesExportIds.length });
+@@ -3282,6 +3328,14 @@ var RpcSessionImpl = class {
+ 		return new RpcStub$1(new RpcImportHook(false, entry));
+ 	}
+ };
++// PATCH (aicolab 2026-09-22): the pipeline base of a replayable push —
++// `["pipeline"|"import"|"remap", <export id>, path, args]`. Restore evaluates every
++// importReplay against the exports table; a base that is no longer there throws
++// "no such entry on exports table" and used to abandon the whole session (see releaseExport,
++// restoreFromSnapshot and the RpcSessionImpl constructor).
++function pipelineBaseId(expr) {
++	return expr instanceof Array && expr.length >= 2 && (expr[0] === "pipeline" || expr[0] === "import" || expr[0] === "remap") && typeof expr[1] === "number" ? expr[1] : void 0;
++}
+ function collectPositiveExportBaseIds(value, out) {
+ 	if (value instanceof Array) {
+ 		if (value.length >= 2 && (value[0] === "pipeline" || value[0] === "import" || value[0] === "remap") && typeof value[1] === "number" && value[1] > 0) out.add(value[1]);
+diff --git a/dist/index.cjs b/dist/index.cjs
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -2352,7 +2352,21 @@ var RpcSessionImpl = class {
+ 		});
+ 		this.imports.push(new ImportTableEntry(this, 0, false));
+ 		const snapshot = options.__experimental_restoreSnapshot;
+-		if (snapshot) this.restoreFromSnapshot(snapshot);
++		// PATCH (aicolab 2026-09-22): a restore that throws part-way has already dispatched the
++		// replays evaluated before the throw — their calls are in flight against the app's
++		// RpcTargets. Nothing ever disposed their results: __experimental_newHibernatable-
++		// WebSocketRpcSession catches the throw, closes the socket 1011, deletes the stored
++		// session and returns undefined, and this half-built RpcSessionImpl was simply dropped.
++		// Seen in optimal-care-pathways (apps/cms document-room-storm suite): after a DO
++		// eviction and a re-seal the room held TWO presence members — the `joinOnline` replayed
++		// by the abandoned restore plus the live one. abort() disposes every export hook, which
++		// is exactly what handleClose does for a session that restored cleanly.
++		if (snapshot) try {
++			this.restoreFromSnapshot(snapshot);
++		} catch (err) {
++			this.abort(err, false);
++			throw err;
++		}
+ 		this.readLoop().catch((err) => this.abort(err));
+ 	}
+ 	trace(phase, detail) {
+@@ -2477,6 +2491,28 @@ var RpcSessionImpl = class {
+ 				this.reverseExports.delete(entry.hook);
+ 				entry.hook.dispose();
+ 			}
++			// PATCH (aicolab 2026-09-22): importReplays was append-only. A replay whose pipeline
++			// base is a NEGATIVE export — a capability this side returned, e.g.
++			// `["pipeline", -5, ["body"], [sink]]` on the facet `openDoc` returned — can never be
++			// re-evaluated once the peer releases that export: the entry is deleted here, but the
++			// replay stayed and the next hibernation wake threw "no such entry on exports
++			// table: -5" out of the RpcSession constructor. (Positive bases are different: they
++			// live in replayBaseExprs and are re-created transiently on restore.) Found by a
++			// storm test that mounted and left three editors ten times, then evicted the DO:
++			// every cycle appended three dead body replays (snapshot +1.6 KB per cycle) and the
++			// wake failed on the first of them, six replays in.
++			// Do not prune based on producesExportIds: a call can return a releasable handle
++			// AND retain a callback independently. Releasing every returned export does not
++			// end that registration. The provenance test "keeps a retained callback registration
++			// after the returned lease is released" covers this case.
++			if (exportId < 0 && this.importReplays.length > 0) {
++				const before = this.importReplays.length;
++				this.importReplays = this.importReplays.filter((replay) => pipelineBaseId(replay.expr) !== exportId);
++				if (this.importReplays.length !== before) this.trace("releaseExport.pruneImportReplays", {
++					exportId,
++					pruned: before - this.importReplays.length
++				});
++			}
+ 		}
+ 	}
+ 	replacePositiveExport(exportId, entry) {
+@@ -3240,7 +3276,17 @@ var RpcSessionImpl = class {
+ 			else if (base.pulling) pendingPulls.push(base.id);
+ 		}
+ 		if (snapshot.importReplays && snapshot.importReplays.length > 0) {
+-			this.importReplays = snapshot.importReplays.map(cloneImportReplay);
++			// PATCH (aicolab 2026-09-22): snapshots persisted before releaseExport pruned dead
++			// replays still carry them (every long-lived room in dev and prod when this landed).
++			// A replay whose base is not on the exports table — negative exports were restored
++			// from the snapshot above, positive bases were inserted just above — is dropped and
++			// traced instead of failing the whole session: one dead replay is not a stale session.
++			this.importReplays = snapshot.importReplays.map(cloneImportReplay).filter((replay) => {
++				const baseId = pipelineBaseId(replay.expr);
++				if (baseId === void 0 || this.exports[baseId]) return true;
++				this.trace("restoreFromSnapshot.importReplay.droppedMissingBase", { baseId });
++				return false;
++			});
+ 			for (let replay of this.importReplays) {
+ 				const producesExportIds = replay.producesExportIds ?? [];
+ 				this.trace("restoreFromSnapshot.importReplay.begin", { producesExportCount: producesExportIds.length });
+@@ -3278,6 +3324,14 @@ var RpcSessionImpl = class {
+ 		return new RpcStub$1(new RpcImportHook(false, entry));
+ 	}
+ };
++// PATCH (aicolab 2026-09-22): the pipeline base of a replayable push —
++// `["pipeline"|"import"|"remap", <export id>, path, args]`. Restore evaluates every
++// importReplay against the exports table; a base that is no longer there throws
++// "no such entry on exports table" and used to abandon the whole session (see releaseExport,
++// restoreFromSnapshot and the RpcSessionImpl constructor).
++function pipelineBaseId(expr) {
++	return expr instanceof Array && expr.length >= 2 && (expr[0] === "pipeline" || expr[0] === "import" || expr[0] === "remap") && typeof expr[1] === "number" ? expr[1] : void 0;
++}
+ function collectPositiveExportBaseIds(value, out) {
+ 	if (value instanceof Array) {
+ 		if (value.length >= 2 && (value[0] === "pipeline" || value[0] === "import" || value[0] === "remap") && typeof value[1] === "number" && value[1] > 0) out.add(value[1]);
+diff --git a/dist/index.js b/dist/index.js
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -2350,7 +2350,21 @@ var RpcSessionImpl = class {
+ 		});
+ 		this.imports.push(new ImportTableEntry(this, 0, false));
+ 		const snapshot = options.__experimental_restoreSnapshot;
+-		if (snapshot) this.restoreFromSnapshot(snapshot);
++		// PATCH (aicolab 2026-09-22): a restore that throws part-way has already dispatched the
++		// replays evaluated before the throw — their calls are in flight against the app's
++		// RpcTargets. Nothing ever disposed their results: __experimental_newHibernatable-
++		// WebSocketRpcSession catches the throw, closes the socket 1011, deletes the stored
++		// session and returns undefined, and this half-built RpcSessionImpl was simply dropped.
++		// Seen in optimal-care-pathways (apps/cms document-room-storm suite): after a DO
++		// eviction and a re-seal the room held TWO presence members — the `joinOnline` replayed
++		// by the abandoned restore plus the live one. abort() disposes every export hook, which
++		// is exactly what handleClose does for a session that restored cleanly.
++		if (snapshot) try {
++			this.restoreFromSnapshot(snapshot);
++		} catch (err) {
++			this.abort(err, false);
++			throw err;
++		}
+ 		this.readLoop().catch((err) => this.abort(err));
+ 	}
+ 	trace(phase, detail) {
+@@ -2475,6 +2489,28 @@ var RpcSessionImpl = class {
+ 				this.reverseExports.delete(entry.hook);
+ 				entry.hook.dispose();
+ 			}
++			// PATCH (aicolab 2026-09-22): importReplays was append-only. A replay whose pipeline
++			// base is a NEGATIVE export — a capability this side returned, e.g.
++			// `["pipeline", -5, ["body"], [sink]]` on the facet `openDoc` returned — can never be
++			// re-evaluated once the peer releases that export: the entry is deleted here, but the
++			// replay stayed and the next hibernation wake threw "no such entry on exports
++			// table: -5" out of the RpcSession constructor. (Positive bases are different: they
++			// live in replayBaseExprs and are re-created transiently on restore.) Found by a
++			// storm test that mounted and left three editors ten times, then evicted the DO:
++			// every cycle appended three dead body replays (snapshot +1.6 KB per cycle) and the
++			// wake failed on the first of them, six replays in.
++			// Do not prune based on producesExportIds: a call can return a releasable handle
++			// AND retain a callback independently. Releasing every returned export does not
++			// end that registration. The provenance test "keeps a retained callback registration
++			// after the returned lease is released" covers this case.
++			if (exportId < 0 && this.importReplays.length > 0) {
++				const before = this.importReplays.length;
++				this.importReplays = this.importReplays.filter((replay) => pipelineBaseId(replay.expr) !== exportId);
++				if (this.importReplays.length !== before) this.trace("releaseExport.pruneImportReplays", {
++					exportId,
++					pruned: before - this.importReplays.length
++				});
++			}
+ 		}
+ 	}
+ 	replacePositiveExport(exportId, entry) {
+@@ -3238,7 +3274,17 @@ var RpcSessionImpl = class {
+ 			else if (base.pulling) pendingPulls.push(base.id);
+ 		}
+ 		if (snapshot.importReplays && snapshot.importReplays.length > 0) {
+-			this.importReplays = snapshot.importReplays.map(cloneImportReplay);
++			// PATCH (aicolab 2026-09-22): snapshots persisted before releaseExport pruned dead
++			// replays still carry them (every long-lived room in dev and prod when this landed).
++			// A replay whose base is not on the exports table — negative exports were restored
++			// from the snapshot above, positive bases were inserted just above — is dropped and
++			// traced instead of failing the whole session: one dead replay is not a stale session.
++			this.importReplays = snapshot.importReplays.map(cloneImportReplay).filter((replay) => {
++				const baseId = pipelineBaseId(replay.expr);
++				if (baseId === void 0 || this.exports[baseId]) return true;
++				this.trace("restoreFromSnapshot.importReplay.droppedMissingBase", { baseId });
++				return false;
++			});
+ 			for (let replay of this.importReplays) {
+ 				const producesExportIds = replay.producesExportIds ?? [];
+ 				this.trace("restoreFromSnapshot.importReplay.begin", { producesExportCount: producesExportIds.length });
+@@ -3276,6 +3322,14 @@ var RpcSessionImpl = class {
+ 		return new RpcStub$1(new RpcImportHook(false, entry));
+ 	}
+ };
++// PATCH (aicolab 2026-09-22): the pipeline base of a replayable push —
++// `["pipeline"|"import"|"remap", <export id>, path, args]`. Restore evaluates every
++// importReplay against the exports table; a base that is no longer there throws
++// "no such entry on exports table" and used to abandon the whole session (see releaseExport,
++// restoreFromSnapshot and the RpcSessionImpl constructor).
++function pipelineBaseId(expr) {
++	return expr instanceof Array && expr.length >= 2 && (expr[0] === "pipeline" || expr[0] === "import" || expr[0] === "remap") && typeof expr[1] === "number" ? expr[1] : void 0;
++}
+ function collectPositiveExportBaseIds(value, out) {
+ 	if (value instanceof Array) {
+ 		if (value.length >= 2 && (value[0] === "pipeline" || value[0] === "import" || value[0] === "remap") && typeof value[1] === "number" && value[1] > 0) out.add(value[1]);

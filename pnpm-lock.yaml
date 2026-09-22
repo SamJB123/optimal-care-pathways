@@ -169,6 +169,7 @@ overrides:
 
 patchedDependencies:
   '@tanstack/db@0.9.2': e9dc15e8a9aceec8d1f1f8a4bdac4da0713681075e620e49dd3a2db85f41038b
+  capnweb-experimental-hibernation@0.12.0-hibernation-cbor.1: 0a6178e3de105d0de05a98fb08c87d6982414552eb92412ca69e85bd1e6a3e7e
 
 importers:
 
@@ -307,7 +308,7 @@ importers:
         version: 1.7.5(35c344bc00a18ad5b79f876bd436de66)
       capnweb-experimental-hibernation:
         specifier: 'catalog:'
-        version: 0.12.0-hibernation-cbor.1(cbor-x@1.6.6)
+        version: 0.12.0-hibernation-cbor.1(patch_hash=0a6178e3de105d0de05a98fb08c87d6982414552eb92412ca69e85bd1e6a3e7e)(cbor-x@1.6.6)
       drizzle-orm:
         specifier: 'catalog:'
         version: 1.0.0-rc.4(@cloudflare/workers-types@5.20260921.1)(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(@types/sql.js@1.4.11)(pg@8.23.0)(sql.js@1.14.2)(valibot@1.2.0(typescript@7.0.2))(zod@4.6.5)
@@ -404,7 +405,7 @@ importers:
         version: 14.0.0-rc.26
       capnweb-experimental-hibernation:
         specifier: 'catalog:'
-        version: 0.12.0-hibernation-cbor.1(cbor-x@1.6.6)
+        version: 0.12.0-hibernation-cbor.1(patch_hash=0a6178e3de105d0de05a98fb08c87d6982414552eb92412ca69e85bd1e6a3e7e)(cbor-x@1.6.6)
       lib0:
         specifier: 1.0.0-rc.32
         version: 1.0.0-rc.32
@@ -608,7 +609,7 @@ importers:
         version: 0.24.0(@ai-sdk/react@3.0.232(react@19.3.0)(zod@4.6.5))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@modelcontextprotocol/client@2.0.0)(@modelcontextprotocol/sdk@1.30.0(@cfworker/json-schema@4.1.1)(zod@4.6.5))(@modelcontextprotocol/server@2.0.0)(@tanstack/ai@0.58.0(@opentelemetry/api@1.9.1)(zod@4.6.5))(ai@6.0.230(zod@4.6.5))(react@19.3.0)(rolldown@1.2.9)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(zod@4.6.5)
       capnweb-experimental-hibernation:
         specifier: 'catalog:'
-        version: 0.12.0-hibernation-cbor.1(cbor-x@1.6.6)
+        version: 0.12.0-hibernation-cbor.1(patch_hash=0a6178e3de105d0de05a98fb08c87d6982414552eb92412ca69e85bd1e6a3e7e)(cbor-x@1.6.6)
       cbor-x:
         specifier: 'catalog:'
         version: 1.6.6
@@ -11675,7 +11676,7 @@ snapshots:
 
   caniuse-lite@1.0.30001810: {}
 
-  capnweb-experimental-hibernation@0.12.0-hibernation-cbor.1(cbor-x@1.6.6):
+  capnweb-experimental-hibernation@0.12.0-hibernation-cbor.1(patch_hash=0a6178e3de105d0de05a98fb08c87d6982414552eb92412ca69e85bd1e6a3e7e)(cbor-x@1.6.6):
     optionalDependencies:
       cbor-x: 1.6.6
 
