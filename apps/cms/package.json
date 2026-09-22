@@ -17,6 +17,7 @@
 		"auth:db:migrate:local": "wrangler d1 migrations apply ocp-auth-d1 --local --persist-to ./.wrangler/state -c ../auth/wrangler.jsonc"
 	},
 	"dependencies": {
+		"@aicolab/app-kit": "workspace:^",
 		"@aicolab/better-auth": "workspace:^",
 		"@aicolab/cloudflare": "workspace:^",
 		"@aicolab/room-service": "workspace:^",

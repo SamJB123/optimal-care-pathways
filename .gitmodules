@@ -16,3 +16,6 @@
 [submodule "packages/ui-solid"]
 	path = packages/ui-solid
 	url = https://github.com/SamJB123/aicolab-ui-solid.git
+[submodule "packages/app-kit"]
+	path = packages/app-kit
+	url = https://github.com/SamJB123/aicolab-app-kit.git
