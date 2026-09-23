@@ -1,6 +1,17 @@
 {
 	"pathway": "neuroendocrine-tumours",
-	"visualPass": null,
+	"visualPass": {
+		"pages": "1-96 of 96",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10): step bands over their panels; the labels under a Timeframe box are its bold lead-ins; 'No treatment / active surveillance (watch and wait)' wraps over two lines and is one panel; 'Palliative care:' and 'Systemic therapy:' are panels over their text.",
+			"Table 1 is a cell grid whose white-lettered top row is its header; Table 2 is a ruled table.",
+			"Figure 4 (page 35) is a rendered figure; its two asterisked notes and its 'Source:' line are three paragraphs under it.",
+			"A step number printed with a space after its stop ('3. 6') is read as 3.6.",
+			"'Published in June 2022.' on the imprint page (page 4); first edition.",
+			"Page 2 is blank, page 95 carries only its footer, and the back cover (page 96) carries only the cover artwork."
+		]
+	},
 	"edition": "First edition",
 	"publicationDate": "2022-06-01",
 	"placements": [
@@ -917,15 +928,9 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-4/no-treatment-active-surveillance",
-			"legacyTitle": "No treatment / active surveillance",
-			"destination": "4/quick-reference-guide/no-treatment-active-surveillance",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-4/watch-and-wait",
-			"legacyTitle": "(watch and wait)",
-			"destination": "4/quick-reference-guide/watch-and-wait",
+			"legacyKey": "summary/step-4/no-treatment-active-surveillance-watch-and-wait",
+			"legacyTitle": "No treatment / active surveillance (watch and wait)",
+			"destination": "4/quick-reference-guide/no-treatment-active-surveillance-watch-and-wait",
 			"how": "guide"
 		},
 		{
@@ -935,15 +940,15 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-4/peptide-receptor-radionuclide-therapy",
-			"legacyTitle": "Peptide receptor radionuclide therapy",
-			"destination": "4/quick-reference-guide/peptide-receptor-radionuclide-therapy",
+			"legacyKey": "summary/step-4/peptide-receptor-radionuclide-therapy-prrt",
+			"legacyTitle": "Peptide receptor radionuclide therapy (PRRT)",
+			"destination": "4/quick-reference-guide/peptide-receptor-radionuclide-therapy-prrt",
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-4/prrt",
-			"legacyTitle": "(PRRT)",
-			"destination": "4/quick-reference-guide/prrt",
+			"legacyKey": "summary/step-4/systemic-therapy",
+			"legacyTitle": "Systemic therapy",
+			"destination": "4/quick-reference-guide/systemic-therapy",
 			"how": "guide"
 		},
 		{
@@ -956,6 +961,12 @@
 			"legacyKey": "summary/step-4/clinical-trials",
 			"legacyTitle": "Clinical trials",
 			"destination": "4/quick-reference-guide/clinical-trials",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/palliative-care",
+			"legacyTitle": "Palliative care",
+			"destination": "4/quick-reference-guide/palliative-care",
 			"how": "guide"
 		},
 		{
@@ -974,36 +985,6 @@
 			"legacyKey": "summary/step-4/timeframe",
 			"legacyTitle": "Timeframe",
 			"destination": "4/quick-reference-guide/timeframe",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-4/surgery",
-			"legacyTitle": "Surgery",
-			"destination": "4/quick-reference-guide/surgery",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-4/localised-radiation-therapy",
-			"legacyTitle": "Localised radiation therapy",
-			"destination": "4/quick-reference-guide/localised-radiation-therapy",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-4/prrt",
-			"legacyTitle": "PRRT",
-			"destination": "4/quick-reference-guide/prrt-2",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-4/systemic-therapy",
-			"legacyTitle": "Systemic therapy",
-			"destination": "4/quick-reference-guide/systemic-therapy",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-4/liver-directed-therapy",
-			"legacyTitle": "Liver directed therapy",
-			"destination": "4/quick-reference-guide/liver-directed-therapy-2",
 			"how": "guide"
 		},
 		{
@@ -1520,15 +1501,11 @@
 		}
 	],
 	"citations": {
-		"matched": 270,
+		"matched": 274,
 		"unmatched": [
-			"Cancer Centre 2021; Roswell Park 2021; Department of Health and Ageing 2013 — \"Department of Health and Ageing 2013\": no entry in the printed reference list",
 			"I-Med Radiology Network 2020 — \"I-Med Radiology Network 2020\": no entry in the printed reference list",
-			"Haines 2011; Temel at al. 2010; Zimmermann et al. 2014 — \"Temel at al. 2010\": no entry in the printed reference list",
 			"ESMO 2014; Knigge et al. 2017 — \"ESMO 2014\": no entry in the printed reference list",
-			"Cancer Centre 2021; Roswell Park 2021; Department of Health and Ageing 2013 — \"Department of Health and Ageing 2013\": no entry in the printed reference list",
 			"I-Med Radiology Network 2020 — \"I-Med Radiology Network 2020\": no entry in the printed reference list",
-			"Haines 2011; Temel at al. 2010; Zimmermann et al. 2014 — \"Temel at al. 2010\": no entry in the printed reference list",
 			"ESMO 2014; Knigge et al. 2017 — \"ESMO 2014\": no entry in the printed reference list"
 		],
 		"byName": [

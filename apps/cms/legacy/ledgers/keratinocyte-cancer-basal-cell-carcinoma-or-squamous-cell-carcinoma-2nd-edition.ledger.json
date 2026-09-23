@@ -1,6 +1,18 @@
 {
 	"pathway": "keratinocyte-cancer-basal-cell-carcinoma-or-squamous-cell-carcinoma",
-	"visualPass": null,
+	"visualPass": {
+		"pages": "1-84 of 84",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages; 'BCC: A dome-shaped …' at the top of page 8 goes on the page 7 'Signs and symptoms' panel after the continued band; the checklists carried over pages 8 and 9 resume their step's checklist; the Step 4 Timeframe box sets 'Surgery:', 'Radiation therapy:' and 'Other therapies:' as bold lead-ins of its own text.",
+			"Section 4.2.4 (page 42) holds the training and health-service subheadings that follow it in the print (they are not under 4.2.3).",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 62) are rendered figures; Figure 3 (page 24) is the timeframes table.",
+			"The welcome's signatory (page 6) is a bold name over one role line; the signature image and the endorsement logos are dropped as design.",
+			"Contributors (pages 60-61) one entry per paragraph; the closing stakeholder statement is a bold paragraph.",
+			"'First published in December 2015. This edition published in June 2021.' on the imprint page; second edition.",
+			"Page 2 is blank; back cover (page 84) carries only the cover artwork."
+		]
+	},
 	"edition": "Second edition",
 	"publicationDate": "2021-06-01",
 	"placements": [
@@ -843,24 +855,6 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-4/surgery",
-			"legacyTitle": "Surgery",
-			"destination": "4/quick-reference-guide/surgery",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-4/radiation-therapy",
-			"legacyTitle": "Radiation therapy",
-			"destination": "4/quick-reference-guide/radiation-therapy",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-4/other-therapies",
-			"legacyTitle": "Other therapies",
-			"destination": "4/quick-reference-guide/other-therapies",
-			"how": "guide"
-		},
-		{
 			"legacyKey": "summary/step-5",
 			"legacyTitle": "Step 5: Care after initial treatment and recovery",
 			"destination": "5/quick-reference-guide",
@@ -1392,11 +1386,8 @@
 		}
 	],
 	"citations": {
-		"matched": 218,
-		"unmatched": [
-			"Haines 2011; Temel at al. 2010; Zimmermann et al. 2014 — \"Temel at al. 2010\": no entry in the printed reference list",
-			"Haines 2011; Temel at al. 2010; Zimmermann et al. 2014 — \"Temel at al. 2010\": no entry in the printed reference list"
-		],
+		"matched": 220,
+		"unmatched": [],
 		"byName": []
 	},
 	"timeframes": {

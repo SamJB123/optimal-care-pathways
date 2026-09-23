@@ -1,6 +1,18 @@
 {
 	"pathway": "low-grade-lymphomas",
-	"visualPass": null,
+	"visualPass": {
+		"pages": "1-88 of 88",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages; Step 1 opens with the pathway's scope statement at step level; the page 10 Step 5 Communication panel has two bullets (the PDF sets no third).",
+			"The 'Optimal care pathway' chapter (pages 25-26) opens with four subheadings on the pathway's scope and subtypes; 1.2 (page 27) and 4.2.3 (pages 41-42) group their text under subtype subheadings, as printed.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 66) are rendered figures; Figure 3 (page 24) is the timeframes table.",
+			"The welcome's signatory (page 6) is a bold name over one role line; the signature image and the endorsement logos are dropped as design.",
+			"Contributors (pages 63-64) one entry per paragraph; the print sets the steering committee chair's entry at the head of the medical colleges list and it is kept there; the closing thanks to the Blood Cancer Taskforce is a bold paragraph.",
+			"'This edition published in October 2021' on the imprint page; first edition.",
+			"Page 2 is blank; back cover (page 88) carries only the cover artwork."
+		]
+	},
 	"edition": "First edition",
 	"publicationDate": "2021-10-01",
 	"placements": [

@@ -1422,11 +1422,8 @@
 		}
 	],
 	"citations": {
-		"matched": 240,
-		"unmatched": [
-			"Haines 2011; Temel at al. 2010; Zimmermann et al. 2014 — \"Temel at al. 2010\": no entry in the printed reference list",
-			"Haines 2011; Temel at al. 2010; Zimmermann et al. 2014 — \"Temel at al. 2010\": no entry in the printed reference list"
-		],
+		"matched": 242,
+		"unmatched": [],
 		"byName": []
 	},
 	"timeframes": {

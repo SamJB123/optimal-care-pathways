@@ -341,12 +341,16 @@ function referenceKeys(citation: string): Set<string> {
 	if (!year) return keys
 	const y = year[1]?.toLowerCase() ?? ''
 	const head = citation.slice(0, year.index).trim().replace(/,\s*$/, '')
-	// Organisations with their abbreviations: "…Health Care (ACSQHC)", "…(ASCO) & …(ESMO)".
-	const abbreviations = [...head.matchAll(/\(([A-Za-z]{2,})\)/g)].map((m) => m[1] ?? '')
+	// A name's "and" or "&" is dropped, as the in-text form's is (partKeys): "Cancer Council
+	// Australia Barrett’s Oesophagus and Early Oesophageal Adenocarcinoma Working Party".
+	const nameKey = (name: string) => normaliseKey(name.replace(/\s+&\s+|\s+and\s+/g, ' '))
+	// Organisations with their abbreviations: "…Health Care (ACSQHC)", "…(ASCO) & …(ESMO)",
+	// "US Department of Health and Human Services (US DHHS)".
+	const abbreviations = [...head.matchAll(/\(([A-Za-z]{2,}(?:\s[A-Za-z]{2,})*)\)/g)].map((m) => m[1] ?? '')
 	if (abbreviations.length > 0) {
 		keys.add(`${abbreviations.map(normaliseKey).join(' ')} ${y}`)
-		keys.add(`${normaliseKey(head.replace(/\s*\([^)]*\)/g, '').replace(/\s+&\s+|\s+and\s+/g, ' '))} ${y}`)
-	} else keys.add(`${normaliseKey(head)} ${y}`)
+		keys.add(`${nameKey(head.replace(/\s*\([^)]*\)/g, ''))} ${y}`)
+	} else keys.add(`${nameKey(head)} ${y}`)
 	// Personal authors: "Wildiers H, Heeren P, Puts M, …, et al." — surnames are the words
 	// before each initials group; the in-text form names one, two, or the first with "et al.".
 	// Nothing after "et al." names an author (a trial group's name follows it).
@@ -388,10 +392,10 @@ function partKeys(part: string): string[] {
 	const years = [...cleaned.matchAll(/((?:19|20)\d\d[a-z]?)(?![0-9])/g)].map((m) => m[1]?.toLowerCase() ?? '')
 	if (years.length === 0) return []
 	const at = cleaned.search(/(?:19|20)\d\d/)
-	// "et al." (or its misprint "el al") and stray initials ("Simms K T") name no author.
+	// "et al." (or its misprints "el al", "at al") and stray initials ("Simms K T") name no author.
 	const head = cleaned
 		.slice(0, at)
-		.replace(/\be[tl] al\.?/i, '')
+		.replace(/\b(?:et|el|at) al\.?/i, '')
 		.replace(/\s+&\s+|\s+and\s+/g, ' ')
 	const words = normaliseKey(head).split(' ').filter(Boolean)
 	const name = (words.length > 1 ? words.filter((w) => w.length > 1) : words).join(' ')

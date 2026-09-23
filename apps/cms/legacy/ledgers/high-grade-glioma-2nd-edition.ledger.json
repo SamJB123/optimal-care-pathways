@@ -1,6 +1,19 @@
 {
 	"pathway": "high-grade-glioma",
-	"visualPass": null,
+	"visualPass": {
+		"pages": "1-80 of 80",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages; the Step 3 'tissue biopsy … brain cancer:' bullet (page 8) holds the two indented paragraphs set under it; 'Checklist continued' (page 10) resumes the Step 5 checklist; page 10 repeats the sentence 'Patients may be discharged into the community …' from page 9, as printed.",
+			"The body sets the same biopsy guidance as dash sub-items (section 3.1, page 29); both are kept as printed.",
+			"The design's teal accent headings ('Timeframe for starting treatment', 'More information') sit at the bold run-in level: this pathway has no black run-in heading above them, so they nest under their numbered section as printed.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 59) are rendered figures; Figure 3 (page 24) is the timeframes table.",
+			"The welcome's signatory (page 6) is a bold name over one role line; the signature image and the endorsement logos are dropped as design.",
+			"Contributors (pages 57-58) one entry per paragraph; the closing stakeholder statement is a bold paragraph.",
+			"'First published in August 2015. This edition published in June 2021.' on the imprint page; second edition.",
+			"Page 2 is blank; back cover (page 80) carries only the cover artwork."
+		]
+	},
 	"edition": "Second edition",
 	"publicationDate": "2021-06-01",
 	"placements": [

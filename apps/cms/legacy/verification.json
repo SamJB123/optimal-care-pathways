@@ -363,5 +363,19 @@
 			"'Published in June 2022.' on the imprint page (page 4); first edition.",
 			"Page 2 is blank, page 95 carries only its footer, and the back cover (page 96) carries only the cover artwork."
 		]
+	},
+	"oesophagogastric-cancer-2nd-edition": {
+		"pages": "1-86 of 86",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages; the Step 1 risk factor grid keeps its bolded common factors; 'Checklist continued' (page 8) resumes the Step 2 checklist; 'Radiation therapy' and 'Systemic therapy' are bold run-ins of Step 4's Surgery text, as printed.",
+			"Figure 3 (page 24) is the timeframes table; its one Treatment timeframe spans the Surgery, Radiation therapy and Systemic therapy rows, and each row becomes a timeframe box.",
+			"Section 1.2's risk factor table (page 26) keeps its white-lettered header row and bullet cells; its 'Note:' line is a paragraph under it.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 63) are rendered figures.",
+			"Citations resolve to the author–year list, including 'US DHHS 2020' (listed under its spelt-out name with the abbreviation in brackets), the Cancer Council Barrett's working party, and the misprint 'Temel at al. 2010'.",
+			"The 7.1 professionals list includes the Canteen item as printed.",
+			"'First published in May 2015. This edition published in June 2021.' on the imprint page; second edition.",
+			"Page 2 is blank, page 85 carries only its footer, and the back cover (page 86) carries only the cover artwork."
+		]
 	}
 }

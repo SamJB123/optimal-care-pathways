@@ -4,7 +4,7 @@
 		"pages": "1-88 of 88",
 		"checked": "2026-09-23",
 		"notes": [
-			"Quick reference guide (pages 7-10) read as the 2021 design's step pages: bold panel headings and bold 'Label:' lead-ins are the panels ('Treatment planning: Because of …', 'Patients fit for intensive chemotherapy:' over its text); a whole bold line ending in the colon over a list is a lead-in; 'Other treatment options' and 'Acute promyelocytic leukaemia' are two headings (the first line had room for the second's first word); a step carried over the page ('… continued') resumes at the step, so 'Research and clinical trials:' on page 9 opens its own panel.",
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages: bold panel headings and bold 'Label:' lead-ins are the panels ('Treatment planning: Because of …'), except under a panel heading, whose own text they open: 'Treatment options to induce remission' holds 'Patients fit for intensive chemotherapy:', 'Patients not fit …:', 'Allogeneic stem cell transplant:' and 'Radiation therapy:' as bold lead-ins; a whole bold line ending in the colon over a list is a lead-in; 'Other treatment options' and 'Acute promyelocytic leukaemia' are two headings (the first line had room for the second's first word); a step carried over the page ('… continued') resumes at the step, so 'Research and clinical trials:' on page 9 opens its own panel.",
 			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 64) are rendered figures; Figure 3 (page 24) is the timeframes table; the seven-steps box, the resource callouts (thumbnails dropped as design), the validated-tools box and the closing 'Visit our guides' band are one-cell tables.",
 			"The welcome's signatory (page 6) is one paragraph of name and role; the signature image is dropped as design; the endorsement logos on the title page leave 'Endorsed by' as text.",
 			"Contributors (pages 62-63) one entry per line under bold group headings; the closing stakeholder statement is a bold paragraph.",
@@ -802,30 +802,6 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-4/patients-fit-for-intensive-chemotherapy",
-			"legacyTitle": "Patients fit for intensive chemotherapy",
-			"destination": "4/quick-reference-guide/patients-fit-for-intensive-chemotherapy",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-4/patients-not-fit-for-intensive-chemotherapy",
-			"legacyTitle": "Patients not fit for intensive chemotherapy",
-			"destination": "4/quick-reference-guide/patients-not-fit-for-intensive-chemotherapy",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-4/allogeneic-stem-cell-transplant",
-			"legacyTitle": "Allogeneic stem cell transplant",
-			"destination": "4/quick-reference-guide/allogeneic-stem-cell-transplant",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-4/radiation-therapy",
-			"legacyTitle": "Radiation therapy",
-			"destination": "4/quick-reference-guide/radiation-therapy",
-			"how": "guide"
-		},
-		{
 			"legacyKey": "summary/step-4/other-treatment-options",
 			"legacyTitle": "Other treatment options",
 			"destination": "4/quick-reference-guide/other-treatment-options",
@@ -1406,7 +1382,7 @@
 		}
 	],
 	"citations": {
-		"matched": 236,
+		"matched": 238,
 		"unmatched": [
 			"Döhner et al. 2017 — \"Döhner et al. 2017\": no entry in the printed reference list",
 			"Döhner et al. 2017 — \"Döhner et al. 2017\": no entry in the printed reference list",
@@ -1416,7 +1392,6 @@
 			"summarised in Döhner et al. 2015 — \"summarised in Döhner et al. 2015\": no entry in the printed reference list",
 			"Döhner et al. 2017 — \"Döhner et al. 2017\": no entry in the printed reference list",
 			"Döhner et al. 2010 — \"Döhner et al. 2010\": no entry in the printed reference list",
-			"Haines 2011; Temel at al. 2010; Zimmermann et al. 2014 — \"Temel at al. 2010\": no entry in the printed reference list",
 			"Döhner et al. 2010, 2017; Sanz et al. 2019 — \"Döhner et al. 2010, 2017\": no entry in the printed reference list; \"Döhner et al. 2010, 2017\": no entry in the printed reference list; \"Sanz et al. 2019\": no entry in the printed reference list",
 			"Döhner et al. 2017 — \"Döhner et al. 2017\": no entry in the printed reference list",
 			"Döhner et al. 2017 — \"Döhner et al. 2017\": no entry in the printed reference list",
@@ -1426,7 +1401,6 @@
 			"summarised in Döhner et al. 2015 — \"summarised in Döhner et al. 2015\": no entry in the printed reference list",
 			"Döhner et al. 2017 — \"Döhner et al. 2017\": no entry in the printed reference list",
 			"Döhner et al. 2010 — \"Döhner et al. 2010\": no entry in the printed reference list",
-			"Haines 2011; Temel at al. 2010; Zimmermann et al. 2014 — \"Temel at al. 2010\": no entry in the printed reference list",
 			"Döhner et al. 2010, 2017; Sanz et al. 2019 — \"Döhner et al. 2010, 2017\": no entry in the printed reference list; \"Döhner et al. 2010, 2017\": no entry in the printed reference list; \"Sanz et al. 2019\": no entry in the printed reference list"
 		],
 		"byName": []

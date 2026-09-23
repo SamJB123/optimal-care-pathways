@@ -897,6 +897,12 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-6/advance-care-planning",
+			"legacyTitle": "Advance care planning",
+			"destination": "6/quick-reference-guide/advance-care-planning",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-6/survivorship-and-palliative-care",
 			"legacyTitle": "Survivorship and palliative care",
 			"destination": "6/quick-reference-guide/survivorship-and-palliative-care",
@@ -1387,11 +1393,8 @@
 		}
 	],
 	"citations": {
-		"matched": 224,
-		"unmatched": [
-			"Haines 2011; Temel at al. 2010; Zimmermann et al. 2014 — \"Temel at al. 2010\": no entry in the printed reference list",
-			"Haines 2011; Temel at al. 2010; Zimmermann et al. 2014 — \"Temel at al. 2010\": no entry in the printed reference list"
-		],
+		"matched": 226,
+		"unmatched": [],
 		"byName": []
 	},
 	"timeframes": {
