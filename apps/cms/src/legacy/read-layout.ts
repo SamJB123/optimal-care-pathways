@@ -1156,6 +1156,9 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 			!nextEntry &&
 			!forcedBreak &&
 			!leavesItem &&
+			// A note ("* GaTate: …"), a source line or a "Note:" opens a paragraph of its own
+			// under a figure or table, however tightly it is set to the one above.
+			!(!sameBaseline && /^(?:\*\s|Sources?:\s|Note:\s)/.test(line.text.trim())) &&
 			(!sizeBreak || sameBaseline) &&
 			// A wrapped line of an item or paragraph starts at or right of the first line
 			// (within its column); a line carried into the next column starts at its edge.
@@ -1543,12 +1546,30 @@ function cellTable(region: Region, lines: Line[], headerLines: Line[], ctx: Page
 					}),
 				}
 			: null
+	const body = rows.filter((r) => r.cells.length > 0)
+	// With no labels above the grid, the labels may be the grid's own top row: a cell per
+	// column, every one lettered in white on a fill no row below uses ("Gastroenteropancreatic
+	// NET | Lung NET | …" over the light cells of the tests).
+	const top = body[0]
+	const whiteText = (c: TableCell): boolean => {
+		const runs = allParagraphs(c.blocks).flatMap((p) => p.runs).filter((r) => r.text.trim().length > 0)
+		return runs.length > 0 && runs.every((r) => r.colour === '#ffffff')
+	}
+	if (!header && top && body.length > 1 && top.cells.length === columnX.length && top.cells.every((c) => c.background !== null && whiteText(c))) {
+		const fills = new Set(top.cells.map((c) => c.background))
+		if (body.slice(1).every((r) => r.cells.every((c) => !fills.has(c.background)))) for (const c of top.cells) c.header = true
+	}
 	return {
 		kind: 'table',
-		rows: [...(header ? [header] : []), ...rows.filter((r) => r.cells.length > 0)],
+		rows: [...(header ? [header] : []), ...body],
 		page: ctx.pageNumber,
 		border: null,
 	}
+}
+
+/** Every paragraph in a block list, lists' items included. */
+function allParagraphs(blocks: Block[]): Paragraph[] {
+	return blocks.flatMap((b) => (b.kind === 'paragraph' ? [b] : b.kind === 'list' ? b.items.flatMap((i) => allParagraphs(i.blocks)) : []))
 }
 
 /**
