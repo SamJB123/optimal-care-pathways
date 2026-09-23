@@ -157,7 +157,8 @@ export async function auditCoverage(doc: PDFDocumentProxy, model: ExtractedDocum
 	for (let n = 1; n <= doc.numPages; n++) {
 		const page = await readPage(doc, n)
 		const figures = figuresByPage.get(n) ?? []
-		for (const line of joinUrlBreaks(pageTextLines(page))) {
+		const pageLines = joinUrlBreaks(pageTextLines(page))
+		for (const line of pageLines) {
 			// A label's baseline lies inside the figure's box; a caption just above it does not.
 			const inFigure = figures.some(([x0, y0, x1, y1]) => line.x0 >= x0 - 6 && line.x1 <= x1 + 6 && line.y >= y0 - 3 && line.y <= y1 - 3)
 			if (inFigure) {
@@ -167,11 +168,15 @@ export async function auditCoverage(doc: PDFDocumentProxy, model: ExtractedDocum
 			if (furniture.has(`${n}|${line.text}`)) continue
 			// A wrapped heading's pieces are one line to the reader; its warnings name the
 			// whole. Match a line that is the whole, or its first or last piece — never a
-			// line that merely repeats words of it (the panel heading a band names).
+			// line that merely repeats words of it (the panel heading a band names). A heading
+			// printed whole on one line has no pieces: another line that happens to open with
+			// its first word ("Checklist" under "Checklist continued") is text of its own.
 			const continuedKey = [...mergedContinued, ...headingContinued].find((k) => {
 				if (!k.startsWith(`${n}|`)) return false
 				const whole = k.slice(k.indexOf('|') + 1)
-				return whole === line.text || whole.startsWith(`${line.text} `) || whole.endsWith(` ${line.text}`)
+				if (whole === line.text) return true
+				if (pageLines.some((l) => l.text === whole)) return false
+				return whole.startsWith(`${line.text} `) || whole.endsWith(` ${line.text}`)
 			})
 			if (continuedKey && mergedContinued.has(continuedKey)) continue
 			const text = continuedKey ? line.text.replace(/\s*continued$/i, '') : line.text

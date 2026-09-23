@@ -2364,6 +2364,16 @@ function pathTo(root: Section, test: (s: Section) => boolean): Section[] | null 
 	return null
 }
 
+/** The path to the LAST section under `root` (reading order) that satisfies `test`. */
+function lastPathTo(root: Section, test: (s: Section) => boolean): Section[] | null {
+	for (const child of [...root.children].reverse()) {
+		const deeper = lastPathTo(child, test)
+		if (deeper) return [child, ...deeper]
+		if (test(child)) return [child]
+	}
+	return null
+}
+
 /** The heading without its printed number. */
 const titleOf = (headingText: string, number: string | null): string => {
 	const text = headingText.replace(/\s+/g, ' ').trim()
@@ -2415,7 +2425,20 @@ function pushSection(outline: Outline, level: HeadingLevel, heading: Line[], pag
 		}
 		return open
 	}
-	if (continued) warnings.push({ page, message: `continued-heading: ${printed}` })
+	// A continued panel ("Checklist continued") resumes the panel of that name the open
+	// step already holds — the latest one, even when the step band that carried the step
+	// over the page closed it.
+	if (continued) {
+		for (const ancestor of [...outline.stack].reverse()) {
+			const path = lastPathTo(ancestor, (s) => s.level === level && s.headingText === text)
+			if (!path) continue
+			while (outline.stack.at(-1) !== ancestor) outline.stack.pop()
+			outline.stack.push(...path)
+			warnings.push({ page, message: `continued-merged: ${printed}` })
+			return path.at(-1) ?? ancestor
+		}
+		warnings.push({ page, message: `continued-heading: ${printed}` })
+	}
 	const section: Section = {
 		id: `s${outline.next++}`,
 		level,
@@ -2714,6 +2737,26 @@ export async function readLayoutDocument(
 		}
 		const openAtStart = outline.stack.at(-1)
 		if (openAtStart && sequence[0]?.block) carryOver(0, openAtStart)
+		// A list the page break cut: the page opens with list items and the open section
+		// ends in a list. Each list the page opens with carries on the level of that list
+		// whose items share its marker (dash sub-items under their bullet, the bullets after
+		// them at the top), however the page's own indents would have nested them.
+		while (openAtStart && sequence[0]?.block?.kind === 'list') {
+			const previous = openAtStart.blocks.at(-1)
+			const next = sequence[0].block
+			if (previous?.kind !== 'list') break
+			const levels: List[] = []
+			for (let at: List | undefined = previous; at; ) {
+				levels.push(at)
+				const tail: Block | undefined = at.items.at(-1)?.blocks.at(-1)
+				at = tail?.kind === 'list' ? tail : undefined
+			}
+			const marker = next.items[0]?.marker
+			const target = [...levels].reverse().find((l) => l.items[0]?.marker === marker)
+			if (!target) break
+			target.items.push(...next.items)
+			sequence.splice(0, 1)
+		}
 		for (const [i, e] of sequence.entries()) {
 			if (e.heading) {
 				const wasOpen = [...outline.stack]
