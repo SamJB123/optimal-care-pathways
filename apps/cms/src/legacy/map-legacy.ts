@@ -1277,14 +1277,32 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		const pages = new Set(flatten([chapter]).map((n) => n.page))
 		const band = [...new Set(model.warnings.filter((w) => w.message.startsWith('furniture: ') && pages.has(w.page)).map((w) => w.message.slice('furniture: '.length)))]
 		const intro = [...nodesOf(chapter.blocks), ...band.map((text): JsonNode => ({ type: 'paragraph', content: [{ type: 'text', text, marks: [{ type: 'bold' }] }] }))]
-		if (intro.length > 0) {
-			const guide = addSection(null, 'Quick reference guide', { note: null, pointOfCare: true, after: table.guideAfter })
-			place(guide, chapter, intro, 'guide')
-		} else provenance(byAddress(table.guideAfter), chapter, 'guide')
+		/** The guide's own section, beside the pathway's steps: its introduction, and the
+		 *  panels the guide sets apart from any step. */
+		let topGuide: DraftSection | null = null
+		const guideSection = (): DraftSection => {
+			topGuide ??= addSection(null, 'Quick reference guide', { note: null, pointOfCare: true, after: table.guideAfter })
+			return topGuide
+		}
+		if (intro.length > 0) place(guideSection(), chapter, intro, 'guide')
+		else provenance(byAddress(table.guideAfter), chapter, 'guide')
 		for (const stepNode of chapter.children) {
 			const step = Number(STEP.exec(stepNode.heading)?.[1] ?? 0)
 			if (!step) {
-				ledger.placements.push({ legacyKey: stepNode.key, legacyTitle: stepNode.heading, destination: null, how: 'unplaced', note: 'not a step' })
+				// A panel of no step ("Understanding your patient", "Practical considerations
+				// for consultations"): a point-of-care section of the guide's own, its parts
+				// under their headings.
+				const panel = addSection(guideSection().row.address, titleOf(stepNode.heading, stepNode.number), { note: null, pointOfCare: true })
+				const nodes = [
+					...pointOfCareLists(nodesOf(stepNode.blocks)),
+					...flatten(stepNode.children).flatMap((child) => {
+						const own = pointOfCareLists(nodesOf(child.blocks))
+						return [headingNode(titleOf(child.heading, child.number), 3), ...own]
+					}),
+				]
+				if (nodes.length > 0) place(panel, stepNode, nodes, 'guide')
+				else provenance(panel, stepNode, 'guide')
+				for (const child of flatten(stepNode.children)) provenance(panel, child, 'guide')
 				continue
 			}
 			const guide = addSection(String(step), 'Quick reference guide', { note: null, pointOfCare: true })
@@ -1437,7 +1455,13 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		// The population template's principles carry owned "considerations" sections, one
 		// per principle: the legacy edition's own text on each principle goes there.
 		if (chapter.l1 === 'principles-intro' && table.principles) {
-			provenance(byAddress('address' in rule ? rule.address : rule.under), chapter)
+			// The chapter's own opening is this population's (its principles, co-design,
+			// cultural safety): version 1's text for the principles section, as any chapter
+			// whose slot is core text.
+			const home = byAddress('address' in rule ? rule.address : rule.under)
+			const opening = nodesOf(chapter.blocks)
+			if (opening.length > 0) placeOrDiverge(home, chapter, opening, 'diverged')
+			else provenance(home, chapter)
 			for (const principle of chapter.children) {
 				const number = /^principle\s+(\d)/i.exec(principle.heading)?.[1]
 				const address = number ? table.principles[number] : undefined

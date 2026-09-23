@@ -662,23 +662,20 @@
 		{
 			"legacyKey": "summary/understanding-your-patient",
 			"legacyTitle": "Understanding your patient",
-			"destination": null,
-			"how": "unplaced",
-			"note": "not a step"
+			"destination": "quick-reference-guide/understanding-your-patient",
+			"how": "guide"
 		},
 		{
 			"legacyKey": "summary/communication",
 			"legacyTitle": "Communication",
-			"destination": null,
-			"how": "unplaced",
-			"note": "not a step"
+			"destination": "quick-reference-guide/communication",
+			"how": "guide"
 		},
 		{
 			"legacyKey": "summary/practical-considerations-for-consultations",
 			"legacyTitle": "Practical considerations for consultations",
-			"destination": null,
-			"how": "unplaced",
-			"note": "not a step"
+			"destination": "quick-reference-guide/practical-considerations-for-consultations",
+			"how": "guide"
 		},
 		{
 			"legacyKey": "summary/step-1",
@@ -942,7 +939,7 @@
 			"legacyKey": "principles-intro",
 			"legacyTitle": "Principles of the optimal care pathway",
 			"destination": "principles-for-optimal-cancer-care",
-			"how": "provenance"
+			"how": "diverged"
 		},
 		{
 			"legacyKey": "principle-1",
@@ -1492,7 +1489,7 @@
 		}
 	],
 	"citations": {
-		"matched": 372,
+		"matched": 380,
 		"unmatched": [
 			"National Lung Cancer Screening Program planned for July 2025 — \"National Lung Cancer Screening Program planned for July 2025\": no entry in the printed reference list",
 			"COAG 2016; APHRA 2020 — \"APHRA 2020\": no entry in the printed reference list",
