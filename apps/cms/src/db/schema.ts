@@ -108,6 +108,10 @@ export const documents = sqliteTable(
 		 *  Substituted into shared prose at render time. */
 		subject: text('subject').notNull(),
 		audience: text('audience').$type<Audience>().notNull(),
+		/** The pathway's family colour (#rrggbb): the accent its printed edition set its
+		 *  step bands in, read by the legacy import; chosen for a new pathway; null for the
+		 *  core documents, which stay neutral. */
+		accent: text('accent'),
 		createdAt: createdAt(),
 		updatedAt: timestampMs('updated_at'),
 	},

@@ -853,6 +853,22 @@ const NON_STEP_TABLES: Record<string, NonStepTable | undefined> = { cancer: CANC
 /** Back matter with no slot of its own: a new section each under Find out more. */
 const FIND_OUT_MORE = /^(appendix-[a-z]|resource-list|glossary|abbreviations)$/
 
+/** The pathway's family colour: the colour its printed edition set the step headings in
+ *  (every edition sets all seven in one colour — breast rose #b65673, ovarian #00856e). The
+ *  commonest non-white colour among the "Step N" headings; null if none is printed. */
+function accentOf(model: ExtractedDocument): string | null {
+	const counts = new Map<string, number>()
+	const walk = (sections: Section[]) => {
+		for (const s of sections) {
+			if (s.level === 2 && /^Step [1-7]\b/.test(s.headingText))
+				for (const r of s.heading) if (r.text.trim() && r.colour.toLowerCase() !== '#ffffff') counts.set(r.colour.toLowerCase(), (counts.get(r.colour.toLowerCase()) ?? 0) + 1)
+			walk(s.children)
+		}
+	}
+	walk(model.sections)
+	return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+}
+
 // ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
@@ -1665,6 +1681,7 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		title: model.title,
 		subject: pathway.subject,
 		audience: pathway.audience,
+		accent: accentOf(model),
 	}
 	// Raised-number markers were resolved by the block mapper; a number the list lacks was
 	// left as printed and recorded by the reader.

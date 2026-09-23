@@ -51,6 +51,8 @@ export type DocumentWireRow = {
 	title: string
 	subject: string
 	audience: DocumentRow['audience']
+	/** The family colour (#rrggbb), or null for the neutral core documents. */
+	accent: string | null
 	createdAt: number
 	updatedAt: number | null
 }
@@ -66,6 +68,7 @@ export function documentWireRow(row: DocumentRow): DocumentWireRow {
 		title: row.title,
 		subject: row.subject,
 		audience: row.audience,
+		accent: row.accent,
 		createdAt: row.createdAt.getTime(),
 		updatedAt: row.updatedAt?.getTime() ?? null,
 	}
