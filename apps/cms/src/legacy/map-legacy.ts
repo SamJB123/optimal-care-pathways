@@ -446,16 +446,18 @@ function lookup(index: CitationIndex, key: string): ReferenceEntry | null {
 	}
 	// An organisation cited under another form of its name: "Australian Government Department
 	// of Health 2017" for the list's "Commonwealth Department of Health 2017" — the same year,
-	// the same last three words or more, and one such entry.
+	// the same last three words or more, and one such entry. A name of one distinctive word
+	// is that word ("HealthInfoNet 2024" for "Australian Indigenous HealthInfoNet 2024").
 	const cited = name.split(' ')
-	if (cited.length >= 3) {
+	const needed = cited.length >= 3 ? 3 : cited.length === 1 && (cited[0]?.length ?? 0) >= 8 ? 1 : null
+	if (needed !== null) {
 		const sharedTail = (key: string): number => {
 			const listed = key.slice(0, -(year.length + 1)).split(' ')
 			let n = 0
 			while (n < listed.length && n < cited.length && listed[listed.length - 1 - n] === cited[cited.length - 1 - n]) n++
 			return n
 		}
-		const byTail = new Set(sameYear.filter(([k]) => sharedTail(k) >= 3).map(([, e]) => e))
+		const byTail = new Set(sameYear.filter(([k]) => sharedTail(k) >= needed).map(([, e]) => e))
 		if (byTail.size === 1) return [...byTail][0] ?? null
 	}
 	return null
