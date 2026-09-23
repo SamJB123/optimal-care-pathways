@@ -20,7 +20,7 @@
 
 import { and, desc, eq, inArray } from 'drizzle-orm'
 import { type AnnotatedBody, annotateChanges, bodyHash } from '#/content/diff.ts'
-import { citationNumbers, type DerivedView, openItemsIn, timeframeRows } from '#/content/derived.ts'
+import { citationNumbers, citedBody, type DerivedView, openItemsIn, timeframeRows } from '#/content/derived.ts'
 import { bodyToMarkdown } from '#/content/markdown.ts'
 import {
 	blockingPlaceholders,
@@ -31,6 +31,7 @@ import {
 import type { JsonNode } from '#/content/schema.ts'
 import type { Db } from '#/db/index.ts'
 import { inGroups, schema } from '#/db/index.ts'
+import type { ReviewChange } from '#/db/schema.ts'
 import { publishDocumentRows, publishSectionRows } from '#/lib/live-publish.ts'
 import { outlineOrder } from '#/lib/outline.ts'
 import { OCP_NAMESPACE, ROLE_LADDER, type Role } from '#/lib/roles.ts'
@@ -275,13 +276,57 @@ export async function changedSections(
 	lc: Lifecycle,
 	documentId: string,
 ): Promise<ResolvedSection[]> {
-	const [resolved, published] = await Promise.all([
+	return (await reviewableChanges(lc, documentId)).text
+}
+
+/** Section id → hidden, as the published version froze it; empty when never published. */
+async function hiddenWhenPublished(lc: Lifecycle, documentId: string): Promise<Map<string, boolean>> {
+	const published = await publishedVersion(lc, documentId)
+	if (!published) return new Map()
+	const frozen = await lc.d
+		.select({ sectionId: schema.versionSections.sectionId, hidden: schema.versionSections.hidden })
+		.from(schema.versionSections)
+		.where(eq(schema.versionSections.versionId, published.versionId))
+	return new Map(frozen.map((f) => [f.sectionId, f.hidden]))
+}
+
+/** A hidden section that stands for its subtree: hidden, and its parent is not. */
+const topHidden = <T extends { hidden: boolean; parentId: string | null }>(row: T, byId: Map<string, T>): boolean =>
+	row.hidden && !(row.parentId !== null && byId.get(row.parentId)?.hidden)
+
+/**
+ * What a review decides and a publish carries, against the published version: the TEXT
+ * changes (live sections whose resolved body differs) and the REMOVALS (sections hidden
+ * since, each the top of its hidden subtree). A draft that only hides sections is still
+ * a change to review and publish.
+ */
+export async function reviewableChanges(
+	lc: Lifecycle,
+	documentId: string,
+): Promise<{
+	text: ResolvedSection[]
+	removals: ResolvedSection[]
+	/** Both, in reading order. */
+	all: { section: ResolvedSection; change: ReviewChange }[]
+}> {
+	const [resolved, published, before] = await Promise.all([
 		resolveSections(lc, documentId),
 		publishedBodies(lc, documentId),
+		hiddenWhenPublished(lc, documentId),
 	])
-	return resolved.filter(
-		(s) => live(s) && !sameBody(s.publishable, published.get(s.row.id) ?? null),
+	const byId = new Map(resolved.map((s) => [s.row.id, s.row]))
+	const all = resolved.flatMap((s): { section: ResolvedSection; change: ReviewChange }[] =>
+		live(s) && !sameBody(s.publishable, published.get(s.row.id) ?? null)
+			? [{ section: s, change: 'text' }]
+			: !s.row.apparatus && topHidden(s.row, byId) && before.get(s.row.id) !== true
+				? [{ section: s, change: 'removal' }]
+				: [],
 	)
+	return {
+		text: all.filter((c) => c.change === 'text').map((c) => c.section),
+		removals: all.filter((c) => c.change === 'removal').map((c) => c.section),
+		all,
+	}
 }
 
 /** Fold every live body of the document's room into D1 before reading the draft. */
@@ -367,19 +412,19 @@ export async function requestReview(
 	await requireRole(lc, input.userId, document, 'member', 'request a review')
 	await foldRoom(lc, document.id)
 	const draft = await ensureDraft(lc, document.id, input.userId)
-	const changed = await changedSections(lc, document.id)
-	if (changed.length === 0) refuse('Nothing has changed since the published version.')
+	const { text, removals } = await reviewableChanges(lc, document.id)
+	if (text.length + removals.length === 0) refuse('Nothing has changed since the published version.')
 	// The template asks teams to report the sections they removed and the subheadings they
 	// added when they submit for review: the request says so, in the reviewers' mail.
 	const structure = await structureChanges(lc, document.id)
 	const reviewId = crypto.randomUUID()
-	const pins = await Promise.all(
-		changed.map(async (s) => ({
-			reviewId,
-			sectionId: s.row.id,
-			bodyHash: await bodyHash(s.publishable),
-		})),
-	)
+	const pin = async (s: ResolvedSection, change: ReviewChange) => ({
+		reviewId,
+		sectionId: s.row.id,
+		change,
+		bodyHash: await bodyHash(s.publishable),
+	})
+	const pins = await Promise.all([...text.map((s) => pin(s, 'text')), ...removals.map((s) => pin(s, 'removal'))])
 	await lc.d.batch([
 		lc.d.insert(schema.reviews).values({
 			id: reviewId,
@@ -392,21 +437,23 @@ export async function requestReview(
 	])
 	await record(lc, document.id, 'review.requested', input.userId, {
 		reviewId,
-		sections: pins.length,
+		sections: text.length,
 		hidden: structure.hidden.length,
 		added: structure.added.length,
 	})
 	const listed = (label: string, items: StructureItem[]) =>
 		items.length > 0 ? `\n\n${label}: ${items.map(structureLabel).join('; ')}.` : ''
+	const changedLine =
+		text.length > 0 ? ` (${text.length} changed section${text.length === 1 ? '' : 's'})` : ' (sections removed only)'
 	await notify(
 		lc,
 		await recipients(lc, document, 'admin'),
 		`Review requested: ${document.title}`,
-		`A review of "${document.title}" has been requested (${pins.length} changed section${pins.length === 1 ? '' : 's'}).${listed('Sections removed', structure.hidden)}${listed('Subheadings added', structure.added)}${input.note ? `\n\n${input.note}` : ''}\n\n${documentLink(lc, document.id)}`,
+		`A review of "${document.title}" has been requested${changedLine}.${listed('Sections removed', structure.hidden)}${listed('Subheadings added', structure.added)}${input.note ? `\n\n${input.note}` : ''}\n\n${documentLink(lc, document.id)}`,
 	)
 	return {
 		reviewId,
-		sections: pins.length,
+		sections: text.length,
 		hidden: structure.hidden.length,
 		added: structure.added.length,
 	}
@@ -431,8 +478,9 @@ export interface StructureReport {
 const structureLabel = (item: StructureItem): string =>
 	item.title ? `${item.title} (${item.address})` : item.address
 
-/** The document's structure report against its published version, in reading order.
- *  Apparatus is template scaffolding, never shown, so it is never reported. */
+/** The document's structure report against its published version, in reading order. A
+ *  hidden subtree is reported by its top section alone; apparatus is template
+ *  scaffolding, never shown, so it is never reported. */
 export async function structureChanges(lc: Lifecycle, documentId: string): Promise<StructureReport> {
 	const rows = await lc.d
 		.select({
@@ -447,16 +495,8 @@ export async function structureChanges(lc: Lifecycle, documentId: string): Promi
 		})
 		.from(schema.sections)
 		.where(eq(schema.sections.documentId, documentId))
-	const published = await publishedVersion(lc, documentId)
-	// Section id → hidden, as the published version froze it; empty when never published.
-	const before = new Map<string, boolean>()
-	if (published) {
-		const frozen = await lc.d
-			.select({ sectionId: schema.versionSections.sectionId, hidden: schema.versionSections.hidden })
-			.from(schema.versionSections)
-			.where(eq(schema.versionSections.versionId, published.versionId))
-		for (const f of frozen) before.set(f.sectionId, f.hidden)
-	}
+	const before = await hiddenWhenPublished(lc, documentId)
+	const byId = new Map(rows.map((r) => [r.id, r]))
 	const item = (r: (typeof rows)[number]): StructureItem => ({
 		sectionId: r.id,
 		address: r.address,
@@ -464,7 +504,7 @@ export async function structureChanges(lc: Lifecycle, documentId: string): Promi
 	})
 	const ordered = outlineOrder(rows).filter((r) => !r.apparatus)
 	return {
-		hidden: ordered.filter((r) => r.hidden && before.get(r.id) !== true).map(item),
+		hidden: ordered.filter((r) => topHidden(r, byId) && before.get(r.id) !== true).map(item),
 		added: ordered.filter((r) => r.added && !before.has(r.id)).map(item),
 	}
 }
@@ -565,7 +605,8 @@ export async function publishReadiness(
 	const document = await documentOf(lc, documentId)
 	const draft = await ensureDraft(lc, documentId, userId)
 	const resolved = await resolveSections(lc, documentId)
-	const changed = await changedSections(lc, documentId)
+	const { text, removals } = await reviewableChanges(lc, documentId)
+	const changes = text.length + removals.length
 	const items: GateItem[] = []
 
 	// The text that publishes as written: a pathway's own sections; in a template, the
@@ -600,7 +641,7 @@ export async function publishReadiness(
 			: { key: 'guidance', level: 'ok', message: 'All drafting guidance is ticked done.' },
 	)
 
-	if (changed.length === 0)
+	if (changes === 0)
 		items.push({
 			key: 'changes',
 			level: 'block',
@@ -610,8 +651,14 @@ export async function publishReadiness(
 		items.push({
 			key: 'changes',
 			level: 'ok',
-			message: `${changed.length} section${changed.length === 1 ? '' : 's'} changed since the published version.`,
-			sections: changed.map((s) => s.row.address),
+			message: [
+				text.length > 0 ? `${text.length} section${text.length === 1 ? '' : 's'} changed` : null,
+				removals.length > 0 ? `${removals.length} section${removals.length === 1 ? '' : 's'} removed` : null,
+			]
+				.filter((part) => part !== null)
+				.join(' and ')
+				.concat(' since the published version.'),
+			sections: [...text, ...removals].map((s) => s.row.address),
 		})
 
 	const review = await currentReview(lc, documentId, draft.id)
@@ -631,13 +678,20 @@ export async function publishReadiness(
 					: `The review is open: ${review.decided} of ${review.total} sections decided.`,
 		})
 	else {
-		const stale = await staleReviewSections(lc, review.reviewId, resolved)
+		const { stale, unreviewed } = await reviewDrift(lc, review.reviewId, resolved, { text, removals })
 		if (stale.length > 0)
 			items.push({
 				key: 'review',
 				level: 'block',
-				message: `${stale.length} approved section${stale.length === 1 ? ' has' : 's have'} changed since the review; request a review again.`,
+				message: `${stale.length} approved section${stale.length === 1 ? ' has' : 's have'} changed since the review; ask for review again.`,
 				sections: stale,
+			})
+		else if (unreviewed.length > 0)
+			items.push({
+				key: 'review',
+				level: 'block',
+				message: `${unreviewed.length} section${unreviewed.length === 1 ? ' has' : 's have'} changed since the review was requested; ask for review again.`,
+				sections: unreviewed,
 			})
 		else items.push({ key: 'review', level: 'ok', message: 'The review is approved in full.' })
 	}
@@ -661,15 +715,22 @@ export async function publishReadiness(
 		)
 	}
 
-	return { items, blocked: items.some((i) => i.level === 'block'), changed: changed.length }
+	return { items, blocked: items.some((i) => i.level === 'block'), changed: changes }
 }
 
-/** Reviewed sections whose body no longer matches the hash the review pinned. */
-async function staleReviewSections(
+/**
+ * How the draft has moved since a review pinned it. STALE: a pinned text change whose
+ * body no longer matches its hash, or a pinned removal shown again. UNREVIEWED: a change
+ * the review never saw (made after the request), or one it saw as the other kind (a
+ * section edited under review and then hidden). Either means what would publish is not
+ * what was approved. Addresses, in reading order.
+ */
+async function reviewDrift(
 	lc: Lifecycle,
 	reviewId: string,
 	resolved: ResolvedSection[],
-): Promise<string[]> {
+	current: { text: ResolvedSection[]; removals: ResolvedSection[] },
+): Promise<{ stale: string[]; unreviewed: string[] }> {
 	const pins = await lc.d
 		.select()
 		.from(schema.reviewSections)
@@ -679,9 +740,17 @@ async function staleReviewSections(
 	for (const pin of pins) {
 		const section = byId.get(pin.sectionId)
 		if (!section) continue
-		if ((await bodyHash(section.publishable)) !== pin.bodyHash) stale.push(section.row.address)
+		const moved =
+			pin.change === 'removal' ? !section.row.hidden : (await bodyHash(section.publishable)) !== pin.bodyHash
+		if (moved) stale.push(section.row.address)
 	}
-	return stale
+	const pinned = new Map(pins.map((p) => [p.sectionId, p.change]))
+	const unreviewed = new Set([
+		...current.text.filter((s) => pinned.get(s.row.id) !== 'text').map((s) => s.row.id),
+		...current.removals.filter((s) => pinned.get(s.row.id) !== 'removal').map((s) => s.row.id),
+	])
+	// `resolved` is in reading order; the two lists are read back through it.
+	return { stale, unreviewed: resolved.filter((s) => unreviewed.has(s.row.id)).map((s) => s.row.address) }
 }
 
 /**
@@ -704,22 +773,25 @@ export async function publish(
 	}
 	const draft = await ensureDraft(lc, document.id, input.userId)
 	const incumbent = await publishedVersion(lc, document.id)
-	const previous = await publishedBodies(lc, document.id)
-	const previousChanged = new Map<string, number>()
+	// The incumbent edition's own rows, hidden ones included: a section is unchanged when
+	// its body and its hidden flag are both as they were.
+	const before = new Map<string, { bodyJson: JsonNode | null; hidden: boolean; lastChangedVersionNo: number }>()
 	if (incumbent) {
 		const rows = await lc.d
 			.select({
 				sectionId: schema.versionSections.sectionId,
+				bodyJson: schema.versionSections.bodyJson,
+				hidden: schema.versionSections.hidden,
 				lastChangedVersionNo: schema.versionSections.lastChangedVersionNo,
 			})
 			.from(schema.versionSections)
 			.where(eq(schema.versionSections.versionId, incumbent.versionId))
-		for (const r of rows) previousChanged.set(r.sectionId, r.lastChangedVersionNo)
+		for (const r of rows) before.set(r.sectionId, { bodyJson: r.bodyJson ?? null, hidden: r.hidden, lastChangedVersionNo: r.lastChangedVersionNo })
 	}
 	const resolved = await resolveSections(lc, document.id)
 	const publishedResolved = resolved.map((s) => ({ ...s, body: s.publishable }))
 	const derived: DerivedView = {
-		referenceNumbers: citationNumbers(publishedResolved.filter(live).map((s) => s.body)),
+		referenceNumbers: citationNumbers(publishedResolved.filter(live).map((s) => citedBody(s.row.titleCitations, s.body))),
 		// The published snapshot is drawn from the timeframe boxes being published.
 		timeframes: timeframeRows(
 			publishedResolved.filter(live).map((s) => ({ stepNumber: s.row.stepNumber, address: s.row.address, printedNumber: s.row.printedNumber, title: s.row.title, body: s.body })),
@@ -731,26 +803,26 @@ export async function publish(
 	const now = new Date()
 	const rows = await Promise.all(
 		publishedResolved.map(async (s) => {
-			const unchanged =
-				sameBody(s.body, previous.get(s.row.id) ?? null) && previousChanged.has(s.row.id)
+			const hidden = s.row.hidden || s.row.apparatus
+			const was = before.get(s.row.id)
+			const unchanged = was !== undefined && was.hidden === hidden && sameBody(s.body, was.bodyJson)
 			return {
 				versionId: draft.id,
 				sectionId: s.row.id,
 				parentAddress: s.row.parentId ? (addressOf.get(s.row.parentId) ?? null) : null,
 				address: s.row.address,
 				title: s.row.title,
+				titleCitations: s.row.titleCitations ?? null,
 				printedNumber: s.row.printedNumber,
 				orderIndex: s.row.orderIndex,
 				ownership: s.row.ownership,
-				hidden: s.row.hidden || s.row.apparatus,
+				hidden,
 				pointOfCare: s.row.pointOfCare,
 				bodyJson: s.body,
 				bodyHash: await bodyHash(s.body),
 				html: s.body ? lc.renderHtml(s.body, derived) : null,
 				markdown: s.body ? bodyToMarkdown(s.body, derived) : null,
-				lastChangedVersionNo: unchanged
-					? (previousChanged.get(s.row.id) ?? draft.versionNo)
-					: draft.versionNo,
+				lastChangedVersionNo: unchanged ? was.lastChangedVersionNo : draft.versionNo,
 			}
 		}),
 	)
@@ -905,6 +977,10 @@ export interface SectionDecisionWire {
 export interface SectionChange {
 	sectionId: string
 	address: string
+	/** New or changed text, or the section removed (hidden since the published version). */
+	change: ReviewChange
+	/** The body annotated against the published version; for a removal, the text readers
+	 *  lose, struck through. */
 	annotated: AnnotatedBody
 	/** The section's row in the current review, when it is under review. */
 	decision: SectionDecisionWire | null
@@ -919,9 +995,10 @@ export interface DocumentState {
 		releaseNotes: string | null
 		publishedAt: number | null
 	} | null
-	review: (Omit<ReviewStateRow, 'requestedAt'> & { requestedAt: number }) | null
-	/** Sections changed since the published version, with their annotated bodies and
-	 *  review decisions — what review mode paints (decision 108, 112). */
+	review: (Omit<ReviewStateRow, 'requestedAt'> & { requestedAt: number; requestedByName: string }) | null
+	/** What changed since the published version — text changes and removals, in reading
+	 *  order — with their annotated bodies and review decisions: what review mode paints
+	 *  (decision 108, 112). */
 	changes: SectionChange[]
 	/** Sections removed and subheadings added since the published version: what a review
 	 *  request reports, as the template asks. */
@@ -964,12 +1041,19 @@ export async function documentState(
 		]),
 	)
 	const previous = await publishedBodies(lc, documentId)
-	const changes = (await changedSections(lc, documentId)).map((s) => ({
-		sectionId: s.row.id,
-		address: s.row.address,
-		annotated: annotateChanges(previous.get(s.row.id) ?? null, s.publishable),
-		decision: decisionOf.get(s.row.id) ?? null,
-	}))
+	const changes = (await reviewableChanges(lc, documentId)).all.map(
+		({ section: s, change }): SectionChange => ({
+			sectionId: s.row.id,
+			address: s.row.address,
+			change,
+			annotated:
+				change === 'removal'
+					? annotateChanges(previous.get(s.row.id) ?? s.publishable, null)
+					: annotateChanges(previous.get(s.row.id) ?? null, s.publishable),
+			decision: decisionOf.get(s.row.id) ?? null,
+		}),
+	)
+	const requester = review ? await lc.auth.getUserById(review.requestedBy) : null
 	return {
 		draft: { versionId: draft.id, versionNo: draft.versionNo },
 		published: published
@@ -981,7 +1065,9 @@ export async function documentState(
 					publishedAt: published.publishedAt?.getTime() ?? null,
 				}
 			: null,
-		review: review ? { ...review, requestedAt: review.requestedAt.getTime() } : null,
+		review: review
+			? { ...review, requestedAt: review.requestedAt.getTime(), requestedByName: requester?.name ?? 'Someone' }
+			: null,
 		changes,
 		structure: await structureChanges(lc, documentId),
 		role: role as Role,

@@ -31,7 +31,6 @@
 	"dependencies": {
 		"@aicolab/app-kit": "workspace:^",
 		"@aicolab/better-auth": "workspace:^",
-		"drizzle-orm": "catalog:",
 		"@aicolab/cloudflare": "workspace:^",
 		"@aicolab/room-service": "workspace:^",
 		"@aicolab/ui-solid": "workspace:^",
@@ -51,6 +50,8 @@
 		"better-auth": "catalog:",
 		"capnweb-experimental-hibernation": "catalog:",
 		"chanfana": "catalog:",
+		"docx": "catalog:",
+		"drizzle-orm": "catalog:",
 		"hono": "catalog:",
 		"pdfjs-dist": "catalog:",
 		"prosemirror-changeset": "catalog:",

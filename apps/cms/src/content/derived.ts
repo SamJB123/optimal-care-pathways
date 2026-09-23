@@ -242,6 +242,20 @@ export function inlineText(node: JsonNode): string {
 }
 
 /** Reference ids numbered by first citation across bodies given in reading order. */
+/** A section as its citations count: the heading's own markers first, then the body —
+ *  the order the page numbers them in, and so the order every numbering reads them in
+ *  (the workspace, the reference list, publish, the published page, the exports). */
+export function citedBody(titleCitations: readonly string[] | null, body: JsonNode | null): JsonNode | null {
+	if (!titleCitations || titleCitations.length === 0) return body
+	return {
+		type: 'doc',
+		content: [
+			{ type: 'paragraph', content: titleCitations.map((id) => ({ type: 'citation', attrs: { referenceId: id } })) },
+			...(body?.content ?? []),
+		],
+	}
+}
+
 export function citationNumbers(bodies: (JsonNode | null)[]): Record<string, number> {
 	const numbers: Record<string, number> = {}
 	let next = 1

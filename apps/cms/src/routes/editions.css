@@ -1,0 +1,196 @@
+/* The edition imprint and the comparison, in the workspace's text column (.ocp-part):
+   the draft at the head, the editions as imprint entries ruled off one from the next,
+   then the two pickers and the sections that read differently, grouped by band. */
+@scope (.ocp-editions) {
+	:scope {
+		display: grid;
+		gap: 1.75rem;
+		align-content: start;
+	}
+	h1 {
+		margin: 0;
+		font-size: var(--t-3xl);
+		font-weight: 600;
+		letter-spacing: -0.015em;
+		line-height: 1.12;
+	}
+	h2 {
+		margin: 0;
+		font-size: var(--t-xl);
+		font-weight: 600;
+		line-height: 1.25;
+		text-wrap: balance;
+	}
+	a {
+		color: var(--family-ink, var(--color-primary));
+	}
+	.ocp-editions-head {
+		display: grid;
+		gap: 0.35rem;
+	}
+	.ocp-editions-kicker {
+		margin: 0;
+		font-size: var(--t-2xs);
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--family-ink, var(--color-base-content-muted));
+	}
+	.ocp-editions-facts {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.2rem 1.2em;
+		margin: 0;
+		overflow: hidden;
+		font-size: var(--t-sm);
+		color: var(--color-base-content-muted);
+	}
+	/* Facts on one line read "a · b"; every fact carries its dot before it, pulled out
+	   past the line's start, where the box clips it: a wrapped line starts without one. */
+	.ocp-editions-facts span {
+		margin-inline-start: -1.2em;
+	}
+	.ocp-editions-facts span::before {
+		content: "·";
+		display: inline-block;
+		inline-size: 1.2em;
+		text-align: center;
+	}
+	.ocp-editions-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem 1.25rem;
+		margin: 0.2rem 0 0;
+		font-size: var(--t-sm);
+		font-weight: 600;
+	}
+
+	/* The draft in work: a ruled box, as the overview's next step is. */
+	.ocp-editions-draft {
+		display: grid;
+		gap: 0.4rem;
+		padding: 0.9rem 1rem;
+		border: 1px solid var(--hair-strong);
+		border-radius: 0.5rem;
+	}
+
+	/* The editions, newest first, each an imprint entry. */
+	.ocp-editions-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+	}
+	.ocp-edition {
+		display: grid;
+		gap: 0.35rem;
+		padding-block: 1.1rem;
+		border-block-start: 1px solid var(--hair);
+	}
+	.ocp-edition:first-child {
+		border-block-start-color: var(--hair-strong);
+	}
+	.ocp-edition-date {
+		font-weight: 400;
+		color: var(--color-base-content-muted);
+	}
+	.ocp-edition-notes {
+		margin: 0.2rem 0;
+		max-inline-size: 60ch;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+
+	/* Compare two. */
+	.ocp-compare {
+		display: grid;
+		gap: 1rem;
+		padding-block-start: 1.5rem;
+		border-block-start: 1px solid var(--hair-strong);
+		scroll-margin-block-start: calc(var(--ocp-mast) + 1rem);
+	}
+	.ocp-compare-pickers {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+		gap: 0.75rem 1rem;
+	}
+	.ocp-compare-field .ui-select-control {
+		inline-size: 100%;
+		max-inline-size: 100%;
+	}
+	.ocp-compare-result {
+		display: grid;
+		gap: 1rem;
+	}
+	.ocp-compare-totals {
+		margin: 0;
+	}
+	.ocp-diff-switch {
+		justify-self: start;
+		max-inline-size: 100%;
+		font-size: 0.85em;
+	}
+	.ocp-compare-group {
+		display: grid;
+		gap: 1.25rem;
+		margin-block-end: 1.75rem;
+	}
+	.ocp-compare-group h3 {
+		margin: 0;
+		padding-block-end: 0.3rem;
+		border-block-end: 1px solid var(--hair-strong);
+		font-size: var(--t-xs);
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--family-ink, var(--color-base-content-muted));
+	}
+	.ocp-compare-entry {
+		display: grid;
+		gap: 0.4rem;
+		min-inline-size: 0;
+	}
+	.ocp-compare-heading {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0.3rem 0.6rem;
+	}
+	.ocp-compare-title {
+		flex: 1 1 14rem;
+		min-inline-size: 0;
+		font-size: var(--t-lg);
+		font-weight: 600;
+		text-wrap: balance;
+		overflow-wrap: anywhere;
+	}
+	a.ocp-compare-title {
+		text-decoration: none;
+		color: var(--color-base-content);
+	}
+	a.ocp-compare-title:hover {
+		text-decoration: underline;
+		text-decoration-color: var(--hair-strong);
+	}
+	/* The kind and the count wrap together, never apart. */
+	.ocp-compare-tags {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 0.6rem;
+		white-space: nowrap;
+	}
+	.ocp-compare-count {
+		font-size: var(--t-xs);
+		font-variant-numeric: tabular-nums;
+		color: var(--color-base-content-muted);
+	}
+	/* A section taken out, read as struck text. */
+	.ocp-compare-entry:is([data-kind="removed"], [data-kind="hidden"]) .ocp-compare-title {
+		text-decoration: line-through;
+		text-decoration-color: var(--hair-strong);
+		color: var(--color-base-content-muted);
+	}
+	.ocp-compare-entry > p {
+		margin: 0;
+	}
+}

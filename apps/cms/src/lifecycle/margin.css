@@ -29,6 +29,30 @@
 		padding-block-end: 0.8rem;
 		border-block-end: 1px solid var(--hair);
 	}
+	/* The package's tool-panel sections, used here without the panel around them (whose
+	   sheet is scoped to it): their parts laid out on paper, a hairline between them. */
+	.ui-tool-panel-section {
+		display: grid;
+		gap: 0.5rem;
+		padding-block-start: 0.8rem;
+		border-block-start: 1px solid var(--hair);
+	}
+	.ui-tool-panel-section-header {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+	.ui-tool-panel-section-header span {
+		font-size: var(--t-2xs);
+		font-variant-numeric: tabular-nums;
+		color: var(--color-base-content-muted);
+	}
+	.ui-tool-panel-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+	}
 	.ocp-margin-title {
 		margin: 0;
 		font-size: var(--t-lg);

@@ -1,0 +1,1 @@
+ALTER TABLE `review_sections` ADD `change` text DEFAULT 'text' NOT NULL;

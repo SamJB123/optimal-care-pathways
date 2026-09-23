@@ -377,10 +377,7 @@ describe('adding, editing and deleting', () => {
 		// The edition still names the old row, and the public list still prints its text.
 		const frozen = await sectionsOf(d, V_PUBLISHED)
 		expect(citedIds(frozen[0]?.bodyJson ?? null)).toEqual([R_P, R_B])
-		const printed = await referencesFor(
-			d,
-			frozen.map((s) => s.bodyJson ?? null),
-		)
+		const printed = await referencesFor(d, frozen)
 		expect(printed.find((r) => r.id === R_P)?.citation).toBe(
 			'Lee M. Lung referral audit, revised. 2022.',
 		)

@@ -293,6 +293,9 @@ export const versionSections = sqliteTable(
 		parentAddress: text('parent_address'),
 		address: text('address').notNull(),
 		title: text('title'),
+		/** The heading's own citation markers, as the section had them: numbered before
+		 *  the body's (`citedBody`). */
+		titleCitations: text('title_citations', { mode: 'json' }).$type<string[]>(),
 		printedNumber: text('printed_number'),
 		orderIndex: real('order_index').notNull(),
 		ownership: text('ownership').$type<Ownership>().notNull(),
@@ -345,11 +348,16 @@ export const reviews = sqliteTable(
 )
 
 /**
- * One row per section the review must decide — the sections whose resolved body differs
- * from the published version — pinning the body's hash at request time (decision 120):
- * publishing requires every pinned hash to still match, so what was approved is what is
- * published. Decision null until a reviewer decides.
+ * One row per change the review must decide, pinned at request time (decision 120) so
+ * that what was approved is what is published. A TEXT change is a live section whose
+ * resolved body differs from the published version, pinned by the body's hash. A
+ * REMOVAL is a section hidden since the published version (the top-most of a hidden
+ * subtree), pinned by being hidden: showing it again undoes what was approved. Decision
+ * null until a reviewer decides.
  */
+export const REVIEW_CHANGES = ['text', 'removal'] as const
+export type ReviewChange = (typeof REVIEW_CHANGES)[number]
+
 export const reviewSections = sqliteTable(
 	'review_sections',
 	{
@@ -357,6 +365,7 @@ export const reviewSections = sqliteTable(
 			.notNull()
 			.references(() => reviews.id, { onDelete: 'cascade' }),
 		sectionId: text('section_id').notNull(),
+		change: text('change').$type<ReviewChange>().notNull().default('text'),
 		bodyHash: text('body_hash').notNull(),
 		decision: text('decision').$type<SectionDecision>(),
 		note: text('note'),
@@ -447,6 +456,7 @@ export const publishedSections = sqliteView('published_sections').as((qb) =>
 			parentAddress: versionSections.parentAddress,
 			address: versionSections.address,
 			title: versionSections.title,
+			titleCitations: versionSections.titleCitations,
 			printedNumber: versionSections.printedNumber,
 			orderIndex: versionSections.orderIndex,
 			ownership: versionSections.ownership,

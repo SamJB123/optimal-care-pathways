@@ -1,0 +1,107 @@
+/* Review mode: the bar in the toolbar's place, and the sections as review reads them.
+   The bar is the same strip of paper under the masthead as the editing toolbar. */
+
+@scope (.ocp-review-bar) {
+	:scope {
+		position: sticky;
+		inset-block-start: var(--ocp-mast);
+		z-index: 5;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem 0.9rem;
+		min-block-size: 2.75rem;
+		padding: 0.35rem 0.25rem;
+		background: var(--color-base-100);
+		border-block-end: 1px solid var(--hair);
+		font-size: var(--t-sm);
+		--ui-seg-font-size: var(--t-xs);
+	}
+	.ocp-review-standing {
+		margin: 0;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+	}
+	.ocp-review-switches {
+		display: inline-flex;
+		gap: 0.4rem;
+	}
+	.ocp-review-steps {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		margin-inline-start: auto;
+	}
+	.ui-iconbtn {
+		inline-size: 2rem;
+		block-size: 2rem;
+	}
+	.ui-btn {
+		min-block-size: 2rem;
+		padding-block: 0.2rem;
+		font-size: var(--t-xs);
+	}
+	.ocp-review-key {
+		display: inline-block;
+		margin-inline-start: 0.3rem;
+		padding: 0 0.3rem;
+		border: 1px solid var(--hair);
+		border-radius: 0.25rem;
+		font-size: var(--t-2xs);
+		color: var(--color-base-content-muted);
+	}
+
+	/* On a phone: where the review stands and the way through it on the first row, the two
+	   switches on the second, scrolling sideways if they must; the keys are moot. */
+	@media (width < 40rem) {
+		:scope {
+			display: grid;
+			grid-template-columns: 1fr auto;
+			padding-inline: 0.5rem;
+		}
+		.ocp-review-standing {
+			grid-row: 1;
+		}
+		.ocp-review-steps {
+			grid-row: 1;
+			grid-column: 2;
+		}
+		.ocp-review-switches {
+			grid-row: 2;
+			grid-column: 1 / -1;
+			overflow-x: auto;
+			scrollbar-width: none;
+		}
+		.ocp-review-key {
+			display: none;
+		}
+	}
+}
+
+/* A part with nothing changed, read changed-only. */
+.ocp-review-empty {
+	display: grid;
+	justify-items: start;
+	gap: 0.6rem;
+	padding-block: 2rem;
+	color: var(--color-base-content-muted);
+}
+
+/* A removal: the section's struck heading, and the text readers lose. */
+.ocp-section[data-change="removal"] > .ocp-section-heading .ocp-section-title,
+.ocp-section[data-change="removal"] > .ocp-section-heading .ocp-section-number {
+	text-decoration: line-through;
+	text-decoration-color: var(--color-error);
+}
+
+.ocp-review-removed {
+	margin: 0;
+	font-size: var(--t-sm);
+	color: var(--color-base-content-muted);
+}
+
+/* Review reads the page without the editing affordances. */
+.ocp-section[data-reviewing] {
+	scroll-margin-block-start: calc(var(--ocp-mast) + 4.5rem);
+}

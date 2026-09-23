@@ -18,8 +18,13 @@ export function RequestReviewSheet(props: { open: boolean; onDismiss: () => void
 	const [busy, setBusy] = createSignal(false)
 	const [result, setResult] = createSignal<string | null>(null)
 	const [error, setError] = createSignal<string | null>(null)
+	// Text changes here; the removals are the structure report's hidden sections below.
 	const changed = () =>
-		workspace.state().changes.map((c) => workspace.sections().find((s) => s.id === c.sectionId)).filter((s) => s !== undefined)
+		workspace
+			.state()
+			.changes.filter((c) => c.change === 'text')
+			.map((c) => workspace.sections().find((s) => s.id === c.sectionId))
+			.filter((s) => s !== undefined)
 	const structure = () => workspace.state().structure
 
 	const send = async () => {
@@ -28,7 +33,13 @@ export function RequestReviewSheet(props: { open: boolean; onDismiss: () => void
 		try {
 			const r = await requestReview({ data: { documentId: workspace.documentId, note: note().trim() || null } })
 			setResult(
-				`Review asked for: ${r.sections} changed section${r.sections === 1 ? '' : 's'}${r.hidden ? `, ${r.hidden} hidden` : ''}${r.added ? `, ${r.added} added` : ''}. The reviewers have been emailed.`,
+				`Review asked for: ${[
+					r.sections > 0 ? `${r.sections} changed section${r.sections === 1 ? '' : 's'}` : null,
+					r.hidden > 0 ? `${r.hidden} hidden` : null,
+					r.added > 0 ? `${r.added} added` : null,
+				]
+					.filter((part) => part !== null)
+					.join(', ')}. The reviewers have been emailed.`,
 			)
 			setNote('')
 			await workspace.refreshState()

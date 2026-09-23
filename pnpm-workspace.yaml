@@ -111,7 +111,7 @@ catalog:
   fflate: ^0.8.3
   # Accessible .docx generation in the Worker (workplace-passport exports a
   # passport laid out like the APSC template, with real headings and tables).
-  docx: ^9.7.1
+  docx: ^9.7.2
   # the pipeline zone's clustering container (Cloudflare Containers SDK)
   '@cloudflare/containers': ^0.3.7
   # SQLite-in-wasm: the pipeline zone builds downloadable .sqlite exports of a run in the Worker

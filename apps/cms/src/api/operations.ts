@@ -11,7 +11,7 @@
 import { NotFound, operationsFor } from '@aicolab/app-kit/api'
 import { desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
-import { citationNumbers, stepNumberOfAddress } from '#/content/derived.ts'
+import { citationNumbers, citedBody, stepNumberOfAddress } from '#/content/derived.ts'
 import type { JsonNode } from '#/content/schema.ts'
 import { schema } from '#/db/index.ts'
 import {
@@ -199,10 +199,7 @@ export const getDocument = define({
 		return {
 			document: summaryOf(ctx, v),
 			outline: sections.map((s) => outlineOf(ctx, v.slug, s)),
-			references: await referencesFor(
-				ctx.d,
-				sections.map((s) => s.bodyJson ?? null),
-			),
+			references: await referencesFor(ctx.d, sections),
 		}
 	},
 })
@@ -226,11 +223,8 @@ export const getSection = define({
 		const found = sections.find((s) => s.address === addressValue)
 		if (!found) throw new NotFound(`"${v.title}" has no section "${addressValue}".`)
 		// Numbered as the whole document numbers them, filtered to what this section cites.
-		const all = await referencesFor(
-			ctx.d,
-			sections.map((s) => s.bodyJson ?? null),
-		)
-		const cited = new Set(Object.keys(citationNumbers([found.bodyJson ?? null])))
+		const all = await referencesFor(ctx.d, sections)
+		const cited = new Set(Object.keys(citationNumbers([citedBody(found.titleCitations, found.bodyJson ?? null)])))
 		return {
 			document: summaryOf(ctx, v),
 			section: sectionOf(ctx, v.slug, found),
@@ -258,10 +252,7 @@ export const getDocumentFull = define({
 		return {
 			document: summaryOf(ctx, v),
 			sections: sections.map((s) => sectionOf(ctx, v.slug, s)),
-			references: await referencesFor(
-				ctx.d,
-				sections.map((s) => s.bodyJson ?? null),
-			),
+			references: await referencesFor(ctx.d, sections),
 		}
 	},
 })
@@ -298,11 +289,10 @@ export const getQuickReferenceGuide = define({
 	handler: async ({ slug: slugValue, version: versionNo }, ctx) => {
 		const v = await versionOf(ctx.d, slugValue, versionNo)
 		const guide = await guideOf(ctx.d, v.versionId)
-		const all = await referencesFor(
-			ctx.d,
-			guide.all.map((s) => s.bodyJson ?? null),
+		const all = await referencesFor(ctx.d, guide.all)
+		const cited = new Set(
+			Object.keys(citationNumbers([...guide.sections.map((s) => citedBody(s.titleCitations, s.bodyJson ?? null)), ...guide.items.map((i) => i.list)])),
 		)
-		const cited = new Set(Object.keys(citationNumbers([...guide.sections.map((s) => s.bodyJson ?? null), ...guide.items.map((i) => i.list)])))
 		// A step section's address is its number ("2"); its parts' addresses open with it
 		// ("2.3.1", "2/quick-reference-guide").
 		const stepOf = (address: string) => {
@@ -412,7 +402,7 @@ export const getComposed = define({
 			sections: ordered.map((o) => ({ ...sectionOf(ctx, o.slug, o.section), source: o.source })),
 			references: await referencesFor(
 				ctx.d,
-				ordered.map((o) => o.section.bodyJson ?? null),
+				ordered.map((o) => o.section),
 			),
 		}
 	},

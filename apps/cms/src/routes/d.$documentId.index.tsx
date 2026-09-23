@@ -1,7 +1,8 @@
 /**
  * The document's overview (decisions 67, 78, S13 and the overview round): the edition's
  * imprint as the published page sets it, where the draft stands and the next step for the
- * reader's role, the pathway map with each step's state, the template's instructions for
+ * reader's role, the review summed up (who asked, what is decided, what was sent back and
+ * why), the pathway map with each step's state, the template's instructions for
  * the whole document (a pathway's drafters read them here and in the margin), the
  * structure changed since the last edition (sections hidden, subheadings added — what
  * the template asks a team to report), and the latest activity.
@@ -14,7 +15,7 @@ import { PathwayMap } from '#/content/blocks.tsx'
 import { RenderedBody } from '#/content/render.tsx'
 import { ago, imprintDate } from '#/lib/labels.ts'
 import { partHref, publishedHref, sectionAnchor } from '#/lib/links.ts'
-import { atLeast, DocumentContext } from '#/lifecycle/workspace.ts'
+import { atLeast, type ChangeEntry, DocumentContext, sectionLabel } from '#/lifecycle/workspace.ts'
 import { type ActivityRow, hubSnapshot } from '#/server/documents.ts'
 import { instructionsFor } from '#/server/workspace-fns.ts'
 import './hub.css'
@@ -29,8 +30,11 @@ function describe(event: ActivityRow): string {
 	const d = event.detail ?? {}
 	const where = typeof d.address === 'string' ? ` ${d.address}` : ''
 	switch (event.kind) {
-		case 'review.requested':
-			return `asked for a review of ${d.sections ?? '?'} changed section${d.sections === 1 ? '' : 's'}`
+		case 'review.requested': {
+			const count = (n: unknown, one: string, many: string) => (typeof n === 'number' && n > 0 ? `${n} ${n === 1 ? one : many}` : null)
+			const covered = [count(d.sections, 'changed section', 'changed sections'), count(d.hidden, 'hidden section', 'hidden sections')].filter((p) => p !== null)
+			return covered.length > 0 ? `asked for a review of ${covered.join(' and ')}` : 'asked for a review'
+		}
 		case 'review.decided':
 			return d.decision === 'approved' ? 'approved the review' : 'asked for changes in the review'
 		case 'version.published':
@@ -92,20 +96,25 @@ function OverviewPage() {
 		const s = state()
 		const r = s.review
 		if (r && r.decision === null && atLeast(workspace.role, 'admin'))
-			return { text: `The review waits on ${r.total - r.decided} of ${r.total} sections.`, label: 'Decide the review', go: () => workspace.setMode('review') }
+			return { text: `The review waits on ${r.total - r.decided} of ${r.total} changes.`, label: 'Decide the review', go: workspace.startReview }
 		if (r?.decision === 'approved' && s.central) return { text: 'The review is approved in full.', label: 'Publish…', go: workspace.openPublish }
 		if (r?.decision === 'changes_requested' && atLeast(workspace.role, 'member'))
-			return { text: 'The review asked for changes. Make them, then ask again.', label: 'Read the decisions', go: () => workspace.setMode('review') }
+			return { text: 'The review asked for changes. Make them, then ask again.', label: 'Read the decisions', go: workspace.startReview }
 		if (!r && s.changes.length > 0 && atLeast(workspace.role, 'member'))
 			return {
 				text: s.published
-					? `${s.changes.length} section${s.changes.length === 1 ? ' has' : 's have'} changed since the published edition.`
+					? `${s.changes.length} change${s.changes.length === 1 ? '' : 's'} since the published edition.`
 					: `Nothing is published yet: the first edition has ${s.changes.length} section${s.changes.length === 1 ? '' : 's'} to review.`,
 				label: 'Ask for review',
 				go: workspace.openRequestReview,
 			}
 		return null
 	}
+
+	// ---- the review, summed up ------------------------------------------------------
+	const sentBack = createMemo(() => workspace.changeOrder().filter((e) => e.change.decision?.decision === 'changes_requested'))
+	const notCovered = createMemo(() => (state().review ? workspace.changeOrder().filter((e) => e.change.decision === null).length : 0))
+	const hrefOf = (e: ChangeEntry) => `${partHref(workspace.documentId, e.part)}#${sectionAnchor(e.section.address)}`
 
 	return (
 		<div class="ocp-overview">
@@ -129,8 +138,10 @@ function OverviewPage() {
 					<div>
 						<dt>Draft</dt>
 						<dd>
-							Edition {state().draft.versionNo} · {state().changes.length} section{state().changes.length === 1 ? '' : 's'}{' '}
-							{state().published ? 'changed' : 'written'}
+							Edition {state().draft.versionNo} ·{' '}
+							{state().published
+								? `${state().changes.length} change${state().changes.length === 1 ? '' : 's'}`
+								: `${state().changes.length} section${state().changes.length === 1 ? '' : 's'} written`}
 							{lastChange() ? ` · last change ${lastChange()}` : ''}
 						</dd>
 					</div>
@@ -158,6 +169,53 @@ function OverviewPage() {
 					)}
 				</Show>
 			</header>
+
+			<Show when={state().review}>
+				{(r) => (
+					<section class="ocp-overview-review" aria-labelledby="ocp-review">
+						<h2 id="ocp-review">The review</h2>
+						<p>
+							Asked for by {r().requestedByName} {ago(r().requestedAt, hub().now)}
+							{r().note ? <>: <q>{r().note}</q></> : '.'}
+						</p>
+						<ul class="ocp-review-tally" aria-label="Decisions">
+							<li data-tone="approved">
+								<strong>{r().approved}</strong> approved
+							</li>
+							<li data-tone="changes_requested">
+								<strong>{r().changesRequested}</strong> sent back
+							</li>
+							<li>
+								<strong>{r().total - r().decided}</strong> waiting
+							</li>
+						</ul>
+						<Show when={notCovered() > 0}>
+							<p class="ocp-muted">
+								{notCovered()} change{notCovered() === 1 ? '' : 's'} made after the request {notCovered() === 1 ? 'is' : 'are'} not in this review. Ask for review again to include{' '}
+								{notCovered() === 1 ? 'it' : 'them'}.
+							</p>
+						</Show>
+						<Show when={sentBack().length > 0}>
+							<h3>Sent back for changes</h3>
+							<ul class="ocp-review-sent-back">
+								<For each={sentBack()}>
+									{(e) => (
+										<li>
+											<a href={hrefOf(e)} onClick={() => workspace.setMode('review')}>
+												{sectionLabel(e.section)}
+											</a>
+											<Show when={e.change.decision?.note}>{(note) => <span class="ocp-muted"> {note()}</span>}</Show>
+										</li>
+									)}
+								</For>
+							</ul>
+						</Show>
+						<Button variant="outline" onClick={() => workspace.startReview()}>
+							Read the changes
+						</Button>
+					</section>
+				)}
+			</Show>
 
 			<Show when={workspace.derived.map}>
 				{(map) => (

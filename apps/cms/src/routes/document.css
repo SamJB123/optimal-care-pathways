@@ -40,6 +40,22 @@
 	}
 }
 
+/* The raised sheet (the proof): the organism sets it against a workspace that fills the
+   screen; this one scrolls as a page, so the sheet holds to the screen instead, on
+   paper. */
+.ocp-workspace .ui-raised-sheet {
+	position: fixed;
+	inset: calc(var(--ocp-mast) + 0.75rem) 1.25rem 1.25rem;
+	z-index: 20;
+	background: var(--color-base-100);
+}
+
+@media (width <= 900px) {
+	.ocp-workspace .ui-raised-sheet {
+		inset: calc(var(--ocp-mast) + 0.5rem) 0.5rem calc(var(--ui-bottom-navigation-height, 4rem) + 0.5rem);
+	}
+}
+
 .ocp-workspace .ui-workspace-stage {
 	min-block-size: calc(100dvh - var(--ocp-mast));
 	/* The workspace aligns its columns to the top (for the sticky spine and margin); the
@@ -64,6 +80,36 @@
 	font-size: var(--t-xs);
 	color: var(--color-base-content-muted);
 	white-space: nowrap;
+}
+
+/* The open review's progress in the masthead: a door into review mode. */
+.ocp-mast-review {
+	all: unset;
+	cursor: pointer;
+	font-size: var(--t-xs);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+	padding: 0.2rem 0.55rem;
+	border-radius: 999px;
+	border: 1px solid var(--hair-strong);
+	color: var(--color-base-content);
+}
+
+.ocp-mast-review[aria-pressed="true"] {
+	background: var(--color-base-content);
+	color: var(--color-base-100);
+	border-color: transparent;
+}
+
+.ocp-mast-review:focus-visible {
+	outline: 2px solid var(--family, var(--color-primary));
+	outline-offset: 2px;
+}
+
+@media (width < 40rem) {
+	.ocp-mast-review {
+		display: none;
+	}
 }
 
 /* ── The text column ── */
@@ -224,37 +270,13 @@
 	font-style: italic;
 }
 
-/* Review mode: the changes switch above each annotated body. */
+/* Review mode: an annotated body (the switch is the review bar's, lifecycle/review.css). */
 .ocp-review-body {
 	display: grid;
 	gap: 0.5rem;
 }
 
-.ocp-diff-switch {
-	justify-self: start;
-	font-size: 0.85em;
-}
-
-/* The publish wizard in its raised sheet. */
-.ocp-wizard {
-	display: grid;
-	gap: 1rem;
-	max-inline-size: 44rem;
-	margin-inline: auto;
-	padding: 1rem 1.25rem 2rem;
-}
-
-.ocp-wizard-fields {
-	display: grid;
-	gap: 0.75rem;
-}
-
-.ocp-wizard-actions {
-	display: flex;
-	justify-content: space-between;
-	gap: 0.75rem;
-}
-
+/* The publish gate's items (the proof sheet, lifecycle/ProofSheet.tsx). */
 .ocp-gate {
 	list-style: none;
 	margin: 0;

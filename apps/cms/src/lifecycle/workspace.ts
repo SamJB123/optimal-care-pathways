@@ -16,10 +16,12 @@ import type { PathwayClient } from '#/lib/ocp-client.ts'
 import { spineOf } from '#/lib/outline.ts'
 import { ROLE_LADDER, type Role } from '#/lib/roles.ts'
 import type { CommentWire } from '#/server/lifecycle-fns.ts'
-import type { DocumentState } from '#/server/lifecycle.ts'
+import type { DocumentState, SectionChange } from '#/server/lifecycle.ts'
 
 export type WorkspaceMode = 'edit' | 'review'
 export type DiffView = 'marks' | 'clean'
+/** Review mode reads the changed sections only, or the whole text with them marked. */
+export type ReviewScope = 'changed' | 'everything'
 
 /** One live section editor, as the page's single toolbar and the margin drive it. */
 export interface EditorControl {
@@ -45,6 +47,24 @@ export interface EditorControl {
 	toggleCheckListPointOfCare(): void
 	/** The selected text, for a link's default wording. */
 	selectedText(): string
+}
+
+/** One change since the published version, placed in the document. */
+export interface ChangeEntry {
+	change: SectionChange
+	section: SectionWireRow
+	/** The address of the part (top-level section) it sits in. */
+	part: string
+}
+
+/** A change that needs the reader next, where the review stands: while a review is open,
+ *  one it covers and nobody has decided; once it is decided, one sent back for changes;
+ *  with no review, every change. */
+export const needsAttention = (entry: ChangeEntry, review: DocumentState['review']): boolean => {
+	const pinned = entry.change.decision
+	if (!review) return true
+	if (review.decision === null) return pinned !== null && pinned.decision === null
+	return pinned?.decision === 'changes_requested'
 }
 
 /** Who else is in the document, and where. */
@@ -73,6 +93,16 @@ export interface DocumentWorkspace {
 	/** Editing, or reading the changes since the published version (decision 108). */
 	mode: () => WorkspaceMode
 	setMode: (mode: WorkspaceMode) => void
+	/** Into review mode; from anywhere but a part, at the first change that needs
+	 *  attention. */
+	startReview: () => void
+	reviewScope: () => ReviewScope
+	setReviewScope: (scope: ReviewScope) => void
+	/** The changes in reading order, each with the part it sits in. */
+	changeOrder: () => ChangeEntry[]
+	/** To the next (1) or previous (-1) change that needs attention (`needsAttention`),
+	 *  from the section the margin is on, wrapping; J and K. False when there is none. */
+	goToChange: (direction: 1 | -1) => boolean
 	/** The section the margin is about: the one pinned by a click, else the one at the
 	 *  reading line. */
 	focused: () => string | null

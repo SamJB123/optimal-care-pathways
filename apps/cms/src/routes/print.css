@@ -60,6 +60,54 @@
 	overflow-wrap: anywhere;
 }
 
+/* A draft (the preview, the draft's PDF): a banner under the head, and a watermark that
+   stands behind the text on screen and on every printed page (a fixed box repeats on
+   each sheet). */
+.ocp-published[data-draft] {
+	position: relative;
+	isolation: isolate;
+}
+
+.ocp-watermark {
+	position: fixed;
+	inset: 0;
+	z-index: -1;
+	display: grid;
+	place-items: center;
+	overflow: hidden;
+	pointer-events: none;
+	font-size: clamp(5rem, 18vw, 11rem);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: color-mix(in oklab, var(--color-base-content) 5%, transparent);
+}
+
+.ocp-watermark span {
+	rotate: -28deg;
+}
+
+.ocp-draft-banner {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 0.4rem 1rem;
+	margin: 1rem 0 0;
+	padding: 0.6rem 0.8rem;
+	border: 1px dashed var(--hair-strong);
+	border-radius: 0.4rem;
+	font-size: var(--t-sm);
+}
+
+.ocp-draft-banner-links {
+	display: inline-flex;
+	gap: 0.9rem;
+}
+
+.ocp-draft-banner a {
+	color: var(--color-primary);
+}
+
 @page {
 	size: A4;
 	margin: 18mm 16mm;
@@ -95,5 +143,10 @@
 
 	.ocp-published-references a[href^="http"]::after {
 		content: none;
+	}
+
+	.ocp-watermark {
+		font-size: 6.5rem;
+		color: rgb(0 0 0 / 0.07);
 	}
 }

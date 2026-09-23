@@ -29,6 +29,7 @@ import { sectionAnchor } from '#/lib/links.ts'
 import { legacyOriginsOf } from '#/server/legacy-fns.ts'
 import { addComment, decideSection, divergeSection, resolveComment, revertSection } from '#/server/lifecycle-fns.ts'
 import { addSubsection, deleteSection, renameSection, setPointOfCare, setSectionHidden } from '#/server/structure-fns.ts'
+import type { SectionChange } from '#/server/lifecycle.ts'
 import { divergedFrom, instructionsFor } from '#/server/workspace-fns.ts'
 import { type MarginNote, marginNotesOf } from './guidance.ts'
 import { atLeast, DocumentContext, MARK_GLYPH, MARK_WORDS, markOf, sectionLabel } from './workspace.ts'
@@ -83,6 +84,16 @@ function WholeDocument() {
 	)
 }
 
+/** What changed in a section since the published edition, in words. */
+function changeLine(c: SectionChange, added: boolean, published: boolean): string {
+	if (c.change === 'removal') return 'Hidden since the published edition: it and everything under it are left out.'
+	if (added || !published) {
+		const lead = published ? 'New in this draft' : 'Written for the first edition'
+		return c.annotated.inserted > 0 ? `${lead}: ${c.annotated.inserted} characters` : `${lead}, not yet written`
+	}
+	return `Changed since the published edition: ${c.annotated.inserted} characters added, ${c.annotated.deleted} removed`
+}
+
 function MarkKey() {
 	return (
 		<dl class="ocp-margin-marks">
@@ -103,12 +114,7 @@ function SectionMargin(props: { sectionId: string }) {
 	const s = createMemo(() => workspace.sections().find((row) => row.id === props.sectionId) ?? null)
 	const change = createMemo(() => workspace.state().changes.find((c) => c.sectionId === props.sectionId) ?? null)
 	const thread = createMemo(() => workspace.comments().filter((c) => c.sectionId === props.sectionId))
-	const review = () => workspace.state().review
 	const canEdit = () => atLeast(workspace.role, 'member')
-	const canDecide = () => {
-		const r = review()
-		return r !== null && r.decision === null && r.superseded === 0 && atLeast(workspace.role, 'admin')
-	}
 	const [busy, setBusy] = createSignal(false)
 	const [error, setError] = createSignal<string | null>(null)
 	const run = async (action: () => Promise<unknown>) => {
@@ -193,21 +199,7 @@ function SectionMargin(props: { sectionId: string }) {
 							{(at) => <p class="ocp-margin-meta ocp-muted">Last changed {ago(at(), Date.now())}</p>}
 						</Show>
 						<Show when={change()}>
-							{(c) => (
-								<p class="ocp-margin-meta">
-									<Show
-										when={row().added || !workspace.state().published}
-										fallback={
-											<>
-												Changed since the published edition: {c().annotated.inserted} characters added, {c().annotated.deleted} removed
-											</>
-										}
-									>
-										{workspace.state().published ? 'New in this draft' : 'Written for the first edition'}
-										{c().annotated.inserted > 0 ? `: ${c().annotated.inserted} characters` : ', not yet written'}
-									</Show>
-								</p>
-							)}
+							{(c) => <p class="ocp-margin-meta">{changeLine(c(), row().added, workspace.state().published !== null)}</p>}
 						</Show>
 						<Show when={row().migrationNote}>
 							{(note) => <p class="ocp-margin-meta ocp-muted">{note().replace(/^(unplaced|proposed):\s*/, 'From the previous edition: ')}</p>}
@@ -220,6 +212,11 @@ function SectionMargin(props: { sectionId: string }) {
 								{text()}
 							</p>
 						)}
+					</Show>
+
+					{/* Reading the changes, the decision leads. */}
+					<Show when={workspace.mode() === 'review'}>
+						<ReviewDecision sectionId={row().id} />
 					</Show>
 
 					<Show when={notes().length > 0}>
@@ -238,7 +235,7 @@ function SectionMargin(props: { sectionId: string }) {
 						</section>
 					</Show>
 
-					<Show when={canEdit() && !row().apparatus}>
+					<Show when={canEdit() && !row().apparatus && workspace.mode() === 'edit'}>
 						<ToolPanelSection title="This section">
 							<div class="ocp-margin-actions">
 								<Confirming
@@ -307,7 +304,7 @@ function SectionMargin(props: { sectionId: string }) {
 						</ToolPanelSection>
 					</Show>
 
-					<Show when={row().ownership === 'shared' && canEdit()}>
+					<Show when={row().ownership === 'shared' && canEdit() && workspace.mode() === 'edit'}>
 						<ToolPanelSection title="Shared content">
 							<p class="ocp-muted">
 								Every pathway reads this section from the core template. Suggest a change to the central team, or take your
@@ -340,7 +337,7 @@ function SectionMargin(props: { sectionId: string }) {
 						</ToolPanelSection>
 					</Show>
 
-					<Show when={row().ownership === 'owned' && row().coreSectionId && canEdit()}>
+					<Show when={row().ownership === 'owned' && row().coreSectionId && canEdit() && workspace.mode() === 'edit'}>
 						<ToolPanelSection title="Your own copy of a shared section">
 							<Confirming
 								label="Return to the shared version"
@@ -379,30 +376,8 @@ function SectionMargin(props: { sectionId: string }) {
 						)}
 					</Show>
 
-					<Show when={change() && review()}>
-						<ToolPanelSection title="Review decision">
-							<Show when={change()?.decision?.decision} fallback={<p class="ocp-muted">Waiting for a decision.</p>}>
-								{(decision) => (
-									<p>
-										<Chip tone={decision() === 'approved' ? 'live' : 'accent'}>{decision() === 'approved' ? 'Approved' : 'Changes asked for'}</Chip>
-										<Show when={change()?.decision?.note}>{(note) => <span class="ocp-muted"> {note()}</span>}</Show>
-									</p>
-								)}
-							</Show>
-							<Show when={canDecide()}>
-								<DecisionStrip
-									busy={busy()}
-									onDecide={(decision, note) =>
-										run(async () => {
-											const r = review()
-											if (!r) return
-											await decideSection({ data: { reviewId: r.reviewId, sectionId: row().id, decision, note } })
-											await workspace.refreshState()
-										})
-									}
-								/>
-							</Show>
-						</ToolPanelSection>
+					<Show when={workspace.mode() === 'edit'}>
+						<ReviewDecision sectionId={row().id} />
 					</Show>
 
 					<ToolPanelSection title="Comments" meta={thread().length > 0 ? `${thread().length}` : undefined}>
@@ -658,6 +633,74 @@ function RenameSection(props: { current: string; busy: boolean; onRename: (title
 					</Button>
 				</ToolPanelActions>
 			</form>
+		</Show>
+	)
+}
+
+/** A change's standing in the open review: its decision, the reviewer's strip, and in
+ *  review mode the way on to the next change. */
+function ReviewDecision(props: { sectionId: string }) {
+	const workspace = useContext(DocumentContext)
+	const change = createMemo(() => workspace.state().changes.find((c) => c.sectionId === props.sectionId) ?? null)
+	const review = () => workspace.state().review
+	const canDecide = () => {
+		const r = review()
+		return r !== null && r.decision === null && r.superseded === 0 && atLeast(workspace.role, 'admin')
+	}
+	const [busy, setBusy] = createSignal(false)
+	const [error, setError] = createSignal<string | null>(null)
+	const decide = async (decision: 'approved' | 'changes_requested', note: string | null) => {
+		const r = review()
+		if (!r) return
+		setBusy(true)
+		setError(null)
+		try {
+			await decideSection({ data: { reviewId: r.reviewId, sectionId: props.sectionId, decision, note } })
+			await workspace.refreshState()
+		} catch (e) {
+			setError(e instanceof Error ? e.message : String(e))
+		} finally {
+			setBusy(false)
+		}
+	}
+	return (
+		<Show when={review() ? change() : null}>
+			{(c) => (
+				<ToolPanelSection title="Review decision">
+					<Show
+						when={c().decision}
+						fallback={<p class="ocp-muted">Changed after the review was requested, so this review does not cover it. Ask for review again to include it.</p>}
+					>
+						{(pinned) => (
+							<>
+								<Show when={pinned().decision} fallback={<p class="ocp-muted">Waiting for a decision.</p>}>
+									{(decision) => (
+										<p>
+											<Chip tone={decision() === 'approved' ? 'live' : 'accent'}>{decision() === 'approved' ? 'Approved' : 'Changes asked for'}</Chip>
+											<Show when={pinned().note}>{(note) => <span class="ocp-muted"> {note()}</span>}</Show>
+										</p>
+									)}
+								</Show>
+								<Show when={canDecide()}>
+									<DecisionStrip busy={busy()} onDecide={(decision, note) => void decide(decision, note)} />
+								</Show>
+							</>
+						)}
+					</Show>
+					<Show when={error()}>
+						{(text) => (
+							<p class="ocp-margin-error" role="alert">
+								{text()}
+							</p>
+						)}
+					</Show>
+					<Show when={workspace.mode() === 'review'}>
+						<Button variant="text" onClick={() => workspace.goToChange(1)}>
+							Next change to read (J)
+						</Button>
+					</Show>
+				</ToolPanelSection>
+			)}
 		</Show>
 	)
 }

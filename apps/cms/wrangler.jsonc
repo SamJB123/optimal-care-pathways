@@ -68,7 +68,12 @@
 	// Uploaded files (the section editor's images) in R2, under `images/<documentId>/…`,
 	// served publicly by /files/* (src/routes/files.$.ts): a published page shows them.
 	// A new account needs `wrangler r2 bucket create ocp-cms-files`.
-	"r2_buckets": [{ "binding": "FILES", "bucket_name": "ocp-cms-files" }]
+	"r2_buckets": [{ "binding": "FILES", "bucket_name": "ocp-cms-files" }],
+
+	// The site's own static files (the template's figures) as the Worker reads them: the
+	// draft's Word file embeds figures without a request to its own hostname. The vite
+	// plugin supplies the directory at build.
+	"assets": { "binding": "ASSETS" }
 
 	// Still to come: R2 for the legacy PDFs.
 	//

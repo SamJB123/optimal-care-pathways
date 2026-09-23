@@ -19,7 +19,7 @@ export const PUBLIC_CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalid
 export const PUBLISHED_CACHE_TAG = 'published'
 export const cacheTagFor = (slug: string): string => `document-${slug}`
 import { and, desc, eq, inArray, like, or, sql } from 'drizzle-orm'
-import { citationNumbers, inlineText, walkNodes } from '#/content/derived.ts'
+import { citationNumbers, citedBody, inlineText, walkNodes } from '#/content/derived.ts'
 import type { JsonNode } from '#/content/schema.ts'
 import type { Db } from '#/db/index.ts'
 import { inGroups, schema } from '#/db/index.ts'
@@ -198,12 +198,13 @@ export interface NumberedReference {
 	url: string | null
 }
 
-/** The references the bodies cite, numbered in first-cited order (decision 15, 118). */
+/** The references the sections cite, numbered in first-cited order (decision 15, 118): each
+ *  heading's own markers before its body's (`citedBody`). */
 export async function referencesFor(
 	d: Db,
-	bodies: (JsonNode | null)[],
+	sections: Pick<FrozenSection, 'titleCitations' | 'bodyJson'>[],
 ): Promise<NumberedReference[]> {
-	const numbers = citationNumbers(bodies)
+	const numbers = citationNumbers(sections.map((s) => citedBody(s.titleCitations, s.bodyJson ?? null)))
 	const ids = Object.keys(numbers)
 	if (ids.length === 0) return []
 	const rows = await inGroups(ids, (group) => d.select().from(schema.references).where(inArray(schema.references.id, group)))

@@ -151,9 +151,11 @@ describe('hiding and showing', () => {
 			[S12]: true,
 			[S2]: false,
 		})
-		// Never published: every hidden section is reported, in reading order.
+		// Never published: the hidden subtree is reported once, by its top section, and is
+		// one removal for the review.
 		const state = await lc.documentState(lifecycle(), DOC, MEMBER)
-		expect(state.structure.hidden.map((h) => h.address)).toEqual(['1', '1.1', '1.1.1', '1.2'])
+		expect(state.structure.hidden.map((h) => h.address)).toEqual(['1'])
+		expect(state.changes.filter((c) => c.change === 'removal').map((c) => c.address)).toEqual(['1'])
 		await expect(
 			st.setSectionHidden(lifecycle(), { sectionId: S11, hidden: false, userId: MEMBER }),
 		).rejects.toThrow(/show that one first/)

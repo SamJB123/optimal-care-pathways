@@ -12,6 +12,7 @@ import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import {
 	citationNumbers,
+	citedBody,
 	type DerivedView,
 	pathwayMapView,
 	timeframeRows,
@@ -235,24 +236,7 @@ async function derivedFor(
 					? (coreBodies.get(r.coreSectionId) ?? null)
 					: (r.bodyJson ?? null),
 		}))
-	// A heading's own citations come first in its section's citation order.
-	const cited = ordered.map((s): JsonNode | null =>
-		s.titleCitations.length === 0
-			? s.body
-			: {
-					type: 'doc',
-					content: [
-						{
-							type: 'paragraph',
-							content: s.titleCitations.map((id) => ({
-								type: 'citation',
-								attrs: { referenceId: id },
-							})),
-						},
-						...(s.body?.content ?? []),
-					],
-				},
-	)
+	const cited = ordered.map((s) => citedBody(s.titleCitations, s.body))
 	const topology = TEMPLATES.find((t) => t.templateId === document.templateId)?.map ?? null
 	const resolvedBody = (r: SectionRow) =>
 		r.ownership === 'shared' && r.coreSectionId

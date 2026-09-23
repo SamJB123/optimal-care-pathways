@@ -107,4 +107,47 @@
 		font-size: var(--t-sm);
 		margin-block-start: 0.4rem;
 	}
+
+	/* The review, summed up: a tally, what was sent back and why, the way in. */
+	.ocp-overview-review {
+		display: grid;
+		justify-items: start;
+		gap: 0.6rem;
+		padding-block-end: 1.5rem;
+		border-block-end: 1px solid var(--hair);
+	}
+	.ocp-overview-review p {
+		margin: 0;
+		max-inline-size: 60ch;
+	}
+	.ocp-overview-review h3 {
+		margin: 0.4rem 0 0;
+	}
+	.ocp-review-tally {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem 1.5rem;
+		padding: 0;
+		list-style: none;
+		font-size: var(--t-sm);
+		color: var(--color-base-content-muted);
+	}
+	.ocp-review-tally strong {
+		font-size: var(--t-xl);
+		font-variant-numeric: tabular-nums;
+		color: var(--color-base-content);
+		margin-inline-end: 0.25rem;
+	}
+	.ocp-review-tally li[data-tone="approved"] strong {
+		color: var(--color-success);
+	}
+	.ocp-review-tally li[data-tone="changes_requested"] strong {
+		color: var(--color-error);
+	}
+	.ocp-review-sent-back li + li {
+		margin-block-start: 0.25rem;
+	}
+	.ocp-review-sent-back a {
+		color: var(--family-ink, var(--color-primary));
+	}
 }

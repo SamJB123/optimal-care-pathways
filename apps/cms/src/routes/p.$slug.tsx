@@ -3,19 +3,17 @@
  * section in order with its body rendered by the site's own renderer, the References
  * list numbered as the API numbers them, and section ids for fragment links. This is
  * the page Browser Run prints to PDF, and the canonical url the API and MCP results
- * cite. Public: no sign-in, published content only.
+ * cite. Public: no sign-in, published content only. The frame is the one the draft
+ * preview uses (published/ReadingDocument.tsx), so a preview is what publishing gives.
  */
 
-import { Eyebrow, Notice } from '@aicolab/ui-solid'
+import { Notice } from '@aicolab/ui-solid'
 import { createFileRoute } from '@tanstack/solid-router'
-import { For, Show } from 'solid-js'
+import { Show } from 'solid-js'
 import { publishedDocumentFull } from '#/api/server-fns.ts'
 import { Masthead } from '#/components/Masthead.tsx'
-import { type DerivedView, stepNumberOfAddress, timeframeRows } from '#/content/derived.ts'
-import { ReferenceList } from '#/content/references.tsx'
-import { RenderedBody } from '#/content/render.tsx'
-import { numberLabel } from '#/lib/labels.ts'
-import './print.css'
+import { imprintDate } from '#/lib/labels.ts'
+import { ReadingDocument } from '#/published/ReadingDocument.tsx'
 
 export const Route = createFileRoute('/p/$slug')({
 	loader: async ({ params }) => {
@@ -28,90 +26,40 @@ export const Route = createFileRoute('/p/$slug')({
 	component: PublishedPage,
 })
 
-const when = (iso: string | null) =>
-	iso
-		? new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
-		: ''
-
-/** Sections carry parent addresses; depth is how many ancestors a section has. */
-function depthOf(address: string, parentOf: Map<string, string | null>): number {
-	let depth = 0
-	let parent = parentOf.get(address) ?? null
-	while (parent !== null && depth < 6) {
-		depth++
-		parent = parentOf.get(parent) ?? null
-	}
-	return depth
-}
-
 function PublishedPage() {
 	const data = Route.useLoaderData()
 	return (
 		<>
-		<Masthead crumbs={[{ label: 'Published library', href: '/library' }, { label: data().document?.document.title ?? 'Not found' }]} />
-		<Show
-			when={data().document}
-			fallback={
-				<main class="ocp-published">
-					<Notice colorBase="info" variant="soft">
-						{data().error ?? 'This document has no published version.'}
-					</Notice>
-				</main>
-			}
-		>
-			{(doc) => {
-				const parentOf = () => new Map(doc().sections.map((s) => [s.address, s.parentAddress]))
-				const derived = (): DerivedView => ({
-					referenceNumbers: Object.fromEntries(doc().references.map((r) => [r.id, r.number])),
-					timeframes: timeframeRows(
-						doc().sections.map((s) => ({ stepNumber: stepNumberOfAddress(s.address), address: s.address, printedNumber: s.printedNumber, title: s.title, body: s.body })),
-					),
-					map: null,
-				})
-				return (
+			<Masthead crumbs={[{ label: 'Published library', href: '/library' }, { label: data().document?.document.title ?? 'Not found' }]} />
+			<Show
+				when={data().document}
+				fallback={
 					<main class="ocp-published">
-						<header class="ocp-published-head">
-							<Eyebrow>Optimal Care Pathways · published</Eyebrow>
-							<h1>{doc().document.title}</h1>
-							<p class="ocp-published-meta">
-								Version {doc().document.version}
-								{doc().document.label ? ` · ${doc().document.label}` : ''}
-								{doc().document.publishedAt ? ` · ${when(doc().document.publishedAt)}` : ''}
-							</p>
-							<Show when={doc().document.releaseNotes}>
-								{(notes) => <p class="ocp-published-notes">{notes()}</p>}
-							</Show>
-						</header>
-						<For each={doc().sections}>
-							{(section) => (
-								<section
-									class="ocp-published-section"
-									id={section.address}
-									data-depth={depthOf(section.address, parentOf())}
-									data-ownership={section.ownership}
-								>
-									<h2 class="ocp-published-title">
-										<Show when={section.printedNumber}>
-											{(n) => <span class="ocp-published-number">{numberLabel(n())} </span>}
-										</Show>
-										{section.title ?? section.address}
-									</h2>
-									<Show when={section.body}>
-										{(body) => <RenderedBody body={body()} derived={derived()} />}
-									</Show>
-								</section>
-							)}
-						</For>
-						<Show when={doc().references.length > 0}>
-							<section class="ocp-published-section ocp-published-references" id="references">
-								<h2 class="ocp-published-title">References</h2>
-								<ReferenceList references={doc().references} />
-							</section>
-						</Show>
+						<Notice colorBase="info" variant="soft">
+							{data().error ?? 'This document has no published version.'}
+						</Notice>
 					</main>
-				)
-			}}
-		</Show>
+				}
+			>
+				{(doc) => (
+					<ReadingDocument
+						eyebrow="published"
+						document={{
+							title: doc().document.title,
+							editionLine: [
+								`Version ${doc().document.version}`,
+								doc().document.label,
+								doc().document.publishedAt ? imprintDate(Date.parse(doc().document.publishedAt ?? '')) : null,
+							]
+								.filter((part) => part)
+								.join(' · '),
+							releaseNotes: doc().document.releaseNotes,
+							sections: doc().sections,
+							references: doc().references,
+						}}
+					/>
+				)}
+			</Show>
 		</>
 	)
 }

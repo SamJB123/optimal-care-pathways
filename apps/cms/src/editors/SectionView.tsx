@@ -3,9 +3,10 @@
  * ● owned) in the document's colour before its number — then either the live editor (an
  * owned section, once the room is up), the read-only rendering of the body it renders (a
  * shared section: the core document's), or, in review mode (decision 108), the body
- * annotated against the published version. A hidden section collapses to its struck
- * heading with "Show again". In a pathway the template's guidance never enters the text:
- * the margin carries it (lifecycle/Margin.tsx).
+ * annotated against the published version — for a section hidden since, the text readers
+ * lose, struck through. A hidden section collapses to its struck heading with "Show
+ * again". In a pathway the template's guidance never enters the text: the margin carries
+ * it (lifecycle/Margin.tsx).
  *
  * The handle is opened ONCE per mount, in `onSettled` over UNTRACKED props — the hive's
  * DocPage wiring — and closed when the view leaves. Never in a reactive effect over the
@@ -19,7 +20,6 @@
  */
 
 import type { DocHandle, DocRoomClient } from '@aicolab/app-kit/doc-room/client'
-import { Segmented } from '@aicolab/ui-solid'
 import { createMemo, createSignal, For, onSettled, Show, untrack, useContext } from 'solid-js'
 import { CitationInline, DerivedContext } from '#/content/blocks.tsx'
 import { RenderedBody } from '#/content/render.tsx'
@@ -30,6 +30,7 @@ import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { pathwayClientFor } from '#/lib/ocp-client.ts'
 import { atLeast, DocumentContext, MARK_GLYPH, MARK_WORDS, markOf } from '#/lifecycle/workspace.ts'
 import { sectionBody } from '#/server/documents.ts'
+import type { SectionChange } from '#/server/lifecycle.ts'
 import { setSectionHidden } from '#/server/structure-fns.ts'
 import SectionEditor from './SectionEditor.tsx'
 
@@ -76,6 +77,8 @@ export function SectionView(props: { section: SectionWireRow; depth: number }) {
 			data-mark={mark()}
 			data-hidden={props.section.hidden ? '' : undefined}
 			data-focused={focused() ? 'true' : undefined}
+			data-reviewing={reviewing() ? '' : undefined}
+			data-change={reviewing() ? (change()?.change ?? undefined) : undefined}
 			onFocusIn={() => workspace.focus(props.section.id)}
 			onPointerDown={() => workspace.focus(props.section.id)}
 		>
@@ -87,20 +90,23 @@ export function SectionView(props: { section: SectionWireRow; depth: number }) {
 				<span class="ocp-section-title">{props.section.title ?? props.section.address}</span>
 				<TitleCitations ids={props.section.titleCitations} />
 				<span class="ocp-section-meta">
-					<Show when={props.section.hidden}>
+					<Show when={props.section.hidden && change()?.change !== 'removal'}>
 						<span>Hidden from this {workspace.document.kind === 'core' ? 'template' : 'pathway'}</span>
 					</Show>
-					{/* Before the first edition every section is new: only a review decision marks one. */}
-					<Show when={!props.section.hidden && (workspace.state().published || change()?.decision) ? change() : null}>
+					{/* Before the first edition every section is new: only a review decision (or a
+					    removal) marks one. */}
+					<Show when={workspace.state().published || change()?.decision || change()?.change === 'removal' ? change() : null}>
 						{(c) => (
 							<span class="ocp-section-change" data-decision={c().decision?.decision ?? undefined}>
 								{c().decision?.decision === 'approved'
 									? 'Approved'
 									: c().decision?.decision === 'changes_requested'
 										? 'Changes asked for'
-										: props.section.added
-											? 'New'
-											: `+${c().annotated.inserted} −${c().annotated.deleted}`}
+										: c().change === 'removal'
+											? 'Removed'
+											: props.section.added
+												? 'New'
+												: `+${c().annotated.inserted} −${c().annotated.deleted}`}
 							</span>
 						)}
 					</Show>
@@ -112,26 +118,28 @@ export function SectionView(props: { section: SectionWireRow; depth: number }) {
 				</span>
 			</header>
 			<Show
-				when={!props.section.hidden}
+				when={reviewing()}
 				fallback={
-					<Show when={atLeast(workspace.role, 'member')}>
-						<button type="button" class="ocp-section-show" disabled={busy()} onClick={() => void showAgain()}>
-							Show again
-						</button>
-					</Show>
-				}
-			>
-				<Show
-					when={reviewing()}
-					fallback={
+					<Show
+						when={!props.section.hidden}
+						fallback={
+							<Show when={atLeast(workspace.role, 'member')}>
+								<button type="button" class="ocp-section-show" disabled={busy()} onClick={() => void showAgain()}>
+									Show again
+								</button>
+							</Show>
+						}
+					>
 						<Show when={props.section.ownership === 'owned'} fallback={<SharedBody sectionId={props.section.id} />}>
 							<OwnedBody sectionId={props.section.id} />
 						</Show>
-					}
-				>
-					<Show when={change()} fallback={<StaticBody sectionId={props.section.id} />}>
-						{(c) => <ReviewBody body={c().annotated.body} />}
 					</Show>
+				}
+			>
+				{/* Review reads; it never edits. A hidden section that is not a removal under
+				    review stands as its struck heading. */}
+				<Show when={change()} fallback={<Show when={!props.section.hidden}><StaticBody sectionId={props.section.id} /></Show>}>
+					{(c) => <ReviewBody change={c()} />}
 				</Show>
 			</Show>
 		</section>
@@ -152,25 +160,24 @@ function TitleCitations(props: { ids: string[] }) {
 	)
 }
 
-/** Review mode: the body annotated against the published version (decision 112), with
- *  the marks/clean switch (the page's, so every section flips together). */
-function ReviewBody(props: { body: JsonNode }) {
+/** Review mode: the body annotated against the published version (decision 112), marked
+ *  or clean as the review bar says. A removal is the text readers lose, struck through;
+ *  clean, it is gone. */
+function ReviewBody(props: { change: SectionChange }) {
 	const workspace = useContext(DocumentContext)
+	const clean = () => workspace.diffView() === 'clean'
 	return (
 		<div class="ocp-review-body" data-view={workspace.diffView()}>
-			<Segmented
-				label="Show changes"
-				class="ocp-diff-switch"
-				options={[
-					{ id: 'marks', label: 'Changes marked' },
-					{ id: 'clean', label: 'As it will publish' },
-				]}
-				value={workspace.diffView()}
-				onChange={(view) => workspace.setDiffView(view)}
-			/>
-			<div class={workspace.diffView() === 'clean' ? 'ocp-body-clean' : undefined}>
-				<RenderedBody body={props.body} derived={workspace.derived} guidance={workspace.guidance} />
-			</div>
+			<Show when={props.change.change === 'removal'}>
+				<p class="ocp-review-removed">
+					Hidden in this draft: the {workspace.document.kind === 'core' ? 'template' : 'pathway'} will publish without it and everything under it.
+				</p>
+			</Show>
+			<Show when={!(clean() && props.change.change === 'removal')}>
+				<div class={clean() ? 'ocp-body-clean' : undefined}>
+					<RenderedBody body={props.change.annotated.body} derived={workspace.derived} guidance={workspace.guidance} />
+				</div>
+			</Show>
 		</div>
 	)
 }

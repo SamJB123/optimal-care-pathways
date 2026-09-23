@@ -21,7 +21,7 @@
  */
 
 import { and, eq, inArray, ne, or, sql } from 'drizzle-orm'
-import { citationNumbers, walkNodes } from '#/content/derived.ts'
+import { citationNumbers, citedBody, walkNodes } from '#/content/derived.ts'
 import { publishableHash, publishAsFor } from '#/content/publish.ts'
 import type { JsonNode } from '#/content/schema.ts'
 import { inGroups, schema } from '#/db/index.ts'
@@ -31,7 +31,6 @@ import {
 	foldRoom,
 	type Lifecycle,
 	live,
-	type ResolvedSection,
 	record,
 	refuse,
 	requireRole,
@@ -98,23 +97,6 @@ function citationsIn(body: JsonNode | null): string[] {
 		if (typeof id === 'string') ids.push(id)
 	})
 	return ids
-}
-
-/** A section as its citations count: the heading's own markers first, then the body —
- *  the order the page numbers them in. */
-function citedBody(section: ResolvedSection): JsonNode | null {
-	const title = section.row.titleCitations ?? []
-	if (title.length === 0) return section.body
-	return {
-		type: 'doc',
-		content: [
-			{
-				type: 'paragraph',
-				content: title.map((id) => ({ type: 'citation', attrs: { referenceId: id } })),
-			},
-			...(section.body?.content ?? []),
-		],
-	}
 }
 
 /** The body with every citation of `from` naming `to` instead. */
@@ -210,7 +192,7 @@ async function frozenIdsOf(lc: Lifecycle, documentId: string): Promise<Set<strin
  *  nothing cites. */
 async function referenceEntries(lc: Lifecycle, document: DocumentRow): Promise<ReferenceList> {
 	const resolved = (await resolveSections(lc, document.id)).filter(live)
-	const numbers = citationNumbers(resolved.map(citedBody))
+	const numbers = citationNumbers(resolved.map((s) => citedBody(s.row.titleCitations, s.body)))
 	const citedIn = new Map<string, CitingSection[]>()
 	for (const s of resolved) {
 		const ids = new Set([...(s.row.titleCitations ?? []), ...citationsIn(s.body)])

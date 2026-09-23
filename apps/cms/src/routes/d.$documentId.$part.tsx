@@ -16,13 +16,16 @@ import { createMemo, For, onSettled, Show, useContext } from 'solid-js'
 import { MapContext } from '#/content/blocks.tsx'
 import { SectionView } from '#/editors/SectionView.tsx'
 import { StageToolbar } from '#/editors/tools/Toolbar.tsx'
+import { partHref } from '#/lib/links.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
-import { atLeast, DocumentContext } from '#/lifecycle/workspace.ts'
+import { ReviewBar } from '#/lifecycle/ReviewBar.tsx'
+import { atLeast, DocumentContext, partsOf } from '#/lifecycle/workspace.ts'
 
 export const Route = createFileRoute('/d/$documentId/$part')({ component: PartPage })
 
-/** The subtree under `root`, depth-first in reading order. */
-function subtree(sections: SectionWireRow[], root: SectionWireRow, showHidden: boolean): { section: SectionWireRow; depth: number }[] {
+/** The subtree under `root`, depth-first in reading order. A hidden section is left out
+ *  unless `shown` says otherwise (hidden sections on request; a removal under review). */
+function subtree(sections: SectionWireRow[], root: SectionWireRow, shown: (hidden: SectionWireRow) => boolean): { section: SectionWireRow; depth: number }[] {
 	const byParent = new Map<string | null, SectionWireRow[]>()
 	for (const s of sections) {
 		const list = byParent.get(s.parentId) ?? []
@@ -31,7 +34,7 @@ function subtree(sections: SectionWireRow[], root: SectionWireRow, showHidden: b
 	}
 	const out: { section: SectionWireRow; depth: number }[] = []
 	const walk = (node: SectionWireRow, depth: number) => {
-		if (node.apparatus || (node.hidden && !showHidden)) return
+		if (node.apparatus || (node.hidden && !shown(node))) return
 		out.push({ section: node, depth })
 		// A hidden section's subsections are hidden with it: its struck heading stands for all.
 		if (node.hidden) return
@@ -45,9 +48,21 @@ function PartPage() {
 	const params = Route.useParams()
 	const workspace = useContext(DocumentContext)
 	const root = createMemo(() => workspace.sections().find((s) => s.parentId === null && s.address === params().part) ?? null)
+	const reviewing = () => workspace.mode() === 'review'
+	const changed = createMemo(() => new Set(workspace.state().changes.map((c) => c.sectionId)))
 	const rows = createMemo(() => {
 		const r = root()
-		return r ? subtree(workspace.sections(), r, workspace.showHidden()) : []
+		if (!r) return []
+		// Review mode shows a removal (struck) whatever the hidden switch says.
+		const all = subtree(workspace.sections(), r, (hidden) => workspace.showHidden() || (reviewing() && changed().has(hidden.id)))
+		return reviewing() && workspace.reviewScope() === 'changed' ? all.filter((row) => changed().has(row.section.id)) : all
+	})
+	/** The next part along with a change in it, for a part read changed-only with none. */
+	const nextChangedPart = createMemo(() => {
+		const keys = partsOf(workspace.sections(), true).map((p) => p.key)
+		const here = keys.indexOf(params().part)
+		const withChanges = [...new Set(workspace.changeOrder().map((e) => e.part))]
+		return withChanges.find((p) => keys.indexOf(p) > here) ?? withChanges.find((p) => p !== params().part) ?? null
 	})
 	// The step this part is (for the map's ring), read where it is used.
 	const at = () => ({ currentStep: rows()[0]?.section.stepNumber ?? null })
@@ -87,11 +102,27 @@ function PartPage() {
 
 	return (
 		<MapContext value={at}>
-			<Show when={atLeast(workspace.role, 'member') && workspace.mode() === 'edit'}>
-				<StageToolbar />
+			<Show when={reviewing()} fallback={<Show when={atLeast(workspace.role, 'member')}><StageToolbar /></Show>}>
+				<ReviewBar />
 			</Show>
 			<div class="ocp-part" ref={page}>
-				<Show when={rows().length > 0} fallback={<Notice colorBase="info" variant="soft">This document has no such part.</Notice>}>
+				<Show
+					when={rows().length > 0}
+					fallback={
+						<Show when={root() && reviewing()} fallback={<Notice colorBase="info" variant="soft">This document has no such part.</Notice>}>
+							<div class="ocp-review-empty">
+								<p>Nothing in this part has changed since the published edition.</p>
+								<Show when={nextChangedPart()}>
+									{(part) => (
+										<a class="ocp-link-button" href={partHref(workspace.documentId, part())}>
+											To the next part with changes
+										</a>
+									)}
+								</Show>
+							</div>
+						</Show>
+					}
+				>
 					{/* Keyed by the SECTION ID — never by the row object, which `rows()` allocates
 					    afresh on every outline tick. Identity keying remounted every section view
 					    (and reopened every facet) on each live update, which the fold's own

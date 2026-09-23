@@ -1,0 +1,154 @@
+/* The proof sheet: an imprint specimen beside its fields, the gate, the changes by step,
+   the sign-off. Paper, hairlines, one column of reading width. */
+@scope (.ocp-proof) {
+	:scope {
+		display: grid;
+		gap: 1.75rem;
+		max-inline-size: 52rem;
+		margin-inline: auto;
+		padding: 0.5rem 1.25rem 3rem;
+		font-size: var(--t-sm);
+	}
+	h3 {
+		margin: 0 0 0.6rem;
+		font-size: var(--t-xs);
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-base-content-muted);
+	}
+	h4 {
+		margin: 1rem 0 0.35rem;
+		font-size: var(--t-sm);
+		font-weight: 600;
+		color: var(--family-ink, var(--color-base-content));
+	}
+	.ocp-proof-lead {
+		margin: 0;
+		font-size: var(--t-md);
+		max-inline-size: 60ch;
+	}
+	.ocp-proof-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem 1.25rem;
+		margin: -1rem 0 0;
+	}
+	.ocp-proof-links a {
+		color: var(--color-primary);
+	}
+
+	/* The imprint as the published page will set it. */
+	.ocp-proof-imprint-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+		gap: 1.25rem;
+		align-items: start;
+	}
+	.ocp-proof-specimen {
+		display: grid;
+		gap: 0.35rem;
+		padding: 1rem 1.1rem;
+		border: 1px solid var(--hair-strong);
+		border-radius: 0.5rem;
+		background: var(--color-base-100);
+	}
+	.ocp-proof-specimen p {
+		margin: 0;
+	}
+	.ocp-proof-specimen-kicker {
+		font-size: var(--t-2xs);
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--color-base-content-muted);
+	}
+	.ocp-proof-specimen-title {
+		font-size: var(--t-xl);
+		line-height: 1.2;
+		text-wrap: balance;
+	}
+	.ocp-proof-specimen-meta {
+		color: var(--color-base-content-muted);
+	}
+	.ocp-proof-specimen-notes {
+		white-space: pre-wrap;
+	}
+	.ocp-proof-fields {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	/* The gate's items name their sections. */
+	.ocp-proof-where {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.2rem 0.75rem;
+		margin-block-start: 0.25rem;
+		font-size: var(--t-xs);
+	}
+	.ocp-proof-where a {
+		color: var(--color-primary);
+	}
+
+	/* The changes, by step. */
+	.ocp-proof-change {
+		border-block-start: 1px solid var(--hair);
+	}
+	.ocp-proof-change summary {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 0.2rem 1rem;
+		padding-block: 0.4rem;
+		cursor: pointer;
+	}
+	.ocp-proof-change-tag {
+		font-size: var(--t-xs);
+		font-variant-numeric: tabular-nums;
+		color: var(--color-base-content-muted);
+	}
+	.ocp-proof-change[data-change="removal"] .ocp-proof-change-label {
+		text-decoration: line-through;
+		text-decoration-color: var(--color-error);
+	}
+	.ocp-proof-change .ocp-body {
+		padding-block: 0.25rem 0.9rem;
+		font-size: var(--t-md);
+	}
+
+	/* Sign-off, and the result in place. */
+	.ocp-proof-sign {
+		display: grid;
+		justify-items: start;
+		gap: 0.75rem;
+		padding-block-start: 1rem;
+		border-block-start: 1px solid var(--hair-strong);
+	}
+	.ocp-proof-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem 1rem;
+	}
+	.ocp-proof-error {
+		margin: 0;
+		color: var(--color-error);
+	}
+	.ocp-proof-done {
+		display: grid;
+		justify-items: start;
+		gap: 0.75rem;
+		padding-block: 1rem;
+	}
+	.ocp-proof-done p {
+		margin: 0;
+	}
+	.ocp-proof-done .ocp-proof-links {
+		margin: 0;
+	}
+	.ocp-proof-done-title {
+		font-size: var(--t-xl);
+		font-weight: 600;
+		color: var(--family-ink, var(--color-base-content));
+	}
+}

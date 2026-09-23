@@ -16,13 +16,13 @@ import {
 	WorkspaceNavigationItem,
 	WorkspaceNavigationList,
 } from '@aicolab/ui-solid'
-import { useNavigate, useParams } from '@tanstack/solid-router'
+import { useLocation, useNavigate, useParams } from '@tanstack/solid-router'
 import { createMemo, createSignal, For, Show, useContext } from 'solid-js'
 import { documentName, numberLabel } from '#/lib/labels.ts'
 import { partHref, previewHref, publishedHref, sectionAnchor } from '#/lib/links.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { moveSection } from '#/server/structure-fns.ts'
-import { atLeast, DocumentContext, MARK_GLYPH, markOf, partsOf } from './workspace.ts'
+import { atLeast, type ChangeEntry, DocumentContext, MARK_GLYPH, markOf, partsOf } from './workspace.ts'
 import './spine.css'
 
 const initials = (name: string) =>
@@ -43,23 +43,64 @@ const shortAgo = (ms: number | null, now: number): string => {
 	return days < 60 ? `${days}d` : `${Math.round(days / 30)}mo`
 }
 
-/** A part's leading mark in the spine: its step number, or a quiet rule. */
-const partMark = (root: SectionWireRow) => (root.stepNumber && !root.parentId ? String(root.stepNumber) : '·')
+/** A part's leading mark in the spine: its step number, or a quiet rule; while a review is
+ *  open, ringed by how much of the part's share has been decided. */
+function PartMark(props: { root: SectionWireRow; progress: { decided: number; total: number } | null }) {
+	return (
+		<span class="ocp-part-mark" title={props.progress ? `${props.progress.decided} of ${props.progress.total} decided` : undefined}>
+			{props.root.stepNumber && !props.root.parentId ? String(props.root.stepNumber) : '·'}
+			<Show when={props.progress}>
+				{(p) => (
+					<svg class="ocp-part-ring" viewBox="0 0 20 20" aria-hidden="true" data-done={p().decided === p().total ? '' : undefined}>
+						<circle class="ocp-part-ring-track" cx="10" cy="10" r="8.5" />
+						<circle class="ocp-part-ring-fill" cx="10" cy="10" r="8.5" pathLength="1" stroke-dasharray={`${p().decided / p().total} 1`} />
+					</svg>
+				)}
+			</Show>
+		</span>
+	)
+}
+
+/** Where a change stands, for its row in the spine. */
+const decisionOf = (entry: ChangeEntry | undefined, reviewOpen: boolean): string | undefined => {
+	if (!entry) return undefined
+	const pinned = entry.change.decision
+	if (pinned?.decision) return pinned.decision
+	return reviewOpen && pinned ? 'waiting' : 'changed'
+}
 
 export function Spine(props: { onRequestReview: () => void }) {
 	const workspace = useContext(DocumentContext)
 	const navigate = useNavigate()
 	const params = useParams({ strict: false })
+	const location = useLocation()
 	const parts = createMemo(() => partsOf(workspace.sections(), workspace.showHidden()))
+	/** What the stage shows: a part's address, one of the document's own pages, or null
+	 *  for the overview. */
 	const current = () => {
 		const p = params()
-		return 'part' in p && typeof p.part === 'string' ? p.part : null
+		if ('part' in p && typeof p.part === 'string') return p.part
+		const page = location().pathname.split('/').at(-1)
+		return page === 'versions' || page === 'references' || page === 'suggestions' ? page : null
 	}
 	const hiddenCount = () => workspace.sections().filter((s) => s.hidden && !s.apparatus).length
 
 	const state = () => workspace.state()
 	const changes = () => state().changes.length
 	const review = () => state().review
+	/** Part → how many of its changes the open review covers, and how many are decided. */
+	const progress = createMemo(() => {
+		const out = new Map<string, { decided: number; total: number }>()
+		if (!review()) return out
+		for (const entry of workspace.changeOrder()) {
+			if (!entry.change.decision) continue
+			const p = out.get(entry.part) ?? { decided: 0, total: 0 }
+			p.total++
+			if (entry.change.decision.decision) p.decided++
+			out.set(entry.part, p)
+		}
+		return out
+	})
 	const reviewLine = () => {
 		const r = review()
 		const n = `${changes()} section${changes() === 1 ? '' : 's'}`
@@ -107,7 +148,7 @@ export function Spine(props: { onRequestReview: () => void }) {
 						<>
 							<WorkspaceNavigationItem
 								label={part.label}
-								mark={partMark(part.root)}
+								mark={<PartMark root={part.root} progress={progress().get(part.key) ?? null} />}
 								current={current() === part.key}
 								muted={part.root.hidden}
 								class={{ 'ocp-spine-hidden-part': part.root.hidden }}
@@ -138,7 +179,7 @@ export function Spine(props: { onRequestReview: () => void }) {
 							label={workspace.mode() === 'review' ? 'Back to writing' : 'Read the changes'}
 							mark={workspace.mode() === 'review' ? '✎' : '⇄'}
 							current={workspace.mode() === 'review'}
-							onSelect={() => workspace.setMode(workspace.mode() === 'review' ? 'edit' : 'review')}
+							onSelect={() => (workspace.mode() === 'review' ? workspace.setMode('edit') : workspace.startReview())}
 						/>
 					</Show>
 					<Show when={atLeast(workspace.role, 'member') && changes() > 0}>
@@ -181,14 +222,18 @@ function PartSections(props: { root: SectionWireRow }) {
 	const [now] = createSignal(Date.now())
 	const [dragging, setDragging] = createSignal<string | null>(null)
 	const [error, setError] = createSignal<string | null>(null)
+	const changeOf = createMemo(() => new Map(workspace.changeOrder().map((e) => [e.section.id, e])))
 	const rows = createMemo(() => {
 		const all = workspace.sections()
 		const byParent = new Map<string | null, SectionWireRow[]>()
 		for (const s of all) byParent.set(s.parentId, [...(byParent.get(s.parentId) ?? []), s])
 		const out: { section: SectionWireRow; depth: number }[] = []
+		// Review mode lists a removal (struck) whatever the hidden switch says.
+		const removal = (s: SectionWireRow) => workspace.mode() === 'review' && changeOf().get(s.id)?.change.change === 'removal'
 		const walk = (node: SectionWireRow, depth: number) => {
-			if (node.apparatus || (node.hidden && !workspace.showHidden())) return
+			if (node.apparatus || (node.hidden && !workspace.showHidden() && !removal(node))) return
 			out.push({ section: node, depth })
+			if (node.hidden) return
 			for (const child of (byParent.get(node.id) ?? []).sort((a, b) => a.orderIndex - b.orderIndex)) walk(child, depth + 1)
 		}
 		walk(props.root, 0)
@@ -241,6 +286,7 @@ function PartSections(props: { root: SectionWireRow }) {
 							data-mark={markOf(row.section)}
 							data-hidden={row.section.hidden ? '' : undefined}
 							data-current={workspace.focused() === row.section.id ? '' : undefined}
+							data-decision={decisionOf(changeOf().get(row.section.id), workspace.state().review?.decision === null)}
 							data-drop={dragging() && dragging() !== row.section.id ? '' : undefined}
 							draggable={canMove(row.section) ? 'true' : 'false'}
 							onDragStart={(e) => {

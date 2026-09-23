@@ -24,7 +24,7 @@ import {
 	WorkspaceShell,
 	WorkspaceStage,
 } from '@aicolab/ui-solid'
-import { createFileRoute, Outlet, useNavigate } from '@tanstack/solid-router'
+import { createFileRoute, Outlet, useNavigate, useParams } from '@tanstack/solid-router'
 import { JUMP_ID } from '#/components/Jump.tsx'
 import { createEffect, createMemo, createSignal, onSettled, Show } from 'solid-js'
 import type { JumpTarget } from '#/components/Jump.tsx'
@@ -32,20 +32,23 @@ import { Masthead } from '#/components/Masthead.tsx'
 import { useAuthSession } from '#/lib/auth-client.ts'
 import { familyStyle } from '#/lib/family.ts'
 import { documentName, numberLabel } from '#/lib/labels.ts'
-import { partHref, previewHref, publishedHref, sectionAnchor } from '#/lib/links.ts'
+import { draftDocxHref, draftPdfHref, partHref, previewHref, publishedHref, sectionAnchor } from '#/lib/links.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { type PathwayClient, pathwayClientFor } from '#/lib/ocp-client.ts'
 import { Margin } from '#/lifecycle/Margin.tsx'
-import { PublishWizard } from '#/lifecycle/PublishWizard.tsx'
+import { ProofSheet } from '#/lifecycle/ProofSheet.tsx'
 import { RequestReviewSheet } from '#/lifecycle/RequestReview.tsx'
 import { Spine } from '#/lifecycle/Spine.tsx'
 import {
 	atLeast,
+	type ChangeEntry,
 	type DiffView,
 	DocumentContext,
 	type DocumentWorkspace,
 	type EditorControl,
+	needsAttention,
 	type PresenceEntry,
+	type ReviewScope,
 	type WorkspaceMode,
 } from '#/lifecycle/workspace.ts'
 import { spineOf } from '#/lib/outline.ts'
@@ -80,7 +83,9 @@ function DocumentShell() {
 	const [pinned, setPinned] = createSignal<string | null>(null)
 	const [reading, setReading] = createSignal<string | null>(null)
 	const [diffView, setDiffView] = createSignal<DiffView>('marks')
-	const [publishing, setPublishing] = createSignal(false)
+	// The edition the proof sheet is open for (it keeps its name once published), or null.
+	const [publishing, setPublishing] = createSignal<number | null>(null)
+	const openPublish = () => setPublishing(state().draft.versionNo)
 	const [asking, setAsking] = createSignal(false)
 	const [showHidden, setShowHidden] = createSignal(false)
 	const [active, setActive] = createSignal<string | null>(null)
@@ -89,7 +94,14 @@ function DocumentShell() {
 	const [names, setNames] = createSignal<Record<string, string>>({})
 	const [contents, setContents] = createSignal(false)
 	const [raise, setRaise] = createSignal(0)
+	const [reviewScope, setReviewScope] = createSignal<ReviewScope>('changed')
 	const navigate = useNavigate()
+	// The child route's params: which part, if any, the stage is showing.
+	const childParams = useParams({ strict: false })
+	const partOnStage = () => {
+		const p = childParams()
+		return 'part' in p && typeof p.part === 'string' ? p.part : null
+	}
 
 	// Client-only by construction: effects never run during SSR. The client is a
 	// page-lifetime singleton per document (lib/ocp-client.ts): this effect only
@@ -159,6 +171,68 @@ function DocumentShell() {
 		setLiveComments(await listComments({ data: { documentId: params().documentId } }))
 	}
 
+	// ---- review: the changes in reading order, and moving between them ------------------
+	const changeOrder = createMemo((): ChangeEntry[] => {
+		const byId = new Map(sections().map((s) => [s.id, s]))
+		const partOf = (s: SectionWireRow): string => {
+			let at = s
+			for (let parent = at.parentId ? byId.get(at.parentId) : undefined; parent; parent = at.parentId ? byId.get(at.parentId) : undefined) at = parent
+			return at.address
+		}
+		return state().changes.flatMap((change) => {
+			const section = byId.get(change.sectionId)
+			return section ? [{ change, section, part: partOf(section) }] : []
+		})
+	})
+	// While a section is being brought into view the page scrolls under the pin; the pin
+	// holds until the scroll has settled.
+	let arriving = false
+	/** Bring a section into view once its part has it on the page, and light its number. */
+	const arrive = (anchor: string, tries = 20) => {
+		const target = document.getElementById(anchor)
+		if (!target) {
+			if (tries > 0) setTimeout(() => arrive(anchor, tries - 1), 50)
+			return
+		}
+		arriving = true
+		const settle = () => {
+			arriving = false
+		}
+		window.addEventListener('scrollend', settle, { once: true })
+		setTimeout(settle, 1200)
+		target.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+		target.dataset.arrived = ''
+		setTimeout(() => delete target.dataset.arrived, 1600)
+	}
+	const goTo = (entry: ChangeEntry) => {
+		setPinned(entry.section.id)
+		if (partOnStage() !== entry.part) void navigate({ href: partHref(params().documentId, entry.part) })
+		arrive(sectionAnchor(entry.section.address))
+	}
+	const goToChange = (direction: 1 | -1): boolean => {
+		const all = changeOrder()
+		const review = state().review
+		if (!all.some((e) => needsAttention(e, review))) return false
+		const found = all.findIndex((e) => e.section.id === focused())
+		// From a section that is not a change, J starts at the first and K at the last.
+		const at = found !== -1 ? found : direction === 1 ? -1 : all.length
+		for (let step = 1; step <= all.length; step++) {
+			const entry = all[(((at + direction * step) % all.length) + all.length) % all.length]
+			if (entry && needsAttention(entry, review)) {
+				goTo(entry)
+				return true
+			}
+		}
+		return false
+	}
+	const startReview = () => {
+		setMode('review')
+		if (partOnStage() === null) {
+			const first = changeOrder().find((e) => needsAttention(e, state().review)) ?? changeOrder()[0]
+			if (first) goTo(first)
+		}
+	}
+
 	const workspace: DocumentWorkspace = {
 		get documentId() {
 			return params().documentId
@@ -180,13 +254,18 @@ function DocumentShell() {
 		refreshComments,
 		mode,
 		setMode,
+		startReview,
+		reviewScope,
+		setReviewScope,
+		changeOrder,
+		goToChange,
 		focused,
 		focus: setPinned,
 		pinned,
 		setReading,
 		diffView,
 		setDiffView,
-		openPublish: () => setPublishing(true),
+		openPublish,
 		openRequestReview: () => setAsking(true),
 		get guidance() {
 			return data().document.kind === 'core' ? 'inline' : 'margin'
@@ -232,14 +311,24 @@ function DocumentShell() {
 	})
 	const jumpActions = createMemo((): JumpTarget[] => [
 		...(state().changes.length > 0
-			? [{ id: 'act:changes', label: mode() === 'review' ? 'Back to writing' : 'Read the changes', kind: 'Action', keywords: ['review', 'diff'], go: () => setMode(mode() === 'review' ? 'edit' : 'review') }]
+			? [
+					{
+						id: 'act:changes',
+						label: mode() === 'review' ? 'Back to writing' : 'Read the changes',
+						kind: 'Action',
+						keywords: ['review', 'diff'],
+						go: () => (mode() === 'review' ? setMode('edit') : startReview()),
+					},
+				]
 			: []),
 		...(atLeast(state().role, 'member') && state().changes.length > 0
 			? [{ id: 'act:review', label: 'Ask for review', kind: 'Action', keywords: ['request'], go: () => setAsking(true) }]
 			: []),
-		...(state().central ? [{ id: 'act:publish', label: 'Publish…', kind: 'Action', keywords: ['edition'], go: () => setPublishing(true) }] : []),
+		...(state().central ? [{ id: 'act:publish', label: 'Publish…', kind: 'Action', keywords: ['edition'], go: openPublish }] : []),
 		{ id: 'act:editions', label: 'Editions', kind: 'Action', keywords: ['versions', 'compare'], go: `/d/${params().documentId}/versions` },
 		{ id: 'act:preview', label: 'Preview the draft', kind: 'Action', keywords: ['preview'], go: previewHref(params().documentId) },
+		{ id: 'act:draft-pdf', label: 'Download the draft as a PDF', kind: 'Action', keywords: ['export', 'print'], go: draftPdfHref(params().documentId) },
+		{ id: 'act:draft-docx', label: 'Download the draft as a Word file', kind: 'Action', keywords: ['export', 'docx'], go: draftDocxHref(params().documentId) },
 		{ id: 'act:references', label: 'References', kind: 'Action', keywords: ['citations'], go: `/d/${params().documentId}/references` },
 		{ id: 'act:hidden', label: showHidden() ? 'Leave hidden sections out' : 'Show hidden sections', kind: 'Action', keywords: ['hidden'], go: () => setShowHidden(!showHidden()) },
 	])
@@ -256,14 +345,29 @@ function DocumentShell() {
 		// A section scrolled out of view lets go of the margin: it follows the reading again.
 		const release = () => {
 			const id = pinned()
-			if (!id) return
+			if (!id || arriving) return
 			const el = document.querySelector(`[data-section-id="${id}"]`)
 			if (!el) return
 			const box = el.getBoundingClientRect()
 			if (box.bottom < 0 || box.top > window.innerHeight) setPinned(null)
 		}
 		window.addEventListener('scroll', release, { passive: true })
-		return () => window.removeEventListener('scroll', release)
+		// Review mode: J and K move between the changes that need attention, unless the
+		// reader is typing.
+		const onKey = (event: KeyboardEvent) => {
+			if (mode() !== 'review' || event.metaKey || event.ctrlKey || event.altKey) return
+			const target = event.target
+			if (target instanceof HTMLElement && (target.isContentEditable || target.closest('input, textarea, select'))) return
+			const key = event.key.toLowerCase()
+			if (key !== 'j' && key !== 'k') return
+			event.preventDefault()
+			goToChange(key === 'j' ? 1 : -1)
+		}
+		window.addEventListener('keydown', onKey)
+		return () => {
+			window.removeEventListener('scroll', release)
+			window.removeEventListener('keydown', onKey)
+		}
 	})
 
 	return (
@@ -281,11 +385,28 @@ function DocumentShell() {
 							: []
 					}
 					presence={
-						<Show when={presence().length > 0}>
-							<span class="ocp-presence" title={presence().map((p) => p.name).join(', ')}>
-								{presence().length === 1 ? `${presence()[0]?.name} is here` : `${presence().length} others here`}
-							</span>
-						</Show>
+						<>
+							<Show when={state().review?.decision === null ? state().review : null}>
+								{(r) => (
+									<button
+										type="button"
+										class="ocp-mast-review"
+										aria-pressed={mode() === 'review' ? 'true' : 'false'}
+										onClick={() => {
+											if (mode() === 'review') setMode('edit')
+											else startReview()
+										}}
+									>
+										Review: {r().decided} of {r().total} decided
+									</button>
+								)}
+							</Show>
+							<Show when={presence().length > 0}>
+								<span class="ocp-presence" title={presence().map((p) => p.name).join(', ')}>
+									{presence().length === 1 ? `${presence()[0]?.name} is here` : `${presence().length} others here`}
+								</span>
+							</Show>
+						</>
 					}
 					sections={jumpSections()}
 					actions={jumpActions()}
@@ -293,7 +414,7 @@ function DocumentShell() {
 				/>
 				<WorkspaceShell
 					class="ocp-workspace"
-					hasRaisedSheet={publishing()}
+					hasRaisedSheet={publishing() !== null}
 					navigation={<Spine onRequestReview={() => setAsking(true)} />}
 					stage={
 						<WorkspaceStage label={data().document.title}>
@@ -332,9 +453,11 @@ function DocumentShell() {
 					}
 				>
 					<Show when={publishing()}>
-						<RaisedSheet title="Publish this document" onClose={() => setPublishing(false)}>
-							<PublishWizard onDone={() => setPublishing(false)} />
-						</RaisedSheet>
+						{(edition) => (
+							<RaisedSheet title={`Publish edition ${edition()}`} onClose={() => setPublishing(null)}>
+								<ProofSheet onClose={() => setPublishing(null)} />
+							</RaisedSheet>
+						)}
 					</Show>
 				</WorkspaceShell>
 				<RequestReviewSheet open={asking()} onDismiss={() => setAsking(false)} />
