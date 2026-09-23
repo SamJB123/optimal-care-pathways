@@ -24,7 +24,7 @@ import { createMemo, createSignal, For, onSettled, Show, untrack, useContext } f
 import { CitationInline, DerivedContext } from '#/content/blocks.tsx'
 import { RenderedBody } from '#/content/render.tsx'
 import type { JsonNode } from '#/content/schema.ts'
-import { numberLabel } from '#/lib/labels.ts'
+import { changeSize, numberLabel } from '#/lib/labels.ts'
 import { sectionAnchor } from '#/lib/links.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { pathwayClientFor } from '#/lib/ocp-client.ts'
@@ -106,7 +106,7 @@ export function SectionView(props: { section: SectionWireRow; depth: number }) {
 											? 'Removed'
 											: props.section.added
 												? 'New'
-												: `+${c().annotated.inserted} −${c().annotated.deleted}`}
+												: changeSize(c().annotated)}
 							</span>
 						)}
 					</Show>

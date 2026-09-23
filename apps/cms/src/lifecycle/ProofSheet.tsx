@@ -11,7 +11,7 @@
 import { Button, Checkbox, Field, TextArea, TextInput } from '@aicolab/ui-solid'
 import { createMemo, createSignal, For, Loading, Show, useContext } from 'solid-js'
 import { RenderedBody } from '#/content/render.tsx'
-import { imprintDate } from '#/lib/labels.ts'
+import { changeSize, imprintDate } from '#/lib/labels.ts'
 import { draftDocxHref, draftPdfHref, guideHref, partHref, pdfHref, previewHref, publishedHref, sectionAnchor } from '#/lib/links.ts'
 import { bandLabel, type SpineBand, spineOf } from '#/lib/outline.ts'
 import { publishDocument, publishReadiness } from '#/server/lifecycle-fns.ts'
@@ -28,7 +28,7 @@ function changeTag(e: ChangeEntry, published: boolean): string {
 			? 'Removed'
 			: e.section.added || !published
 				? 'New'
-				: `Changed +${e.change.annotated.inserted} −${e.change.annotated.deleted}`
+				: `Changed ${changeSize(e.change.annotated)}`
 	const decided = e.change.decision?.decision
 	return decided === 'approved' ? `${kind} · approved` : decided === 'changes_requested' ? `${kind} · sent back` : kind
 }

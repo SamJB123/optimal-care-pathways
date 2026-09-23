@@ -170,6 +170,13 @@ function DocumentShell() {
 	const refreshComments = async () => {
 		setLiveComments(await listComments({ data: { documentId: params().documentId } }))
 	}
+	// Writing is saved by the room, not by an action here: when a section's body lands in
+	// its row (the live rows carry the time), the changes and the review are read again, so
+	// a first change offers "Ask for review" and an edit under review shows as one.
+	const lastWritten = createMemo(() => sections().reduce((at, s) => Math.max(at, s.updatedAt ?? 0), 0))
+	createEffect(lastWritten, (at, before) => {
+		if (before !== undefined && at !== before) void refreshState()
+	})
 
 	// ---- review: the changes in reading order, and moving between them ------------------
 	const changeOrder = createMemo((): ChangeEntry[] => {

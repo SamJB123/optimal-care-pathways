@@ -617,7 +617,9 @@ export async function publishReadiness(
 		live(s) &&
 		s.row.ownership === 'owned' &&
 		(document.kind === 'pathway' || s.row.pathwayOwnership !== 'owned')
-	const placeholders = resolved.filter((s) => asWritten(s) && blockingPlaceholders(s.body) > 0)
+	// Measured on the body as it would publish: a placeholder in drafting guidance (which a
+	// pathway publishes without) is not text readers would see.
+	const placeholders = resolved.filter((s) => asWritten(s) && blockingPlaceholders(s.publishable) > 0)
 	items.push(
 		placeholders.length > 0
 			? {

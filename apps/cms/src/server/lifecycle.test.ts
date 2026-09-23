@@ -373,6 +373,29 @@ describe('the pathway', () => {
 		expect(readiness.items.find((i) => i.key === 'core')?.level).toBe('ok')
 	})
 
+	it('does not block on a placeholder in drafting guidance: a pathway publishes without it', async () => {
+		await db(env.DB)
+			.update(schema.sections)
+			.set({
+				bodyJson: doc(
+					{
+						type: 'guidance',
+						content: [
+							paragraph(
+								text('Add sub-categories if required', [{ type: 'placeholder', attrs: { label: 'Add sub-categories if required' } }]),
+							),
+						],
+					},
+					paragraph(text('Use the ECOG scale here.')),
+				),
+			})
+			.where(eq(schema.sections.id, P_OWNED))
+		const readiness = await lc.publishReadiness(lifecycle(), PATHWAY_ID, `owner@${CENTRAL}`)
+		expect(readiness.items.find((i) => i.key === 'placeholders')?.level).toBe('ok')
+		// The guidance itself is still the drafter's to tick done: a warning, not a block.
+		expect(readiness.items.find((i) => i.key === 'guidance')?.level).toBe('warn')
+	})
+
 	it('publishes once reviewed by its own reviewer, freezing the core body and the core version', async () => {
 		const d = db(env.DB)
 		await d

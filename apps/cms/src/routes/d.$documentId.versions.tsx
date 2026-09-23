@@ -15,7 +15,7 @@ import { createFileRoute, useNavigate } from '@tanstack/solid-router'
 import { createMemo, createSignal, Errored, For, Loading, Show, useContext } from 'solid-js'
 import { z } from 'zod'
 import { RenderedBody } from '#/content/render.tsx'
-import { imprintDate } from '#/lib/labels.ts'
+import { changeSize, imprintDate } from '#/lib/labels.ts'
 import { compareHref, editionHref, pdfHref, sectionHref } from '#/lib/links.ts'
 import { type DiffView, DocumentContext, sectionLabel } from '#/lifecycle/workspace.ts'
 import type {
@@ -314,9 +314,7 @@ function CompareItem(props: { entry: CompareEntry; to: string; clean: boolean })
 						{KIND_WORDS[props.entry.kind]}
 					</Chip>
 					<Show when={props.entry.kind === 'changed'}>
-						<span class="ocp-compare-count">
-							+{props.entry.annotated.inserted} −{props.entry.annotated.deleted}
-						</span>
+						<span class="ocp-compare-count">{changeSize(props.entry.annotated)}</span>
 					</Show>
 				</span>
 			</header>

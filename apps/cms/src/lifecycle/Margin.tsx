@@ -92,6 +92,9 @@ function changeLine(c: SectionChange, added: boolean, published: boolean): strin
 		const lead = published ? 'New in this draft' : 'Written for the first edition'
 		return c.annotated.inserted > 0 ? `${lead}: ${c.annotated.inserted} characters` : `${lead}, not yet written`
 	}
+	// The diff counts words; links, formatting and layout can move without them.
+	if (c.annotated.inserted === 0 && c.annotated.deleted === 0)
+		return 'Changed since the published edition in its links, formatting or layout; the words are the same.'
 	return `Changed since the published edition: ${c.annotated.inserted} characters added, ${c.annotated.deleted} removed`
 }
 
