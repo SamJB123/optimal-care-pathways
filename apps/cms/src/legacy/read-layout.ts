@@ -2023,10 +2023,27 @@ function labelOfLines(lines: Line[], boldWeights: Set<Weight>): { head: Line[]; 
  */
 function labelDrafts(drafts: Draft[], ctx: PageContext, options: { rows: boolean } = { rows: true }): Draft[] {
 	const out: Draft[] = []
+	// A panel whose text opens with a label directly under its heading ("Timeframe" over
+	// "Surgery: Patients will usually …") sets its own text with bold lead-ins: every
+	// label in that column until the next heading is a lead-in, not a panel of its own.
+	let leadInColumn: number | null = null
+	const columnOfDraft = (d: Draft): number => d.lines[0]?.columnX ?? 0
 	for (let i = 0; i < drafts.length; i++) {
 		const draft = drafts[i]
 		if (!draft) continue
 		const next = drafts[i + 1]
+		if (draft.kind === 'heading') leadInColumn = null
+		if (!options.rows && draft.kind === 'paragraph' && !draft.closed) {
+			const label = labelOfLines(draft.lines, ctx.boldWeights)
+			const above = out.at(-1)
+			const underHeading = above?.kind === 'heading' && runIn(above.level ?? null) && Math.abs(columnOfDraft(above) - columnOfDraft(draft)) <= 4
+			const inLeadInColumn = leadInColumn !== null && Math.abs(leadInColumn - columnOfDraft(draft)) <= 4
+			if (label && (label.inline || label.rest.length > 0) && (underHeading || inLeadInColumn)) {
+				leadInColumn = columnOfDraft(draft)
+				out.push(draft)
+				continue
+			}
+		}
 		if (draft.kind === 'heading' && runIn(draft.level ?? null)) {
 			const text = draft.lines.map((l) => l.text).join(' ').trim()
 			const nextLine = next?.kind === 'paragraph' && !next.closed ? next.lines[0] : undefined
@@ -2043,6 +2060,37 @@ function labelDrafts(drafts: Draft[], ctx: PageContext, options: { rows: boolean
 				}
 			}
 			if (!options.rows) {
+				// A panel label wrapped over two lines, its first a whole bold line and its second
+				// closing the label on a colon with the panel's text after it ("No treatment /
+				// active surveillance" / "(watch and wait): No treatment may be …"), is one label.
+				// The label wrapped only where its first line had no room for the next word.
+				const labelLine = next?.kind === 'paragraph' && !next.closed ? next.lines[0] : undefined
+				const headLast = draft.lines.at(-1)
+				const hadNoRoom = (): boolean => {
+					if (!headLast || !labelLine) return false
+					const rights = drafts
+						.flatMap((d) => d.lines)
+						.filter((l) => l.page === headLast.page && Math.abs(l.columnX - headLast.columnX) <= 4)
+						.map((l) => l.x1)
+						.sort((a, b) => b - a)
+					const columnRight = rights[Math.floor(rights.length * 0.1)] ?? headLast.x1
+					const firstWord = labelLine.text.trim().split(/\s+/)[0] ?? ''
+					const wordWidth = ((labelLine.x1 - labelLine.x0) * (firstWord.length + 1)) / Math.max(1, labelLine.text.trim().length)
+					return headLast.x1 + wordWidth > columnRight - 6
+				}
+				// … and it carries on as one does, in lower case or a bracket, not with the
+				// capital a label of its own opens with ("Patients fit for intensive …").
+				const wrapped =
+					labelLine !== undefined && closeBelow(headLast, labelLine) && !/[.:;!?]$/.test(text) && !/^\p{Lu}/u.test(labelLine.text.trim()) && hadNoRoom()
+						? labelOf(labelLine, ctx.boldWeights)
+						: null
+				if (wrapped && next) {
+					out.push({ kind: 'heading', level: 5, lines: [...draft.lines, wrapped.head] })
+					const rest = [...(wrapped.rest ? [wrapped.rest] : []), ...next.lines.slice(1)]
+					if (rest.length > 0) out.push({ kind: 'paragraph', lines: rest })
+					i++
+					continue
+				}
 				// The 2021 design's page sets its panel headings on lines of their own and its
 				// bold lead-ins under them as paragraphs: both stand as read. Every panel is the
 				// step's own: one level, whatever its colour (a blue "Checklist" is no subpanel).
@@ -2461,6 +2509,9 @@ const titleOf = (headingText: string, number: string | null): string => {
 	return text.replace(new RegExp(`^${escaped}:?\\s*`, 'i'), '').trim() || text
 }
 
+/** Where each section's heading starts on its page: which column of a guide row it heads. */
+const headingX = new WeakMap<Section, number>()
+
 function pushSection(outline: Outline, level: HeadingLevel, heading: Line[], page: number, boldWeights: Set<Weight>, warnings: Warning[]): Section {
 	// A heading is styled by its level; its weight is not a bold mark. A run-in heading set
 	// as a label ("Further information:") sheds its colon.
@@ -2536,6 +2587,7 @@ function pushSection(outline: Outline, level: HeadingLevel, heading: Line[], pag
 	}
 	while (outline.stack.length > 0 && (outline.stack.at(-1)?.level ?? 0) >= level) outline.stack.pop()
 	const parent = outline.stack.at(-1)
+	headingX.set(section, heading[0]?.x0 ?? 0)
 	if (parent) parent.children.push(section)
 	else outline.sections.push(section)
 	outline.stack.push(section)
@@ -2886,6 +2938,17 @@ export async function readLayoutDocument(
 				if (wasOpen.includes(section)) {
 					carryOver(i + 1, section)
 					carryList(i + 1, section)
+					// Text the band carries on that joins nothing still stands in the panel the
+					// text columns left open ("BCC: A dome-shaped …" goes on the page-7 "Signs
+					// and symptoms"): the last panel headed left of the side column, which holds
+					// the checklist and timeframe. A step with no such panel keeps it as its own.
+					const first = sequence[i + 1]
+					if (section.level === 2 && outline.stack.at(-1) === section && (first?.block?.kind === 'paragraph' || first?.block?.kind === 'list')) {
+						const xs = section.children.map((c) => headingX.get(c) ?? 0)
+						const side = Math.max(...xs)
+						const panel = [...section.children].reverse().find((c) => (headingX.get(c) ?? 0) < side - 50)
+						if (panel) outline.stack.push(panel)
+					}
 				}
 				continue
 			}
