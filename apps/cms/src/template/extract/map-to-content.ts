@@ -66,7 +66,8 @@ interface Grammar {
 	headings: { page: number; y: number; address: string }[]
 	referenceId: (number: number) => string
 	footnotes: ExtractedDocument['footnotes']
-	templateKey: string
+	/** Where a rendered figure is served from, by page and per-page index. */
+	figureUrl: (page: number, index: number) => string
 	stats: SeedResult['stats']
 	/** Each content figure's per-page index (see `contentFigures`). */
 	figureIndex: Map<Figure, number>
@@ -704,7 +705,7 @@ function blockNodes(
 						const index = g.figureIndex.get(figure) ?? 0
 						return {
 							type: 'image',
-							attrs: { src: figureUrl(g.templateKey, figure.page, index), alt: figure.alt },
+							attrs: { src: g.figureUrl(figure.page, index), alt: figure.alt },
 						}
 					})
 				const [first] = images
@@ -1456,7 +1457,7 @@ function iconRowsList(rows: TableRow[], g: Grammar): JsonNode[] | null {
 			type: 'list',
 			attrs: {
 				kind: 'bullet',
-				icon: icon ? figureUrl(g.templateKey, icon.page, g.figureIndex.get(icon) ?? 0) : '',
+				icon: icon ? g.figureUrl(icon.page, g.figureIndex.get(icon) ?? 0) : '',
 			},
 			content,
 		}
@@ -1749,34 +1750,81 @@ function ownershipOf(section: Section, g: Grammar): Ownership {
 }
 
 // ---------------------------------------------------------------------------
-// Entry point
+// Entry points
 // ---------------------------------------------------------------------------
+
+export const emptyStats = (): SeedResult['stats'] => ({
+	checkItems: 0,
+	citations: 0,
+	footnotes: 0,
+	timeframes: 0,
+	guidance: 0,
+	boxes: 0,
+	variants: 0,
+	tables: 0,
+	figures: 0,
+	links: 0,
+	placeholders: 0,
+	resources: 0,
+})
+
+/** The block mapper alone, for a document with no template grammar of its own. */
+export interface BlockMapper {
+	/** Blocks of the model → content nodes. */
+	blocks: (blocks: Block[]) => JsonNode[]
+	/** Runs → inline nodes (a heading's text, a table cell's label). */
+	inline: (runs: TextRun[]) => JsonNode[]
+	stats: SeedResult['stats']
+}
+
+/**
+ * A mapper for a PLAIN document — a legacy pathway read off its drawing — where no colour
+ * is an instruction, a note or a placeholder: every colour is body, so runs map to text
+ * with their marks and nothing folds into guidance. Footnotes and figures are the
+ * model's; internal links resolve against the headings given.
+ */
+export function createBlockMapper(
+	model: ExtractedDocument,
+	options: {
+		figureUrl: (page: number, index: number) => string
+		headings?: { page: number; y: number; address: string }[]
+		referenceId?: (number: number) => string
+	},
+): BlockMapper {
+	const colours = new Set<string>()
+	for (const p of allParagraphs([...model.front, ...allBlocks(model.sections)]))
+		for (const r of p.runs) colours.add(r.colour)
+	const stats = emptyStats()
+	const g: Grammar = {
+		instruction: new Set(),
+		body: colours,
+		note: new Set(),
+		headings: options.headings ?? [],
+		referenceId: options.referenceId ?? ((n) => String(n)),
+		footnotes: model.footnotes,
+		figureUrl: options.figureUrl,
+		stats,
+		figureIndex: new Map(contentFigures(model).map(({ figure, index }) => [figure, index])),
+	}
+	return {
+		blocks: (blocks) => blockNodes(blocks, g),
+		inline: (runs) => inlineOf(runs, g, { instructionAsMark: false }),
+		stats,
+	}
+}
 
 export function mapTemplate(input: MapInput): SeedResult {
 	const { model, template, orgId, id } = input
 	const documentId = id('document', `${template.templateId}:core`)
 	const learned = learnGrammar(model)
-	const stats: SeedResult['stats'] = {
-		checkItems: 0,
-		citations: 0,
-		footnotes: 0,
-		timeframes: 0,
-		guidance: 0,
-		boxes: 0,
-		variants: 0,
-		tables: 0,
-		figures: 0,
-		links: 0,
-		placeholders: 0,
-		resources: 0,
-	}
+	const stats = emptyStats()
 	const placed = placeSections(model)
 	const g: Grammar = {
 		...learned,
 		headings: placed.map((p) => ({ page: p.section.page, y: p.section.y, address: p.address })),
 		referenceId: (n) => id('reference', `${template.templateId}:${n}`),
 		footnotes: model.footnotes,
-		templateKey: template.key,
+		figureUrl: (page, index) => figureUrl(template.key, page, index),
 		stats,
 		figureIndex: new Map(contentFigures(model).map(({ figure, index }) => [figure, index])),
 	}

@@ -25,12 +25,12 @@ const range = pagesFlag >= 0 ? (rest[pagesFlag + 1] ?? '').split('-').map(Number
 const from = range?.[0] ?? 1
 const to = range?.[1] ?? range?.[0] ?? Number.POSITIVE_INFINITY
 
-const model: ExtractedDocument = JSON.parse(
-	readFileSync(
-		join(import.meta.dirname, '..', 'template', '2026', 'extracted', `${name}.model.json`),
-		'utf8',
-	),
-)
+// A template model by key, or a legacy pathway model by slug (`--legacy <slug>`).
+const modelPath =
+	name === '--legacy'
+		? join(import.meta.dirname, '..', 'legacy', 'extracted', `${rest[0] ?? ''}.model.json`)
+		: join(import.meta.dirname, '..', 'template', '2026', 'extracted', `${name}.model.json`)
+const model: ExtractedDocument = JSON.parse(readFileSync(modelPath, 'utf8'))
 
 const BODY_COLOURS = new Set(['#000000', '#414042', '#0f1e64'])
 

@@ -1,0 +1,1 @@
+ALTER TABLE `sections` ADD `migration_note` text;

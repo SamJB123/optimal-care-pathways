@@ -128,6 +128,8 @@ export interface PdfPage {
 	/** Every text run's page order (the order pdf.js emitted them). */
 	textRuns: TextRun[]
 	paths: PaintedPath[]
+	/** Where images (raster figures, signatures) were drawn. */
+	images: Box[]
 	links: LinkAnnotation[]
 	/** Links by annotation id, for the tree's Link elements. */
 	linksById: Map<string, LinkAnnotation>
@@ -290,6 +292,7 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 	// ---- operator list: glyph runs with style, and painted paths ---------------------
 	const spansByMcid = new Map<string, StyleSpan[]>()
 	const paths: PaintedPath[] = []
+	const images: Box[] = []
 	const fontAliases = new Set<string>()
 	// The graphics state: everything `q`/`Q` saves and restores — the transform AND the
 	// colours, font and text spacing. Restoring only the transform misreports the colour
@@ -586,6 +589,13 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 					paths.push({ box, kind: 'stroke', colour: stroke, segments, mcid })
 				break
 			}
+			case OPS.paintImageXObject:
+			case OPS.paintImageXObjectRepeat:
+			case OPS.paintInlineImageXObject:
+			case OPS.paintImageMaskXObject:
+				// An image is drawn into the unit square under the current transform.
+				images.push(boxOf([0, 0, 1, 1], ctm))
+				break
 			default:
 				break
 		}
@@ -659,6 +669,7 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 		spansByMcid,
 		textRuns,
 		paths: contentPaths,
+		images,
 		links,
 		linksById,
 		fonts,

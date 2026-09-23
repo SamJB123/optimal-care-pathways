@@ -9,6 +9,7 @@ import { createFileRoute, useNavigate } from '@tanstack/solid-router'
 import { createSignal, For, Show } from 'solid-js'
 import { useAuthSession } from '#/lib/auth-client.ts'
 import { bootstrapCentral, createPathway, documentsSnapshot } from '#/server/documents.ts'
+import { finaliseLegacyImports } from '#/server/legacy-fns.ts'
 import './index.css'
 
 export const Route = createFileRoute('/')({
@@ -64,6 +65,24 @@ function Documents(props: { snapshot: Awaited<ReturnType<typeof documentsSnapsho
 				`Central organisation ready; ${result.adoptedCoreDocuments} core documents adopted. Reloading…`,
 			)
 			window.location.reload()
+		} catch (error) {
+			setMessage(error instanceof Error ? error.message : String(error))
+		} finally {
+			setBusy(false)
+		}
+	}
+
+	const pending = () => pathways().filter((doc) => doc.orgId.startsWith('pending:'))
+	const finalise = async () => {
+		setBusy(true)
+		try {
+			const result = await finaliseLegacyImports()
+			setMessage(
+				`${result.finalised.length} organisation${result.finalised.length === 1 ? '' : 's'} created; ${result.rendered} published sections rendered.${
+					result.errors.length > 0 ? ` Not finalised: ${result.errors.join('; ')}` : ''
+				} Reloading…`,
+			)
+			if (result.errors.length === 0) window.location.reload()
 		} catch (error) {
 			setMessage(error instanceof Error ? error.message : String(error))
 		} finally {
@@ -159,6 +178,22 @@ function Documents(props: { snapshot: Awaited<ReturnType<typeof documentsSnapsho
 							</For>
 						</ul>
 					</Panel>
+					<Show when={pending().length > 0}>
+						<Panel title="Legacy imports awaiting an organisation" variant="soft">
+							<p>
+								{pending().length} imported{' '}
+								{pending().length === 1 ? 'pathway has' : 'pathways have'} a published edition and
+								a draft but no organisation yet. Finalising creates each organisation with you as
+								its owner and renders the published edition for the public site.
+							</p>
+							<ul class="ocp-document-list">
+								<For each={pending()}>{(doc) => <li>{doc.title}</li>}</For>
+							</ul>
+							<Button variant="solid" disabled={busy()} onClick={() => void finalise()}>
+								Finalise legacy imports
+							</Button>
+						</Panel>
+					</Show>
 					<Panel title="Start a pathway" variant="soft">
 						<form class="ocp-create-form" onSubmit={(e) => void create(e)}>
 							<label>

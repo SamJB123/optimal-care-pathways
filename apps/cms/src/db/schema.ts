@@ -171,6 +171,12 @@ export const sections = sqliteTable(
 		 *  care⁵²"): a title is plain text, so its markers live here and render after it,
 		 *  counted first in the section's citation order. */
 		titleCitations: text('title_citations', { mode: 'json' }).$type<string[]>(),
+		/** Set by the legacy import on a section whose place in the template was not
+		 *  declared by the template itself — legacy content appended under a step with no
+		 *  matching section ('unplaced: …'), or moved to a destination chosen by reading
+		 *  ('proposed: …'). An author clears it by keeping, moving or removing the section.
+		 *  Null on every other section. */
+		migrationNote: text('migration_note'),
 		updatedAt: timestampMs('updated_at'),
 		updatedBy: text('updated_by'),
 	},

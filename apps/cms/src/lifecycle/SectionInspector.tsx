@@ -15,9 +15,11 @@ import {
 	ToolPanelList,
 	ToolPanelSection,
 } from '@aicolab/ui-solid'
-import { createMemo, createSignal, For, Show, useContext } from 'solid-js'
+import { createMemo, createSignal, For, Loading, Show, useContext } from 'solid-js'
+import { RenderedBody } from '#/content/render.tsx'
 import { numberLabel } from '#/lib/labels.ts'
 import { atLeast, DocumentContext } from '#/lifecycle/workspace.ts'
+import { legacyOriginsOf } from '#/server/legacy-fns.ts'
 import {
 	addComment,
 	decideSection,
@@ -54,6 +56,13 @@ export function SectionInspector() {
 	}
 	const [busy, setBusy] = createSignal(false)
 	const [error, setError] = createSignal<string | null>(null)
+	// What the previous edition said here (decision 136): an async read per focused
+	// section of a pathway, rendered under <Loading>.
+	const origins = createMemo(() => {
+		const id = workspace.focused()
+		if (!id || workspace.document.kind !== 'pathway') return null
+		return legacyOriginsOf({ data: { sectionId: id } })
+	})
 
 	const run = async (action: () => Promise<unknown>) => {
 		setBusy(true)
@@ -89,7 +98,56 @@ export function SectionInspector() {
 								</Chip>
 							)}
 						</Show>
+						<Show when={s().migrationNote}>
+							{(note) => (
+								<Chip tone="accent" title={note()}>
+									{note().startsWith('unplaced') ? 'Needs a home' : 'Placement proposed'}
+								</Chip>
+							)}
+						</Show>
 					</InspectorHeader>
+
+					<Show when={s().migrationNote}>
+						{(note) => (
+							<ToolPanelSection title="From the previous edition">
+								<p class="ocp-muted">{note().replace(/^(unplaced|proposed):\s*/, '')}</p>
+							</ToolPanelSection>
+						)}
+					</Show>
+
+					<Loading fallback={<p class="ocp-muted">Looking up the previous edition…</p>}>
+						<Show when={origins()}>
+							{(found) => (
+								<Show when={found().origins.length > 0}>
+									<ToolPanelSection
+										title="The previous edition said"
+										meta={`${found().origins.length}`}
+									>
+										<p class="ocp-muted">
+											From{' '}
+											<Show when={found().legacySlug} fallback={found().legacyTitle}>
+												{(slug) => <a href={`/legacy/${slug()}`}>{found().legacyTitle}</a>}
+											</Show>
+											, as printed.
+										</p>
+										<For each={found().origins}>
+											{(origin) => (
+												<details class="ocp-origin">
+													<summary>
+														<strong>{origin.heading ?? origin.key}</strong>
+														<span class="ocp-muted"> · {origin.chars.toLocaleString()} characters</span>
+													</summary>
+													<Show when={origin.body}>
+														{(body) => <RenderedBody body={body()} />}
+													</Show>
+												</details>
+											)}
+										</For>
+									</ToolPanelSection>
+								</Show>
+							)}
+						</Show>
+					</Loading>
 
 					<Show when={error()}>
 						{(text) => (

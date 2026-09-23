@@ -28,3 +28,6 @@ routeTree.gen.ts
 .claude/settings.local.json
 .DS_Store
 *.log
+
+# Legacy pathway extractions: regenerated from public/legacy-sources by `pnpm legacy:extract`
+apps/cms/legacy/extracted/

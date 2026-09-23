@@ -92,6 +92,8 @@ export type SectionWireRow = {
 	sourcePages: string | null
 	icon: string | null
 	titleCitations: string[]
+	/** The legacy import's flag on a section whose place the template did not declare. */
+	migrationNote: string | null
 	updatedAt: number | null
 	updatedBy: string | null
 }
@@ -117,6 +119,7 @@ export function sectionWireRow(row: SectionRow): SectionWireRow {
 		sourcePages: row.sourcePages,
 		icon: row.icon,
 		titleCitations: row.titleCitations ?? [],
+		migrationNote: row.migrationNote,
 		updatedAt: row.updatedAt?.getTime() ?? null,
 		updatedBy: row.updatedBy,
 	}
