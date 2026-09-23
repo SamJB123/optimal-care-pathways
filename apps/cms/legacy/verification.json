@@ -402,5 +402,18 @@
 			"'First published in May 2015. This edition published in June 2021.' on the imprint page; second edition.",
 			"Page 2 is blank, page 83 carries only its footer, and the back cover (page 84) carries only the cover artwork."
 		]
+	},
+	"prostate-cancer-2nd-edition": {
+		"pages": "1-86 of 86",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages; Step 4's treatment panels keep their bold-led bullets ('Watchful waiting:', 'Radiation therapy (…) may benefit patients with:' over its dash items); the Step 2 timeframe keeps its two lists and the bold 'Urgent'.",
+			"Section 4.2.1 (pages 40-42): the accent headings (Watchful waiting, Active surveillance, Surgery, Radiation therapy) hold the italic accent headings printed under them ('Timeframe for starting treatment', 'Training and experience required of the surgeon', 'Health service characteristics'); in 4.2.2 the same headings are set upright at the accent level and are siblings, as printed.",
+			"Figure 3 (page 24) is the timeframes table; each of its eight rows becomes a timeframe box.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 63) are rendered figures.",
+			"Every author–year citation resolves to the printed list.",
+			"'First published in July 2015. Updated April 2016. This edition published in June 2021.' on the imprint page; second edition.",
+			"Page 2 is blank, page 85 carries only its footer, and the back cover (page 86) carries only the cover artwork."
+		]
 	}
 }
