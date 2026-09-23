@@ -1,4 +1,5 @@
 import { createRouter as createTanStackRouter } from '@tanstack/solid-router'
+import { RouteError } from './components/RouteError.tsx'
 import { routeTree } from './routeTree.gen.ts'
 
 export function getRouter() {
@@ -7,6 +8,9 @@ export function getRouter() {
 		scrollRestoration: true,
 		defaultPreload: 'intent',
 		defaultPreloadStaleTime: 0,
+		// Every route's error page is the app's own: a route without an error component takes
+		// the router's default, not its parent's.
+		defaultErrorComponent: RouteError,
 	})
 }
 

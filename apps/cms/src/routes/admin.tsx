@@ -56,7 +56,7 @@ function AdminPage() {
 	const setUp = () =>
 		run(async () => {
 			const result = await bootstrapCentral()
-			return `The central organisation is set up and owns ${result.adoptedCoreDocuments} core documents.`
+			return `The central organisation is set up and owns ${result.adoptedCoreDocuments} core documents.${result.lead ? ' You are its lead.' : ''}`
 		})
 
 	const finalise = () =>
@@ -83,17 +83,28 @@ function AdminPage() {
 				<section class="ocp-admin-section" aria-labelledby="ocp-admin-deployment">
 					<h2 id="ocp-admin-deployment">This deployment</h2>
 					<Show
-						when={data().admin.setUp || data().admin.pending.length > 0}
+						when={data().admin.setUp || data().admin.leadless || data().admin.pending.length > 0}
 						fallback={<p class="ocp-muted">Nothing is waiting: the central organisation owns the core templates and every import is finalised.</p>}
 					>
 						<Show when={data().admin.setUp}>
 							<div class="ocp-admin-door">
 								<p>
 									The core templates have no owner yet. Setting up creates (or finds) the central organisation, makes you
-									a member, and hands it the core templates. Only an administrator listed for this deployment can do this.
+									its lead, and hands it the core templates. Only an administrator listed for this deployment can do this.
 								</p>
 								<Button variant="solid" disabled={busy()} onClick={() => void setUp()}>
 									Set up the central organisation
+								</Button>
+							</div>
+						</Show>
+						<Show when={!data().admin.setUp && data().admin.leadless}>
+							<div class="ocp-admin-door">
+								<p>
+									The central organisation has no lead, so nobody can review the core templates or manage its team. An
+									administrator listed for this deployment can take the lead.
+								</p>
+								<Button variant="solid" disabled={busy()} onClick={() => void setUp()}>
+									Take the lead of the central organisation
 								</Button>
 							</div>
 						</Show>

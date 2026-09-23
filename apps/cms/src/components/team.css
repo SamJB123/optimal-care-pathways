@@ -1,0 +1,145 @@
+/* The team page's head, set as the editions page sets its own. */
+@scope (.ocp-team-page) {
+	:scope {
+		display: grid;
+		gap: 1.5rem;
+		align-content: start;
+	}
+	.ocp-team-head {
+		display: grid;
+		gap: 0.35rem;
+	}
+	.ocp-team-head h1 {
+		margin: 0;
+		font-size: var(--t-3xl);
+		font-weight: 600;
+		letter-spacing: -0.015em;
+		line-height: 1.12;
+	}
+	.ocp-team-kicker {
+		margin: 0;
+		font-size: var(--t-2xs);
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--family-ink, var(--color-base-content-muted));
+	}
+}
+
+/* A team: the roster, then the ways in, in the workspace's text column (or on /admin).
+   Composition only; the rows and controls are ui-solid's. */
+@scope (.ocp-team) {
+	:scope {
+		display: grid;
+		gap: 1.5rem;
+		align-content: start;
+		min-inline-size: 0;
+	}
+	h2 {
+		margin: 0;
+		font-size: var(--t-xl);
+		font-weight: 600;
+		line-height: 1.25;
+	}
+	h3 {
+		margin: 0;
+		font-size: var(--t-sm);
+		font-weight: 600;
+	}
+	.ocp-team-standing,
+	.ocp-team-note {
+		margin: 0;
+		font-size: var(--t-sm);
+		color: var(--color-base-content-muted);
+		text-wrap: pretty;
+	}
+	.ocp-team-roster {
+		min-inline-size: 0;
+	}
+	.ocp-team-you {
+		font-weight: 400;
+		color: var(--color-base-content-muted);
+	}
+	/* Identity is name, avatar and the derived tag: never an address. */
+	.ocp-team-tag {
+		font-family: var(--font-data, ui-monospace, monospace);
+		font-size: var(--t-xs);
+		color: var(--color-base-content-muted);
+	}
+	.ocp-team-trailing {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: end;
+		gap: 0.4rem;
+	}
+
+	/* The ways in: one role for all of them, then the forms side by side where they fit. */
+	.ocp-team-in {
+		display: grid;
+		gap: 1rem;
+		padding-block-start: 1.25rem;
+		border-block-start: 1px solid var(--hair-strong);
+		justify-items: start;
+	}
+	.ocp-team-ways {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+		gap: 1.25rem;
+		align-items: start;
+		inline-size: 100%;
+	}
+	.ocp-team-way {
+		display: grid;
+		gap: 0.5rem;
+		justify-items: start;
+		align-content: start;
+		min-inline-size: 0;
+	}
+	.ocp-team-way .ui-field {
+		inline-size: 100%;
+	}
+	.ocp-team-search {
+		grid-column: 1 / -1;
+		justify-items: stretch;
+	}
+	.ocp-team-hint {
+		margin: 0;
+		font-size: var(--t-xs);
+		color: var(--color-base-content-muted);
+		text-wrap: pretty;
+	}
+
+	.ocp-team-links {
+		display: grid;
+		gap: 0.5rem;
+		inline-size: 100%;
+		min-inline-size: 0;
+	}
+	.ocp-team-link {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.25rem 0.5rem;
+		/* Without it the unbroken URL's width becomes the row's minimum and widens the page. */
+		min-inline-size: 0;
+	}
+	.ocp-team-link-url {
+		flex: 1 1 10rem;
+		min-inline-size: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: var(--t-xs);
+		color: var(--color-base-content-muted);
+	}
+	.ocp-team-link-actions {
+		display: flex;
+		gap: 0.25rem;
+	}
+	.ocp-team-link-new {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+}

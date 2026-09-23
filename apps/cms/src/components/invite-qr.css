@@ -1,0 +1,88 @@
+/* The invite QR sheet, and its full-screen present mode. */
+@scope (.ocp-qr-sheet) {
+	:scope {
+		display: grid;
+		/* One column no wider than the sheet: the unbroken link must not widen it. */
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0.9rem;
+		justify-items: center;
+		padding-block: 0.5rem;
+		min-inline-size: 0;
+	}
+	.ocp-qr-code {
+		--ui-qr-size: min(18rem, 70vw);
+		border: 1px solid var(--hair-strong);
+		border-radius: 0.5rem;
+		overflow: hidden;
+	}
+	.ocp-qr-url {
+		max-inline-size: 100%;
+		min-inline-size: 0;
+		border: 0;
+		background: transparent;
+		padding: 0.2rem 0.4rem;
+		font: inherit;
+		cursor: copy;
+	}
+	.ocp-qr-url code {
+		display: block;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: var(--t-xs);
+		color: var(--color-base-content-muted);
+	}
+	.ocp-qr-expiry {
+		margin: 0;
+		font-size: var(--t-xs);
+		color: var(--color-base-content-muted);
+		text-align: center;
+		text-wrap: pretty;
+	}
+	.ocp-qr-actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.5rem;
+	}
+}
+
+/* The glyph sits on the code's WHITE knockout on paper and at night alike, so its ink is
+   pinned dark: the code itself is black on white in both.
+   Its size is the code's own: the knockout's patch, set by QrCode. */
+.ocp-qr-mark {
+	fill: #1c1917;
+}
+
+@scope (.ocp-qr-present) {
+	:scope {
+		position: fixed;
+		inset: 0;
+		z-index: 100;
+		display: grid;
+		place-content: center;
+		justify-items: center;
+		gap: 1.5rem;
+		padding: 1rem;
+		background: #ffffff;
+		color: #1c1917;
+		cursor: pointer;
+	}
+	.ocp-qr-present-title {
+		margin: 0;
+		font-size: clamp(1.5rem, 4vw, 2.75rem);
+		font-weight: 600;
+		text-align: center;
+		text-wrap: balance;
+	}
+	.ocp-qr-present-code {
+		--ui-qr-size: min(70vh, 80vw);
+	}
+	.ocp-qr-present-url {
+		margin: 0;
+		font-size: clamp(0.9rem, 2vw, 1.4rem);
+		color: #57534e;
+		overflow-wrap: anywhere;
+		text-align: center;
+	}
+}

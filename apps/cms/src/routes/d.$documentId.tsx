@@ -32,7 +32,7 @@ import { Masthead } from '#/components/Masthead.tsx'
 import { useAuthSession } from '#/lib/auth-client.ts'
 import { familyStyle } from '#/lib/family.ts'
 import { documentName, numberLabel } from '#/lib/labels.ts'
-import { draftDocxHref, draftPdfHref, partHref, previewHref, publishedHref, sectionAnchor } from '#/lib/links.ts'
+import { draftDocxHref, draftPdfHref, partHref, previewHref, publishedHref, sectionAnchor, teamHref } from '#/lib/links.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { type PathwayClient, pathwayClientFor } from '#/lib/ocp-client.ts'
 import { Margin } from '#/lifecycle/Margin.tsx'
@@ -333,6 +333,7 @@ function DocumentShell() {
 			: []),
 		...(state().central ? [{ id: 'act:publish', label: 'Publish…', kind: 'Action', keywords: ['edition'], go: openPublish }] : []),
 		{ id: 'act:editions', label: 'Editions', kind: 'Action', keywords: ['versions', 'compare'], go: `/d/${params().documentId}/versions` },
+		{ id: 'act:team', label: 'Team', kind: 'Action', keywords: ['people', 'members', 'invite', 'roles'], go: teamHref(params().documentId) },
 		{ id: 'act:preview', label: 'Preview the draft', kind: 'Action', keywords: ['preview'], go: previewHref(params().documentId) },
 		{ id: 'act:draft-pdf', label: 'Download the draft as a PDF', kind: 'Action', keywords: ['export', 'print'], go: draftPdfHref(params().documentId) },
 		{ id: 'act:draft-docx', label: 'Download the draft as a Word file', kind: 'Action', keywords: ['export', 'docx'], go: draftDocxHref(params().documentId) },

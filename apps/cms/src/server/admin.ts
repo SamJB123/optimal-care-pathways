@@ -13,7 +13,7 @@ import { schema } from '#/db/index.ts'
 import { isHexColour } from '#/lib/family.ts'
 import { documentName } from '#/lib/labels.ts'
 import { publishDocumentRows } from '#/lib/live-publish.ts'
-import { roles } from '#/lib/roles.ts'
+import { OCP_NAMESPACE, roles } from '#/lib/roles.ts'
 import * as access from './access.ts'
 import { envOf, requireUser } from './env.ts'
 import { lifecycleOf } from './lifecycle-env.ts'
@@ -21,6 +21,9 @@ import { lifecycleOf } from './lifecycle-env.ts'
 export interface AdminSnapshot {
 	/** No central organisation owns the core documents yet. */
 	setUp: boolean
+	/** The central organisation has no lead (a deployment set up before the first
+	 *  administrator became one): nobody may review core content or manage its team. */
+	leadless: boolean
 	central: boolean
 	/** Imported pathways waiting for their organisations. */
 	pending: { slug: string; name: string }[]
@@ -44,6 +47,8 @@ export const adminSnapshot = createServerFn({ method: 'GET' }).handler(async ({ 
 	const { env, d } = await envOf()
 	const central = await access.centralOrgId(env.AUTH, d)
 	const isCentral = central !== null && (await roles.roleOf(env.AUTH, userId, central)) !== null
+	const leadless =
+		central !== null && !(await env.AUTH.listOrgMembers(central, OCP_NAMESPACE)).some((member) => member.role === 'owner')
 	const pending = await d
 		.select({ slug: schema.documents.slug, subject: schema.documents.subject, kind: schema.documents.kind, audience: schema.documents.audience })
 		.from(schema.documents)
@@ -54,6 +59,7 @@ export const adminSnapshot = createServerFn({ method: 'GET' }).handler(async ({ 
 	)
 	return {
 		setUp: central === null,
+		leadless,
 		central: isCentral,
 		pending: isCentral ? pending.filter((p) => p.kind === 'pathway').map((p) => ({ slug: p.slug, name: documentName(p) })) : [],
 		documents: documents.map((doc) => ({

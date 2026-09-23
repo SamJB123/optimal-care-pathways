@@ -197,6 +197,12 @@ export function Spine(props: { onRequestReview: () => void }) {
 					current={current() === 'versions'}
 					onSelect={() => void navigate({ to: '/d/$documentId/versions', params: { documentId: workspace.documentId } })}
 				/>
+				<WorkspaceNavigationItem
+					label="Team"
+					mark="☷"
+					current={current() === 'team'}
+					onSelect={() => void navigate({ to: '/d/$documentId/team', params: { documentId: workspace.documentId } })}
+				/>
 				<WorkspaceNavigationItem label="Preview the draft" mark="◫" onSelect={() => void navigate({ href: previewHref(workspace.documentId) })} />
 				<Show when={state().published}>
 					<WorkspaceNavigationItem label="The published page" mark="↗" onSelect={() => window.location.assign(publishedHref(workspace.document.slug))} />

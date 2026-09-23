@@ -34,6 +34,8 @@ import * as access from './access.ts'
 import { reindex } from './search-index.ts'
 import { CENTRAL_ORG_NAME, CENTRAL_ORG_SLUG } from './access.ts'
 import { envOf, requireUser } from './env.ts'
+import { claimCentralLead } from './team.ts'
+import { teamOfEnv } from './team-env.ts'
 
 /** The central organisation's id in this request's environment (see access.ts). */
 async function centralOrgId(): Promise<string | null> {
@@ -57,8 +59,8 @@ async function requireCentralMember(userId: string): Promise<string> {
 
 /**
  * First run: the caller's email is listed in ADMIN_EMAILS, so they create the central
- * organisation, become its owner, and the core documents become its own. Idempotent:
- * later admins listed in the var are added as members.
+ * organisation, the core documents become its own, and the caller becomes its lead while
+ * it has none. Idempotent: later admins listed in the var are added as members.
  */
 export const bootstrapCentral = createServerFn({ method: 'POST' }).handler(async ({ context }) => {
 	const userId = requireUser(context.userId)
@@ -76,18 +78,20 @@ export const bootstrapCentral = createServerFn({ method: 'POST' }).handler(async
 		name: CENTRAL_ORG_NAME,
 		namespace: OCP_NAMESPACE,
 	})
-	// Membership of the central organisation is what makes a publisher (decision 11);
-	// the better-auth role inside it is not load-bearing for this application, and the
-	// auth worker's member door grants 'member'.
-	const membership = await env.AUTH.getOrgMembershipById(userId, org.id, OCP_NAMESPACE)
-	if (!membership) await env.AUTH.addOrgMember(userId, CENTRAL_ORG_SLUG, OCP_NAMESPACE)
 	const adopted = await d
 		.update(schema.documents)
 		.set({ orgId: org.id })
 		.where(eq(schema.documents.kind, 'core'))
 		.returning()
 	void publishDocumentRows(adopted)
-	return { organizationId: org.id, adoptedCoreDocuments: adopted.length }
+	// Membership of the central organisation is what makes a publisher (decision 11), and
+	// on the core documents the role inside it is the role: the first administrator
+	// becomes its lead, so core content has someone who may review it and manage its
+	// team. Later administrators join as members; the lead appoints roles from there.
+	const lead = await claimCentralLead(await teamOfEnv(), userId, org.id)
+	if (!lead && !(await env.AUTH.getOrgMembershipById(userId, org.id, OCP_NAMESPACE)))
+		await env.AUTH.addOrgMember(userId, CENTRAL_ORG_SLUG, OCP_NAMESPACE)
+	return { organizationId: org.id, adoptedCoreDocuments: adopted.length, lead }
 })
 
 /** Where a document stands, for a list: its published version and whether a review is open. */

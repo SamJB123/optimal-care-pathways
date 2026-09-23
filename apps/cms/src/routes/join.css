@@ -1,0 +1,42 @@
+/* The invite-link and invitation pages: one narrow column under the masthead. */
+@scope (.ocp-join) {
+	:scope {
+		display: grid;
+		gap: 1rem;
+		justify-items: start;
+		max-inline-size: 34rem;
+		margin-inline: auto;
+		padding: 3rem clamp(1rem, 4vw, 2rem) 5rem;
+	}
+	h1 {
+		margin: 0;
+		font-size: var(--t-3xl);
+		font-weight: 600;
+		letter-spacing: -0.015em;
+		line-height: 1.12;
+		text-wrap: balance;
+	}
+	.ocp-join-kicker {
+		margin: 0;
+		font-size: var(--t-2xs);
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-base-content-muted);
+	}
+	.ocp-join-lede {
+		margin: 0;
+		line-height: 1.55;
+	}
+	.ocp-join-sign-in {
+		display: grid;
+		gap: 0.75rem;
+		inline-size: 100%;
+		padding-block-start: 1rem;
+		border-block-start: 1px solid var(--hair-strong);
+	}
+	.ocp-join-sign-in > p {
+		margin: 0;
+		color: var(--color-base-content-muted);
+	}
+}
