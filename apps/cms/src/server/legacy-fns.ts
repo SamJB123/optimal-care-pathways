@@ -93,6 +93,20 @@ export const legacyDocumentBySlug = createServerFn({ method: 'GET' })
 			key: r.key,
 			body: r.bodyJson ?? null,
 		}))
+		// The pathway this edition became: the document whose sections came from its own.
+		const successor = (
+			await d
+				.select({ id: schema.documents.id, slug: schema.documents.slug, title: schema.documents.title, accent: schema.documents.accent })
+				.from(schema.sectionOrigins)
+				.innerJoin(schema.legacySections, eq(schema.legacySections.id, schema.sectionOrigins.legacySectionId))
+				.innerJoin(schema.sections, eq(schema.sections.id, schema.sectionOrigins.sectionId))
+				.innerJoin(schema.documents, eq(schema.documents.id, schema.sections.documentId))
+				.where(eq(schema.legacySections.documentId, document.id))
+				.limit(1)
+		)[0]
+		const published = successor
+			? (await d.select({ versionNo: schema.publishedVersions.versionNo }).from(schema.publishedVersions).where(eq(schema.publishedVersions.documentId, successor.id)).limit(1))[0]
+			: undefined
 		return {
 			document: {
 				id: document.id,
@@ -103,6 +117,8 @@ export const legacyDocumentBySlug = createServerFn({ method: 'GET' })
 				publicationDate: document.publicationDate,
 				pdfUrl: document.pdfKey ? `/${document.pdfKey}` : null,
 			},
+			/** The pathway it became; `published` when readers can open its current edition. */
+			pathway: successor ? { slug: successor.slug, title: successor.title, accent: successor.accent, published: published !== undefined } : null,
 			sections,
 		}
 	})

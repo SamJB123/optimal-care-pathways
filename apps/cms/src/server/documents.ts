@@ -458,7 +458,7 @@ const eventDetail = (value: unknown): EventDetail | null => {
  */
 export const hubSnapshot = createServerFn({ method: 'GET' })
 	.inputValidator(z.object({ documentId: z.string().min(1).max(64) }))
-	.handler(async ({ data, context }): Promise<{ activity: ActivityRow[] }> => {
+	.handler(async ({ data, context }): Promise<{ activity: ActivityRow[]; legacy: { slug: string; title: string; edition: string | null } | null }> => {
 		const userId = requireUser(context.userId)
 		const { d } = await envOf()
 		const document = (
@@ -471,13 +471,20 @@ export const hubSnapshot = createServerFn({ method: 'GET' })
 		if (!document) throw new Error('Document not found.')
 		if (!(await roleOn(userId, document.orgId)))
 			throw new Error('You are not a member of this document.')
-		const activity = await d
-			.select()
-			.from(schema.events)
-			.where(eq(schema.events.documentId, data.documentId))
-			.orderBy(desc(schema.events.at))
-			.limit(30)
+		const [activity, legacy] = await Promise.all([
+			d.select().from(schema.events).where(eq(schema.events.documentId, data.documentId)).orderBy(desc(schema.events.at)).limit(30),
+			// The previous edition this document was drafted from, as its PDF printed it.
+			d
+				.select({ slug: schema.legacyDocuments.slug, title: schema.legacyDocuments.title, edition: schema.legacyDocuments.edition })
+				.from(schema.sections)
+				.innerJoin(schema.sectionOrigins, eq(schema.sectionOrigins.sectionId, schema.sections.id))
+				.innerJoin(schema.legacySections, eq(schema.legacySections.id, schema.sectionOrigins.legacySectionId))
+				.innerJoin(schema.legacyDocuments, eq(schema.legacyDocuments.id, schema.legacySections.documentId))
+				.where(eq(schema.sections.documentId, data.documentId))
+				.limit(1),
+		])
 		return {
+			legacy: legacy[0] ?? null,
 			activity: activity.map((e) => ({
 				id: e.id,
 				kind: e.kind,

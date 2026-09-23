@@ -1,41 +1,48 @@
 /**
- * A document as its readers get it: the published edition (/p/{slug}), or the draft as
- * publishing it now would give it (/d/{id}/preview). One frame for both, so the preview
- * is exactly what publishing gives: each section in reading order with its body rendered
- * by the site's own renderer, then the References numbered as the text cites them. A
- * draft is marked as one, on screen and on every printed page.
+ * A pathway or template as its readers get it — the published edition (/p/{slug}), an
+ * earlier edition (/p/{slug}/v/{n}), or the draft as publishing it now would give it
+ * (/d/{id}/preview) — in the reading frame, so a preview is exactly what publishing gives.
+ * The spine is the document's own: its front matter's parts, Steps 1–7 by number, its back
+ * matter, the References. Each part is a chapter (an h2), each of its sections an h3,
+ * deeper ones h4; every heading carries the section's address as its id, so a link to a
+ * section lands on it.
  */
 
-import { Eyebrow } from '@aicolab/ui-solid'
+import type { DocsNavItem } from '@aicolab/ui-solid'
 import type { JSX } from '@solidjs/web'
-import { children, For, Show } from 'solid-js'
+import { createMemo, For, Show, useContext } from 'solid-js'
 import type { NumberedReference } from '#/api/published.ts'
+import { CitationInline, DerivedContext } from '#/content/blocks.tsx'
 import { type DerivedView, stepNumberOfAddress, timeframeRows } from '#/content/derived.ts'
 import { ReferenceList } from '#/content/references.tsx'
 import { RenderedBody } from '#/content/render.tsx'
 import type { JsonNode } from '#/content/schema.ts'
 import { numberLabel } from '#/lib/labels.ts'
-import '#/routes/print.css'
+import { ReadingFrame } from './ReadingFrame.tsx'
 
 export interface ReadingSection {
 	address: string
 	parentAddress: string | null
 	printedNumber: string | null
 	title: string | null
+	titleCitations: string[]
 	ownership: 'shared' | 'owned'
 	body: JsonNode | null
 }
 
 export interface ReadingModel {
 	title: string
-	/** "Version 2 · Second edition · 1 June 2021", or the draft's line. */
+	/** What the document is: "Cancer-specific pathway", "Core template". */
+	kicker: string
+	/** "Second edition · 1 June 2021", or the draft's line. */
 	editionLine: string
+	/** What changed in this edition. */
 	releaseNotes: string | null
 	sections: ReadingSection[]
 	references: NumberedReference[]
 }
 
-/** Sections carry parent addresses; depth is how many ancestors a section has. */
+/** How many ancestors a section has, by its parent's address. */
 function depthOf(address: string, parentOf: Map<string, string | null>): number {
 	let depth = 0
 	let parent = parentOf.get(address) ?? null
@@ -46,62 +53,107 @@ function depthOf(address: string, parentOf: Map<string, string | null>): number 
 	return depth
 }
 
+/** A top-level part's spine entry: its step number, or a quiet rule, and its words. */
+function spineEntry(s: ReadingSection): DocsNavItem {
+	const step = stepNumberOfAddress(s.address)
+	const title = s.title ?? s.address
+	// A step part's title repeats its number ("Step 4: Treatment"); the mark carries it.
+	return { href: `#${s.address}`, mark: step !== null ? String(step) : '·', label: step !== null ? title.replace(/^Step\s+\d+\s*:\s*/i, '') : title }
+}
+
 export function ReadingDocument(props: {
 	document: ReadingModel
-	/** What stands above the title: "published", "draft preview". */
-	eyebrow: string
-	/** A draft: watermarked on screen and on every printed page. */
+	accent: string | null
 	draft?: boolean
-	/** Under the head: the draft's banner. */
-	banner?: JSX.Element
+	links?: JSX.Element
+	aside?: JSX.Element
 }) {
-	// An element prop is a getter: resolved once, or hydration claims its nodes twice.
-	const banner = children(() => props.banner)
-	const parentOf = () => new Map(props.document.sections.map((s) => [s.address, s.parentAddress]))
-	const derived = (): DerivedView => ({
-		referenceNumbers: Object.fromEntries(props.document.references.map((r) => [r.id, r.number])),
-		timeframes: timeframeRows(
-			props.document.sections.map((s) => ({
-				stepNumber: stepNumberOfAddress(s.address),
-				address: s.address,
-				printedNumber: s.printedNumber,
-				title: s.title,
-				body: s.body,
-			})),
-		),
-		map: null,
-	})
+	const parentOf = createMemo(() => new Map(props.document.sections.map((s) => [s.address, s.parentAddress])))
+	const derived = createMemo(
+		(): DerivedView => ({
+			referenceNumbers: Object.fromEntries(props.document.references.map((r) => [r.id, r.number])),
+			timeframes: timeframeRows(
+				props.document.sections.map((s) => ({
+					stepNumber: stepNumberOfAddress(s.address),
+					address: s.address,
+					printedNumber: s.printedNumber,
+					title: s.title,
+					body: s.body,
+				})),
+			),
+			map: null,
+		}),
+	)
+	const spine = createMemo((): DocsNavItem[] => [
+		...props.document.sections.filter((s) => s.parentAddress === null).map(spineEntry),
+		...(props.document.references.length > 0 ? [{ href: '#references', mark: '¶', label: 'References' }] : []),
+	])
 	return (
-		<main class="ocp-published" data-draft={props.draft ? '' : undefined}>
-			<Show when={props.draft}>
-				<div class="ocp-watermark" aria-hidden="true">
-					<span>Draft</span>
-				</div>
-			</Show>
-			<header class="ocp-published-head">
-				<Eyebrow>Optimal Care Pathways · {props.eyebrow}</Eyebrow>
-				<h1>{props.document.title}</h1>
-				<p class="ocp-published-meta">{props.document.editionLine}</p>
-				<Show when={props.document.releaseNotes}>{(notes) => <p class="ocp-published-notes">{notes()}</p>}</Show>
-				{banner()}
-			</header>
-			<For each={props.document.sections}>
-				{(section) => (
-					<section class="ocp-published-section" id={section.address} data-depth={depthOf(section.address, parentOf())} data-ownership={section.ownership}>
-						<h2 class="ocp-published-title">
-							<Show when={section.printedNumber}>{(n) => <span class="ocp-published-number">{numberLabel(n())} </span>}</Show>
-							{section.title ?? section.address}
+		<ReadingFrame
+			accent={props.accent}
+			nav={spine()}
+			navLabel="The pathway"
+			kicker={props.document.kicker}
+			title={props.document.title}
+			editionLine={props.document.editionLine}
+			note={props.document.releaseNotes}
+			links={props.links}
+			aside={props.aside}
+			draft={props.draft}
+		>
+			<DerivedContext value={derived}>
+				<For each={props.document.sections}>{(section) => <ReadingSectionView section={section} depth={depthOf(section.address, parentOf())} />}</For>
+				<Show when={props.document.references.length > 0}>
+					<section class="ocp-published-section ocp-published-references" data-depth="0">
+						<h2 class="ocp-published-title" id="references">
+							References
 						</h2>
-						<Show when={section.body}>{(body) => <RenderedBody body={body()} derived={derived()} />}</Show>
+						<ReferenceList references={props.document.references} />
 					</section>
-				)}
-			</For>
-			<Show when={props.document.references.length > 0}>
-				<section class="ocp-published-section ocp-published-references" id="references">
-					<h2 class="ocp-published-title">References</h2>
-					<ReferenceList references={props.document.references} />
-				</section>
+				</Show>
+			</DerivedContext>
+		</ReadingFrame>
+	)
+}
+
+/** One section, its heading at the level its depth gives it. */
+function ReadingSectionView(props: { section: ReadingSection; depth: number }) {
+	const derived = useContext(DerivedContext)
+	const content = () => (
+		<>
+			<Show when={props.section.printedNumber}>{(n) => <span class="ocp-published-number">{numberLabel(n())} </span>}</Show>
+			{props.section.title ?? props.section.address}
+			<Show when={props.section.titleCitations.length > 0}>
+				<span class="ocp-published-citations">
+					<For each={props.section.titleCitations}>{(id) => <CitationInline referenceId={id} />}</For>
+				</span>
 			</Show>
-		</main>
+		</>
+	)
+	return (
+		<section class="ocp-published-section" data-depth={props.depth} data-ownership={props.section.ownership}>
+			<Show
+				when={props.depth === 0}
+				fallback={
+					<Show
+						when={props.depth === 1}
+						fallback={
+							<h4 class="ocp-published-title" id={props.section.address}>
+								{content()}
+							</h4>
+						}
+					>
+						<h3 class="ocp-published-title" id={props.section.address}>
+							{content()}
+						</h3>
+					</Show>
+				}
+			>
+				<h2 class="ocp-published-title" id={props.section.address}>
+					{content()}
+				</h2>
+			</Show>
+			<Show when={props.section.body}>{(body) => <RenderedBody body={body()} derived={derived()} />}</Show>
+		</section>
 	)
 }

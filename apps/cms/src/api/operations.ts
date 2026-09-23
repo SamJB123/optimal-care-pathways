@@ -67,6 +67,9 @@ const outlineEntry = z.object({
 	address: z.string(),
 	parentAddress: z.string().nullable(),
 	title: z.string().nullable(),
+	titleCitations: z
+		.array(z.string())
+		.describe('Reference ids the heading itself cites, numbered before the body’s citations'),
 	printedNumber: z.string().nullable(),
 	ownership: z
 		.enum(['shared', 'owned'])
@@ -142,6 +145,7 @@ const outlineOf = (
 	address: s.address,
 	parentAddress: s.parentAddress,
 	title: s.title,
+	titleCitations: s.titleCitations ?? [],
 	printedNumber: s.printedNumber,
 	ownership: s.ownership,
 	pointOfCare: s.pointOfCare,

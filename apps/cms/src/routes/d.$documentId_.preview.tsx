@@ -13,6 +13,7 @@ import { z } from 'zod'
 import { Masthead } from '#/components/Masthead.tsx'
 import { imprintDate } from '#/lib/labels.ts'
 import { draftDocxHref, draftPdfHref, workspaceHref } from '#/lib/links.ts'
+import { kickerOf } from '#/published/PublishedEdition.tsx'
 import { ReadingDocument } from '#/published/ReadingDocument.tsx'
 import { draftReading } from '#/server/preview-fns.ts'
 
@@ -56,16 +57,17 @@ function PreviewPage() {
 			>
 				{(draft) => (
 					<ReadingDocument
-						eyebrow="draft preview"
+						accent={draft().document.accent}
 						document={{
 							title: draft().document.title,
+							kicker: `Draft · ${kickerOf(draft().document.kind, draft().document.audience)}`,
 							editionLine: `Draft of edition ${draft().editionNo} · as it would publish on ${imprintDate(data().now)}`,
 							releaseNotes: null,
 							sections: draft().sections,
 							references: draft().references,
 						}}
 						draft
-						banner={
+						aside={
 							<Show when={!printing()}>
 								<p class="ocp-draft-banner" role="note">
 									<span>Not published. This is the draft as publishing it now would give it.</span>

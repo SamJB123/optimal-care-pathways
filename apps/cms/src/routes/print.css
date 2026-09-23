@@ -1,28 +1,9 @@
-/* The public read page of a published document, on screen and on paper. */
+/* The public read pages' text, on screen and on paper (the frame around it is
+   published/reading.css). */
 .ocp-published {
 	max-width: 52rem;
 	margin-inline: auto;
 	padding: 1.5rem 1.25rem 4rem;
-}
-
-.ocp-published-head {
-	margin-block-end: 2rem;
-}
-
-.ocp-published-head h1 {
-	margin: 0.25rem 0 0.5rem;
-	font-size: 2rem;
-	line-height: 1.2;
-}
-
-.ocp-published-meta {
-	margin: 0;
-	color: var(--color-base-content-muted);
-}
-
-.ocp-published-notes {
-	margin: 0.75rem 0 0;
-	white-space: pre-wrap;
 }
 
 .ocp-published-section {
@@ -63,11 +44,6 @@
 /* A draft (the preview, the draft's PDF): a banner under the head, and a watermark that
    stands behind the text on screen and on every printed page (a fixed box repeats on
    each sheet). */
-.ocp-published[data-draft] {
-	position: relative;
-	isolation: isolate;
-}
-
 .ocp-watermark {
 	position: fixed;
 	inset: 0;
@@ -105,7 +81,7 @@
 }
 
 .ocp-draft-banner a {
-	color: var(--color-primary);
+	color: var(--family-ink, var(--color-primary));
 }
 
 @page {
@@ -122,15 +98,19 @@
 		display: none;
 	}
 
+	/* On paper the ground is the sheet's own, not the screen's paper tint. */
+	html,
+	body {
+		background: Canvas;
+	}
+
 	.ocp-published {
 		max-width: none;
 		padding: 0;
 	}
 
-	.ocp-published-section {
-		break-inside: avoid-page;
-	}
-
+	/* A heading stays with the text it opens; a long section runs on across pages rather
+	   than leaving the page before it half empty. */
 	.ocp-published-title {
 		break-after: avoid-page;
 	}

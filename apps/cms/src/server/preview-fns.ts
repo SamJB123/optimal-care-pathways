@@ -27,13 +27,22 @@ export const draftReading = createServerFn({ method: 'GET' })
 		const addressOf = new Map(resolved.map((s) => [s.row.id, s.row.address]))
 		const sections = resolved.filter(live)
 		return {
-			document: { id: document.id, title: document.title, slug: document.slug, name: documentName(document), accent: document.accent },
+			document: {
+				id: document.id,
+				title: document.title,
+				slug: document.slug,
+				name: documentName(document),
+				accent: document.accent,
+				kind: document.kind,
+				audience: document.audience,
+			},
 			editionNo: draft.versionNo,
 			sections: sections.map((s) => ({
 				address: s.row.address,
 				parentAddress: s.row.parentId ? (addressOf.get(s.row.parentId) ?? null) : null,
 				printedNumber: s.row.printedNumber,
 				title: s.row.title,
+				titleCitations: s.row.titleCitations ?? [],
 				ownership: s.row.ownership,
 				body: s.publishable,
 			})),

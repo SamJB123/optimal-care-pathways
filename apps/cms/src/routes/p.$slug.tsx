@@ -1,10 +1,10 @@
 /**
- * /p/{slug} — the public read page of a published document (decisions 125, 126): every
- * section in order with its body rendered by the site's own renderer, the References
- * list numbered as the API numbers them, and section ids for fragment links. This is
- * the page Browser Run prints to PDF, and the canonical url the API and MCP results
- * cite. Public: no sign-in, published content only. The frame is the one the draft
- * preview uses (published/ReadingDocument.tsx), so a preview is what publishing gives.
+ * /p/{slug} — the public read page of a published document (decisions 125, 126, U22, S5):
+ * the current edition in the reading frame (published/PublishedEdition.tsx) — the
+ * seven-step spine, the imprint, every section rendered by the site's own renderer, the
+ * References numbered as the API numbers them, section ids for fragment links. This is
+ * the page Browser Run prints to PDF, and the canonical url the API and MCP results cite.
+ * Public: no sign-in, published content only.
  */
 
 import { Notice } from '@aicolab/ui-solid'
@@ -12,8 +12,7 @@ import { createFileRoute } from '@tanstack/solid-router'
 import { Show } from 'solid-js'
 import { publishedDocumentFull } from '#/api/server-fns.ts'
 import { Masthead } from '#/components/Masthead.tsx'
-import { imprintDate } from '#/lib/labels.ts'
-import { ReadingDocument } from '#/published/ReadingDocument.tsx'
+import { PublishedEdition } from '#/published/PublishedEdition.tsx'
 
 export const Route = createFileRoute('/p/$slug')({
 	loader: async ({ params }) => {
@@ -30,7 +29,12 @@ function PublishedPage() {
 	const data = Route.useLoaderData()
 	return (
 		<>
-			<Masthead crumbs={[{ label: 'Published library', href: '/library' }, { label: data().document?.document.title ?? 'Not found' }]} />
+			<Masthead
+				crumbs={[
+					{ label: 'Published library', href: '/library' },
+					{ label: data().document?.document.title ?? 'Not found', accent: data().document?.accent ?? null },
+				]}
+			/>
 			<Show
 				when={data().document}
 				fallback={
@@ -41,24 +45,7 @@ function PublishedPage() {
 					</main>
 				}
 			>
-				{(doc) => (
-					<ReadingDocument
-						eyebrow="published"
-						document={{
-							title: doc().document.title,
-							editionLine: [
-								`Version ${doc().document.version}`,
-								doc().document.label,
-								doc().document.publishedAt ? imprintDate(Date.parse(doc().document.publishedAt ?? '')) : null,
-							]
-								.filter((part) => part)
-								.join(' · '),
-							releaseNotes: doc().document.releaseNotes,
-							sections: doc().sections,
-							references: doc().references,
-						}}
-					/>
-				)}
+				{(doc) => <PublishedEdition data={doc()} />}
 			</Show>
 		</>
 	)

@@ -2,6 +2,10 @@
  * The pages of a PDF, drawn by pdf.js in the browser: one canvas per page, rendered when
  * it scrolls into view. Client-only by construction — pdf.js is imported inside the
  * settled effect, never during SSR — and one parsed document is shared per file URL.
+ *
+ * `width` is the resolution a page is drawn at, in CSS pixels across; the stylesheet
+ * sizes the canvas to its column. A page unmounted mid-draw (a scroll-synced column
+ * moving on) cancels its render.
  */
 
 import type { PDFDocumentProxy } from 'pdfjs-dist'
@@ -48,33 +52,38 @@ function PdfPage(props: { url: string; page: number; width: number; eager: boole
 
 	onSettled(() => {
 		let cancelled = false
+		let task: { cancel: () => void } | undefined
 		const render = async () => {
 			if (cancelled || state() !== 'waiting') return
 			setState('rendering')
 			try {
 				const doc = await openDocument(props.url)
 				const pdfPage = await doc.getPage(props.page)
+				if (cancelled) return
 				const base = pdfPage.getViewport({ scale: 1 })
 				const scale = (props.width / base.width) * (window.devicePixelRatio || 1)
 				const viewport = pdfPage.getViewport({ scale })
 				canvas.width = Math.floor(viewport.width)
 				canvas.height = Math.floor(viewport.height)
-				canvas.style.width = `${props.width}px`
-				canvas.style.height = `${Math.floor(viewport.height / (window.devicePixelRatio || 1))}px`
 				const context = canvas.getContext('2d')
 				if (!context) throw new Error('no 2d context')
-				await pdfPage.render({ canvas, canvasContext: context, viewport }).promise
+				const drawing = pdfPage.render({ canvas, canvasContext: context, viewport })
+				task = drawing
+				await drawing.promise
 				if (!cancelled) setState('rendered')
 			} catch (error) {
+				if (cancelled) return
 				console.error('[pdf-pages]', props.url, props.page, error)
-				if (!cancelled) setState('failed')
+				setState('failed')
 			}
+		}
+		const stop = () => {
+			cancelled = true
+			task?.cancel()
 		}
 		if (props.eager) {
 			void render()
-			return () => {
-				cancelled = true
-			}
+			return stop
 		}
 		const observer = new IntersectionObserver(
 			(entries) => {
@@ -87,7 +96,7 @@ function PdfPage(props: { url: string; page: number; width: number; eager: boole
 		)
 		observer.observe(canvas)
 		return () => {
-			cancelled = true
+			stop()
 			observer.disconnect()
 		}
 	})

@@ -1,66 +1,214 @@
+/* ── The fidelity review: spine, text, template page ──────────────────────────
+   ui-solid's WorkspaceShell lays the three columns out (and on a phone hides the spine);
+   this sheet sets them on paper with hairlines between, keeps the spine and the template
+   page in view beside the scrolling text, and sets the text as the workspace does. At
+   900px and under: one column, the jump held under the masthead, each section's page(s)
+   behind its disclosure. */
+
 .ocp-review {
-	max-width: 100rem;
+	--ui-workspace-surface: var(--color-base-100);
+	--ui-workspace-nav-surface: var(--color-base-100);
+	--ui-workspace-nav-width: 17rem;
+	--ui-workspace-accent: var(--family, var(--color-primary));
+	min-block-size: calc(100dvh - var(--ocp-mast));
+	block-size: auto;
+	align-items: flex-start;
+}
+
+.ocp-review .ui-workspace-stage {
+	/* The columns align to the top for the sticky spine and source; the text stretches. */
+	align-self: stretch;
+}
+
+@media (width > 900px) {
+	/* The page scrolls as a document; the spine and the source stay beside it. */
+	.ocp-review > .ui-workspace-navigation,
+	.ocp-review > .ocp-review-source {
+		position: sticky;
+		inset-block-start: var(--ocp-mast);
+		block-size: calc(100dvh - var(--ocp-mast));
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		scrollbar-width: thin;
+	}
+	.ocp-review > .ui-workspace-navigation {
+		box-shadow: 1px 0 0 var(--hair);
+	}
+}
+
+/* ── The spine ── */
+@scope (.ocp-review-spine) {
+	:scope {
+		font-size: var(--t-sm);
+		gap: 1.1rem;
+	}
+	.ui-workspace-navigation-item {
+		padding: 0.22rem 0.45rem;
+		font-size: var(--t-sm);
+		line-height: 1.3;
+	}
+	.ocp-review-spine-depth-0 {
+		font-weight: 600;
+	}
+	.ocp-review-spine-depth-1 {
+		padding-inline-start: 1.1rem;
+	}
+	.ocp-review-spine-depth-2 {
+		padding-inline-start: 1.8rem;
+		color: var(--color-base-content-muted);
+	}
+	.ocp-review-spine-depth-3 {
+		padding-inline-start: 2.5rem;
+		color: var(--color-base-content-muted);
+	}
+}
+
+/* ── The text ── */
+.ocp-review-text {
+	--ocp-gutter: 2rem;
+	max-inline-size: 46rem;
 	margin-inline: auto;
-	padding: 1rem 1.25rem 4rem;
+	/* Room below the last section for its heading to reach the reading line. */
+	padding: 1.5rem var(--ocp-gutter) 60vh;
 }
 
 .ocp-review-header h1 {
-	font-size: 1.5rem;
-	margin: 0 0 0.25rem;
+	margin: 0 0 0.35rem;
+	font-size: var(--t-2xl);
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	text-wrap: balance;
 }
 
 .ocp-review-header p {
-	color: var(--color-base-content-muted);
 	margin: 0 0 1.5rem;
+	font-size: var(--t-sm);
+	color: var(--color-base-content-muted);
 }
 
-.ocp-review-row {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) 540px;
-	gap: 1.5rem;
-	align-items: start;
-	padding: 1.25rem 0;
-	border-top: 1px solid var(--color-border);
+.ocp-review-header code {
+	font-family: var(--font-data);
+	font-size: 0.95em;
+	overflow-wrap: anywhere;
+}
+
+/* A section reaches into the gutter (as the workspace's headings do), so that the rule
+   beside its heading stays inside the box content-visibility paints. */
+.ocp-review-section {
+	margin-inline: calc(-1 * var(--ocp-gutter));
+	padding: 1rem var(--ocp-gutter) 1.5rem;
+	border-block-start: 1px solid var(--hair);
 	content-visibility: auto;
-	contain-intrinsic-size: auto 40rem;
-}
-
-.ocp-review-rendered {
-	min-width: 0;
-	padding: 1rem 1.25rem;
-	border-radius: 0.5rem;
-	background: var(--color-base-100);
+	contain-intrinsic-size: auto 30rem;
 }
 
 .ocp-review-section-heading {
+	position: relative;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: baseline;
-	gap: 0.6rem;
-	margin-bottom: 0.6rem;
+	column-gap: 0.75rem;
+	row-gap: 0.15rem;
+	margin-block-end: 0.6rem;
 }
 
 .ocp-review-section-heading h2 {
+	flex: 1 1 16rem;
+	min-inline-size: 0;
 	margin: 0;
-	font-size: 1.2rem;
+	font-size: var(--t-lg);
+	font-weight: 600;
+	line-height: 1.25;
+	text-wrap: balance;
+	scroll-margin-block-start: calc(var(--ocp-mast) + 1.25rem);
 }
 
-.ocp-review-section-heading h2[data-level="1"] {
-	font-size: 1.5rem;
+.ocp-review-section[data-depth="0"] h2 {
+	font-size: var(--t-2xl);
+	letter-spacing: -0.015em;
+	line-height: 1.15;
 }
 
-.ocp-review-address,
+.ocp-review-section[data-depth="1"] h2 {
+	font-size: var(--t-xl);
+}
+
+.ocp-review-section[data-depth="3"] h2 {
+	font-size: var(--t-md);
+}
+
+.ocp-review-number {
+	font-variant-numeric: tabular-nums;
+	color: var(--family-ink, var(--color-base-content-muted));
+}
+
 .ocp-review-meta {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 0.2rem 0.6rem;
+	min-inline-size: 0;
+	font-size: var(--t-xs);
+	color: var(--color-base-content-muted);
+}
+
+.ocp-review-address {
 	font-family: var(--font-data);
-	font-size: 0.75rem;
 	color: var(--color-base-content-faint);
+	overflow-wrap: anywhere;
 }
 
+/* The section at the reading line: a family rule in the gutter beside its heading. */
+.ocp-review-section-heading::before {
+	content: "";
+	position: absolute;
+	inset-block: 0.15em;
+	inset-inline-start: calc(-0.6 * var(--ocp-gutter));
+	inline-size: 2px;
+	border-radius: 1px;
+	background: var(--family, var(--color-primary));
+	opacity: 0;
+	transition: opacity var(--dur-move) var(--ease-out);
+}
+
+.ocp-review-section[data-reading] > .ocp-review-section-heading::before {
+	opacity: 1;
+}
+
+/* ── The source: the template page(s) of the section being read ── */
 .ocp-review-source {
-	position: sticky;
-	top: 4.5rem;
+	flex: none;
+	box-sizing: border-box;
+	inline-size: clamp(22rem, 36vw, 40rem);
+	padding: 0.9rem 1.25rem 2rem;
+	background: var(--color-base-200);
+	box-shadow: -1px 0 0 var(--hair);
 }
 
+.ocp-review-source-caption {
+	display: flex;
+	align-items: baseline;
+	gap: 0.75rem;
+	margin: 0 0 0.6rem;
+	font-size: var(--t-xs);
+	color: var(--color-base-content-muted);
+}
+
+.ocp-review-source-of {
+	flex: 1 1 auto;
+	min-inline-size: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--color-base-content);
+	font-weight: 600;
+}
+
+.ocp-review-source-pages {
+	flex: none;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── The pages (editors/PdfPages.tsx draws them; the column sizes them) ── */
 .ocp-pdf-pages {
 	display: grid;
 	gap: 0.75rem;
@@ -72,24 +220,76 @@
 
 .ocp-pdf-page canvas {
 	display: block;
-	background: white;
-	border: 1px solid var(--color-border-strong);
+	inline-size: 100%;
+	block-size: auto;
+	border: 1px solid var(--hair-strong);
 	border-radius: 0.25rem;
-	min-height: 12rem;
+	box-sizing: border-box;
+}
+
+/* Until it is drawn, a page holds the shape of one. */
+.ocp-pdf-page canvas[data-rendered="false"] {
+	aspect-ratio: 210 / 297;
+	background: var(--color-base-100);
 }
 
 .ocp-pdf-page figcaption {
-	font-family: var(--font-data);
-	font-size: 0.75rem;
+	margin-block-start: 0.2rem;
+	font-size: var(--t-xs);
+	font-variant-numeric: tabular-nums;
 	color: var(--color-base-content-faint);
-	margin-top: 0.2rem;
 }
 
-@media (max-width: 70rem) {
-	.ocp-review-row {
-		grid-template-columns: 1fr;
+/* ── One column ── */
+.ocp-review-jump {
+	display: none;
+}
+
+.ocp-review-disclosure {
+	display: none;
+}
+
+@media (width <= 900px) {
+	.ocp-review > .ocp-review-source {
+		display: none;
 	}
-	.ocp-review-source {
-		position: static;
+	.ocp-review-text {
+		--ocp-gutter: 1rem;
+		padding-block-start: 1rem;
+	}
+	.ocp-review-header h1 {
+		font-size: var(--t-xl);
+	}
+	/* The platform's own menu: a long section title ends in an ellipsis beside the arrow
+	   (the customizable select wraps or clips it), and a phone opens its native picker. */
+	.ocp-review-jump {
+		appearance: auto;
+		display: block;
+		position: sticky;
+		inset-block-start: calc(var(--ocp-mast) + 0.5rem);
+		z-index: 5;
+		inline-size: 100%;
+		margin-block-end: 1rem;
+		background: var(--color-base-100);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.ocp-review-section-heading h2 {
+		scroll-margin-block-start: calc(var(--ocp-mast) + 4rem);
+	}
+	.ocp-review-section[data-depth="0"] h2 {
+		font-size: var(--t-xl);
+	}
+	/* The section's own rule separates it from the next: the disclosure draws none. */
+	.ocp-review-disclosure {
+		--ui-acc-divider: transparent;
+		--ui-acc-pad-block: 0.6rem;
+		--ui-acc-summary-font-size: var(--t-sm);
+		display: block;
+		margin-block-start: 0.75rem;
+	}
+	.ocp-review-section {
+		padding-block-end: 0.5rem;
 	}
 }

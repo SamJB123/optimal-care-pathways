@@ -14,7 +14,7 @@ import { createMemo, For, Loading, Show, useContext } from 'solid-js'
 import { PathwayMap } from '#/content/blocks.tsx'
 import { RenderedBody } from '#/content/render.tsx'
 import { ago, imprintDate } from '#/lib/labels.ts'
-import { partHref, publishedHref, sectionAnchor } from '#/lib/links.ts'
+import { legacyHref, partHref, publishedHref, sectionAnchor } from '#/lib/links.ts'
 import { atLeast, type ChangeEntry, DocumentContext, sectionLabel } from '#/lifecycle/workspace.ts'
 import { type ActivityRow, hubSnapshot } from '#/server/documents.ts'
 import { instructionsFor } from '#/server/workspace-fns.ts'
@@ -158,6 +158,13 @@ function OverviewPage() {
 					</Show>
 				</dl>
 				<Show when={state().published?.releaseNotes}>{(notes) => <p class="ocp-imprint-notes">{notes()}</p>}</Show>
+				<Show when={hub().legacy}>
+					{(legacy) => (
+						<p class="ocp-imprint-notes">
+							Drafted from the <a href={legacyHref(legacy().slug)}>{`${legacy().edition?.toLowerCase() ?? 'previous edition'}, as printed`}</a>.
+						</p>
+					)}
+				</Show>
 				<Show when={next()}>
 					{(n) => (
 						<div class="ocp-next">

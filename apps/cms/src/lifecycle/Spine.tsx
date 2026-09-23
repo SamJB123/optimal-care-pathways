@@ -19,7 +19,7 @@ import {
 import { useLocation, useNavigate, useParams } from '@tanstack/solid-router'
 import { createMemo, createSignal, For, Show, useContext } from 'solid-js'
 import { documentName, numberLabel } from '#/lib/labels.ts'
-import { partHref, previewHref, publishedHref, sectionAnchor } from '#/lib/links.ts'
+import { fidelityHref, partHref, previewHref, publishedHref, sectionAnchor } from '#/lib/links.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { moveSection } from '#/server/structure-fns.ts'
 import { atLeast, type ChangeEntry, DocumentContext, MARK_GLYPH, markOf, partsOf } from './workspace.ts'
@@ -209,6 +209,7 @@ export function Spine(props: { onRequestReview: () => void }) {
 							current={current() === 'suggestions'}
 							onSelect={() => void navigate({ to: '/d/$documentId/suggestions', params: { documentId: workspace.documentId } })}
 						/>
+						<WorkspaceNavigationItem label="Against the template PDF" mark="⧉" onSelect={() => void navigate({ href: fidelityHref(workspace.documentId) })} />
 					</Show>
 				</WorkspaceNavigationList>
 			</WorkspaceNavigationGroup>

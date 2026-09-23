@@ -15,6 +15,10 @@ export const partHref = (documentId: string, part: string): string =>
 export const sectionHref = (documentId: string, part: string, address: string): string =>
 	`${partHref(documentId, part)}#${sectionAnchor(address)}`
 export const previewHref = (documentId: string): string => `/d/${documentId}/preview`
+/** A previous edition as its PDF printed it. */
+export const legacyHref = (slug: string): string => `/legacy/${slug}`
+/** A core template set against the template PDF it was read from. */
+export const fidelityHref = (documentId: string): string => `/review/${documentId}`
 /** The draft as a watermarked PDF, and as a Word file (guidance left out of both). */
 export const draftPdfHref = (documentId: string): string => `/d/${documentId}/draft.pdf`
 export const draftDocxHref = (documentId: string): string => `/d/${documentId}/draft.docx`

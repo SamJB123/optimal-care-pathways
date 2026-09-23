@@ -1,0 +1,223 @@
+/* The published frame: DocsShell's rails set to the document's colour and the masthead's
+   height; the imprint at the head; the parts as the print sets them, each step opened by
+   a rule in the family colour. The body's own typography is content/blocks.css and
+   editors/section.css; this sheet is the frame around it. */
+
+.ocp-reading {
+	--ui-docs-sticky-top: var(--ocp-mast);
+	--ui-docs-progress-ink: var(--family, var(--color-primary));
+	--ui-docs-max-width: 90rem;
+	--ui-docs-side-width: 14.5rem;
+	position: relative;
+	isolation: isolate;
+}
+
+.ocp-reading .ocp-published {
+	max-width: 48rem;
+	margin-inline: auto;
+	padding: 0 0 5rem;
+}
+
+/* On a phone the compass stands above the imprint: a breath between them. */
+.ocp-reading .docs-compass {
+	margin-block-end: 1.5rem;
+}
+
+/* The spine's marks: step numbers in the document's colour. */
+.ocp-reading .docs-nav-mark {
+	color: var(--family-ink, var(--color-primary));
+}
+
+/* The part being read, in the rails and the compass: a soft wash of the document's colour
+   with its ink (the list's shared active surface reads --ui-color). */
+.ocp-reading .ui-rich-list[data-navigation] {
+	--ui-color: color-mix(in oklab, var(--family, var(--color-primary)) 14%, transparent);
+}
+
+.ocp-reading .ui-rich-list[data-navigation] .ui-rich-list-item[data-selected] {
+	--ui-surface: color-mix(in oklab, var(--family, var(--color-primary)) 14%, transparent);
+	--ui-ink: var(--family-ink, var(--color-base-content));
+	--ui-ink-muted: var(--family-ink, var(--color-base-content));
+}
+
+/* ── The imprint ── */
+.ocp-imprint-head {
+	display: grid;
+	gap: 0.55rem;
+	margin-block-end: 2.5rem;
+	padding-block-end: 1.75rem;
+	border-block-end: 1px solid var(--hair-strong);
+}
+
+.ocp-imprint-head .ui-eyebrow {
+	color: var(--family-ink, var(--color-base-content-muted));
+}
+
+.ocp-imprint-head h1 {
+	margin: 0;
+	font-size: clamp(1.9rem, 4vw, 2.75rem);
+	font-weight: 600;
+	line-height: 1.1;
+	letter-spacing: -0.015em;
+	text-wrap: balance;
+}
+
+.ocp-imprint-edition {
+	margin: 0;
+	font-size: var(--t-lg);
+	color: var(--color-base-content-muted);
+}
+
+.ocp-imprint-changed {
+	margin: 0;
+	max-inline-size: 60ch;
+	white-space: pre-wrap;
+}
+
+.ocp-imprint-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem 1.25rem;
+	margin: 0.4rem 0 0;
+	font-size: var(--t-sm);
+}
+
+.ocp-imprint-links a,
+.ocp-imprint-links button {
+	all: unset;
+	cursor: pointer;
+	color: var(--family-ink, var(--color-primary));
+	border-block-end: 1px solid color-mix(in oklab, currentColor 35%, transparent);
+}
+
+.ocp-imprint-links :is(a, button):hover {
+	border-block-end-color: currentColor;
+}
+
+.ocp-imprint-links :is(a, button):focus-visible {
+	outline: 2px solid var(--family, var(--color-primary));
+	outline-offset: 2px;
+}
+
+/* The other editions, as the print's imprint page lists them. */
+.ocp-imprint-editions {
+	display: grid;
+	gap: 0.2rem;
+	margin: 0.5rem 0 0;
+	padding: 0;
+	list-style: none;
+	font-size: var(--t-sm);
+	color: var(--color-base-content-muted);
+}
+
+.ocp-imprint-editions a {
+	color: var(--family-ink, var(--color-primary));
+}
+
+.ocp-imprint-editions [aria-current] {
+	font-weight: 600;
+	color: var(--color-base-content);
+}
+
+.ocp-imprint-note {
+	margin: 0.4rem 0 0;
+	padding: 0.6rem 0.8rem;
+	border: 1px solid var(--hair-strong);
+	border-radius: 0.4rem;
+	font-size: var(--t-sm);
+}
+
+.ocp-imprint-note a {
+	color: var(--family-ink, var(--color-primary));
+}
+
+/* ── The parts and sections ── */
+.ocp-reading .ocp-published-section {
+	margin-block: 1.5rem;
+}
+
+.ocp-reading .ocp-published-title {
+	scroll-margin-block-start: calc(var(--ocp-mast) + 1.5rem);
+	font-weight: 600;
+	line-height: 1.25;
+	text-wrap: balance;
+}
+
+/* A part opens with a rule in the family colour, as a step band opens it in print. */
+.ocp-reading .ocp-published-section[data-depth="0"] {
+	margin-block-start: 3.5rem;
+	padding-block-start: 1.1rem;
+	border-block-start: 3px solid var(--family, var(--color-primary));
+}
+
+.ocp-reading .ocp-published-section[data-depth="0"] > .ocp-published-title {
+	margin: 0 0 1rem;
+	font-size: var(--t-3xl);
+	letter-spacing: -0.01em;
+	color: var(--family-ink, var(--color-base-content));
+}
+
+.ocp-reading .ocp-published-section[data-depth="1"] > .ocp-published-title {
+	margin: 0 0 0.6rem;
+	font-size: var(--t-xl);
+}
+
+.ocp-reading .ocp-published-section[data-depth="2"] > .ocp-published-title {
+	margin: 0 0 0.5rem;
+	font-size: var(--t-lg);
+}
+
+.ocp-reading .ocp-published-section:not([data-depth="0"], [data-depth="1"], [data-depth="2"]) > .ocp-published-title {
+	margin: 0 0 0.4rem;
+	font-size: var(--t-md);
+}
+
+.ocp-reading .ocp-published-number {
+	color: var(--family-ink, var(--color-base-content-muted));
+	font-variant-numeric: tabular-nums;
+}
+
+.ocp-published-citations {
+	font-size: 0.6em;
+	vertical-align: super;
+	line-height: 0;
+}
+
+.ocp-reading .ocp-body {
+	font-size: var(--t-lg);
+	line-height: 1.6;
+}
+
+@media (width < 40rem) {
+	.ocp-reading .ocp-body {
+		font-size: var(--t-md);
+	}
+	.ocp-reading .ocp-published-section[data-depth="0"] > .ocp-published-title {
+		font-size: var(--t-2xl);
+	}
+	.ocp-reading .ocp-published-title {
+		/* Below the masthead and the compass. */
+		scroll-margin-block-start: calc(var(--ocp-mast) + 4rem);
+	}
+}
+
+/* On paper the frame is the page itself: no rails, no compass, no progress line. */
+@media print {
+	.ocp-reading .docs-nav,
+	.ocp-reading .docs-toc,
+	.ocp-reading .docs-compass,
+	.ocp-reading .docs-progress,
+	.ocp-imprint-links {
+		display: none;
+	}
+	.ocp-reading .docs-shell {
+		padding: 0;
+		max-width: none;
+	}
+	.ocp-reading .docs-grid {
+		display: block;
+	}
+	.ocp-reading .ocp-published {
+		max-width: none;
+	}
+}
