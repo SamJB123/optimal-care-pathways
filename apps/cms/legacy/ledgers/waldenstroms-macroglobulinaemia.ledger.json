@@ -1142,6 +1142,20 @@
 			"note": "row \"Multidisciplinary team meeting and treatment planning\" of the summary timeframes table"
 		},
 		{
+			"legacyKey": "summary-timeframes",
+			"legacyTitle": "Summary – optimal timeframes",
+			"destination": "4/timeframes",
+			"how": "timeframe-row",
+			"note": "row \"Watchful waiting\" of the summary timeframes table"
+		},
+		{
+			"legacyKey": "summary-timeframes",
+			"legacyTitle": "Summary – optimal timeframes",
+			"destination": "4.4.2",
+			"how": "timeframe-row",
+			"note": "row \"Radiation therapy\" of the summary timeframes table"
+		},
+		{
 			"legacyKey": "contributors",
 			"legacyTitle": "Contributors and reviewers",
 			"destination": "contributors-and-reviewers",
@@ -1457,17 +1471,15 @@
 			"\"Australian Cancer Survivorship Centre 2010\" → Australian Cancer Survivorship Centre 2019, Community support organisations’ can",
 			"\"Australian Government Department of Health 2021a\" → Australian Government Department of Health 2021b, The National Teletrials Compen",
 			"\"Australian Government Department of Health 2021a\" → Australian Government Department of Health 2021b, The National Teletrials Compen",
-			"\"Australian Government Department of Health 2017\" → Australian Government Department of Health 2021b, The National Teletrials Compen",
 			"\"Australian Government Department of Health 2021a\" → Australian Government Department of Health 2021b, The National Teletrials Compen",
 			"\"Australian Cancer Survivorship Centre 2010\" → Australian Cancer Survivorship Centre 2019, Community support organisations’ can",
 			"\"Australian Government Department of Health 2021a\" → Australian Government Department of Health 2021b, The National Teletrials Compen",
-			"\"Australian Government Department of Health 2021a\" → Australian Government Department of Health 2021b, The National Teletrials Compen",
-			"\"Australian Government Department of Health 2017\" → Australian Government Department of Health 2021b, The National Teletrials Compen"
+			"\"Australian Government Department of Health 2021a\" → Australian Government Department of Health 2021b, The National Teletrials Compen"
 		]
 	},
 	"timeframes": {
-		"figureRows": 5,
-		"boxes": 7,
+		"figureRows": 8,
+		"boxes": 9,
 		"rows": [
 			{
 				"step": 2,
@@ -1498,6 +1510,24 @@
 				"carePoint": "Multidisciplinary team meeting and treatment planning",
 				"source": "row",
 				"destination": "3.5.1"
+			},
+			{
+				"step": 4,
+				"carePoint": "Watchful waiting",
+				"source": "row",
+				"destination": "4/timeframes"
+			},
+			{
+				"step": 4,
+				"carePoint": "Systemic therapy",
+				"source": "body",
+				"destination": null
+			},
+			{
+				"step": 4,
+				"carePoint": "Radiation therapy",
+				"source": "row",
+				"destination": "4.4.2"
 			}
 		]
 	},
@@ -1532,6 +1562,11 @@
 			"address": "2/timeframes",
 			"title": "Timeframes",
 			"note": "proposed: rows of the printed summary table whose care point names no section of Step 2; move each into its section"
+		},
+		{
+			"address": "4/timeframes",
+			"title": "Timeframes",
+			"note": "proposed: rows of the printed summary table whose care point names no section of Step 4; move each into its section"
 		},
 		{
 			"address": "find-out-more/appendix-a-supportive-care-domains",

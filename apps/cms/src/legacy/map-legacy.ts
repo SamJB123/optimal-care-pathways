@@ -429,6 +429,20 @@ function lookup(index: CitationIndex, key: string): ReferenceEntry | null {
 		const byInitials = new Set(sameYear.filter(([k]) => initialsOf(k.slice(0, -(year.length + 1))) === name).map(([, e]) => e))
 		if (byInitials.size === 1) return [...byInitials][0] ?? null
 	}
+	// An organisation cited under another form of its name: "Australian Government Department
+	// of Health 2017" for the list's "Commonwealth Department of Health 2017" — the same year,
+	// the same last three words or more, and one such entry.
+	const cited = name.split(' ')
+	if (cited.length >= 3) {
+		const sharedTail = (key: string): number => {
+			const listed = key.slice(0, -(year.length + 1)).split(' ')
+			let n = 0
+			while (n < listed.length && n < cited.length && listed[listed.length - 1 - n] === cited[cited.length - 1 - n]) n++
+			return n
+		}
+		const byTail = new Set(sameYear.filter(([k]) => sharedTail(k) >= 3).map(([, e]) => e))
+		if (byTail.size === 1) return [...byTail][0] ?? null
+	}
 	return null
 }
 
@@ -1395,18 +1409,26 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			// one (decision 148), so a row the body's own subsections did not produce makes a
 			// box of its own in the step section its care point names.
 			// The table: the one with the most rows across at least two columns (a band under
-			// the caption is a one-cell table of its own). Its caption goes with it.
-			const table = flatten([chapter])
+			// the caption is a one-cell table of its own), and any table that repeats its header
+			// row — the same figure carried over a page ("Figure 3: … (continued)"). Its
+			// captions go with it.
+			const multiColumn = flatten([chapter])
 				.flatMap((n) => n.blocks)
 				.filter((b): b is Table => b.kind === 'table' && b.rows.some((r) => r.cells.length >= 2))
-				.sort((a, b) => b.rows.length - a.rows.length)[0]
-			const isCaption = (b: Block) => table !== undefined && b.kind === 'paragraph' && /^Figure\s+\d+\s*:/.test(plainText(b.runs).trim())
+			const main = [...multiColumn].sort((a, b) => b.rows.length - a.rows.length)[0]
+			const headerOf = (t: Table): string | null => {
+				const first = t.rows[0]
+				return first && first.cells.length > 0 && first.cells.every((c) => c.header) ? first.cells.map((c) => textOfBlocks(c.blocks).trim()).join('|') : null
+			}
+			const mainHeader = main ? headerOf(main) : null
+			const figureTables = multiColumn.filter((t) => t === main || (mainHeader !== null && headerOf(t) === mainHeader))
+			const isCaption = (b: Block) => figureTables.length > 0 && b.kind === 'paragraph' && /^Figure\s+\d+\s*:/.test(plainText(b.runs).trim())
 			for (const node of flatten([chapter])) {
-				const own = nodesOf(node.blocks.filter((b) => b !== table && b.kind !== 'figure' && !isCaption(b)))
+				const own = nodesOf(node.blocks.filter((b) => !(b.kind === 'table' && figureTables.includes(b)) && b.kind !== 'figure' && !isCaption(b)))
 				if (own.length > 0) place(destination, node, node === chapter ? own : [headingNode(titleOf(node.heading, node.number), 3), ...own], node === chapter ? 'rule' : 'merged', node === chapter ? { note: 'the printed timeframes table and its caption are derived from the steps’ timeframe boxes' } : {})
 				else provenance(destination, node)
 			}
-			if (table) placeTimeframeRows(table, chapter)
+			for (const table of figureTables) placeTimeframeRows(table, chapter)
 			continue
 		}
 		// The edition slot takes the cover and title page as statements (decision 145): the
