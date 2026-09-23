@@ -19,7 +19,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { publishableHash } from '../src/content/publish.ts'
-import { parseBody } from '../src/content/schema.ts'
+import { normalBody, parseBody } from '../src/content/schema.ts'
+import { searchText } from '../src/server/search-index.ts'
 import { mapTemplate } from '../src/template/extract/map-to-content.ts'
 import type { ExtractedDocument } from '../src/template/extract/model.ts'
 import type { SeedResult } from '../src/template/rows.ts'
@@ -28,6 +29,9 @@ import { deterministicId } from './ids.ts'
 
 /** Who owns the core documents until the first-run door adopts them. */
 const orgId = 'pending:central'
+
+/** A section's words in the search index are capped well inside D1's statement size. */
+const SEARCH_CHARS = 60_000
 
 const dataDir = join(import.meta.dirname, '..', 'template', '2026', 'extracted')
 const read = (key: string): ExtractedDocument =>
@@ -47,7 +51,10 @@ const statements: string[] = []
 /** Every seeded section row is stamped with the seed's own time: a document room that
  *  holds an older live body for the section sees the row moved and re-hydrates from it. */
 const seededAt = Date.now()
-const emit = async (result: SeedResult) => {
+const emit = async (seeded: SeedResult) => {
+	// Bodies in the schema's normal form (every attribute's default written), as the
+	// editor holds them: a section's first open in its room then changes nothing.
+	const result: SeedResult = { ...seeded, sections: seeded.sections.map((s) => ({ ...s, bodyJson: normalBody(s.bodyJson) })) }
 	const { template: t, document: d } = result
 	statements.push(
 		insert('templates', {
@@ -70,6 +77,12 @@ const emit = async (result: SeedResult) => {
 			accent: d.accent,
 		}),
 	)
+	// The search index holds each section's words (server/search-index.ts); rebuilt whole.
+	statements.push(`DELETE FROM section_search WHERE document_id = ${q(d.id)};`)
+	for (const s of result.sections)
+		statements.push(
+			`INSERT INTO section_search (section_id, document_id, title, body) VALUES (${q(s.id)}, ${q(d.id)}, ${q([s.printedNumber, s.title].filter(Boolean).join(' '))}, ${q(searchText(s.bodyJson).slice(0, SEARCH_CHARS))});`,
+		)
 	for (const s of result.sections) {
 		parseBody(s.bodyJson) // throws on a body the content schema rejects
 		statements.push(
@@ -87,6 +100,7 @@ const emit = async (result: SeedResult) => {
 				ownership: s.ownership,
 				pathway_ownership: s.pathwayOwnership,
 				apparatus: s.apparatus,
+				instructions: s.instructions,
 				body_json: JSON.stringify(s.bodyJson),
 				source_pages: s.sourcePages,
 				icon: s.icon,

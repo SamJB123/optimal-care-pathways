@@ -9,6 +9,14 @@
 		{
 			"includes": ["scripts/**"],
 			"linter": { "rules": { "suspicious": { "noConsole": "off" } } }
+		},
+		{
+			"includes": ["src/components/Atlas.tsx"],
+			"linter": { "rules": { "a11y": { "useSemanticElements": "off", "useFocusableInteractive": "off" } } }
+		},
+		{
+			"includes": ["src/components/atlas.css"],
+			"linter": { "rules": { "correctness": { "noUnknownProperty": "off" } } }
 		}
 	]
 }

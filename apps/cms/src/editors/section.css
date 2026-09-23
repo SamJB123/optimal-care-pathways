@@ -9,6 +9,8 @@
 
 .ocp-body {
 	line-height: 1.55;
+	/* A printed URL is one long word: it breaks rather than widen the page. */
+	overflow-wrap: anywhere;
 }
 
 /* An editorial aside the source set in its own colour (the Principles' purple notes). */
@@ -231,10 +233,38 @@ sup[data-ocp="citation"]::before {
 	color: var(--color-base-content-muted);
 }
 
+/* A shared section reads as the published text reads: no panel of its own. Its standing
+   is the spine's mark (○) and the margin's words. */
 .ocp-section-shared {
-	padding: 0.8rem 1rem;
-	border-radius: 0.5rem;
-	background: var(--color-base-150);
+	display: block;
+}
+
+/* The package's editor is a standalone card; on a document page it is the document's own
+   text, flowing on the paper with the sections around it. */
+.ocp-section-editor.aic-prosekit {
+	--aic-prosekit-accent: var(--family-ink, var(--color-primary));
+	--aic-prosekit-surface: transparent;
+	--aic-prosekit-ink: var(--color-base-content);
+	background: none;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	overflow: visible;
+}
+
+.ocp-section-editor .aic-prosekit-editor.ProseMirror {
+	min-block-size: 1.6em;
+	padding: 0;
+	/* As in the read-only body: a printed URL breaks rather than widen the column. */
+	overflow-wrap: anywhere;
+	font-family: inherit;
+	font-size: inherit;
+	line-height: 1.55;
+}
+
+/* Where the caret is: a faint rule in the document's colour down the gutter. */
+.ocp-section-editor .aic-prosekit-editor.ProseMirror-focused {
+	box-shadow: -0.9rem 0 0 -0.8rem var(--family, var(--color-primary));
 }
 
 .ocp-section-shared-note {

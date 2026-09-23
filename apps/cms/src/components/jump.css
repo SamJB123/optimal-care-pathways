@@ -39,11 +39,12 @@
 		border: 1px solid var(--hair);
 		border-radius: 0.3rem;
 	}
+	/* A phone has no ⌘K: the trigger keeps its words and drops the shortcut. */
 	@media (width < 40rem) {
 		:scope {
 			min-inline-size: 0;
 		}
-		.ui-command-palette-trigger-label {
+		.ui-command-palette-trigger-shortcut {
 			display: none;
 		}
 	}

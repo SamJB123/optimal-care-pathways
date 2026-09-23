@@ -77,7 +77,7 @@ export function Jump(props: JumpContribution) {
 			/* no recents: fine */
 		}
 		const onKey = (event: KeyboardEvent) => {
-			if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+			if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'k') {
 				event.preventDefault()
 				openCommandPalette(JUMP_ID)
 			}

@@ -16,9 +16,10 @@ import { z } from 'zod'
 import { inGroups, schema } from '#/db/index.ts'
 import { documentName } from '#/lib/labels.ts'
 import { type SpineBand, spineOf } from '#/lib/outline.ts'
-import { OCP_NAMESPACE, ROLE_LADDER, type Role } from '#/lib/roles.ts'
+import type { Role } from '#/lib/roles.ts'
 import * as access from './access.ts'
 import { envOf, requireUser } from './env.ts'
+import { visibleDocuments } from './visibility.ts'
 
 /** A tick: published unchanged, changed in the draft, new since (or never) published; and
  *  under review — undecided, approved, changes requested. */
@@ -40,6 +41,8 @@ export interface AtlasRow {
 	title: string
 	subject: string
 	accent: string | null
+	/** Who has it open now. */
+	present: { id: string; name: string }[]
 	/** A legacy import still waiting for its organisation (the admin door). */
 	pending: boolean
 	role: Role
@@ -75,27 +78,6 @@ type SectionLite = {
 	draftHash: string | null
 	updatedAt: Date | null
 	updatedBy: string | null
-}
-
-/** What the caller may see, and in what role: the one visibility rule of the documents
- *  topic (a member sees their organisations' documents; a central member sees all). */
-async function visibleDocuments(userId: string) {
-	const { env, d } = await envOf()
-	const memberships = await env.AUTH.listUserOrgs(userId, OCP_NAMESPACE)
-	const orgIds = memberships.map((m) => m.organizationId)
-	const central = await access.centralOrgId(env.AUTH, d)
-	const isCentral = central !== null && orgIds.includes(central)
-	const rows = isCentral
-		? await d.select().from(schema.documents)
-		: orgIds.length === 0
-			? []
-			: await inGroups(orgIds, (group) => d.select().from(schema.documents).where(inArray(schema.documents.orgId, group)))
-	const roleByOrg = new Map(memberships.map((m) => [m.organizationId, ROLE_LADDER.find((r) => r === m.role) ?? null]))
-	const withRole = rows.flatMap((row) => {
-		const role = roleByOrg.get(row.orgId) ?? (isCentral ? ('admin' as const) : null)
-		return role ? [{ row, role }] : []
-	})
-	return { documents: withRole, central: isCentral, setUp: central === null }
 }
 
 const live = (s: SectionLite) => !s.hidden && !s.apparatus
@@ -235,6 +217,7 @@ export const atlasSnapshot = createServerFn({ method: 'GET' }).handler(async ({ 
 			title: row.title,
 			subject: row.subject,
 			accent: row.accent,
+			present: row.present ?? [],
 			pending: row.orgId.startsWith('pending:'),
 			role,
 			published: published

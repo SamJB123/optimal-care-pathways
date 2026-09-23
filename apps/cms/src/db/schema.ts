@@ -113,6 +113,8 @@ export const documents = sqliteTable(
 		 *  pathway; for a core document, the colour its template's headings are printed in.
 		 *  Editable by the central team (lib/family.ts derives the legible text pair). */
 		accent: text('accent'),
+		/** Who has the document open now, as its room last announced it: the atlas's dot. */
+		present: text('present', { mode: 'json' }).$type<{ id: string; name: string }[]>(),
 		createdAt: createdAt(),
 		updatedAt: timestampMs('updated_at'),
 	},
@@ -156,6 +158,14 @@ export const sections = sqliteTable(
 		/** Template scaffolding a document never renders: the developer instructions,
 		 *  the cover banner, the contents page. */
 		apparatus: bool('apparatus').notNull().default(false),
+		/** The template's instructions to authors (its "Instructions for developers" page):
+		 *  part of a core document, rendered and published as the template prints it; never
+		 *  copied into a pathway, whose drafters read it in their margin by reference. */
+		instructions: bool('instructions').notNull().default(false),
+		/** A subsection the document's own team added (the template permits unnumbered
+		 *  subheadings within sections): never canonical, and the only kind of section that
+		 *  may be renamed, moved or deleted. Listed in a review request, as the template asks. */
+		added: bool('added').notNull().default(false),
 		/** Removed sections are hidden, not deleted: the canonical spine stays comparable. */
 		hidden: bool('hidden').notNull().default(false),
 		/** Belongs in the quick reference guide (a derived view). */
@@ -218,6 +228,11 @@ export const references = sqliteTable(
 		/** The number the source document printed, kept for provenance; numbering in the
 		 *  rendered document is derived from citation order. */
 		printedNumber: integer('printed_number'),
+		/** The reference this one replaced: editing a reference a published edition cites
+		 *  writes a new row and repoints the draft's citations, so the edition keeps exactly
+		 *  what it printed. */
+		supersedes: text('supersedes'),
+		createdBy: text('created_by'),
 		createdAt: createdAt(),
 	},
 	(t) => [index('references_document').on(t.documentId)],
@@ -371,6 +386,9 @@ export const comments = sqliteTable(
 			.notNull()
 			.references(() => sections.id, { onDelete: 'cascade' }),
 		kind: text('kind').$type<CommentKind>().notNull().default('comment'),
+		/** A reply's comment: the central team answering a suggestion, a reviewer answering a
+		 *  drafter. Null on a thread's first comment. */
+		replyTo: text('reply_to'),
 		body: text('body').notNull(),
 		authorId: text('author_id').notNull(),
 		authorName: text('author_name').notNull(),

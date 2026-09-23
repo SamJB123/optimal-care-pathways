@@ -23,7 +23,8 @@ import { getTableColumns, getTableName } from 'drizzle-orm'
 import { getTableConfig, type SQLiteTable } from 'drizzle-orm/sqlite-core'
 import { bodyHash } from '../src/content/diff.ts'
 import { publishableHash } from '../src/content/publish.ts'
-import { parseBody } from '../src/content/schema.ts'
+import { type JsonNode, normalBody, parseBody } from '../src/content/schema.ts'
+import { searchText } from '../src/server/search-index.ts'
 import * as schema from '../src/db/schema.ts'
 import { LEGACY_PATHWAYS, type LegacyFamily, type LegacyPathway } from '../src/legacy/catalogue.ts'
 import { type LegacyImport, mapLegacy } from '../src/legacy/map-legacy.ts'
@@ -118,18 +119,30 @@ const coreBodies = new Map([...cores.values()].flatMap((c) => c.sections.map((s)
  *  would publish) and each published section's (`bodyHash` of the published body). */
 async function withHashes(result: LegacyImport): Promise<LegacyImport> {
 	const subject = result.document.subject
+	// Bodies in the schema's normal form (every attribute's default written), as the
+	// editor holds them: a section's first open in its room then changes nothing.
+	const normal = (body: JsonNode | null | undefined) => (body ? normalBody(body) : null)
 	return {
 		...result,
 		sections: await Promise.all(
-			result.sections.map(async (s) => ({
-				...s,
-				draftHash: await publishableHash(
-					s.ownership === 'shared' && s.coreSectionId ? (coreBodies.get(s.coreSectionId) ?? null) : (s.bodyJson ?? null),
-					subject,
-				),
-			})),
+			result.sections.map(async (s) => {
+				const bodyJson = normal(s.bodyJson)
+				return {
+					...s,
+					bodyJson,
+					draftHash: await publishableHash(
+						s.ownership === 'shared' && s.coreSectionId ? normal(coreBodies.get(s.coreSectionId)) : bodyJson,
+						subject,
+					),
+				}
+			}),
 		),
-		versionSections: await Promise.all(result.versionSections.map(async (vs) => ({ ...vs, bodyHash: await bodyHash(vs.bodyJson ?? null) }))),
+		versionSections: await Promise.all(
+			result.versionSections.map(async (vs) => {
+				const bodyJson = normal(vs.bodyJson)
+				return { ...vs, bodyJson, bodyHash: await bodyHash(bodyJson) }
+			}),
+		),
 	}
 }
 
@@ -150,6 +163,14 @@ const emit = (result: LegacyImport) => {
 		if (s.bodyJson) parseBody(s.bodyJson)
 		statements.push(...insert(schema.sections, s))
 	}
+	// The search index holds each owned section's words (server/search-index.ts); a shared
+	// section is found through its core section.
+	statements.push(`DELETE FROM section_search WHERE document_id = ${q(result.document.id)};`)
+	for (const s of result.sections)
+		if (s.ownership === 'owned')
+			statements.push(
+				`INSERT INTO section_search (section_id, document_id, title, body) VALUES (${q(s.id)}, ${q(result.document.id)}, ${q([s.printedNumber, s.title].filter(Boolean).join(' '))}, ${q(searchText(s.bodyJson ?? null).slice(0, 60_000))});`,
+			)
 	for (const r of result.references) statements.push(...insert(schema.references, r))
 	for (const v of result.versions) statements.push(...insert(schema.versions, v))
 	statements.push(`DELETE FROM version_sections WHERE version_id = ${q(result.versions[0]?.id ?? '')};`)

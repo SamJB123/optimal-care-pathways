@@ -53,6 +53,8 @@ export type DocumentWireRow = {
 	audience: DocumentRow['audience']
 	/** The family colour (#rrggbb), or null for the neutral core documents. */
 	accent: string | null
+	/** Who has the document open (its room's roster, as last announced). */
+	present: { id: string; name: string }[]
 	createdAt: number
 	updatedAt: number | null
 }
@@ -69,6 +71,7 @@ export function documentWireRow(row: DocumentRow): DocumentWireRow {
 		subject: row.subject,
 		audience: row.audience,
 		accent: row.accent,
+		present: row.present ?? [],
 		createdAt: row.createdAt.getTime(),
 		updatedAt: row.updatedAt?.getTime() ?? null,
 	}
@@ -90,6 +93,8 @@ export type SectionWireRow = {
 	coreSectionId: string | null
 	pathwayOwnership: SectionRow['pathwayOwnership']
 	apparatus: boolean
+	instructions: boolean
+	added: boolean
 	hidden: boolean
 	pointOfCare: boolean
 	sourcePages: string | null
@@ -117,6 +122,8 @@ export function sectionWireRow(row: SectionRow): SectionWireRow {
 		coreSectionId: row.coreSectionId,
 		pathwayOwnership: row.pathwayOwnership,
 		apparatus: row.apparatus,
+		instructions: row.instructions,
+		added: row.added,
 		hidden: row.hidden,
 		pointOfCare: row.pointOfCare,
 		sourcePages: row.sourcePages,

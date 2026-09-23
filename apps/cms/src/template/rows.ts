@@ -43,6 +43,8 @@ export interface SectionRow {
 	ownership: 'owned'
 	pathwayOwnership: Ownership
 	apparatus: boolean
+	/** The template's instructions to authors: printed in the template, never in a pathway. */
+	instructions: boolean
 	bodyJson: JsonNode
 	/** The source PDF pages the section spans, as printed ("13" or "13-14"). */
 	sourcePages: string

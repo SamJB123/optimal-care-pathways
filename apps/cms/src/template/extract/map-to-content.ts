@@ -1662,9 +1662,10 @@ function headingColourOf(model: ExtractedDocument): string | null {
 
 const APPARATUS = /^(contents|cancer-specific-template|population-based-template|core-content)$/
 /** The template's instructions to its developers, wherever the title page puts them
- *  ("optimal-care-pathway-for-people-with/instructions-for-developers/…"): scaffolding for
- *  whoever builds a pathway, never a section of one. */
-const APPARATUS_SUBTREE = /(^|\/)instructions-for-developers(\/|$)/
+ *  ("optimal-care-pathway-for-people-with/instructions-for-developers/…"): part of the
+ *  template as printed, never a section of a pathway (whose drafters read it in their
+ *  margin by reference). */
+const INSTRUCTIONS_SUBTREE = /(^|\/)instructions-for-developers(\/|$)/
 
 interface Placed {
 	section: Section
@@ -1872,10 +1873,7 @@ export function mapTemplate(input: MapInput): SeedResult {
 
 	const sectionId = (p: Placed) => id('section', `${template.templateId}:${p.address}`)
 	const sections: SectionRow[] = placed.map((p) => {
-		const apparatus =
-			APPARATUS.test(p.address) ||
-			APPARATUS_SUBTREE.test(p.address) ||
-			p.parent?.address === 'contents'
+		const apparatus = APPARATUS.test(p.address) || p.parent?.address === 'contents'
 		// The contents page is a derived view of the section tree, never content; a
 		// template-declared derived section keeps its prose and boxes but its printed table
 		// (the snapshot schematic) or figure (the steps schematic) is replaced by the node
@@ -1910,6 +1908,7 @@ export function mapTemplate(input: MapInput): SeedResult {
 			ownership: 'owned',
 			pathwayOwnership: ownershipOf(p.section, g),
 			apparatus,
+			instructions: INSTRUCTIONS_SUBTREE.test(p.address),
 			bodyJson: { type: 'doc', content: body.length > 0 ? body : [{ type: 'paragraph' }] },
 			sourcePages: sourcePagesOf(p.section),
 			icon: p.section.icon

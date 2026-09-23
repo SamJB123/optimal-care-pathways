@@ -6,34 +6,11 @@
 
 import { createServerFn } from '@tanstack/solid-start'
 import { z } from 'zod'
-import { renderBodyHtml } from '#/content/render-html.tsx'
-import { centralOrgId } from './access.ts'
-import { envOf, requireUser } from './env.ts'
+import { requireUser } from './env.ts'
 import * as lifecycle from './lifecycle.ts'
+import { lifecycleOf } from './lifecycle-env.ts'
 
 const documentIdSchema = z.object({ documentId: z.string().min(1).max(64) })
-
-/** The lifecycle bound to this worker's bindings and the request's origin. */
-async function lifecycleOf(): Promise<lifecycle.Lifecycle> {
-	const { env, d } = await envOf()
-	let central: Promise<string | null> | null = null
-	return {
-		d,
-		auth: env.AUTH,
-		rooms: env.DOCUMENT_ROOM,
-		centralOrgId: () => {
-			central ??= centralOrgId(env.AUTH, d)
-			return central
-		},
-		origin: env.PUBLIC_ORIGIN ?? 'https://ocp-cms.aicolab.workers.dev',
-		renderHtml: renderBodyHtml,
-		purge: async (tags) => {
-			// biome-ignore lint/correctness/noUnresolvedImports: provided by the Workers runtime
-			const { cache } = await import('cloudflare:workers')
-			await cache.purge({ tags })
-		},
-	}
-}
 
 export const documentState = createServerFn({ method: 'GET' })
 	.inputValidator(documentIdSchema)

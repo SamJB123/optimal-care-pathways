@@ -36,9 +36,10 @@ describe.skipIf(!existsSync(join(appDir, modelPath)))('legacy import: breast can
 
 	it('scaffolds the pathway from the template spine and keeps shared sections shared', () => {
 		const addresses = new Set(result.sections.map((s) => s.address))
-		for (const c of core.sections.filter((s) => !s.apparatus)) expect(addresses.has(c.address)).toBe(true)
+		for (const c of core.sections.filter((s) => !s.apparatus && !s.instructions)) expect(addresses.has(c.address)).toBe(true)
+		for (const c of core.sections.filter((s) => s.instructions)) expect(addresses.has(c.address)).toBe(false)
 		const shared = result.sections.filter((s) => s.ownership === 'shared')
-		expect(shared.length).toBe(core.sections.filter((s) => !s.apparatus && s.pathwayOwnership === 'shared').length)
+		expect(shared.length).toBe(core.sections.filter((s) => !s.apparatus && !s.instructions && s.pathwayOwnership === 'shared').length)
 		for (const s of shared) {
 			expect(s.bodyJson).toBeNull()
 			expect(s.coreSectionId).toBeTruthy()

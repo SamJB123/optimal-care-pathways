@@ -10,6 +10,10 @@
  * The hover card is ONE popover shared by every band. Where the browser has `interestfor`
  * the bands declare it and the browser opens the card on hover, focus or long-press; where
  * it does not, pointer and focus handlers open the same card, anchored to the band.
+ *
+ * The grid is a table to assistive technology through ARIA roles on its elements, not a
+ * <table>: its rows are CSS subgrids, and a table whose display is changed loses its
+ * semantics in some browsers. (So biome's semantic-element rules are off for this file.)
  */
 
 import { Button, withScopedViewTransition } from '@aicolab/ui-solid'
@@ -48,6 +52,7 @@ function standing(row: AtlasRow): string {
 	if (r && r.decision === null) return `In review, ${r.decided} of ${r.total} decided`
 	if (r?.decision === 'approved') return 'Review approved'
 	if (r?.decision === 'changes_requested') return 'Changes asked for'
+	if (!row.published) return `${row.draft.sections} sections in the first edition`
 	if (row.draft.changed === 0) return 'Nothing changed since publishing'
 	return `${row.draft.changed} of ${row.draft.sections} sections changed`
 }
@@ -248,19 +253,23 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 				<Show
 					when={groups().length > 0}
 					fallback={
-						<p class="ocp-atlas-empty" role="row">
+						<div class="ocp-atlas-empty" role="row">
 							<span role="cell">No document matches. Clear the search or choose Everything.</span>
-						</p>
+						</div>
 					}
 				>
 					<For each={groups()}>
 						{(group) => (
 							<div role="rowgroup" class="ocp-atlas-group" data-group={group.key}>
-								<h2 class="ocp-atlas-group-title" role="row">
+								{/* The group's title stays a heading inside its row header (a role on
+								    the h2 itself would erase the heading). */}
+								<div class="ocp-atlas-group-title" role="row">
 									<span role="rowheader">
-										{group.label} <span class="ocp-figure ocp-muted">{group.rows.length}</span>
+										<h2>
+											{group.label} <span class="ocp-figure ocp-muted">{group.rows.length}</span>
+										</h2>
 									</span>
-								</h2>
+								</div>
 								<For each={group.rows}>
 									{(row) => (
 										<div
@@ -278,6 +287,14 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 												<a href={workspaceHref(row.id)} title={row.title} style={{ 'view-transition-name': `ocp-name-${row.slug}` }}>
 													{row.name}
 												</a>
+												<Show when={row.present.length > 0}>
+													<span
+														class="ocp-atlas-here"
+													role="img"
+														title={`Open now: ${row.present.map((p) => p.name || 'someone').join(', ')}`}
+														aria-label={`${row.present.length} ${row.present.length === 1 ? 'person has' : 'people have'} it open`}
+													/>
+												</Show>
 											</span>
 											<For each={row.bands}>
 												{(band) => (

@@ -96,8 +96,10 @@
 	.ocp-family-link {
 		margin: 0;
 	}
-	.ocp-family-link a {
+	/* A specimen of a link in the family's ink: drawn as one, not a link to nowhere. */
+	.ocp-family-link-sample {
 		color: var(--family-ink);
+		text-decoration: underline;
 	}
 	.ocp-family-readout {
 		margin: 0;

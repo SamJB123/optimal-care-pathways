@@ -16,8 +16,10 @@
 
 import {
 	AccordionItem,
+	Button,
 	Callout,
 	colorTreatmentData,
+	Field,
 	FlowMap,
 	type FlowMapFooter,
 	type FlowMapNode,
@@ -25,9 +27,10 @@ import {
 	Notice,
 	RichList,
 	RichListItem,
+	TextInput,
 } from '@aicolab/ui-solid'
-import type { JSX } from '@solidjs/web'
-import { createContext, For, Show, useContext } from 'solid-js'
+import { type JSX, Portal } from '@solidjs/web'
+import { createContext, createSignal, createUniqueId, For, Show, useContext } from 'solid-js'
 import './blocks.css'
 import {
 	type DerivedView,
@@ -126,7 +129,32 @@ export function BannerBlock(props: BlockProps<BannerAttrs>) {
 	)
 }
 
+/** Where drafting guidance shows (decision: guidance in a pathway lives in the margin).
+ *  In a core template the guidance IS the template's text, written and read in place;
+ *  in a pathway it is the template talking to the drafter, so the text column carries
+ *  only a mark in its gutter where the note belongs, and the margin carries the note. */
+export type GuidanceMode = 'inline' | 'margin'
+export const GuidanceModeContext = createContext<GuidanceMode>('inline')
+
 export function GuidanceBlock(props: BlockProps<GuidanceAttrs>) {
+	const mode = useContext(GuidanceModeContext)
+	return (
+		<Show when={mode === 'margin'} fallback={<GuidanceInline {...props} />}>
+			<aside
+				class="ocp-guidance-anchor"
+				data-ocp="guidance"
+				data-done={props.attrs.done ? 'true' : 'false'}
+				contenteditable="false"
+				aria-hidden="true"
+			>
+				<span class="ocp-guidance-mark" />
+				<div class="ocp-guidance-hidden">{props.children}</div>
+			</aside>
+		</Show>
+	)
+}
+
+function GuidanceInline(props: BlockProps<GuidanceAttrs>) {
 	const toggle = (event: Event) => {
 		event.preventDefault()
 		event.stopPropagation()
@@ -223,17 +251,49 @@ export function ResourceListBlock(props: BlockProps<Record<string, never>>) {
 }
 
 export function ResourceBlock(props: BlockProps<ResourceAttrs>) {
-	const editLink = () => {
-		const edit = props.edit
-		if (!edit) return
-		const title = window.prompt('Resource title:', props.attrs.title)
-		if (title === null) return
-		const url = window.prompt(
-			'Link (a URL, or #address for a section; leave empty for none):',
-			props.attrs.url,
-		)
-		if (url === null) return
-		edit.setAttrs({ title: title.trim(), url: url.trim() })
+	// Editing in place: an anchored form (title and link) against the entry's "edit"
+	// button. It is portalled out of the editor's DOM, so ProseMirror never reads its
+	// fields as part of the document, and exists only in the editor (`edit` present), so
+	// the server's renderer never meets a Portal.
+	const popoverId = `ocp-resource-${createUniqueId()}`
+	const anchorName = `--ocp-resource-${createUniqueId()}`
+	const [draftTitle, setDraftTitle] = createSignal('')
+	const [draftUrl, setDraftUrl] = createSignal('')
+	const [urlError, setUrlError] = createSignal<string | null>(null)
+	let panel: HTMLElement | undefined
+	/** Why a link cannot be stored, in words; null when it can. Blank is allowed (the
+	 *  source printed a placeholder), as is `#address` for a section of the document. */
+	const urlProblem = (url: string): string | null => {
+		const text = url.trim()
+		if (text === '') return null
+		if (text.startsWith('#'))
+			return /^#[\w.-]+$/.test(text) ? null : 'A section is written as # and its number, such as #4.2.'
+		const parsed = URL.canParse(text) ? new URL(text) : null
+		return parsed && (parsed.protocol === 'https:' || parsed.protocol === 'http:')
+			? null
+			: 'Write the whole web address, starting with https://, or # and a section number.'
+	}
+	const attachPanel = (el: HTMLElement) => {
+		panel = el
+		// Each opening starts from the entry as it stands.
+		el.addEventListener('beforetoggle', (event) => {
+			if (!('newState' in event) || event.newState !== 'open') return
+			setDraftTitle(props.attrs.title)
+			setDraftUrl(props.attrs.url)
+			setUrlError(null)
+		})
+		el.addEventListener('toggle', (event) => {
+			if ('newState' in event && event.newState === 'open')
+				el.querySelector<HTMLInputElement>('input')?.focus()
+		})
+	}
+	const save = (event: SubmitEvent) => {
+		event.preventDefault()
+		const problem = urlProblem(draftUrl())
+		setUrlError(problem)
+		if (problem) return
+		props.edit?.setAttrs({ title: draftTitle().trim(), url: draftUrl().trim() })
+		panel?.hidePopover()
 	}
 	return (
 		<RichListItem
@@ -271,11 +331,59 @@ export function ResourceBlock(props: BlockProps<ResourceAttrs>) {
 					<button
 						type="button"
 						class="ocp-resource-edit"
-						onClick={editLink}
+						popovertarget={popoverId}
+						style={{ 'anchor-name': anchorName }}
 						title="Edit the title and link"
 					>
 						edit
 					</button>
+					<Portal>
+						<div
+							id={popoverId}
+							popover="auto"
+							role="dialog"
+							aria-label="Edit this resource"
+							class={['ui-anchored', 'ocp-resource-popover']}
+							style={{ 'position-anchor': anchorName, '--ui-anchored-width': '22rem' }}
+							ref={attachPanel}
+						>
+							<form class="ocp-resource-form" onSubmit={save}>
+								<Field label="Title">
+									<TextInput
+										value={draftTitle()}
+										maxlength={500}
+										onInput={(event) => setDraftTitle(event.currentTarget.value)}
+									/>
+								</Field>
+								<Field
+									label="Link"
+									hint="A web address (https://…), or # and a section number (#4.2) for a section of this document. Leave it empty for none."
+								>
+									<TextInput
+										value={draftUrl()}
+										maxlength={2000}
+										placeholder="https://"
+										aria-invalid={urlError() ? 'true' : undefined}
+										onInput={(event) => setDraftUrl(event.currentTarget.value)}
+									/>
+								</Field>
+								<Show when={urlError()}>
+									{(message) => <p class="ocp-resource-error">{message()}</p>}
+								</Show>
+								<div class="ocp-resource-actions">
+									<Button
+										type="button"
+										variant="ghost"
+										colorBase="neutral"
+										onClick={() => panel?.hidePopover()}
+									>
+										Cancel
+									</Button>
+									<Button type="submit">Save</Button>
+								</div>
+							</form>
+						</div>
+					</Portal>
 				</Show>
 			}
 		/>

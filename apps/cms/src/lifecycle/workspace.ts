@@ -1,15 +1,19 @@
 /**
- * The document workspace's contract: what every view on a document page — the section
- * views, the inspector, the hub, the wizard — reads from the shell. Kept apart from the
- * route module so the views depend on the contract, never on the route (no import
- * cycle), and the route provides it.
+ * The document workspace's contract: what every view on a document page — the spine,
+ * the section views, the margin, the toolbar, the overview, the wizard — reads from the
+ * shell. Kept apart from the route module so the views depend on the contract, never on
+ * the route (no import cycle), and the route provides it.
  */
 
+import type { ToolbarItem } from '@aicolab/ui-solid/prosekit-solid'
 import { createContext } from 'solid-js'
+import type { GuidanceMode } from '#/content/blocks.tsx'
 import type { DerivedView } from '#/content/derived.ts'
+import type { JsonNode } from '#/content/schema.ts'
 import { numberLabel } from '#/lib/labels.ts'
 import type { DocumentWireRow, SectionWireRow } from '#/lib/live-topics.ts'
 import type { PathwayClient } from '#/lib/ocp-client.ts'
+import { spineOf } from '#/lib/outline.ts'
 import { ROLE_LADDER, type Role } from '#/lib/roles.ts'
 import type { CommentWire } from '#/server/lifecycle-fns.ts'
 import type { DocumentState } from '#/server/lifecycle.ts'
@@ -17,8 +21,42 @@ import type { DocumentState } from '#/server/lifecycle.ts'
 export type WorkspaceMode = 'edit' | 'review'
 export type DiffView = 'marks' | 'clean'
 
-/** What every section view on the stage needs: the outline, the room, the role, and
- *  where the document stands in its lifecycle. */
+/** One live section editor, as the page's single toolbar and the margin drive it. */
+export interface EditorControl {
+	sectionId: string
+	/** The toolbar's items for this editor (reactive: active marks follow the caret). */
+	toolbar: () => readonly ToolbarItem[]
+	canUndo: () => boolean
+	canRedo: () => boolean
+	undo(): void
+	redo(): void
+	focus(): void
+	/** The body as the editor holds it now. */
+	body(): JsonNode
+	/** Mark the `index`th guidance note (in reading order) done or not, as `by`. */
+	setGuidanceDone(index: number, done: boolean, by: string): void
+	/** Insert template content at the caret (the '/' menu, the Cite tool). */
+	insert(nodes: JsonNode[]): void
+	/** Apply a link, or a typed cross-reference, to the selection. */
+	link(target: { href: string } | { address: string } | null): void
+	/** Whether the caret sits in a check list, and flip that list's point-of-care flag. */
+	inCheckList(): boolean
+	checkListPointOfCare(): boolean
+	toggleCheckListPointOfCare(): void
+	/** The selected text, for a link's default wording. */
+	selectedText(): string
+}
+
+/** Who else is in the document, and where. */
+export interface PresenceEntry {
+	userId: string
+	name: string
+	/** The section they are in, when they are in one. */
+	sectionId: string | null
+}
+
+/** What every view on the page needs: the outline, the room, the role, where the document
+ *  stands in its lifecycle, and where the reader is. */
 export interface DocumentWorkspace {
 	documentId: string
 	document: DocumentWireRow
@@ -35,12 +73,34 @@ export interface DocumentWorkspace {
 	/** Editing, or reading the changes since the published version (decision 108). */
 	mode: () => WorkspaceMode
 	setMode: (mode: WorkspaceMode) => void
-	/** The section the inspector is about. */
+	/** The section the margin is about: the one pinned by a click, else the one at the
+	 *  reading line. */
 	focused: () => string | null
+	/** Pin the margin to a section (a click into it); null follows the reading again. */
 	focus: (sectionId: string | null) => void
+	pinned: () => string | null
+	/** The section at the reading line as the page scrolls. */
+	setReading: (sectionId: string | null) => void
 	diffView: () => DiffView
 	setDiffView: (view: DiffView) => void
 	openPublish: () => void
+	/** Open the "Ask for review" sheet. */
+	openRequestReview: () => void
+	/** Guidance on this document: in place (a core template) or in the margin (a pathway). */
+	guidance: GuidanceMode
+	/** Hidden sections shown struck through (the spine's switch), or left out. */
+	showHidden: () => boolean
+	setShowHidden: (show: boolean) => void
+	/** The live editors on the page, and the one the toolbar acts on. */
+	editors: {
+		register(control: EditorControl): () => void
+		get(sectionId: string): EditorControl | undefined
+		active: () => EditorControl | null
+		activate(sectionId: string): void
+	}
+	presence: () => PresenceEntry[]
+	/** The reader's own name, for "Done · name · date". */
+	selfName: () => string
 }
 
 /** Default-less: the context IS the provider, and reading it outside one throws. */
@@ -49,22 +109,50 @@ export const DocumentContext = createContext<DocumentWorkspace>()
 export const atLeast = (role: Role, floor: Role): boolean =>
 	ROLE_LADDER.indexOf(role) >= ROLE_LADDER.indexOf(floor)
 
-/** A part of the document as the navigation shows it: a top-level section and its subtree. */
+/** A part of the document as the spine shows it: a top-level section and its subtree. */
 export interface Part {
 	key: string
 	label: string
 	root: SectionWireRow
 }
 
-export function partsOf(sections: SectionWireRow[]): Part[] {
-	return sections
-		.filter((s) => s.parentId === null && !s.apparatus && !s.hidden)
-		.sort((a, b) => a.orderIndex - b.orderIndex)
-		.map((root) => ({
-			key: root.address,
-			label: root.printedNumber
-				? `${numberLabel(root.printedNumber)} ${root.title ?? ''}`
-				: (root.title ?? root.address),
-			root,
-		}))
+/** The heading of a section as the page sets it. */
+export const sectionLabel = (s: Pick<SectionWireRow, 'printedNumber' | 'title' | 'address'>): string =>
+	s.printedNumber ? `${numberLabel(s.printedNumber)} ${s.title ?? ''}`.trim() : (s.title ?? s.address)
+
+/** The document's parts in reading order. Apparatus (the cover banner, the contents page)
+ *  is never a part; a hidden part is one only while hidden sections are shown. */
+export function partsOf(sections: SectionWireRow[], showHidden = false): Part[] {
+	return spineOf(sections, (s) => !s.apparatus && (showHidden || !s.hidden))
+		.flatMap((band) => band.roots)
+		.map((root) => ({ key: root.address, label: sectionLabel(root), root }))
+}
+
+/** A section's standing, in the spine's marks (decision U13). In a pathway: shared from
+ *  the core (○), its own copy of a shared section (◐), written for it (●). In a core
+ *  template the same marks say what a pathway gets (the ownership legend): read by every
+ *  pathway as written (○), a scaffold each pathway writes its own (◑), or the template's
+ *  instructions to authors (◇). */
+export type SectionMark = 'shared' | 'diverged' | 'owned' | 'scaffold' | 'instructions'
+export const markOf = (
+	s: Pick<SectionWireRow, 'ownership' | 'coreSectionId' | 'pathwayOwnership' | 'instructions'>,
+): SectionMark =>
+	s.instructions
+		? 'instructions'
+		: s.pathwayOwnership !== null
+			? s.pathwayOwnership === 'shared'
+				? 'shared'
+				: 'scaffold'
+			: s.ownership === 'shared'
+				? 'shared'
+				: s.coreSectionId
+					? 'diverged'
+					: 'owned'
+export const MARK_GLYPH: Record<SectionMark, string> = { shared: '○', diverged: '◐', owned: '●', scaffold: '◑', instructions: '◇' }
+export const MARK_WORDS: Record<SectionMark, string> = {
+	shared: 'Shared: every pathway reads it as written',
+	diverged: 'This pathway’s own copy of a shared section',
+	owned: 'Written for this document',
+	scaffold: 'A scaffold: each pathway writes its own',
+	instructions: 'Instructions to the people writing a pathway',
 }

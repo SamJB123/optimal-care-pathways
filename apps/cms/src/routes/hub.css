@@ -1,65 +1,110 @@
-/* The document hub: the map first at full width, then the state panels in a row. */
-.ocp-hub {
-	display: grid;
-	gap: 1.5rem;
-	padding: 1rem 0 2rem;
-}
-
-.ocp-hub-map {
-	max-width: 62rem;
-	margin-inline: auto;
-	width: 100%;
-}
-
-.ocp-hub-panels {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
-	gap: 1rem;
-}
-
-.ocp-hub-facts {
-	display: grid;
-	grid-template-columns: auto 1fr;
-	gap: 0.35rem 1rem;
-	margin: 0;
-}
-
-.ocp-hub-facts dt {
-	color: var(--color-base-content-muted);
-}
-
-.ocp-hub-facts dd {
-	margin: 0;
-	font-weight: 600;
-}
-
-.ocp-hub-reviews {
-	display: grid;
-	gap: 0.5rem;
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
-
-.ocp-hub-reviews li {
-	display: grid;
-	gap: 0.15rem;
-}
-
-.ocp-hub-review-note {
-	color: var(--color-base-content-muted);
-	font-size: 0.9em;
-}
-
-.ocp-hub-actions {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 0.75rem;
-	margin-block-start: 0.75rem;
-}
-
-.ocp-hub-release-notes {
-	margin: 0.75rem 0 0;
-	white-space: pre-wrap;
+/* The overview: an imprint page, then the map, then three plain columns. */
+@scope (.ocp-overview) {
+	:scope {
+		display: grid;
+		gap: 2rem;
+		max-inline-size: 64rem;
+		margin-inline: auto;
+		padding: 1.75rem clamp(1rem, 3vw, 2rem) 5rem;
+	}
+	.ocp-imprint {
+		display: grid;
+		gap: 0.6rem;
+		padding-block-end: 1.5rem;
+		border-block-end: 1px solid var(--hair-strong);
+	}
+	.ocp-imprint-kicker {
+		margin: 0;
+		font-size: var(--t-2xs);
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--family-ink, var(--color-base-content-muted));
+	}
+	h1 {
+		margin: 0;
+		max-inline-size: 36ch;
+		font-size: clamp(1.7rem, 3vw, 2.4rem);
+		font-weight: 600;
+		letter-spacing: -0.015em;
+		line-height: 1.12;
+		text-wrap: balance;
+	}
+	.ocp-imprint-facts {
+		display: grid;
+		grid-template-columns: max-content 1fr;
+		gap: 0.3rem 1.25rem;
+		margin: 0.5rem 0 0;
+	}
+	.ocp-imprint-facts div {
+		display: contents;
+	}
+	.ocp-imprint-facts dt {
+		color: var(--color-base-content-muted);
+		font-size: var(--t-sm);
+	}
+	.ocp-imprint-facts dd {
+		margin: 0;
+	}
+	.ocp-imprint-facts a {
+		color: var(--family-ink, var(--color-primary));
+		font-weight: 600;
+	}
+	.ocp-imprint-notes {
+		margin: 0;
+		max-inline-size: 60ch;
+		white-space: pre-wrap;
+		color: var(--color-base-content-muted);
+	}
+	.ocp-next {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.75rem 1.25rem;
+		margin-block-start: 0.5rem;
+		padding: 0.8rem 1rem;
+		border: 1px solid var(--hair-strong);
+		border-radius: 0.5rem;
+	}
+	.ocp-next p {
+		margin: 0;
+		flex: 1 1 18rem;
+	}
+	.ocp-overview-columns {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+		gap: 2rem;
+		align-items: start;
+	}
+	h2 {
+		margin: 0 0 0.6rem;
+		font-size: var(--t-xs);
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-base-content-muted);
+	}
+	h3 {
+		margin: 0.6rem 0 0.25rem;
+		font-size: var(--t-sm);
+	}
+	ul {
+		margin: 0;
+		padding-inline-start: 1.1rem;
+	}
+	.ocp-overview-instructions p {
+		margin: 0 0 0.5rem;
+	}
+	.ocp-overview-instruction {
+		padding-block: 0.4rem;
+		border-block-start: 1px solid var(--hair);
+	}
+	.ocp-overview-instruction summary {
+		cursor: pointer;
+		font-weight: 600;
+	}
+	.ocp-overview-instruction .ocp-body {
+		font-size: var(--t-sm);
+		margin-block-start: 0.4rem;
+	}
 }

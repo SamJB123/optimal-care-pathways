@@ -27,9 +27,10 @@ import { publishableHash, publishAsFor } from '#/content/publish.ts'
 import { emptyBody, type JsonNode } from '#/content/schema.ts'
 import { bodyFromRoot, hydrateRoot, replaceRoot } from '#/content/yjs.ts'
 import { db, schema } from '#/db/index.ts'
-import { publishSectionRows } from '#/lib/live-publish.ts'
+import { publishDocumentRows, publishSectionRows } from '#/lib/live-publish.ts'
 import { type Role, tierForRole } from '#/lib/roles.ts'
 import { documentRoleOf } from '#/server/access.ts'
+import { reindex } from '#/server/search-index.ts'
 
 const ROOM_PREFIX = 'document:'
 
@@ -210,8 +211,40 @@ export class DocumentRoom extends DocRoom {
 			.where(where)
 			.returning()
 		await this.#rememberRowClock(sectionId, updated[0]?.updatedAt ?? at)
-		if (updated.length > 0) void publishSectionRows(this.documentId(), updated)
+		if (updated.length > 0) {
+			void publishSectionRows(this.documentId(), updated)
+			await reindex(db(this.env.DB), updated.map((row) => ({ ...row, body: row.bodyJson ?? null })))
+		}
 		return body
+	}
+
+	// ---- who is here, for the atlas ------------------------------------------------------
+
+	#presenceTimer: ReturnType<typeof setTimeout> | null = null
+
+	/** The roster moved: after it settles, the document row says who has it open, so the
+	 *  atlas can mark a pathway someone is working in without joining its room. */
+	override materializeOnline(userId: string): void {
+		super.materializeOnline(userId)
+		if (this.#presenceTimer) clearTimeout(this.#presenceTimer)
+		this.#presenceTimer = setTimeout(() => {
+			this.#presenceTimer = null
+			void this.#announcePresence().catch((error) =>
+				console.error('[document-room] presence announcement failed:', error instanceof Error ? error.message : error),
+			)
+		}, 1500)
+	}
+
+	async #announcePresence(): Promise<void> {
+		const ids = this.collections.online.toArray.map((row) => row.userId)
+		const people = await this.env.AUTH.getUsersByIds(ids)
+		const present = ids.map((id) => ({ id, name: people[id]?.name ?? '' }))
+		const updated = await db(this.env.DB)
+			.update(schema.documents)
+			.set({ present })
+			.where(eq(schema.documents.id, this.documentId()))
+			.returning()
+		void publishDocumentRows(updated)
 	}
 
 	// ---- native workerd-RPC doors (`await this.ready` is load-bearing) --------------------

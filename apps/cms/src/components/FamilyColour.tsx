@@ -68,7 +68,7 @@ export function FamilyColourField(props: {
 									</div>
 									<p class="ocp-family-heading">Step 3: Diagnosis, staging and treatment planning</p>
 									<p class="ocp-family-link">
-										See <a href="#top" onClick={(e) => e.preventDefault()}>3.5 Multidisciplinary meeting</a>
+										See <span class="ocp-family-link-sample">3.5 Multidisciplinary meeting</span>
 									</p>
 									<p class="ocp-family-readout">
 										Text {ratio(s.side.contrast)}, {s.side.contrast >= TEXT_CONTRAST ? 'passes AA' : 'below AA'}

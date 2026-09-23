@@ -1,0 +1,227 @@
+/* The margin: a quiet column of notes and actions beside the text. Hairlines between its
+   parts; the template's notes in the template's green, everything else in ink. */
+@scope (.ocp-margin) {
+	:scope {
+		display: grid;
+		gap: 1rem;
+		font-size: var(--t-sm);
+		line-height: 1.5;
+	}
+	.ocp-margin-kicker {
+		display: flex;
+		align-items: baseline;
+		gap: 0.4rem;
+		margin: 0;
+		font-size: var(--t-2xs);
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-base-content-muted);
+	}
+	.ocp-margin-mark {
+		font-size: var(--t-sm);
+		letter-spacing: 0;
+		color: var(--family-ink, var(--color-base-content));
+	}
+	.ocp-margin-head {
+		display: grid;
+		gap: 0.25rem;
+		padding-block-end: 0.8rem;
+		border-block-end: 1px solid var(--hair);
+	}
+	.ocp-margin-title {
+		margin: 0;
+		font-size: var(--t-lg);
+		font-weight: 600;
+		line-height: 1.25;
+		text-wrap: balance;
+	}
+	.ocp-margin-pin,
+	.ocp-margin-meta {
+		margin: 0;
+		font-size: var(--t-xs);
+	}
+	.ocp-margin-error {
+		margin: 0;
+		color: var(--color-error);
+	}
+	/* The template's notes. */
+	.ocp-margin-notes {
+		display: grid;
+		gap: 0.6rem;
+	}
+	.ocp-note {
+		display: grid;
+		gap: 0.35rem;
+		padding: 0.6rem 0.75rem;
+		border-radius: 0.45rem;
+		background: color-mix(in oklab, var(--color-success) 8%, var(--color-base-100));
+		border: 1px solid color-mix(in oklab, var(--color-success) 28%, transparent);
+		transition: border-color var(--dur-quick) var(--ease-out), background var(--dur-quick) var(--ease-out);
+	}
+	.ocp-note:hover {
+		border-color: var(--color-success);
+	}
+	.ocp-note p {
+		margin: 0;
+	}
+	.ocp-note[data-done] {
+		background: none;
+		border-style: dashed;
+	}
+	.ocp-note[data-kind="instruction"] p:first-child::before {
+		content: "In the shared text: ";
+		font-weight: 600;
+	}
+	.ocp-note-sub {
+		font-size: var(--t-xs);
+	}
+	.ocp-note-folded {
+		all: unset;
+		cursor: pointer;
+		color: var(--color-success);
+		font-weight: 600;
+	}
+	.ocp-note-tick {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		justify-self: start;
+		font-weight: 600;
+		color: var(--color-success);
+		cursor: pointer;
+	}
+	.ocp-note-tick input {
+		accent-color: var(--color-success);
+		inline-size: 1rem;
+		block-size: 1rem;
+	}
+
+	.ocp-margin-actions {
+		display: grid;
+		justify-items: start;
+		gap: 0.6rem;
+	}
+	.ocp-margin-toggle {
+		display: flex;
+		gap: 0.55rem;
+		align-items: start;
+		cursor: pointer;
+	}
+	.ocp-margin-toggle input {
+		margin-block-start: 0.2rem;
+	}
+	.ocp-margin-toggle small {
+		display: block;
+		color: var(--color-base-content-muted);
+	}
+	.ocp-confirm {
+		display: grid;
+		gap: 0.5rem;
+		padding: 0.6rem 0.75rem;
+		border: 1px solid var(--hair-strong);
+		border-radius: 0.45rem;
+		animation: ocp-margin-in var(--dur-move) var(--ease-out);
+	}
+	.ocp-confirm p {
+		margin: 0;
+	}
+	.ocp-confirm-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+	.ocp-inline-form {
+		display: grid;
+		gap: 0.5rem;
+		inline-size: 100%;
+	}
+	.ocp-margin-list {
+		margin: 0;
+		padding-inline-start: 1.1rem;
+	}
+	.ocp-comment {
+		display: grid;
+		gap: 0.25rem;
+		padding-block: 0.55rem;
+		border-block-end: 1px solid var(--hair);
+	}
+	.ocp-comment[data-resolved="true"] {
+		opacity: 0.6;
+	}
+	.ocp-comment header {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		align-items: baseline;
+	}
+	.ocp-comment p {
+		margin: 0;
+		white-space: pre-wrap;
+	}
+	.ocp-comment-kind {
+		font-size: var(--t-2xs);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--color-accent);
+	}
+	.ocp-composer,
+	.ocp-decision {
+		display: grid;
+		gap: 0.5rem;
+		margin-block-start: 0.5rem;
+	}
+
+	/* A pathway's margin with no section in view: the template's instructions. */
+	.ocp-margin-whole {
+		display: grid;
+		gap: 0.6rem;
+	}
+	.ocp-margin-whole p {
+		margin: 0;
+	}
+	.ocp-margin-instruction {
+		padding-block: 0.4rem;
+		border-block-start: 1px solid var(--hair);
+	}
+	.ocp-margin-instruction[data-depth="0"] .ocp-margin-instruction-title {
+		font-size: var(--t-md);
+	}
+	.ocp-margin-instruction-title {
+		margin: 0 0 0.25rem;
+		font-weight: 600;
+	}
+	.ocp-margin-instruction .ocp-body {
+		font-size: var(--t-sm);
+	}
+	.ocp-margin-quiet {
+		display: grid;
+		gap: 0.6rem;
+		color: var(--color-base-content-muted);
+	}
+	.ocp-margin-quiet p {
+		margin: 0;
+	}
+	.ocp-margin-marks {
+		display: grid;
+		gap: 0.3rem;
+		margin: 0;
+	}
+	.ocp-margin-marks div {
+		display: flex;
+		gap: 0.5rem;
+	}
+	.ocp-margin-marks dt {
+		inline-size: 1rem;
+		color: var(--family-ink, var(--color-base-content));
+	}
+	.ocp-margin-marks dd {
+		margin: 0;
+	}
+}
+
+@keyframes ocp-margin-in {
+	from {
+		opacity: 0;
+		translate: 0 -3px;
+	}
+}

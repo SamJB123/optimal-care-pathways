@@ -31,5 +31,6 @@
 			{ "name": "OCP_BELL", "class_name": "OcpBell" }
 		]
 	},
-	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["DocumentRoom", "OcpBell"] }]
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["DocumentRoom", "OcpBell"] }],
+	"r2_buckets": [{ "binding": "FILES", "bucket_name": "ocp-cms-files" }]
 }

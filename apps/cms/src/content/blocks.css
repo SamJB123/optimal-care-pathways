@@ -150,6 +150,63 @@
 	margin-bottom: 0;
 }
 
+/* ── Guidance in a pathway: the note lives in the margin; here only its mark, in the
+      gutter beside the block it belongs to, taking no space in the text ── */
+.ocp-body .ocp-guidance-anchor {
+	position: relative;
+	display: block;
+	block-size: 0;
+	margin: 0;
+	user-select: none;
+}
+
+.ocp-body .ocp-guidance-mark {
+	position: absolute;
+	inset-inline-start: calc(-1 * var(--ocp-gutter, 1.6rem) + 0.35rem);
+	inset-block-start: 0.35em;
+	inline-size: 0.5rem;
+	block-size: 0.5rem;
+	border-radius: 1px;
+	rotate: 45deg;
+	background: var(--color-success);
+	transition: scale var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
+}
+
+.ocp-body .ocp-guidance-anchor[data-done="true"] .ocp-guidance-mark {
+	background: none;
+	box-shadow: inset 0 0 0 1px var(--color-success);
+}
+
+/* The note under the reader's eye in the margin lights its mark here. */
+.ocp-body .ocp-guidance-anchor[data-lit] .ocp-guidance-mark {
+	scale: 1.5;
+	box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-success) 25%, transparent);
+}
+
+.ocp-body .ocp-guidance-hidden {
+	display: none;
+}
+
+/* An instruction written inside a shared sentence ("<for prostate cancer OCP only add:
+   …>") is the template talking to the drafter: in a pathway it leaves the sentence for
+   the margin, marked where it stood. */
+.ocp-body[data-guidance="margin"] span[data-ocp="instruction"],
+[data-guidance="margin"] .ocp-body span[data-ocp="instruction"] {
+	font-size: 0;
+}
+
+.ocp-body[data-guidance="margin"] span[data-ocp="instruction"]::before,
+[data-guidance="margin"] .ocp-body span[data-ocp="instruction"]::before {
+	content: "";
+	display: inline-block;
+	inline-size: 0.4rem;
+	block-size: 0.4rem;
+	margin-inline: 0.15rem;
+	rotate: 45deg;
+	background: var(--color-success);
+	vertical-align: 0.15em;
+}
+
 /* ── Timeframe: a Callout in the error family, the care point its first line ── */
 .ocp-body .ocp-timeframe {
 	margin: 0.8em 0;

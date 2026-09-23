@@ -143,8 +143,11 @@ export interface ResourceAttrs {
 }
 
 export interface GuidanceAttrs {
-	/** Marked done by an author: the box collapses and stops counting as an open item. */
+	/** Marked done by an author: the note folds and stops counting as an open item. */
 	done: boolean
+	/** Who marked it done and when (epoch ms), for the reviewer reading the folded note. */
+	doneBy: string
+	doneAt: number
 }
 
 export interface CitationAttrs {
@@ -197,6 +200,13 @@ export const boxAttrsOf = (attrs: Record<string, unknown>): BoxAttrs => ({
 	icon: typeof attrs.icon === 'string' ? attrs.icon : '',
 	family: typeof attrs.family === 'string' ? attrs.family : '',
 	variant: attrs.variant === 'solid' ? 'solid' : 'soft',
+})
+
+/** A guidance note's attributes read off loose node attributes. */
+export const guidanceAttrsOf = (attrs: Record<string, unknown>): GuidanceAttrs => ({
+	done: attrs.done === true,
+	doneBy: typeof attrs.doneBy === 'string' ? attrs.doneBy : '',
+	doneAt: typeof attrs.doneAt === 'number' ? attrs.doneAt : 0,
 })
 
 /** The family a box paints in: its own, else its kind's (decision 60). */
@@ -458,11 +468,19 @@ const defineGuidance = () =>
 		content: 'block+',
 		group: 'block',
 		defining: true,
-		attrs: { done: { default: false, validate: 'boolean' } },
+		attrs: {
+			done: { default: false, validate: 'boolean' },
+			doneBy: { default: '', validate: 'string' },
+			doneAt: { default: 0, validate: 'number' },
+		},
 		parseDOM: [
 			{
 				tag: 'aside[data-ocp="guidance"]',
-				getAttrs: (element) => ({ done: element.getAttribute('data-done') === 'true' }),
+				getAttrs: (element) => ({
+					done: element.getAttribute('data-done') === 'true',
+					doneBy: element.getAttribute('data-done-by') ?? '',
+					doneAt: Number(element.getAttribute('data-done-at') ?? 0) || 0,
+				}),
 			},
 		],
 		toDOM: (node) => [
@@ -470,6 +488,8 @@ const defineGuidance = () =>
 			{
 				'data-ocp': 'guidance',
 				'data-done': node.attrs.done ? 'true' : 'false',
+				'data-done-by': String(node.attrs.doneBy),
+				'data-done-at': String(node.attrs.doneAt),
 				...ui('success', 'soft'),
 			},
 			0,
@@ -759,6 +779,14 @@ function buildSchema(): Schema {
 export const contentSchema: Schema = buildSchema()
 
 /** The JSON form of a node, as stored in `sections.body_json` and served by the API. */
+/** A body as the editor would hold it: parsed against the schema (which fills every
+ *  attribute's default) and written back. Seeds store this form, so a section's first open
+ *  in its room finds the row already equal to the live doc and writes nothing. */
+export function normalBody(body: JsonNode): JsonNode {
+	const json: JsonNode = parseBody(body).toJSON()
+	return json
+}
+
 export interface JsonNode {
 	type: NodeName
 	attrs?: Record<string, string | number | boolean | null>

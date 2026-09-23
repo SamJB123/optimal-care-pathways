@@ -91,6 +91,7 @@
 		/* Hairlines between the columns, drawn by the grid itself. */
 		column-rule: 1px solid var(--hair);
 	}
+	/* column-rule-break is from CSS Gaps (newer than biome's property list). */
 	@supports (column-rule-break: intersection) {
 		.ocp-atlas-grid {
 			column-rule-break: none;
@@ -145,6 +146,11 @@
 	.ocp-atlas-group-title > span {
 		grid-column: 1 / -1;
 	}
+	.ocp-atlas-group-title h2 {
+		margin: 0;
+		font: inherit;
+		letter-spacing: inherit;
+	}
 	.ocp-atlas-group[data-group="core"] .ocp-atlas-group-title {
 		border-block-start: 1px solid var(--hair-strong);
 		padding-block-start: 1rem;
@@ -165,8 +171,20 @@
 	}
 
 	.ocp-atlas-name {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
 		min-inline-size: 0;
 		padding-block: 0.35rem;
+	}
+	/* Someone has the document open now. */
+	.ocp-atlas-here {
+		flex: none;
+		inline-size: 0.45rem;
+		block-size: 0.45rem;
+		border-radius: 50%;
+		background: var(--color-success);
+		box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-success) 22%, transparent);
 	}
 	.ocp-atlas-name a {
 		display: -webkit-box;
@@ -366,13 +384,16 @@
 			row-gap: 0.35rem;
 			padding-block: 0.7rem;
 		}
+		/* The words span the row whatever the strip's proportions: a document with a
+		   short last band would otherwise squeeze whatever sat over it. */
 		.ocp-atlas-name {
 			grid-row: 1;
-			grid-column: 1 / 6;
+			grid-column: 1 / -1;
 		}
 		.ocp-atlas-links {
-			grid-row: 1;
-			grid-column: 6 / -1;
+			grid-row: 4;
+			grid-column: 1 / -1;
+			justify-self: end;
 		}
 		.ocp-atlas-band {
 			grid-row: 2;
@@ -392,13 +413,13 @@
 		}
 		.ocp-atlas-state {
 			grid-row: 3;
-			grid-column: 1 / 6;
+			grid-column: 1 / -1;
 		}
 		.ocp-atlas-last {
-			grid-row: 3;
-			grid-column: 6 / -1;
-			text-align: end;
-			align-self: start;
+			grid-row: 4;
+			grid-column: 1 / -1;
+			justify-self: start;
+			align-self: center;
 		}
 	}
 }

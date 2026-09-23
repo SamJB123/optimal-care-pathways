@@ -63,10 +63,14 @@
 
 	// Workers Cache (decision 126): the PDF response carries Cache-Control and a Cache-Tag
 	// per document; publishing purges the tag.
-	"cache": { "enabled": true }
+	"cache": { "enabled": true },
 
-	// Still to come, each with its own migration tag: R2 for images and the legacy PDFs,
-	// and Browser Rendering for PDF.
+	// Uploaded files (the section editor's images) in R2, under `images/<documentId>/…`,
+	// served publicly by /files/* (src/routes/files.$.ts): a published page shows them.
+	// A new account needs `wrangler r2 bucket create ocp-cms-files`.
+	"r2_buckets": [{ "binding": "FILES", "bucket_name": "ocp-cms-files" }]
+
+	// Still to come: R2 for the legacy PDFs.
 	//
 	// Secrets (`wrangler secret put`, not committed):
 	//   CAPNWEB_SNAPSHOT_ENCRYPTION_KEY — room-service's hibernatable session

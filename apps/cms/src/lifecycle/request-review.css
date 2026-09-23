@@ -1,0 +1,38 @@
+@scope (.ocp-request) {
+	:scope {
+		display: grid;
+		gap: 1rem;
+		max-inline-size: 38rem;
+		padding: 1.25rem;
+	}
+	p {
+		margin: 0;
+	}
+	h3 {
+		margin: 0 0 0.35rem;
+		font-size: var(--t-xs);
+		font-weight: 600;
+		letter-spacing: 0.07em;
+		text-transform: uppercase;
+		color: var(--color-base-content-muted);
+	}
+	ul {
+		margin: 0;
+		padding-inline-start: 1.1rem;
+		max-block-size: 12rem;
+		overflow: auto;
+	}
+	.ocp-request-actions {
+		display: flex;
+		justify-content: end;
+		gap: 0.6rem;
+		padding-block-start: 0.6rem;
+		border-block-start: 1px solid var(--hair);
+	}
+	.ocp-request-error {
+		color: var(--color-error);
+	}
+	.ocp-request-done {
+		font-size: var(--t-lg);
+	}
+}

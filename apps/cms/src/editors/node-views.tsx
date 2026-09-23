@@ -27,6 +27,8 @@ import {
 	DerivedContext,
 	FootnoteInline,
 	GuidanceBlock,
+	type GuidanceMode,
+	GuidanceModeContext,
 	PathwayMapBlock,
 	ResourceBlock,
 	ResourceListBlock,
@@ -43,6 +45,7 @@ import {
 	type BoxAttrs,
 	boxAttrsOf,
 	type GuidanceAttrs,
+	guidanceAttrsOf,
 	type ResourceAttrs,
 } from '#/content/schema.ts'
 
@@ -51,11 +54,13 @@ import {
 type Provide = <P extends object>(component: Component<P>) => Component<P>
 
 const providing =
-	(derived: () => DerivedView): Provide =>
+	(derived: () => DerivedView, guidance: GuidanceMode): Provide =>
 	(Inner) =>
 	(props) => (
 		<DerivedContext value={derived}>
-			<Inner {...props} />
+			<GuidanceModeContext value={guidance}>
+				<Inner {...props} />
+			</GuidanceModeContext>
 		</DerivedContext>
 	)
 
@@ -90,8 +95,8 @@ const asAttrs =
 const str = (value: unknown, fallback = ''): string =>
 	typeof value === 'string' ? value : fallback
 
-export function defineTemplateNodeViews(derived: () => DerivedView) {
-	const provide = providing(derived)
+export function defineTemplateNodeViews(derived: () => DerivedView, guidance: GuidanceMode) {
+	const provide = providing(derived, guidance)
 	return union(
 		defineSolidNodeView<BoxAttrs>({
 			name: 'box',
@@ -110,7 +115,7 @@ export function defineTemplateNodeViews(derived: () => DerivedView) {
 		defineSolidNodeView<GuidanceAttrs>({
 			name: 'guidance',
 			hasContent: true,
-			readAttrs: asAttrs((a) => ({ done: a.done === true })),
+			readAttrs: asAttrs(guidanceAttrsOf),
 			component: provide(viewOf(GuidanceBlock)),
 			contentAs: contentElement('div'),
 		}),

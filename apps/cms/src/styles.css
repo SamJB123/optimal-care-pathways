@@ -49,6 +49,24 @@ body {
 	color: var(--color-base-content-muted);
 }
 
+/* An action that reads as a link in running text. */
+.ocp-link-button {
+	all: unset;
+	cursor: pointer;
+	color: var(--color-primary);
+	border-block-end: 1px solid color-mix(in oklab, var(--color-primary) 40%, transparent);
+}
+
+.ocp-link-button:focus-visible {
+	outline: 2px solid var(--color-primary);
+	outline-offset: 2px;
+}
+
+.ocp-link-button:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
 /* A figure set in tabular numerals, for counts that line up. */
 .ocp-figure {
 	font-variant-numeric: tabular-nums;

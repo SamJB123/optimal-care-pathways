@@ -11,7 +11,7 @@
  */
 
 import { Dynamic, type JSX } from '@solidjs/web'
-import { For, Match, Show, Switch } from 'solid-js'
+import { For, Match, Show, Switch, untrack } from 'solid-js'
 import {
 	BannerBlock,
 	BoxBlock,
@@ -22,6 +22,8 @@ import {
 	DerivedContext,
 	FootnoteInline,
 	GuidanceBlock,
+	type GuidanceMode,
+	GuidanceModeContext,
 	PathwayMapBlock,
 	ResourceBlock,
 	ResourceListBlock,
@@ -32,7 +34,7 @@ import {
 	VariantsBlock,
 } from './blocks.tsx'
 import { type DerivedView, emptyDerived } from './derived.ts'
-import { boxAttrsOf, type JsonMark, type JsonNode } from './schema.ts'
+import { boxAttrsOf, guidanceAttrsOf, type JsonMark, type JsonNode } from './schema.ts'
 // The body's own styles travel with the renderer: a page that renders a body (the
 // review page, the hub) gets them without mounting an editor. The list sheet is the
 // one the editor uses (prosekit's, which draws the bullet itself), never the flat-list
@@ -42,12 +44,16 @@ import '#/editors/section.css'
 
 /** A body, rendered. `derived` is the page's derived view; without it citations show
  *  '?' and the snapshot is empty. */
-export function RenderedBody(props: { body: JsonNode; derived?: DerivedView }) {
+export function RenderedBody(props: { body: JsonNode; derived?: DerivedView; guidance?: GuidanceMode }) {
+	// Where guidance shows is a constant of the document a body belongs to.
+	const guidance = untrack(() => props.guidance ?? 'inline')
 	return (
 		<DerivedContext value={() => props.derived ?? emptyDerived()}>
-			<div class="ocp-body ocp-body-static">
-				<Blocks nodes={props.body.content ?? []} />
-			</div>
+			<GuidanceModeContext value={guidance}>
+				<div class="ocp-body ocp-body-static" data-guidance={guidance}>
+					<Blocks nodes={props.body.content ?? []} />
+				</div>
+			</GuidanceModeContext>
 		</DerivedContext>
 	)
 }
@@ -125,7 +131,7 @@ function Block(props: { node: JsonNode }) {
 				</BannerBlock>
 			</Match>
 			<Match when={props.node.type === 'guidance'}>
-				<GuidanceBlock attrs={{ done: attrs().done === true }}>
+				<GuidanceBlock attrs={guidanceAttrsOf(attrs())}>
 					<Blocks nodes={children()} />
 				</GuidanceBlock>
 			</Match>

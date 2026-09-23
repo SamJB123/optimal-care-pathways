@@ -97,6 +97,7 @@ export function Masthead(props: MastheadProps) {
 				</Show>
 				<Jump sections={props.sections} actions={props.actions} search={props.search} />
 				<AccountMenu session={session} google={false} onSignedIn={() => void router.invalidate()} onSignedOut={() => void router.invalidate()}>
+					{/* biome-ignore lint/a11y/useSemanticElements: inside a menu the radio items' group is role="group", not a fieldset */}
 					<div class="ocp-mast-theme" role="group" aria-label="Ground">
 						<For each={THEMES}>
 							{(t) => (

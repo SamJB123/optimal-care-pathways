@@ -975,7 +975,7 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	})
 
 	// ---- the draft's scaffold -------------------------------------------------------------
-	const coreRows = core.sections.filter((s) => !s.apparatus)
+	const coreRows = core.sections.filter((s) => !s.apparatus && !s.instructions)
 	const sectionId = (address: string) => id('section', `legacy:${pathway.pathwaySlug}:${address}`)
 	const drafts = new Map<string, DraftSection>()
 	/** The template's two title placeholders, as the edition prints them: the title page

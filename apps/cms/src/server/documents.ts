@@ -30,6 +30,7 @@ import { outlineOrder } from '#/lib/outline.ts'
 import { OCP_NAMESPACE, ROLE_LADDER, type Role, organisationNameOf, roles } from '#/lib/roles.ts'
 import { TEMPLATES } from '#/template/templates.ts'
 import * as access from './access.ts'
+import { reindex } from './search-index.ts'
 import { CENTRAL_ORG_NAME, CENTRAL_ORG_SLUG } from './access.ts'
 import { envOf, requireUser } from './env.ts'
 
@@ -551,7 +552,7 @@ export const createPathway = createServerFn({ method: 'POST' })
 		// template scaffold of the sections the template hands the pathway to write.
 		const coreSections = (
 			await d.select().from(schema.sections).where(eq(schema.sections.documentId, core.id))
-		).filter((s) => !s.apparatus)
+		).filter((s) => !s.apparatus && !s.instructions)
 		const sectionIds = new Map(coreSections.map((s) => [s.id, crypto.randomUUID()]))
 		// A shared section renders the core body as published (its draft while the core has
 		// never published): its change hash starts from that.
@@ -628,5 +629,9 @@ export const createPathway = createServerFn({ method: 'POST' })
 			.then(([first]) => first)
 
 		if (document) void publishDocumentRows([document])
+		await reindex(
+			d,
+			rows.map((r) => ({ ...r, body: r.bodyJson })),
+		)
 		return { documentId, organizationId: created.organizationId }
 	})

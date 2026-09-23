@@ -133,6 +133,10 @@
 		.ocp-mast-link {
 			display: none;
 		}
+		/* The account is its initials; the name is inside the menu. */
+		.auth-user-name {
+			display: none;
+		}
 		.ocp-mast-crumbs li:not(:last-child) {
 			display: none;
 		}

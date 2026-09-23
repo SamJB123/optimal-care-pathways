@@ -75,7 +75,7 @@ export interface Lifecycle {
 
 export class LifecycleRefusal extends Error {}
 
-const refuse = (message: string): never => {
+export const refuse = (message: string): never => {
 	throw new LifecycleRefusal(message)
 }
 
@@ -84,14 +84,14 @@ const refuse = (message: string): never => {
 // ---------------------------------------------------------------------------
 
 /** The one access rule (access.ts), with the lifecycle's own central-organisation source. */
-async function roleOn(lc: Lifecycle, userId: string, document: DocumentRow): Promise<Role | null> {
+export async function roleOn(lc: Lifecycle, userId: string, document: DocumentRow): Promise<Role | null> {
 	return documentRole(lc.auth, userId, document.orgId, await lc.centralOrgId())
 }
 
 const atLeast = (role: Role | null, floor: Role): boolean =>
 	role !== null && ROLE_LADDER.indexOf(role) >= ROLE_LADDER.indexOf(floor)
 
-async function requireRole(
+export async function requireRole(
 	lc: Lifecycle,
 	userId: string,
 	document: DocumentRow,
@@ -265,7 +265,7 @@ export async function resolveSections(
 	})
 }
 
-const live = (s: ResolvedSection): boolean => !s.row.hidden && !s.row.apparatus
+export const live = (s: ResolvedSection): boolean => !s.row.hidden && !s.row.apparatus
 
 const sameBody = (a: JsonNode | null, b: JsonNode | null): boolean =>
 	JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
@@ -285,7 +285,7 @@ export async function changedSections(
 }
 
 /** Fold every live body of the document's room into D1 before reading the draft. */
-async function foldRoom(lc: Lifecycle, documentId: string): Promise<void> {
+export async function foldRoom(lc: Lifecycle, documentId: string): Promise<void> {
 	await lc.rooms.get(lc.rooms.idFromName(documentRoomName(documentId))).foldAll()
 }
 
@@ -293,7 +293,7 @@ async function foldRoom(lc: Lifecycle, documentId: string): Promise<void> {
 // Events and mail
 // ---------------------------------------------------------------------------
 
-async function record(
+export async function record(
 	lc: Lifecycle,
 	documentId: string,
 	kind: string,
@@ -362,13 +362,16 @@ export async function currentReview(
 export async function requestReview(
 	lc: Lifecycle,
 	input: { documentId: string; userId: string; note: string | null },
-): Promise<{ reviewId: string; sections: number }> {
+): Promise<{ reviewId: string; sections: number; hidden: number; added: number }> {
 	const document = await documentOf(lc, input.documentId)
 	await requireRole(lc, input.userId, document, 'member', 'request a review')
 	await foldRoom(lc, document.id)
 	const draft = await ensureDraft(lc, document.id, input.userId)
 	const changed = await changedSections(lc, document.id)
 	if (changed.length === 0) refuse('Nothing has changed since the published version.')
+	// The template asks teams to report the sections they removed and the subheadings they
+	// added when they submit for review: the request says so, in the reviewers' mail.
+	const structure = await structureChanges(lc, document.id)
 	const reviewId = crypto.randomUUID()
 	const pins = await Promise.all(
 		changed.map(async (s) => ({
@@ -390,14 +393,80 @@ export async function requestReview(
 	await record(lc, document.id, 'review.requested', input.userId, {
 		reviewId,
 		sections: pins.length,
+		hidden: structure.hidden.length,
+		added: structure.added.length,
 	})
+	const listed = (label: string, items: StructureItem[]) =>
+		items.length > 0 ? `\n\n${label}: ${items.map(structureLabel).join('; ')}.` : ''
 	await notify(
 		lc,
 		await recipients(lc, document, 'admin'),
 		`Review requested: ${document.title}`,
-		`A review of "${document.title}" has been requested (${pins.length} changed section${pins.length === 1 ? '' : 's'}).${input.note ? `\n\n${input.note}` : ''}\n\n${documentLink(lc, document.id)}`,
+		`A review of "${document.title}" has been requested (${pins.length} changed section${pins.length === 1 ? '' : 's'}).${listed('Sections removed', structure.hidden)}${listed('Subheadings added', structure.added)}${input.note ? `\n\n${input.note}` : ''}\n\n${documentLink(lc, document.id)}`,
 	)
-	return { reviewId, sections: pins.length }
+	return {
+		reviewId,
+		sections: pins.length,
+		hidden: structure.hidden.length,
+		added: structure.added.length,
+	}
+}
+
+/** A section a structure report names. */
+export interface StructureItem {
+	sectionId: string
+	address: string
+	title: string | null
+}
+
+/** How the document's structure differs from its published version, as the template asks
+ *  a team to report it: the sections hidden since (every hidden one, if it has never
+ *  published) and the subheadings the team added since. */
+export interface StructureReport {
+	hidden: StructureItem[]
+	added: StructureItem[]
+}
+
+/** A section as a report names it: its heading with its address, else its address. */
+const structureLabel = (item: StructureItem): string =>
+	item.title ? `${item.title} (${item.address})` : item.address
+
+/** The document's structure report against its published version, in reading order.
+ *  Apparatus is template scaffolding, never shown, so it is never reported. */
+export async function structureChanges(lc: Lifecycle, documentId: string): Promise<StructureReport> {
+	const rows = await lc.d
+		.select({
+			id: schema.sections.id,
+			parentId: schema.sections.parentId,
+			orderIndex: schema.sections.orderIndex,
+			address: schema.sections.address,
+			title: schema.sections.title,
+			hidden: schema.sections.hidden,
+			added: schema.sections.added,
+			apparatus: schema.sections.apparatus,
+		})
+		.from(schema.sections)
+		.where(eq(schema.sections.documentId, documentId))
+	const published = await publishedVersion(lc, documentId)
+	// Section id → hidden, as the published version froze it; empty when never published.
+	const before = new Map<string, boolean>()
+	if (published) {
+		const frozen = await lc.d
+			.select({ sectionId: schema.versionSections.sectionId, hidden: schema.versionSections.hidden })
+			.from(schema.versionSections)
+			.where(eq(schema.versionSections.versionId, published.versionId))
+		for (const f of frozen) before.set(f.sectionId, f.hidden)
+	}
+	const item = (r: (typeof rows)[number]): StructureItem => ({
+		sectionId: r.id,
+		address: r.address,
+		title: r.title,
+	})
+	const ordered = outlineOrder(rows).filter((r) => !r.apparatus)
+	return {
+		hidden: ordered.filter((r) => r.hidden && before.get(r.id) !== true).map(item),
+		added: ordered.filter((r) => r.added && !before.has(r.id)).map(item),
+	}
 }
 
 /** One section's decision by a reviewer (decision 95); the roll-up follows in the view. */
@@ -854,6 +923,9 @@ export interface DocumentState {
 	/** Sections changed since the published version, with their annotated bodies and
 	 *  review decisions — what review mode paints (decision 108, 112). */
 	changes: SectionChange[]
+	/** Sections removed and subheadings added since the published version: what a review
+	 *  request reports, as the template asks. */
+	structure: StructureReport
 	role: Role
 	central: boolean
 }
@@ -911,6 +983,7 @@ export async function documentState(
 			: null,
 		review: review ? { ...review, requestedAt: review.requestedAt.getTime() } : null,
 		changes,
+		structure: await structureChanges(lc, documentId),
 		role: role as Role,
 		central: isCentral,
 	}

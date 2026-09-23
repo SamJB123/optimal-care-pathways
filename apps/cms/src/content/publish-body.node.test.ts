@@ -49,12 +49,15 @@ describe('publishable bodies and first-publication diffs over the seeded templat
 			expect(failures).toEqual([])
 		})
 
-		it(`${template.key}: the developer instructions are apparatus, never a pathway's section`, () => {
+		it(`${template.key}: the developer instructions are the template's own part, never a pathway's section`, () => {
 			const mapped = mapTemplate({ model: readModel(template.key), template, orgId: 'org-test', id: deterministicId })
 			const instructions = mapped.sections.filter((s) => /(^|\/)instructions-for-developers(\/|$)/.test(s.address))
 			if (template.kind === 'principles') return
 			expect(instructions.length).toBeGreaterThan(0)
-			for (const s of instructions) expect(s.apparatus).toBe(true)
+			for (const s of instructions) {
+				expect(s.instructions).toBe(true)
+				expect(s.apparatus).toBe(false)
+			}
 		})
 	}
 })

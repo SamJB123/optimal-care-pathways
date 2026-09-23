@@ -61,6 +61,7 @@ import { defineTextAlignCommands, defineTextAlignKeymap } from '@prosekit/extens
 import { defineUnderlineCommands, defineUnderlineKeymap } from '@prosekit/extensions/underline'
 import { Fragment, Slice } from '@prosekit/pm/model'
 import { createToggleListCommand } from 'prosemirror-flat-list'
+import type { GuidanceMode } from '#/content/blocks.tsx'
 import type { DerivedView } from '#/content/derived.ts'
 import { BLOCK_NODE_NAMES, defineContentSchema } from '#/content/schema.ts'
 import { defineTemplateNodeViews } from './node-views.tsx'
@@ -134,10 +135,10 @@ function defineJoinedCitations() {
 /** Schema + behaviour. `defineTable()` also carries the table specs; ProseKit merges
  *  same-named specs, so the schema stays the one in content/schema.ts. `derived` is the
  *  page's derived view (citation numbers, timeframes) the node views read. */
-export function defineSectionSchema(derived: () => DerivedView) {
+export function defineSectionSchema(derived: () => DerivedView, guidance: GuidanceMode = 'inline') {
 	return union(
 		defineContentSchema(),
-		defineTemplateNodeViews(derived),
+		defineTemplateNodeViews(derived, guidance),
 		defineJoinedCitations(),
 		defineTextAlignCommands(ALIGNABLE),
 		defineTextAlignKeymap(ALIGNABLE),
@@ -186,12 +187,12 @@ export function createSectionExtension(
 	opts: Omit<
 		CollaborativeExtensionOptions<SectionSchemaExtension>,
 		'schema' | 'blockIdentityTypes'
-	> & { derived: () => DerivedView },
+	> & { derived: () => DerivedView; guidance: GuidanceMode },
 ) {
-	const { derived, ...rest } = opts
+	const { derived, guidance, ...rest } = opts
 	return createCollaborativeExtension({
 		...rest,
-		schema: defineSectionSchema(derived),
+		schema: defineSectionSchema(derived, guidance),
 		blockIdentityTypes: BLOCK_NODE_NAMES,
 	})
 }
