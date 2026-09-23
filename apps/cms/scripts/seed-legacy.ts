@@ -21,6 +21,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { getTableColumns, getTableName } from 'drizzle-orm'
 import { getTableConfig, type SQLiteTable } from 'drizzle-orm/sqlite-core'
+import { bodyHash } from '../src/content/diff.ts'
+import { publishableHash } from '../src/content/publish.ts'
 import { parseBody } from '../src/content/schema.ts'
 import * as schema from '../src/db/schema.ts'
 import { LEGACY_PATHWAYS, type LegacyFamily, type LegacyPathway } from '../src/legacy/catalogue.ts'
@@ -108,6 +110,29 @@ function insert(table: SQLiteTable, row: Record<string, unknown>): string[] {
 	return out
 }
 
+/** Every core section's body: what a pathway's shared section renders until the core
+ *  publishes, and so what its change hash starts from. */
+const coreBodies = new Map([...cores.values()].flatMap((c) => c.sections.map((s) => [s.id, s.bodyJson ?? null] as const)))
+
+/** The import with its change hashes: a draft section's (`publishableHash` of what it
+ *  would publish) and each published section's (`bodyHash` of the published body). */
+async function withHashes(result: LegacyImport): Promise<LegacyImport> {
+	const subject = result.document.subject
+	return {
+		...result,
+		sections: await Promise.all(
+			result.sections.map(async (s) => ({
+				...s,
+				draftHash: await publishableHash(
+					s.ownership === 'shared' && s.coreSectionId ? (coreBodies.get(s.coreSectionId) ?? null) : (s.bodyJson ?? null),
+					subject,
+				),
+			})),
+		),
+		versionSections: await Promise.all(result.versionSections.map(async (vs) => ({ ...vs, bodyHash: await bodyHash(vs.bodyJson ?? null) }))),
+	}
+}
+
 const statements: string[] = []
 /** The documents this run writes. */
 const written: string[] = []
@@ -145,7 +170,7 @@ for (const pathway of targets) {
 	const core = cores.get(pathway.audience)
 	if (!core) throw new Error(`no core mapping for ${pathway.audience}`)
 	const model = readModel('legacy/extracted', pathway.slug)
-	const result = mapLegacy({ model, pathway, core, id: deterministicId, orgId: `pending:${pathway.pathwaySlug}`, actorId: ACTOR })
+	const result = await withHashes(mapLegacy({ model, pathway, core, id: deterministicId, orgId: `pending:${pathway.pathwaySlug}`, actorId: ACTOR }))
 	emit(result)
 	const { ledger } = result
 	const by = (how: string) => ledger.placements.filter((p) => p.how === how).length

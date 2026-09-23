@@ -25,6 +25,8 @@ export interface DocumentRow {
 	title: string
 	subject: string
 	audience: Audience
+	/** The template's family colour: the colour its headings are printed in. */
+	accent: string | null
 }
 
 export interface SectionRow {

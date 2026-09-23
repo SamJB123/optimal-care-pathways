@@ -1,0 +1,50 @@
+@scope (.ocp-new-pathway) {
+	:scope {
+		display: grid;
+		gap: 1.1rem;
+		max-inline-size: 40rem;
+		padding: 1.25rem 1.25rem 1.5rem;
+	}
+	.ocp-new-kind {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+		gap: 0.6rem;
+		margin: 0;
+		padding: 0;
+		border: 0;
+	}
+	.ocp-new-kind legend {
+		margin-block-end: 0.4rem;
+		font-weight: 600;
+		font-size: var(--t-sm);
+	}
+	.ocp-new-kind label {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		column-gap: 0.5rem;
+		padding: 0.7rem 0.8rem;
+		border: 1px solid var(--hair-strong);
+		border-radius: 0.5rem;
+		cursor: pointer;
+	}
+	.ocp-new-kind label:has(:checked) {
+		border-color: var(--color-primary);
+		box-shadow: inset 0 0 0 1px var(--color-primary);
+	}
+	.ocp-new-kind label span {
+		grid-column: 2;
+		font-size: var(--t-xs);
+		color: var(--color-base-content-muted);
+	}
+	.ocp-new-error {
+		margin: 0;
+		color: var(--color-error);
+	}
+	.ocp-new-actions {
+		display: flex;
+		justify-content: end;
+		gap: 0.6rem;
+		padding-block-start: 0.5rem;
+		border-block-start: 1px solid var(--hair);
+	}
+}

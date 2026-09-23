@@ -1,54 +1,64 @@
-/* The complete UI system and its default theme come from @aicolab/ui-solid. This
-   file holds application composition only; component paint belongs to the package. */
+/* The complete UI system and its default theme come from @aicolab/ui-solid. This file
+   holds application composition only; component paint belongs to the package, and each
+   surface's own sheet sits beside it (components/, routes/). */
 @import "@aicolab/ui-solid/styles.css";
 @import "./theme.css";
 
+/* Page-to-page navigations cross-fade, and named surfaces (the spine glyph, a pathway's
+   name travelling from its atlas row into the masthead) move instead (decision U10). */
 @view-transition {
 	navigation: auto;
 }
 
+::view-transition-group(*) {
+	animation-duration: var(--dur-scene);
+	animation-timing-function: var(--ease-out);
+}
+
 html,
-body,
-#app {
+body {
 	min-height: 100%;
 }
 
 body {
 	margin: 0;
-}
-
-.ocp-app-header {
-	position: sticky;
-	top: 0;
-	z-index: 50;
-	border-bottom: 1px solid var(--color-border);
 	background: var(--color-base-100);
+	color: var(--color-base-content);
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
 }
 
-main {
-	min-height: calc(100svh - 4rem);
-	background: var(--color-base-200);
+:focus-visible {
+	outline: 2px solid var(--color-primary);
+	outline-offset: 2px;
 }
 
-.ocp-app-nav {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 1rem;
-	max-width: 64rem;
-	margin: 0 auto;
-	padding: 0.75rem 1rem;
-}
-
-.ocp-app-nav-end {
-	display: flex;
-	align-items: center;
-	gap: 0.65rem;
+::selection {
+	background: color-mix(in oklab, var(--color-primary) 22%, transparent);
 }
 
 .ocp-route-error,
 .ocp-loading {
-	max-width: 64rem;
+	max-width: 44rem;
 	margin-inline: auto;
-	padding: 2rem 1rem;
+	padding: 3rem 1rem;
+}
+
+/* Plain, quiet text in the application's voice. */
+.ocp-muted {
+	color: var(--color-base-content-muted);
+}
+
+/* A figure set in tabular numerals, for counts that line up. */
+.ocp-figure {
+	font-variant-numeric: tabular-nums;
+}
+
+.ocp-visually-hidden {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
 }

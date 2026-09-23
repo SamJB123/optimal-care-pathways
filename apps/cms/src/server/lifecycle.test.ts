@@ -263,10 +263,18 @@ describe('review of the core document', () => {
 			.from(schema.publishedSections)
 			.where(eq(schema.publishedSections.documentId, CORE_ID))
 		const owned = frozen.find((s) => s.sectionId === S_OWNED)
-		expect(owned?.bodyJson?.content?.some((n) => n.type === 'guidance')).toBe(false)
-		expect(plain(owned?.bodyJson ?? null)).toBe('Refer people with cancer promptly.')
-		expect(owned?.html).toContain('Refer people with cancer promptly.')
-		expect(owned?.markdown).toContain('Refer people with cancer promptly.')
+		// A core document IS the template: it publishes as the template prints, its drafting
+		// guidance included. A pathway's publish strips it (publish-body tests).
+		expect(owned?.bodyJson?.content?.some((n) => n.type === 'guidance')).toBe(true)
+		expect(plain(owned?.bodyJson ?? null)).toContain('Refer people with [cancer type] promptly.')
+		// The published side of the change hash is written with the body.
+		const hashed = await d
+			.select({ bodyHash: schema.versionSections.bodyHash })
+			.from(schema.versionSections)
+			.where(eq(schema.versionSections.sectionId, S_OWNED))
+		expect(hashed.every((h) => h.bodyHash?.length === 64)).toBe(true)
+		expect(owned?.html).toContain('Refer people with [cancer type] promptly.')
+		expect(owned?.markdown).toContain('Refer people with')
 		expect(owned?.lastChangedVersionNo).toBe(1)
 		const shared = frozen.find((s) => s.sectionId === S_SHARED)
 		expect(shared?.markdown).toContain('[^1]')

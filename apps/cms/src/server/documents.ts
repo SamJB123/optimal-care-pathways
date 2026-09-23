@@ -16,6 +16,7 @@ import {
 	pathwayMapView,
 	timeframeRows,
 } from '#/content/derived.ts'
+import { publishableHash } from '#/content/publish.ts'
 import type { JsonNode } from '#/content/schema.ts'
 import { inGroups, schema } from '#/db/index.ts'
 import { publishDocumentRows } from '#/lib/live-publish.ts'
@@ -25,6 +26,7 @@ import {
 	type SectionWireRow,
 	sectionWireRow,
 } from '#/lib/live-topics.ts'
+import { outlineOrder } from '#/lib/outline.ts'
 import { OCP_NAMESPACE, ROLE_LADDER, type Role, organisationNameOf, roles } from '#/lib/roles.ts'
 import { TEMPLATES } from '#/template/templates.ts'
 import * as access from './access.ts'
@@ -501,27 +503,6 @@ export const hubSnapshot = createServerFn({ method: 'GET' })
 		}
 	})
 
-/** Depth-first reading order over the section tree. */
-function outlineOrder<T extends { id: string; parentId: string | null; orderIndex: number }>(
-	rows: T[],
-): T[] {
-	const byParent = new Map<string | null, T[]>()
-	for (const row of rows) {
-		const list = byParent.get(row.parentId) ?? []
-		list.push(row)
-		byParent.set(row.parentId, list)
-	}
-	const out: T[] = []
-	const walk = (parentId: string | null) => {
-		for (const row of (byParent.get(parentId) ?? []).sort((a, b) => a.orderIndex - b.orderIndex)) {
-			out.push(row)
-			walk(row.id)
-		}
-	}
-	walk(null)
-	return out
-}
-
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 /**
@@ -537,6 +518,10 @@ export const createPathway = createServerFn({ method: 'POST' })
 			title: z.string().trim().min(1).max(200),
 			subject: z.string().trim().min(1).max(120),
 			slug: z.string().trim().regex(slugPattern).min(2).max(64),
+			accent: z
+				.string()
+				.regex(/^#[0-9a-fA-F]{6}$/)
+				.transform((v) => v.toLowerCase()),
 		}),
 	)
 	.handler(async ({ data, context }) => {
@@ -568,25 +553,46 @@ export const createPathway = createServerFn({ method: 'POST' })
 			await d.select().from(schema.sections).where(eq(schema.sections.documentId, core.id))
 		).filter((s) => !s.apparatus)
 		const sectionIds = new Map(coreSections.map((s) => [s.id, crypto.randomUUID()]))
-		const rows = coreSections.map((s) => {
-			const shared = s.pathwayOwnership === 'shared'
-			return {
-				id: sectionIds.get(s.id) ?? s.id,
-				documentId,
-				parentId: s.parentId ? (sectionIds.get(s.parentId) ?? null) : null,
-				address: s.address,
-				canonical: s.canonical,
-				printedNumber: s.printedNumber,
-				title: s.title,
-				headingLevel: s.headingLevel,
-				orderIndex: s.orderIndex,
-				stepNumber: s.stepNumber,
-				ownership: shared ? ('shared' as const) : ('owned' as const),
-				coreSectionId: shared ? s.id : null,
-				pointOfCare: s.pointOfCare,
-				bodyJson: shared ? null : (s.bodyJson ?? null),
-			}
-		})
+		// A shared section renders the core body as published (its draft while the core has
+		// never published): its change hash starts from that.
+		const corePublished = new Map(
+			(
+				await d
+					.select({
+						sectionId: schema.publishedSections.sectionId,
+						bodyJson: schema.publishedSections.bodyJson,
+					})
+					.from(schema.publishedSections)
+					.where(eq(schema.publishedSections.documentId, core.id))
+			).map((p) => [p.sectionId, p.bodyJson ?? null]),
+		)
+		const rows = await Promise.all(
+			coreSections.map(async (s) => {
+				const shared = s.pathwayOwnership === 'shared'
+				const renders = shared
+					? corePublished.has(s.id)
+						? (corePublished.get(s.id) ?? null)
+						: (s.bodyJson ?? null)
+					: (s.bodyJson ?? null)
+				return {
+					id: sectionIds.get(s.id) ?? s.id,
+					documentId,
+					parentId: s.parentId ? (sectionIds.get(s.parentId) ?? null) : null,
+					address: s.address,
+					canonical: s.canonical,
+					printedNumber: s.printedNumber,
+					title: s.title,
+					headingLevel: s.headingLevel,
+					orderIndex: s.orderIndex,
+					stepNumber: s.stepNumber,
+					ownership: shared ? ('shared' as const) : ('owned' as const),
+					coreSectionId: shared ? s.id : null,
+					pointOfCare: s.pointOfCare,
+					bodyJson: shared ? null : (s.bodyJson ?? null),
+					draftHash: await publishableHash(renders, data.subject),
+				}
+			}),
+		)
 		// One atomic D1 batch: the document, its first draft version, its sections — all or
 		// nothing. D1 binds at most 100 parameters per statement, so rows go in small groups.
 		const chunk = <T>(items: T[], size: number): T[][] => {
@@ -607,6 +613,7 @@ export const createPathway = createServerFn({ method: 'POST' })
 						title: data.title,
 						subject: data.subject,
 						audience: data.kind,
+						accent: data.accent,
 					})
 					.returning(),
 				d.insert(schema.versions).values({

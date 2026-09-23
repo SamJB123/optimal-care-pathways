@@ -1,0 +1,168 @@
+/* The public library: a title page and an index, set like the front of a publication. */
+@scope (.ocp-library) {
+	:scope {
+		max-inline-size: 72rem;
+		margin-inline: auto;
+		padding: 3rem clamp(1rem, 4vw, 2.5rem) 5rem;
+	}
+	.ocp-library-head {
+		max-inline-size: 44rem;
+		padding-block-end: 2rem;
+	}
+	.ocp-library-glyph {
+		inline-size: 3rem;
+		fill: var(--color-base-content);
+	}
+	.ocp-library-head h1 {
+		margin: 0.75rem 0 0.75rem;
+		font-size: clamp(2rem, 5vw, 3.2rem);
+		font-weight: 600;
+		letter-spacing: -0.02em;
+		line-height: 1.05;
+	}
+	.ocp-library-lede {
+		margin: 0;
+		font-size: var(--t-lg);
+		line-height: 1.55;
+		color: var(--color-base-content-muted);
+		text-wrap: pretty;
+	}
+	.ocp-library-foundation {
+		padding-block: 1.25rem;
+		border-block: 1px solid var(--hair-strong);
+		margin-block-end: 2rem;
+	}
+	.ocp-library-kicker {
+		margin: 0;
+		font-size: var(--t-2xs);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-base-content-muted);
+	}
+	.ocp-library-foundation h2 {
+		margin: 0.3rem 0 0.2rem;
+		font-size: var(--t-2xl);
+		font-weight: 600;
+	}
+	.ocp-library-foundation h2 a {
+		color: var(--family-ink, var(--color-base-content));
+		text-decoration: none;
+	}
+	.ocp-library-foundation p {
+		margin: 0;
+	}
+	.ocp-library-body {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 20rem;
+		gap: 3rem;
+	}
+	.ocp-library-search input {
+		inline-size: min(100%, 22rem);
+		font: inherit;
+		padding: 0.5rem 0.7rem;
+		border: 1px solid var(--hair-strong);
+		border-radius: 0.45rem;
+		background: var(--color-base-100);
+		color: var(--color-base-content);
+	}
+	.ocp-library-group h2,
+	.ocp-library-aside h2 {
+		margin: 2rem 0 0.5rem;
+		font-size: var(--t-xs);
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-base-content-muted);
+	}
+	.ocp-library-group ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		border-block-start: 1px solid var(--hair);
+	}
+	.ocp-library-group li {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-areas: "name links" "edition links";
+		column-gap: 1.5rem;
+		padding-block: 0.65rem;
+		border-block-end: 1px solid var(--hair);
+	}
+	.ocp-library-name {
+		grid-area: name;
+		color: var(--family-ink, var(--color-base-content));
+		font-weight: 600;
+		font-size: var(--t-lg);
+		text-decoration: none;
+	}
+	.ocp-library-name:hover {
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+	.ocp-library-edition {
+		grid-area: edition;
+		font-size: var(--t-xs);
+	}
+	.ocp-library-links {
+		grid-area: links;
+		align-self: center;
+		display: flex;
+		gap: 0.9rem;
+		font-size: var(--t-xs);
+	}
+	.ocp-library-links a,
+	.ocp-library-dev a {
+		color: var(--color-base-content-muted);
+		text-decoration: none;
+		border-block-end: 1px solid var(--hair-strong);
+	}
+	.ocp-library-links a:hover,
+	.ocp-library-dev a:hover {
+		color: var(--color-base-content);
+		border-block-end-color: currentColor;
+	}
+	.ocp-library-recent {
+		display: grid;
+		gap: 0.9rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.ocp-library-recent li {
+		display: grid;
+		gap: 0.1rem;
+		font-size: var(--t-sm);
+	}
+	.ocp-library-recent a {
+		color: var(--family-ink, var(--color-base-content));
+		font-weight: 600;
+		text-decoration: none;
+	}
+	.ocp-library-note {
+		font-size: var(--t-xs);
+		color: var(--color-base-content-muted);
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+	.ocp-library-dev p {
+		margin: 0;
+		font-size: var(--t-sm);
+		color: var(--color-base-content-muted);
+		line-height: 1.5;
+	}
+	@media (width < 56rem) {
+		.ocp-library-body {
+			grid-template-columns: 1fr;
+			gap: 1rem;
+		}
+	}
+	@media (width < 34rem) {
+		.ocp-library-group li {
+			grid-template-columns: 1fr;
+			grid-template-areas: "name" "edition" "links";
+			row-gap: 0.25rem;
+		}
+	}
+}

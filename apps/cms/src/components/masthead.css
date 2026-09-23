@@ -1,0 +1,143 @@
+/* The masthead: one line on the paper, a hairline under it. It sticks, and every sticky
+   surface below offsets by --ocp-mast. */
+@scope (.ocp-mast) {
+	:scope {
+		position: sticky;
+		inset-block-start: 0;
+		z-index: 50;
+		display: flex;
+		align-items: center;
+		gap: 1.1rem;
+		block-size: var(--ocp-mast);
+		padding-inline: 1rem;
+		background: color-mix(in oklab, var(--color-base-100) 92%, transparent);
+		backdrop-filter: blur(10px) saturate(1.1);
+		border-block-end: 1px solid var(--hair);
+		font-size: var(--t-sm);
+	}
+
+	.ocp-mast-mark {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.55rem;
+		color: var(--color-base-content);
+		text-decoration: none;
+		white-space: nowrap;
+		flex: none;
+	}
+	.ocp-mast-word {
+		font-weight: 600;
+		letter-spacing: 0.01em;
+	}
+	.ocp-spine-glyph {
+		inline-size: 1.45rem;
+		block-size: auto;
+		fill: currentColor;
+		view-transition-name: ocp-spine-glyph;
+	}
+
+	.ocp-mast-crumbs {
+		min-inline-size: 0;
+		flex: 1 1 auto;
+	}
+	.ocp-mast-crumbs ol {
+		display: flex;
+		align-items: baseline;
+		gap: 0.5rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		white-space: nowrap;
+		overflow: hidden;
+	}
+	.ocp-mast-crumbs li {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 0.5rem;
+		min-inline-size: 0;
+		color: var(--color-base-content-muted);
+	}
+	.ocp-mast-crumbs li + li::before {
+		content: "/";
+		color: var(--hair-strong);
+	}
+	.ocp-mast-crumbs li[data-family] {
+		color: var(--family-ink);
+		font-weight: 600;
+	}
+	.ocp-mast-crumbs li[data-last] {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.ocp-mast-crumbs li[data-last] > * {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.ocp-mast-crumbs a {
+		color: inherit;
+		text-decoration: none;
+	}
+	.ocp-mast-crumbs a:hover {
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+
+	.ocp-mast-end {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-inline-start: auto;
+		flex: none;
+	}
+	.ocp-mast-link {
+		color: var(--color-base-content);
+		text-decoration: none;
+		white-space: nowrap;
+		border-block-end: 1px solid var(--hair-strong);
+		padding-block: 0.1rem;
+	}
+	.ocp-mast-link:hover {
+		border-block-end-color: currentColor;
+	}
+	.ocp-mast-presence {
+		display: flex;
+		align-items: center;
+	}
+
+	.ocp-mast-theme {
+		display: grid;
+	}
+	.ocp-mast-theme [aria-checked="true"]::after {
+		content: "✓";
+		margin-inline-start: auto;
+		padding-inline-start: 1rem;
+	}
+
+	/* Narrow: the wordmark keeps its glyph, the crumbs keep their last two. */
+	@media (width < 48rem) {
+		:scope {
+			gap: 0.7rem;
+			padding-inline: 0.75rem;
+		}
+		.ocp-mast-word {
+			display: none;
+		}
+		.ocp-mast-crumbs li:not(:nth-last-child(-n + 2)) {
+			display: none;
+		}
+		.ocp-mast-link:not(:first-child) {
+			display: none;
+		}
+	}
+	@media (width < 30rem) {
+		.ocp-mast-link {
+			display: none;
+		}
+		.ocp-mast-crumbs li:not(:last-child) {
+			display: none;
+		}
+		.ocp-mast-crumbs li + li::before {
+			content: none;
+		}
+	}
+}

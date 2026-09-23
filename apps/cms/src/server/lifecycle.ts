@@ -22,11 +22,17 @@ import { and, desc, eq, inArray } from 'drizzle-orm'
 import { type AnnotatedBody, annotateChanges, bodyHash } from '#/content/diff.ts'
 import { citationNumbers, type DerivedView, openItemsIn, timeframeRows } from '#/content/derived.ts'
 import { bodyToMarkdown } from '#/content/markdown.ts'
-import { blockingPlaceholders, publishBody } from '#/content/publish.ts'
+import {
+	blockingPlaceholders,
+	publishableHash,
+	publishAsFor,
+	publishBody,
+} from '#/content/publish.ts'
 import type { JsonNode } from '#/content/schema.ts'
 import type { Db } from '#/db/index.ts'
 import { inGroups, schema } from '#/db/index.ts'
 import { publishDocumentRows, publishSectionRows } from '#/lib/live-publish.ts'
+import { outlineOrder } from '#/lib/outline.ts'
 import { OCP_NAMESPACE, ROLE_LADDER, type Role } from '#/lib/roles.ts'
 import { cacheTagFor, PUBLISHED_CACHE_TAG } from '#/api/published.ts'
 import { documentRoomName } from '#/rooms/document-room.ts'
@@ -252,32 +258,11 @@ export async function resolveSections(
 		return {
 			row,
 			body,
-			publishable: publishBody(body, document.subject),
+			publishable: publishBody(body, document.subject, publishAsFor(document.kind)),
 			coreSource:
 				row.ownership === 'shared' && row.coreSectionId ? (shared?.source ?? 'draft') : null,
 		}
 	})
-}
-
-/** Depth-first reading order over the section tree. */
-export function outlineOrder<T extends { id: string; parentId: string | null; orderIndex: number }>(
-	rows: T[],
-): T[] {
-	const byParent = new Map<string | null, T[]>()
-	for (const row of rows) {
-		const list = byParent.get(row.parentId) ?? []
-		list.push(row)
-		byParent.set(row.parentId, list)
-	}
-	const out: T[] = []
-	const walk = (parentId: string | null) => {
-		for (const row of (byParent.get(parentId) ?? []).sort((a, b) => a.orderIndex - b.orderIndex)) {
-			out.push(row)
-			walk(row.id)
-		}
-	}
-	walk(null)
-	return out
 }
 
 const live = (s: ResolvedSection): boolean => !s.row.hidden && !s.row.apparatus
@@ -675,28 +660,31 @@ export async function publish(
 	const coreVersionId = document.kind === 'pathway' ? await coreVersionFor(lc, resolved) : null
 	const addressOf = new Map(resolved.map((s) => [s.row.id, s.row.address]))
 	const now = new Date()
-	const rows = publishedResolved.map((s) => {
-		const unchanged =
-			sameBody(s.body, previous.get(s.row.id) ?? null) && previousChanged.has(s.row.id)
-		return {
-			versionId: draft.id,
-			sectionId: s.row.id,
-			parentAddress: s.row.parentId ? (addressOf.get(s.row.parentId) ?? null) : null,
-			address: s.row.address,
-			title: s.row.title,
-			printedNumber: s.row.printedNumber,
-			orderIndex: s.row.orderIndex,
-			ownership: s.row.ownership,
-			hidden: s.row.hidden || s.row.apparatus,
-			pointOfCare: s.row.pointOfCare,
-			bodyJson: s.body,
-			html: s.body ? lc.renderHtml(s.body, derived) : null,
-			markdown: s.body ? bodyToMarkdown(s.body, derived) : null,
-			lastChangedVersionNo: unchanged
-				? (previousChanged.get(s.row.id) ?? draft.versionNo)
-				: draft.versionNo,
-		}
-	})
+	const rows = await Promise.all(
+		publishedResolved.map(async (s) => {
+			const unchanged =
+				sameBody(s.body, previous.get(s.row.id) ?? null) && previousChanged.has(s.row.id)
+			return {
+				versionId: draft.id,
+				sectionId: s.row.id,
+				parentAddress: s.row.parentId ? (addressOf.get(s.row.parentId) ?? null) : null,
+				address: s.row.address,
+				title: s.row.title,
+				printedNumber: s.row.printedNumber,
+				orderIndex: s.row.orderIndex,
+				ownership: s.row.ownership,
+				hidden: s.row.hidden || s.row.apparatus,
+				pointOfCare: s.row.pointOfCare,
+				bodyJson: s.body,
+				bodyHash: await bodyHash(s.body),
+				html: s.body ? lc.renderHtml(s.body, derived) : null,
+				markdown: s.body ? bodyToMarkdown(s.body, derived) : null,
+				lastChangedVersionNo: unchanged
+					? (previousChanged.get(s.row.id) ?? draft.versionNo)
+					: draft.versionNo,
+			}
+		}),
+	)
 	const nextDraftId = crypto.randomUUID()
 	await lc.d.batch([
 		lc.d
@@ -732,6 +720,13 @@ export async function publish(
 		versionNo: draft.versionNo,
 		label: input.label,
 	})
+	// A core document's published bodies are what the pathways' shared sections render:
+	// their draft hashes move with it.
+	if (document.kind === 'core')
+		await refreshSharedHashes(
+			lc,
+			new Map(rows.map((r) => [r.sectionId, r.bodyJson])),
+		)
 	void publishDocumentRows([document])
 	if (lc.purge) {
 		const tags = [
@@ -770,6 +765,60 @@ async function coreVersionFor(lc: Lifecycle, resolved: ResolvedSection[]): Promi
 	)[0]
 	if (!core) return null
 	return (await publishedVersion(lc, core.documentId))?.versionId ?? null
+}
+
+/** After a core document publishes: every pathway section sharing one of its sections
+ *  re-hashes against the body just published (`coreBodies`: core section id → body). */
+async function refreshSharedHashes(
+	lc: Lifecycle,
+	coreBodies: Map<string, JsonNode | null>,
+): Promise<void> {
+	const ids = [...coreBodies.keys()]
+	const shared = await inGroups(ids, (group) =>
+		lc.d
+			.select({
+				id: schema.sections.id,
+				coreSectionId: schema.sections.coreSectionId,
+				draftHash: schema.sections.draftHash,
+				subject: schema.documents.subject,
+			})
+			.from(schema.sections)
+			.innerJoin(schema.documents, eq(schema.documents.id, schema.sections.documentId))
+			.where(and(eq(schema.sections.ownership, 'shared'), inArray(schema.sections.coreSectionId, group))),
+	)
+	const updates = []
+	for (const s of shared) {
+		if (!s.coreSectionId) continue
+		const hash = await publishableHash(coreBodies.get(s.coreSectionId) ?? null, s.subject)
+		if (hash !== s.draftHash)
+			updates.push(
+				lc.d.update(schema.sections).set({ draftHash: hash }).where(eq(schema.sections.id, s.id)),
+			)
+	}
+	for (const group of chunk(updates, 50)) {
+		const [first, ...rest] = group
+		if (first) await lc.d.batch([first, ...rest])
+	}
+}
+
+/** The body a shared section renders: its core section's as published, else its draft. */
+async function coreBodyOf(lc: Lifecycle, coreSectionId: string): Promise<JsonNode | null> {
+	const published = (
+		await lc.d
+			.select({ bodyJson: schema.publishedSections.bodyJson })
+			.from(schema.publishedSections)
+			.where(eq(schema.publishedSections.sectionId, coreSectionId))
+			.limit(1)
+	)[0]
+	if (published) return published.bodyJson ?? null
+	const draft = (
+		await lc.d
+			.select({ bodyJson: schema.sections.bodyJson })
+			.from(schema.sections)
+			.where(eq(schema.sections.id, coreSectionId))
+			.limit(1)
+	)[0]
+	return draft?.bodyJson ?? null
 }
 
 // ---------------------------------------------------------------------------
@@ -1035,12 +1084,13 @@ export async function divergeSection(lc: Lifecycle, input: { sectionId: string; 
 	await requireRole(lc, input.userId, document, 'member', 'diverge a section')
 	if (row.ownership !== 'shared' || !row.coreSectionId)
 		refuse('This section is already the pathway’s own.')
-	const resolved = (await resolveSections(lc, document.id)).find((s) => s.row.id === row.id)
+	const body = row.coreSectionId ? await coreBodyOf(lc, row.coreSectionId) : null
 	const updated = await lc.d
 		.update(schema.sections)
 		.set({
 			ownership: 'owned',
-			bodyJson: resolved?.body ?? null,
+			bodyJson: body,
+			draftHash: await publishableHash(body, document.subject, publishAsFor(document.kind)),
 			updatedAt: new Date(),
 			updatedBy: input.userId,
 		})
@@ -1067,11 +1117,19 @@ export async function revertSection(lc: Lifecycle, input: { sectionId: string; u
 	const row = section as SectionRow
 	const document = await documentOf(lc, row.documentId)
 	await requireRole(lc, input.userId, document, 'member', 'revert a section')
-	if (row.ownership !== 'owned' || !row.coreSectionId)
-		refuse('This section has no shared version to return to.')
+	const coreSectionId = row.coreSectionId
+	if (row.ownership !== 'owned' || !coreSectionId)
+		return refuse('This section has no shared version to return to.')
+	const core = await coreBodyOf(lc, coreSectionId)
 	const updated = await lc.d
 		.update(schema.sections)
-		.set({ ownership: 'shared', bodyJson: null, updatedAt: new Date(), updatedBy: input.userId })
+		.set({
+			ownership: 'shared',
+			bodyJson: null,
+			draftHash: await publishableHash(core, document.subject),
+			updatedAt: new Date(),
+			updatedBy: input.userId,
+		})
 		.where(eq(schema.sections.id, row.id))
 		.returning()
 	await record(lc, document.id, 'section.reverted', input.userId, {

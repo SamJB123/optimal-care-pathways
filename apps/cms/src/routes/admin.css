@@ -1,0 +1,58 @@
+@scope (.ocp-admin) {
+	:scope {
+		max-inline-size: 60rem;
+		margin-inline: auto;
+		padding: 2rem clamp(1rem, 3vw, 2rem) 5rem;
+	}
+	h1 {
+		margin: 0 0 1.5rem;
+		font-size: var(--t-3xl);
+		font-weight: 600;
+		letter-spacing: -0.015em;
+	}
+	.ocp-admin-section {
+		padding-block: 1.25rem 1.75rem;
+		border-block-start: 1px solid var(--hair-strong);
+	}
+	.ocp-admin-section > h2 {
+		margin: 0 0 0.9rem;
+		font-size: var(--t-xs);
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-base-content-muted);
+	}
+	.ocp-admin-door {
+		display: grid;
+		justify-items: start;
+		gap: 0.75rem;
+		max-inline-size: 42rem;
+		padding-block: 0.5rem 1.25rem;
+	}
+	.ocp-admin-door p {
+		margin: 0;
+		line-height: 1.55;
+	}
+	.ocp-admin-pending {
+		columns: 2 14rem;
+		margin: 0;
+		padding-inline-start: 1.1rem;
+		font-size: var(--t-sm);
+		color: var(--color-base-content-muted);
+	}
+	.ocp-admin-report {
+		margin: 0 0 1.25rem;
+		padding: 0.7rem 0.9rem;
+		border: 1px solid var(--hair-strong);
+		border-radius: 0.4rem;
+	}
+	.ocp-admin-report::before {
+		content: "Done. ";
+		font-weight: 600;
+		color: var(--color-success);
+	}
+	.ocp-admin-report[data-tone="error"]::before {
+		content: "Not done. ";
+		color: var(--color-error);
+	}
+}

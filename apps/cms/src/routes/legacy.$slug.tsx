@@ -10,6 +10,7 @@ import { createFileRoute } from '@tanstack/solid-router'
 import { For, Show } from 'solid-js'
 import { citationNumbers, type DerivedView } from '#/content/derived.ts'
 import { RenderedBody } from '#/content/render.tsx'
+import { Masthead } from '#/components/Masthead.tsx'
 import { legacyDocumentBySlug } from '#/server/legacy-fns.ts'
 import './print.css'
 
@@ -30,6 +31,8 @@ const when = (iso: string | null) =>
 function LegacyPage() {
 	const data = Route.useLoaderData()
 	return (
+		<>
+		<Masthead crumbs={[{ label: 'Published library', href: '/library' }, { label: data().legacy?.document.title ?? 'Not found' }]} />
 		<Show
 			when={data().legacy}
 			fallback={
@@ -88,5 +91,6 @@ function LegacyPage() {
 				)
 			}}
 		</Show>
+		</>
 	)
 }

@@ -1642,6 +1642,24 @@ const slugify = (value: string): string =>
 		.replace(/^-+|-+$/g, '')
 		.slice(0, 64) || 'section'
 
+/** The template's family colour: the commonest non-white colour its top two heading levels
+ *  are printed in (every 2026 template sets them in Cancer Australia's navy). */
+function headingColourOf(model: ExtractedDocument): string | null {
+	const counts = new Map<string, number>()
+	const walk = (sections: ExtractedDocument['sections']) => {
+		for (const s of sections) {
+			if (s.level <= 2)
+				for (const run of s.heading) {
+					const colour = run.colour.toLowerCase()
+					if (run.text.trim() && colour !== '#ffffff') counts.set(colour, (counts.get(colour) ?? 0) + 1)
+				}
+			walk(s.children)
+		}
+	}
+	walk(model.sections)
+	return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+}
+
 const APPARATUS = /^(contents|cancer-specific-template|population-based-template|core-content)$/
 /** The template's instructions to its developers, wherever the title page puts them
  *  ("optimal-care-pathway-for-people-with/instructions-for-developers/…"): scaffolding for
@@ -1849,6 +1867,7 @@ export function mapTemplate(input: MapInput): SeedResult {
 		title: model.title,
 		subject: template.coreSubject,
 		audience: template.kind,
+		accent: headingColourOf(model),
 	}
 
 	const sectionId = (p: Placed) => id('section', `${template.templateId}:${p.address}`)

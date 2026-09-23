@@ -10,6 +10,7 @@ import { Eyebrow, Notice } from '@aicolab/ui-solid'
 import { createFileRoute } from '@tanstack/solid-router'
 import { For, Show } from 'solid-js'
 import { publishedDocumentFull } from '#/api/server-fns.ts'
+import { Masthead } from '#/components/Masthead.tsx'
 import { type DerivedView, stepNumberOfAddress, timeframeRows } from '#/content/derived.ts'
 import { ReferenceList } from '#/content/references.tsx'
 import { RenderedBody } from '#/content/render.tsx'
@@ -46,6 +47,8 @@ function depthOf(address: string, parentOf: Map<string, string | null>): number 
 function PublishedPage() {
 	const data = Route.useLoaderData()
 	return (
+		<>
+		<Masthead crumbs={[{ label: 'Published library', href: '/library' }, { label: data().document?.document.title ?? 'Not found' }]} />
 		<Show
 			when={data().document}
 			fallback={
@@ -109,5 +112,6 @@ function PublishedPage() {
 				)
 			}}
 		</Show>
+		</>
 	)
 }

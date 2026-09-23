@@ -18,7 +18,7 @@ import { schema } from '#/db/index.ts'
 import { OCP_NAMESPACE, organisationNameOf } from '#/lib/roles.ts'
 import { documentRoleOf, isCentralMember } from './access.ts'
 import { envOf, requireUser } from './env.ts'
-import { outlineOrder } from './lifecycle.ts'
+import { outlineOrder } from '#/lib/outline.ts'
 
 export interface LegacyOrigin {
 	id: string

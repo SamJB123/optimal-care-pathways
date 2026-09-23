@@ -1,12 +1,29 @@
-@scope (.ocp-home) {
-	:scope {
-		padding-block-end: 3rem;
-	}
+.ocp-home-notice {
+	margin: 0;
+	padding: 0.6rem clamp(1rem, 3vw, 2.25rem);
+	border-block-end: 1px solid var(--hair);
+	background: color-mix(in oklab, var(--color-warning) 9%, var(--color-base-100));
+	font-size: var(--t-sm);
+}
 
-	.ocp-home-session {
-		width: fit-content;
-		max-width: 42rem;
-		margin: 0 auto 2rem;
-		text-align: center;
-	}
+.ocp-home-notice a {
+	color: inherit;
+	font-weight: 600;
+}
+
+.ocp-home-empty {
+	max-inline-size: 38rem;
+	margin-inline: auto;
+	padding: 4rem 1rem;
+}
+
+.ocp-home-empty h1 {
+	margin: 0 0 0.75rem;
+	font-size: var(--t-2xl);
+	font-weight: 600;
+}
+
+.ocp-home-empty p {
+	color: var(--color-base-content-muted);
+	line-height: 1.55;
 }

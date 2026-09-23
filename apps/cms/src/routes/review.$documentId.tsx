@@ -13,6 +13,7 @@ import { CitationInline, DerivedContext } from '#/content/blocks.tsx'
 import { RenderedBody } from '#/content/render.tsx'
 import { PdfPages, pageRange } from '#/editors/PdfPages.tsx'
 import { numberLabel } from '#/lib/labels.ts'
+import { Masthead } from '#/components/Masthead.tsx'
 import { reviewSnapshot } from '#/server/documents.ts'
 import './review.css'
 
@@ -33,6 +34,8 @@ function ReviewPage() {
 	const pdfUrl = () => `/template-sources/${data().sourceFile}`
 	const rows = () => data().sections.filter((s) => s.address !== 'contents')
 	return (
+		<>
+		<Masthead crumbs={[{ label: 'Pathways', href: '/' }, { label: data().document.title, href: `/d/${data().document.id}` }, { label: 'Against the template' }]} central />
 		<div class="ocp-review">
 			<header class="ocp-review-header">
 				<h1>{data().document.title}</h1>
@@ -88,5 +91,6 @@ function ReviewPage() {
 				</For>
 			</Show>
 		</div>
+		</>
 	)
 }

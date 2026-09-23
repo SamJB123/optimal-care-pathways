@@ -1,0 +1,90 @@
+/* Section ticks. The run fills its box like a line of type: marks share the width, never
+   wider than a stroke, so a long step reads dense and a short one sparse. */
+@scope (.ocp-ticks) {
+	:scope {
+		--tick-h: 1.1rem;
+		display: flex;
+		align-items: flex-end;
+		gap: 1px;
+		block-size: var(--tick-h);
+		min-inline-size: 0;
+	}
+	i {
+		flex: 1 1 0;
+		min-inline-size: 1px;
+		max-inline-size: 3px;
+		block-size: 100%;
+		border-radius: 0.5px;
+		background: var(--family, var(--color-base-content));
+		transition: background var(--dur-quick) var(--ease-out), block-size var(--dur-move) var(--ease-spring);
+	}
+	/* As published: a hairline, low. */
+	i[data-s="published"] {
+		max-inline-size: 1px;
+		block-size: 55%;
+		background: var(--hair-strong);
+	}
+	/* Waiting in review: the notch — the mark is cut at its top. */
+	i[data-s="review"] {
+		clip-path: polygon(0 34%, 100% 34%, 100% 100%, 0 100%);
+	}
+	/* Decided: the reviewer's rule beneath the mark. */
+	i[data-s="approved"],
+	i[data-s="changes"] {
+		clip-path: polygon(0 34%, 100% 34%, 100% 100%, 0 100%);
+		box-shadow: 0 2px 0 var(--color-success);
+	}
+	i[data-s="changes"] {
+		box-shadow: 0 2px 0 var(--color-error);
+	}
+}
+
+@scope (.ocp-tick-runs) {
+	:scope {
+		display: flex;
+		align-items: flex-end;
+		gap: 1px;
+		block-size: 1.1rem;
+		min-inline-size: 0;
+	}
+	i {
+		flex-basis: 0;
+		min-inline-size: 1px;
+		block-size: 100%;
+		background: var(--family, var(--color-base-content));
+	}
+	i[data-s="published"] {
+		block-size: 30%;
+		background: var(--hair-strong);
+	}
+	i[data-s="review"],
+	i[data-s="approved"],
+	i[data-s="changes"] {
+		clip-path: polygon(0 34%, 100% 34%, 100% 100%, 0 100%);
+	}
+}
+
+@scope (.ocp-tick-key) {
+	:scope {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem 1.1rem;
+		margin: 0;
+		font-size: var(--t-xs);
+		color: var(--color-base-content-muted);
+	}
+	div {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	dt {
+		inline-size: 0.9rem;
+	}
+	dt .ocp-ticks {
+		--tick-h: 0.8rem;
+	}
+	dd {
+		margin: 0;
+	}
+}

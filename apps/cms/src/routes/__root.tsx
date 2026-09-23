@@ -8,12 +8,13 @@ import {
 	type AuthSession,
 	resolveAuthSession,
 } from '@aicolab/better-auth/cloudflare/shared/auth-session'
-import { ButtonLink, Eyebrow, Notice, Panel, ThemeToggle } from '@aicolab/ui-solid'
+import { Notice, Panel, themeBootScript, ToastHost } from '@aicolab/ui-solid'
 import { Loading } from '@solidjs/web'
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/solid-router'
 import { createIsomorphicFn } from '@tanstack/solid-start'
 import { getRequest } from '@tanstack/solid-start/server'
 import type { ParentProps } from 'solid-js'
+import { paletteStyle } from '#/lib/palette.ts'
 import { startAuthDrivenSocket } from '#/ws.ts'
 // biome-ignore lint/correctness/noUnresolvedImports: Vite's ?url import has a default export at build time
 import appCss from '../styles.css?url'
@@ -42,44 +43,36 @@ export const Route = createRootRoute({
 		const error = props.error
 		const message = error instanceof Error ? error.message : String(error)
 		return (
-			<div class="ocp-route-error">
-				<Panel title="Something went wrong" colorBase="error" variant="soft">
+			<main class="ocp-route-error">
+				<Panel title="This page could not be shown" colorBase="error" variant="soft">
 					<Notice colorBase="error" variant="text" role="alert">
 						{message}
 					</Notice>
+					<p>
+						<a href="/">Back to the pathways</a>
+					</p>
 				</Panel>
-			</div>
+			</main>
 		)
 	},
 })
 
 function RootDocument(props: ParentProps) {
 	return (
-		<html lang="en-AU" class="ui-theme">
+		<html lang="en-AU" class="ui-theme" style={paletteStyle()}>
 			<head>
 				<meta charset="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				<meta name="color-scheme" content="light dark" />
 				<title>Optimal Care Pathways</title>
+				{/* The reader's ground (paper, night) before first paint: no flash. */}
+				<script innerHTML={themeBootScript()} />
 				<link rel="stylesheet" href={appCss} />
 				<HeadContent />
 			</head>
 			<body>
-				<header class="ocp-app-header">
-					<nav class="ocp-app-nav" aria-label="Primary navigation">
-						<Eyebrow>Optimal Care Pathways</Eyebrow>
-						<div class="ocp-app-nav-end">
-							<ButtonLink href="/" variant="text">
-								Home
-							</ButtonLink>
-							<ThemeToggle />
-						</div>
-					</nav>
-				</header>
-				<main>
-					<Loading fallback={<Notice class="ocp-loading">Loading…</Notice>}>
-						{props.children}
-					</Loading>
-				</main>
+				<Loading fallback={<p class="ocp-loading">Loading…</p>}>{props.children}</Loading>
+				<ToastHost />
 				<Scripts />
 			</body>
 		</html>

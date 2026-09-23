@@ -1,8 +1,11 @@
 /**
- * The publishable form of a body (decisions 29, 99): drafting guidance stripped, the
- * subject placeholders filled from the document, everything else left as written. Pure
+ * The publishable form of a body (decisions 29, 99). A PATHWAY publishes only its own
+ * words: drafting guidance and the instructions written inside core sentences ("<for
+ * prostate cancer OCP only add: …>") are stripped, the subject placeholders filled from
+ * the document, everything else left as written. A CORE document is the template itself
+ * and publishes as the template prints, its guidance and instructions included. Pure
  * over the JSON, shared by the lifecycle (what "changed", what a review pins, what is
- * frozen at publish) and the gate (which placeholders block).
+ * frozen at publish), the gate (which placeholders block) and the change hashes.
  *
  * Stripping guidance can empty a container. What happens then follows the schema: a
  * container that may not be empty and exists only to hold content (a box, a variant, a
@@ -13,7 +16,14 @@
 
 import { Fragment } from '@prosekit/pm/model'
 import { walkNodes } from './derived.ts'
+import { bodyHash } from './diff.ts'
 import { contentSchema, emptyBody, type JsonNode } from './schema.ts'
+
+/** Who a body is published for: a pathway's readers, or the template's own page. */
+export type PublishAs = 'pathway' | 'template'
+
+export const publishAsFor = (kind: 'core' | 'pathway'): PublishAs =>
+	kind === 'core' ? 'template' : 'pathway'
 
 /** Subject placeholders fill from the document at render; every other placeholder left
  *  in an owned section blocks publishing. */
@@ -60,9 +70,42 @@ const DROPPED_WHEN_EMPTY = new Set([
 	'blockquote',
 ])
 
-/** The body as published: guidance stripped, subject placeholders filled. */
-export function publishBody(body: JsonNode | null, subject: string): JsonNode | null {
+/** Text written inside a core sentence as an instruction to the author. */
+const isInstruction = (node: JsonNode): boolean =>
+	node.type === 'text' && (node.marks?.some((m) => m.type === 'instruction') ?? false)
+
+/** An instruction's text leaves the sentence it sat in: the space it leaves behind goes
+ *  with it when the sentence closes or continues with punctuation after it. */
+function withoutInstructions(content: JsonNode[]): JsonNode[] {
+	const out: JsonNode[] = []
+	for (let i = 0; i < content.length; i++) {
+		const node = content[i]
+		if (!node) continue
+		if (!isInstruction(node)) {
+			out.push(node)
+			continue
+		}
+		const before = out.at(-1)
+		const after = content.slice(i + 1).find((n) => !isInstruction(n))
+		const closes = after === undefined || (after.type === 'text' && /^[\s.,;:)]/.test(after.text ?? ''))
+		if (before?.type === 'text' && closes) {
+			const text = (before.text ?? '').replace(/\s+$/, '')
+			out.pop()
+			if (text.length > 0) out.push({ ...before, text })
+		}
+	}
+	return out
+}
+
+/** The body as published: for a pathway, guidance and instructions stripped and the
+ *  subject placeholders filled; for the template's own page, as written. */
+export function publishBody(
+	body: JsonNode | null,
+	subject: string,
+	as: PublishAs = 'pathway',
+): JsonNode | null {
 	if (!body) return null
+	if (as === 'template') return body
 	const fill = (node: JsonNode): JsonNode[] => {
 		if (node.type === 'guidance') return []
 		if (node.type === 'text') {
@@ -81,7 +124,7 @@ export function publishBody(body: JsonNode | null, subject: string): JsonNode | 
 			return [node]
 		}
 		if (!node.content) return [node]
-		const content = node.content.flatMap(fill)
+		const content = withoutInstructions(node.content).flatMap(fill)
 		const type = contentSchema.nodes[node.type]
 		if (!type) return [{ ...node, content }]
 		const fragment = Fragment.fromJSON(contentSchema, content)
@@ -95,4 +138,14 @@ export function publishBody(body: JsonNode | null, subject: string): JsonNode | 
 	const [doc] = fill(body)
 	if (!doc) return null
 	return (doc.content?.length ?? 0) === 0 ? emptyBody() : doc
+}
+
+/** The hash of what a body would publish (`sections.draft_hash`,
+ *  `version_sections.body_hash`): equal hashes mean nothing to publish. */
+export function publishableHash(
+	body: JsonNode | null,
+	subject: string,
+	as: PublishAs = 'pathway',
+): Promise<string> {
+	return bodyHash(publishBody(body, subject, as))
 }

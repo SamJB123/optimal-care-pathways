@@ -18,6 +18,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { publishableHash } from '../src/content/publish.ts'
 import { parseBody } from '../src/content/schema.ts'
 import { mapTemplate } from '../src/template/extract/map-to-content.ts'
 import type { ExtractedDocument } from '../src/template/extract/model.ts'
@@ -46,7 +47,7 @@ const statements: string[] = []
 /** Every seeded section row is stamped with the seed's own time: a document room that
  *  holds an older live body for the section sees the row moved and re-hydrates from it. */
 const seededAt = Date.now()
-const emit = (result: SeedResult) => {
+const emit = async (result: SeedResult) => {
 	const { template: t, document: d } = result
 	statements.push(
 		insert('templates', {
@@ -66,6 +67,7 @@ const emit = (result: SeedResult) => {
 			title: d.title,
 			subject: d.subject,
 			audience: d.audience,
+			accent: d.accent,
 		}),
 	)
 	for (const s of result.sections) {
@@ -89,6 +91,7 @@ const emit = (result: SeedResult) => {
 				source_pages: s.sourcePages,
 				icon: s.icon,
 				title_citations: s.titleCitations.length > 0 ? JSON.stringify(s.titleCitations) : null,
+				draft_hash: await publishableHash(s.bodyJson, d.subject, 'template'),
 				updated_at: seededAt,
 			}),
 		)
@@ -124,7 +127,7 @@ for (const template of TEMPLATES) {
 	const model = read(template.key)
 	const result = mapTemplate({ model, template, orgId, id: deterministicId })
 	results.push(result)
-	emit(result)
+	await emit(result)
 	const { stats } = result
 	console.log(
 		`${template.key}: ${result.sections.length} sections, ${result.references.length} references; ` +

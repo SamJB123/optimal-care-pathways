@@ -23,6 +23,7 @@
 
 import { DocRoom, type DocRow, type DocTier, type UserProfiles } from '@aicolab/app-kit/doc-room'
 import { and, eq } from 'drizzle-orm'
+import { publishableHash, publishAsFor } from '#/content/publish.ts'
 import { emptyBody, type JsonNode } from '#/content/schema.ts'
 import { bodyFromRoot, hydrateRoot, replaceRoot } from '#/content/yjs.ts'
 import { db, schema } from '#/db/index.ts'
@@ -34,9 +35,16 @@ const ROOM_PREFIX = 'document:'
 
 export const documentRoomName = (documentId: string) => `${ROOM_PREFIX}${documentId}`
 
+/** What the room needs of its document: who works on it, and how its bodies publish. */
+interface HostedDocument {
+	orgId: string
+	subject: string
+	kind: 'core' | 'pathway'
+}
+
 export class DocumentRoom extends DocRoom {
 	#documentId: string | null = null
-	#orgId: Promise<string> | null = null
+	#document: Promise<HostedDocument> | null = null
 
 	/** The document this room hosts, from the room's own name. */
 	documentId(): string {
@@ -48,26 +56,32 @@ export class DocumentRoom extends DocRoom {
 		return this.#documentId
 	}
 
-	/** The organisation whose members work on this document. Memoised: it never changes. */
-	#organisation(): Promise<string> {
-		this.#orgId ??= (async () => {
+	/** The document this room hosts: its organisation, subject and kind. Memoised: none of
+	 *  them changes under a live room (a finalised import's organisation is set before any
+	 *  member can open it). */
+	#hosted(): Promise<HostedDocument> {
+		this.#document ??= (async () => {
 			const row = (
 				await db(this.env.DB)
-					.select({ orgId: schema.documents.orgId })
+					.select({
+						orgId: schema.documents.orgId,
+						subject: schema.documents.subject,
+						kind: schema.documents.kind,
+					})
 					.from(schema.documents)
 					.where(eq(schema.documents.id, this.documentId()))
 					.limit(1)
 			)[0]
 			if (!row) throw new Error('[document-room] document not found')
-			return row.orgId
+			return row
 		})()
-		return this.#orgId
+		return this.#document
 	}
 
 	/** The one access rule (access.ts): the user's role on this document's organisation,
 	 *  else a reviewer when they belong to the central organisation. */
 	async roleFor(userId: string): Promise<Role | null> {
-		return documentRoleOf(this.env.AUTH, db(this.env.DB), userId, await this.#organisation())
+		return documentRoleOf(this.env.AUTH, db(this.env.DB), userId, (await this.#hosted()).orgId)
 	}
 
 	// ---- the seams ----------------------------------------------------------
@@ -185,9 +199,14 @@ export class DocumentRoom extends DocRoom {
 			await this.#rememberRowClock(sectionId, rowAt)
 			return this.readBody(sectionId, (root) => bodyFromRoot(root))
 		}
+		const hosted = await this.#hosted()
 		const updated = await db(this.env.DB)
 			.update(schema.sections)
-			.set({ bodyJson: body, updatedAt: new Date(at) })
+			.set({
+				bodyJson: body,
+				draftHash: await publishableHash(body, hosted.subject, publishAsFor(hosted.kind)),
+				updatedAt: new Date(at),
+			})
 			.where(where)
 			.returning()
 		await this.#rememberRowClock(sectionId, updated[0]?.updatedAt ?? at)

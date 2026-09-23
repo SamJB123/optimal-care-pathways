@@ -33,6 +33,9 @@ import {
 	partsOf,
 	type WorkspaceMode,
 } from '#/lifecycle/workspace.ts'
+import { Masthead } from '#/components/Masthead.tsx'
+import { documentName } from '#/lib/labels.ts'
+import { publishedHref } from '#/lib/links.ts'
 import { sectionsSnapshot } from '#/server/documents.ts'
 import {
 	type CommentWire,
@@ -171,6 +174,18 @@ function DocumentShell() {
 
 	return (
 		<DocumentContext value={workspace}>
+			<Masthead
+				crumbs={[
+					{ label: 'Pathways', href: '/' },
+					{ label: documentName(data().document), href: `/d/${params().documentId}`, accent: data().document.accent },
+				]}
+				central={state().central}
+				links={
+					state().published
+						? [{ label: `Published, edition ${state().published?.versionNo}`, href: publishedHref(data().document.slug) }]
+						: [{ label: 'Not yet published', href: `/d/${params().documentId}` }]
+				}
+			/>
 			<WorkspaceShell
 				class="ocp-workspace"
 				hasRaisedSheet={publishing()}

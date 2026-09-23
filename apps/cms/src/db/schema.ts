@@ -108,9 +108,10 @@ export const documents = sqliteTable(
 		 *  Substituted into shared prose at render time. */
 		subject: text('subject').notNull(),
 		audience: text('audience').$type<Audience>().notNull(),
-		/** The pathway's family colour (#rrggbb): the accent its printed edition set its
-		 *  step bands in, read by the legacy import; chosen for a new pathway; null for the
-		 *  core documents, which stay neutral. */
+		/** The document's family colour (#rrggbb): for a pathway, the accent its printed
+		 *  edition set its step bands in, read by the legacy import, or chosen for a new
+		 *  pathway; for a core document, the colour its template's headings are printed in.
+		 *  Editable by the central team (lib/family.ts derives the legible text pair). */
 		accent: text('accent'),
 		createdAt: createdAt(),
 		updatedAt: timestampMs('updated_at'),
@@ -181,6 +182,14 @@ export const sections = sqliteTable(
 		 *  ('proposed: …'). An author clears it by keeping, moving or removing the section.
 		 *  Null on every other section. */
 		migrationNote: text('migration_note'),
+		/** A hash of what the section would publish now (`publishableHash`: its body — a
+		 *  shared section's core body — guidance stripped, subject filled). Beside the
+		 *  published version's `version_sections.body_hash` it answers "changed since
+		 *  published" without reading a body, which is how the atlas paints every section of
+		 *  every document at once. Written wherever the publishable body moves: the room's
+		 *  fold, diverge and revert, a core document's publish (for the pathways' shared
+		 *  sections it renders), a new pathway, the seeds. */
+		draftHash: text('draft_hash'),
 		updatedAt: timestampMs('updated_at'),
 		updatedBy: text('updated_by'),
 	},
@@ -275,6 +284,8 @@ export const versionSections = sqliteTable(
 		hidden: bool('hidden').notNull(),
 		pointOfCare: bool('point_of_care').notNull(),
 		bodyJson: text('body_json', { mode: 'json' }).$type<JsonNode>(),
+		/** `bodyHash` of `body_json`: the published side of `sections.draft_hash`. */
+		bodyHash: text('body_hash'),
 		html: text('html'),
 		markdown: text('markdown'),
 		/** The version in which this section's resolved body last changed — the partner

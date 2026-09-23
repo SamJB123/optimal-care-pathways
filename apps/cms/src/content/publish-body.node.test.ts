@@ -81,3 +81,28 @@ describe('subject placeholders', () => {
 		expect(filled('[insert timeframe]')).toContain('[insert timeframe]')
 	})
 })
+
+describe('instructions inside core sentences', () => {
+	const sentence: JsonNode = {
+		type: 'doc',
+		content: [
+			{
+				type: 'paragraph',
+				content: [
+					{ type: 'text', text: 'Cancer Care Nursing Services (Cancer Care Nurse Service) ' },
+					{ type: 'text', text: '<for prostate cancer OCP only add: Prostate Cancer Specialist Nurses>', marks: [{ type: 'instruction' }] },
+					{ type: 'text', text: '.' },
+				],
+			},
+		],
+	}
+	it('leave a pathway’s published text, and the space before them with it', () => {
+		parseBody(sentence)
+		const out = JSON.stringify(publishBody(sentence, 'breast cancer'))
+		expect(out).not.toContain('prostate')
+		expect(out).toContain('(Cancer Care Nurse Service)"')
+	})
+	it('stay in the template’s own publication, as the template prints them', () => {
+		expect(JSON.stringify(publishBody(sentence, '[cancer type]', 'template'))).toContain('prostate')
+	})
+})

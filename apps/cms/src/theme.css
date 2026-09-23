@@ -1,28 +1,52 @@
 /* ── ocp — the Optimal Care Pathways theme ──────────────────────────────────
-   Anchors only, in the ui-solid contract (see packages/ui-solid/src/themes/*):
-   the ladder derives every surface, border and content role per scheme, and both
-   schemes are authored here with light-dark(). Forced with data-theme /
-   .theme-dark / .theme-light as usual; the ThemeToggle in the header cycles them.
+   PAPER and NIGHT (decision U14): a warm paper ground by default, a considered night
+   scheme, following the system unless the reader chooses (the account menu). The two
+   grounds and their inks are the theme's base anchors and live in src/lib/palette.ts —
+   the family colours derive their legible text from the same numbers — and reach the
+   page as the root element's inline style. This file holds the rest, in the ui-solid
+   contract: anchors only, both schemes with light-dark(); the ladder derives every
+   surface, border and content role.
 
-   The palette follows the printed 2026 templates so the CMS reads like the
-   documents it produces: Cancer Australia's navy as the lead, the template's
-   green as the "success" family (developer guidance is painted with it), the
-   band blue as "info" (resource boxes, callouts), amber as "warning" (the
-   editable slots), the template's purple as "accent" (population-specific
-   material) and a deep red for error (the timeframe boxes). Each dark value
-   keeps the hue and lifts lightness so the same family reads on the night
-   surface.
+   Colour is signal (decision U2): the chrome's one accent is an ink blue used for links,
+   focus and selection. The template's own families stay as the printed 2026 templates
+   set them — green developer guidance ("success"), the band blue ("info"), amber for the
+   editable slots ("warning"), purple population material ("accent"), the timeframe red
+   ("error") — because the documents' blocks are painted with them. Each pathway's own
+   colour (its printed edition's step bands) is set per subtree as --family (lib/family.ts).
 
-   Authored on `.ui-theme` (the root element carries the class), never on
-   :root, so the theme stays scopable to a subtree if a page ever needs it. */
+   Authored on `.ui-theme` (the root element carries the class), never on :root, so the
+   theme stays scopable to a subtree if a page ever needs it. */
 .ui-theme {
-	--color-base-100: light-dark(#fdfdfb, #0e1526);
-	--color-base-content: light-dark(#1c2333, #e2e7f0);
-	--color-primary: light-dark(#0f3d8c, #8fb2ff);
-	--color-secondary: light-dark(#0f1e64, #5c78d6);
+	--color-primary: light-dark(#244a8f, #9db6ea);
+	--color-secondary: light-dark(#1d2b57, #7d93cf);
 	--color-accent: light-dark(#6a4c9c, #c3aef0);
 	--color-info: light-dark(#3a6fb0, #8fb7f0);
 	--color-success: light-dark(#0d7a3a, #63c98a);
-	--color-warning: light-dark(#b98400, #f2c94c);
+	--color-warning: light-dark(#a87800, #f2c94c);
 	--color-error: light-dark(#b8323c, #f28b8b);
+
+	/* Hairlines, not cards (decision U2): one rule weight for structure, one for emphasis. */
+	--hair: color-mix(in oklab, var(--color-base-content) 13%, transparent);
+	--hair-strong: color-mix(in oklab, var(--color-base-content) 28%, transparent);
+
+	/* Motion (decision U10): expressive where it carries meaning, and one vocabulary for
+	   it. Reduced motion collapses every duration (below). */
+	--ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+	--ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+	--ease-spring: linear(0, 0.36 8%, 0.72 17%, 0.94 27%, 1.03 37%, 1.04 45%, 1.01 60%, 1);
+	--dur-quick: 140ms;
+	--dur-move: 260ms;
+	--dur-scene: 460ms;
+
+	/* The masthead's height: every sticky surface below it (the workspace, the published
+	   frame's rails and compass) offsets by it. */
+	--ocp-mast: 3.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ui-theme {
+		--dur-quick: 1ms;
+		--dur-move: 1ms;
+		--dur-scene: 1ms;
+	}
 }

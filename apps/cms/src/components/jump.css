@@ -1,0 +1,50 @@
+/* The jump's trigger in the masthead: a quiet field-like button, the shortcut at its end. */
+@scope (.ocp-jump-trigger) {
+	:scope {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6rem;
+		min-inline-size: 11rem;
+		padding: 0.3rem 0.45rem 0.3rem 0.7rem;
+		border: 1px solid var(--hair);
+		border-radius: 0.45rem;
+		background: color-mix(in oklab, var(--color-base-100) 70%, transparent);
+		color: var(--color-base-content-muted);
+		font: inherit;
+		font-size: var(--t-sm);
+		cursor: pointer;
+		transition: border-color var(--dur-quick) var(--ease-out), color var(--dur-quick) var(--ease-out);
+	}
+	:scope:hover {
+		border-color: var(--hair-strong);
+		color: var(--color-base-content);
+	}
+	/* The package's trigger is inked for chrome over media; on paper it reads as text. */
+	.ui-command-palette-trigger-label {
+		order: -1;
+		margin-inline-end: auto;
+		color: inherit;
+	}
+	.ui-command-palette-trigger-shortcut {
+		order: 1;
+		background: none;
+		padding: 0;
+		letter-spacing: 0;
+	}
+	kbd {
+		font: inherit;
+		font-size: var(--t-2xs);
+		letter-spacing: 0.04em;
+		padding: 0.05rem 0.35rem;
+		border: 1px solid var(--hair);
+		border-radius: 0.3rem;
+	}
+	@media (width < 40rem) {
+		:scope {
+			min-inline-size: 0;
+		}
+		.ui-command-palette-trigger-label {
+			display: none;
+		}
+	}
+}
