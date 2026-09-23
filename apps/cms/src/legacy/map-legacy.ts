@@ -1206,14 +1206,14 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	}
 
 	// ---- the summary timeframes table, row by row (decision 148) ---------------------------------
-	const stepTitles = tree
-		.find((n) => n.l1 === 'pathway-note')
-		?.children.flatMap((s) => {
-			const step = Number(STEP.exec(s.heading)?.[1] ?? 0)
-			return step ? [{ step, tokens: titleTokens(titleOf(s.heading, s.number), pathway.subject) }] : []
-		}) ?? []
+	// The step a table label names is the template's step: its own titles, not the print's
+	// headings, which can be misprinted (WM and MPN head Step 1 "Presentation, initial
+	// investigations and referral", Step 2's title).
+	const stepTitles = coreRows.flatMap((s) =>
+		s.stepNumber !== null && s.address === String(s.stepNumber) ? [{ step: s.stepNumber, tokens: titleTokens(s.title ?? '', pathway.subject) }] : [],
+	)
 	const wordsOf = (text: string) => new Set(text.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 3))
-	const covered = (step: number | null, statement: string): boolean => {
+	const covered = (step: number | null, statement: string, share = 0.6): boolean => {
 		const words = wordsOf(statement)
 		if (words.size === 0) return true
 		return bodyTimeframes.some((b) => {
@@ -1221,9 +1221,15 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			const have = wordsOf(b.text)
 			let shared = 0
 			for (const w of words) if (have.has(w)) shared++
-			return shared / words.size >= 0.6
+			return shared / words.size >= share
 		})
 	}
+	/** A row the table groups under another step than the body prints its box in (ovarian's
+	 *  "Referral to specialist": Diagnosis in the table, 2.3.1 in the body) is that box —
+	 *  every word of the statement, so no second box is made. Timeframe wording is shared
+	 *  across boxes ("patients should … within 2 weeks of GP referral"), so nothing less
+	 *  than all of it names another step's box. */
+	const coveredElsewhere = (step: number | null, statement: string): boolean => step !== null && covered(null, statement, 1)
 	const placeTimeframeRows = (table: Table, chapter: LegacyNode) => {
 		let step: number | null = null
 		/** A statement cell spanning the rows beneath it: each of their care points has it. */
@@ -1274,7 +1280,7 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 				shared = statementCell.rowSpan > 1 ? { statement, nodes: statementNodes, remaining: statementCell.rowSpan - 1 } : null
 			}
 			ledger.timeframes.figureRows++
-			if (covered(step, statement)) {
+			if (covered(step, statement) || coveredElsewhere(step, statement)) {
 				ledger.timeframes.rows.push({ step, carePoint, source: 'body', destination: null })
 				continue
 			}

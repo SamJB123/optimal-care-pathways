@@ -1092,13 +1092,6 @@
 		{
 			"legacyKey": "summary-timeframes",
 			"legacyTitle": "Summary – optimal timeframes",
-			"destination": "3/timeframes",
-			"how": "timeframe-row",
-			"note": "row \"Referral to specialist\" of the summary timeframes table"
-		},
-		{
-			"legacyKey": "summary-timeframes",
-			"legacyTitle": "Summary – optimal timeframes",
 			"destination": "3.5.1",
 			"how": "timeframe-row",
 			"note": "row \"Multidisciplinary team meeting and treatment planning\" of the summary timeframes table"
@@ -1399,7 +1392,7 @@
 	},
 	"timeframes": {
 		"figureRows": 8,
-		"boxes": 9,
+		"boxes": 8,
 		"rows": [
 			{
 				"step": 2,
@@ -1416,8 +1409,8 @@
 			{
 				"step": 3,
 				"carePoint": "Referral to specialist",
-				"source": "row",
-				"destination": "3/timeframes"
+				"source": "body",
+				"destination": null
 			},
 			{
 				"step": 3,

@@ -1130,21 +1130,7 @@
 		{
 			"legacyKey": "summary-timeframes",
 			"legacyTitle": "Summary – optimal timeframes",
-			"destination": "1/timeframes",
-			"how": "timeframe-row",
-			"note": "row \"Signs and symptoms\" of the summary timeframes table"
-		},
-		{
-			"legacyKey": "summary-timeframes",
-			"legacyTitle": "Summary – optimal timeframes",
-			"destination": "1/timeframes",
-			"how": "timeframe-row",
-			"note": "row \"Initial investigations initiated by GP\" of the summary timeframes table"
-		},
-		{
-			"legacyKey": "summary-timeframes",
-			"legacyTitle": "Summary – optimal timeframes",
-			"destination": "1/timeframes",
+			"destination": "2/timeframes",
 			"how": "timeframe-row",
 			"note": "row \"Referral to specialist\" of the summary timeframes table"
 		},
@@ -1481,25 +1467,25 @@
 	},
 	"timeframes": {
 		"figureRows": 5,
-		"boxes": 9,
+		"boxes": 7,
 		"rows": [
 			{
-				"step": 1,
+				"step": 2,
 				"carePoint": "Signs and symptoms",
-				"source": "row",
-				"destination": "1/timeframes"
+				"source": "body",
+				"destination": null
 			},
 			{
-				"step": 1,
+				"step": 2,
 				"carePoint": "Initial investigations initiated by GP",
-				"source": "row",
-				"destination": "1/timeframes"
+				"source": "body",
+				"destination": null
 			},
 			{
-				"step": 1,
+				"step": 2,
 				"carePoint": "Referral to specialist",
 				"source": "row",
-				"destination": "1/timeframes"
+				"destination": "2/timeframes"
 			},
 			{
 				"step": 3,
@@ -1543,9 +1529,9 @@
 			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
 		},
 		{
-			"address": "1/timeframes",
+			"address": "2/timeframes",
 			"title": "Timeframes",
-			"note": "proposed: rows of the printed summary table whose care point names no section of Step 1; move each into its section"
+			"note": "proposed: rows of the printed summary table whose care point names no section of Step 2; move each into its section"
 		},
 		{
 			"address": "find-out-more/appendix-a-supportive-care-domains",

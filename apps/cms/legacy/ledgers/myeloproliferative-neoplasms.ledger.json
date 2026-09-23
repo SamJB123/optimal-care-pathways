@@ -1168,23 +1168,9 @@
 		{
 			"legacyKey": "summary-timeframes",
 			"legacyTitle": "Summary – optimal timeframes",
-			"destination": "1/timeframes",
+			"destination": "2.1",
 			"how": "timeframe-row",
 			"note": "row \"Signs and symptoms\" of the summary timeframes table"
-		},
-		{
-			"legacyKey": "summary-timeframes",
-			"legacyTitle": "Summary – optimal timeframes",
-			"destination": "1/timeframes",
-			"how": "timeframe-row",
-			"note": "row \"Initial investigations initiated by GP\" of the summary timeframes table"
-		},
-		{
-			"legacyKey": "summary-timeframes",
-			"legacyTitle": "Summary – optimal timeframes",
-			"destination": "1/timeframes",
-			"how": "timeframe-row",
-			"note": "row \"Referral to specialist\" of the summary timeframes table"
 		},
 		{
 			"legacyKey": "summary-timeframes",
@@ -1536,25 +1522,25 @@
 	},
 	"timeframes": {
 		"figureRows": 7,
-		"boxes": 11,
+		"boxes": 9,
 		"rows": [
 			{
-				"step": 1,
+				"step": 2,
 				"carePoint": "Signs and symptoms",
 				"source": "row",
-				"destination": "1/timeframes"
+				"destination": "2.1"
 			},
 			{
-				"step": 1,
+				"step": 2,
 				"carePoint": "Initial investigations initiated by GP",
-				"source": "row",
-				"destination": "1/timeframes"
+				"source": "body",
+				"destination": null
 			},
 			{
-				"step": 1,
+				"step": 2,
 				"carePoint": "Referral to specialist",
-				"source": "row",
-				"destination": "1/timeframes"
+				"source": "body",
+				"destination": null
 			},
 			{
 				"step": 3,
@@ -1613,11 +1599,6 @@
 			"address": "5/transition-to-shared-care-models-of-treatment",
 			"title": "Transition to shared care models of treatment",
 			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
-		},
-		{
-			"address": "1/timeframes",
-			"title": "Timeframes",
-			"note": "proposed: rows of the printed summary table whose care point names no section of Step 1; move each into its section"
 		},
 		{
 			"address": "find-out-more/appendix-a-supportive-care-domains",
