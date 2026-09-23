@@ -627,3 +627,18 @@ export const inviteLinks = sqliteTable(
 	},
 	(t) => [index('invite_links_org').on(t.orgId)],
 )
+
+// ---------------------------------------------------------------------------
+// Deployments — which version last cleared the published cache
+// ---------------------------------------------------------------------------
+
+/**
+ * The Worker version that last purged the published cache (worker.ts). Publishing purges a
+ * document's pages and PDFs; a deploy that changes how every page or PDF looks must purge
+ * them all, once, whichever instance of the new version serves first. One row.
+ */
+export const cacheGenerations = sqliteTable('cache_generations', {
+	tag: text('tag').primaryKey(),
+	versionId: text('version_id').notNull(),
+	purgedAt: timestampMs('purged_at').notNull(),
+})

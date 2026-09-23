@@ -65,6 +65,10 @@
 	// per document; publishing purges the tag.
 	"cache": { "enabled": true },
 
+	// The running version's id: the first request a new deployment serves purges the
+	// published cache once (worker.ts), so no page or PDF outlives the code that made it.
+	"version_metadata": { "binding": "CF_VERSION_METADATA" },
+
 	// Uploaded files (the section editor's images) in R2, under `images/<documentId>/…`,
 	// served publicly by /files/* (src/routes/files.$.ts): a published page shows them.
 	// A new account needs `wrangler r2 bucket create ocp-cms-files`.

@@ -14,7 +14,9 @@
 
 import { serveCapnweb } from '@aicolab/room-service/base-worker'
 import handler from '@tanstack/solid-start/server-entry'
+import { eq } from 'drizzle-orm'
 import { cacheTagFor, PUBLIC_CACHE_CONTROL, PUBLISHED_CACHE_TAG } from '#/api/published.ts'
+import { db, schema } from '#/db/index.ts'
 import { CoreRpcRoot, OcpBell } from '#/lib/rpc-root.ts'
 import { DocumentRoom } from '#/rooms/document-room.ts'
 
@@ -57,8 +59,47 @@ function withCachePolicy(request: Request, response: Response): Response {
 	})
 }
 
+/**
+ * A new deployment's first request purges the published cache, once. Publishing purges a
+ * document's own pages and PDFs, but a deploy that changes how pages or PDFs are drawn (or
+ * the scripts a cached page names) would otherwise leave readers the old ones for up to a
+ * day. The version that last purged is kept in D1, so every instance of the new version
+ * after the first finds it done; the purge runs beside the response, never in its way.
+ */
+let deploymentPurge: Promise<void> | null = null
+
+async function purgeForDeployment(env: Cloudflare.Env): Promise<void> {
+	const versionId = env.CF_VERSION_METADATA.id
+	const d = db(env.DB)
+	const last = (
+		await d
+			.select({ versionId: schema.cacheGenerations.versionId })
+			.from(schema.cacheGenerations)
+			.where(eq(schema.cacheGenerations.tag, PUBLISHED_CACHE_TAG))
+			.limit(1)
+	)[0]
+	if (last?.versionId === versionId) return
+	// biome-ignore lint/correctness/noUnresolvedImports: provided by the Workers runtime
+	const { cache } = await import('cloudflare:workers')
+	// Local development runs with no Workers Cache in front: nothing is cached to purge.
+	if (typeof cache?.purge !== 'function') return
+	await cache.purge({ tags: [PUBLISHED_CACHE_TAG] })
+	const purgedAt = new Date()
+	await d
+		.insert(schema.cacheGenerations)
+		.values({ tag: PUBLISHED_CACHE_TAG, versionId, purgedAt })
+		.onConflictDoUpdate({ target: schema.cacheGenerations.tag, set: { versionId, purgedAt } })
+	console.log(`[deploy] published cache purged for version ${versionId}`)
+}
+
 export default {
 	async fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext) {
+		deploymentPurge ??= purgeForDeployment(env).catch((error: unknown) => {
+			console.error('[deploy] cache purge failed:', error instanceof Error ? error.message : error)
+			// Tried again on the next request.
+			deploymentPurge = null
+		})
+		ctx.waitUntil(deploymentPurge)
 		return withCachePolicy(
 			request,
 			await serveCapnweb({ request, env, ctx, Root: CoreRpcRoot, handler }),
