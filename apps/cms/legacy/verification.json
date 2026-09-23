@@ -377,5 +377,18 @@
 			"'First published in May 2015. This edition published in June 2021.' on the imprint page; second edition.",
 			"Page 2 is blank, page 85 carries only its footer, and the back cover (page 86) carries only the cover artwork."
 		]
+	},
+	"ovarian-cancer-2nd-edition": {
+		"pages": "1-82 of 82",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages; Step 3's 'Genetic testing' panel keeps the accent colour it is printed in; Step 4's 'Surgery:', 'Systemic therapy:' and 'Radiation therapy:' lead-ins are panels, as the design's 'Label:' lead-ins are elsewhere.",
+			"Figure 3 (page 24) is the timeframes table. It groups 'Referral to specialist' under Diagnosis, while the body prints that box as 2.3.1 in Step 2; the row is the 2.3.1 box, not a second one.",
+			"'Referral choices and informed financial consent' (page 15) is set at the section-heading size in this print and is a subsection of Principle 1, not a run-in heading.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 61) are rendered figures.",
+			"Every author–year citation resolves to the printed list.",
+			"'First published in August 2015. This edition published in June 2021.' on the imprint page; second edition.",
+			"Page 2 is blank; the back cover (page 82) carries only the cover artwork."
+		]
 	}
 }
