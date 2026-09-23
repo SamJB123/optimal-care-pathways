@@ -1436,14 +1436,12 @@
 		}
 	],
 	"citations": {
-		"matched": 212,
+		"matched": 214,
 		"unmatched": [
 			"ACSQHC 2011 — \"ACSQHC 2011\": the list has that author only for 2014, 2015, 2017, 2019a, 2019b, 2020",
 			"Australian Cancer Survivorship Centre 2016; Cancer Australia 2017; NCSI 2015 — \"Australian Cancer Survivorship Centre 2016\": the list has that author only for 2010, 2019",
-			"2020 — \"Haematology 2020\": no entry in the printed reference list",
 			"ACSQHC 2011 — \"ACSQHC 2011\": the list has that author only for 2014, 2015, 2017, 2019a, 2019b, 2020",
-			"Australian Cancer Survivorship Centre 2016; Cancer Australia 2017; NCSI 2015 — \"Australian Cancer Survivorship Centre 2016\": the list has that author only for 2010, 2019",
-			"2020 — \"Haematology 2020\": no entry in the printed reference list"
+			"Australian Cancer Survivorship Centre 2016; Cancer Australia 2017; NCSI 2015 — \"Australian Cancer Survivorship Centre 2016\": the list has that author only for 2010, 2019"
 		],
 		"byName": []
 	},

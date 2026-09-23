@@ -1665,12 +1665,10 @@
 		}
 	],
 	"citations": {
-		"matched": 270,
+		"matched": 272,
 		"unmatched": [
-			"Cave et al. 1998; Van Dongen et al. 1998 — \"Cave et al. 1998\": no entry in the printed reference list",
-			"Pui et al. 2019; Zhang et al. 2015 — \"Pui et al. 2019\": the list has that author only for ch pei d coustan smith e jeha s cheng c bowman wp et al 2015, 2015, c h nichols ke yang jj 2018, c h 2018",
-			"Cave et al. 1998; Van Dongen et al. 1998 — \"Cave et al. 1998\": no entry in the printed reference list",
-			"Pui et al. 2019; Zhang et al. 2015 — \"Pui et al. 2019\": the list has that author only for ch pei d coustan smith e jeha s cheng c bowman wp et al 2015, 2015, c h nichols ke yang jj 2018, c h 2018"
+			"Pui et al. 2019; Zhang et al. 2015 — \"Pui et al. 2019\": the list has that author only for 2015, 2018",
+			"Pui et al. 2019; Zhang et al. 2015 — \"Pui et al. 2019\": the list has that author only for 2015, 2018"
 		],
 		"byName": []
 	},

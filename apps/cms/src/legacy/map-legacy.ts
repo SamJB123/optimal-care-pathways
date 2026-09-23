@@ -322,6 +322,9 @@ interface ReferenceEntry {
 
 const normaliseKey = (value: string): string =>
 	value
+		// Accents fold to their letter ("Gómez-Moreno", "Döhner"), never to a word break.
+		.normalize('NFD')
+		.replace(/\p{M}/gu, '')
 		.toLowerCase()
 		.replace(/[’']/g, '')
 		.replace(/[^a-z0-9]+/g, ' ')
@@ -347,19 +350,24 @@ function referenceKeys(citation: string): Set<string> {
 	// Organisations with their abbreviations: "…Health Care (ACSQHC)", "…(ASCO) & …(ESMO)",
 	// "US Department of Health and Human Services (US DHHS)".
 	const abbreviations = [...head.matchAll(/\(([A-Za-z]{2,}(?:\s[A-Za-z]{2,})*)\)/g)].map((m) => m[1] ?? '')
-	if (abbreviations.length > 0) {
-		keys.add(`${abbreviations.map(normaliseKey).join(' ')} ${y}`)
-		keys.add(`${nameKey(head.replace(/\s*\([^)]*\)/g, ''))} ${y}`)
-	} else keys.add(`${nameKey(head)} ${y}`)
+	const named = abbreviations.length > 0 ? nameKey(head.replace(/\s*\([^)]*\)/g, '')) : nameKey(head)
+	if (abbreviations.length > 0) keys.add(`${abbreviations.map(normaliseKey).join(' ')} ${y}`)
+	keys.add(`${named} ${y}`)
+	// The in-text form drops one-letter words ("John A Hartford Foundation", "I-Med"), as it
+	// drops stray initials (partKeys); so does this key.
+	const words = named.split(' ')
+	if (words.length > 1 && words.some((w) => w.length === 1)) keys.add(`${words.filter((w) => w.length > 1).join(' ')} ${y}`)
 	// Personal authors: "Wildiers H, Heeren P, Puts M, …, et al." — surnames are the words
 	// before each initials group; the in-text form names one, two, or the first with "et al.".
 	// Nothing after "et al." names an author (a trial group's name follows it).
+	// Initials may stand apart ("Averyt, J, Nishimoto, PW") or be hyphenated ("Pui C-H").
+	const INITIALS = /^\p{Lu}(?:-?\p{Lu}){0,2}$/u
 	const authors = head
 		.replace(/\bet al\.?[\s\S]*$/i, '')
 		.split(/,\s*|\s+&\s+|\s+and\s+/)
 		.map((a) => a.trim())
-		.filter((a) => a)
-	const surnames = authors.map((a) => a.replace(/\s+\p{Lu}{1,3}$/u, '').trim()).filter((s) => SURNAME.test(s))
+		.filter((a) => a && !INITIALS.test(a))
+	const surnames = authors.map((a) => a.replace(/\s+\p{Lu}(?:-?\p{Lu}){0,2}$/u, '').trim()).filter((s) => SURNAME.test(s))
 	if (surnames.length > 0 && surnames.length === authors.length) {
 		const first = normaliseKey(surnames[0] ?? '')
 		keys.add(`${first} ${y}`)
@@ -381,7 +389,7 @@ const CITED_NAME = String.raw`(?:\p{Lu}[\p{L}’'-]*|de|del|den|der|da|di|la|le|
  *  a name and a year follow it. A comma before a bare year ("2018a, 2018b") is not one. */
 const CITATION_COMMA = new RegExp(String.raw`,\s*(?=${CITED_NAME}\s(?:19|20)\d\d)`, 'u')
 /** Words a citation may open with that name no author: "adapted from Fizazi et al. 2015". */
-const CITATION_PREFIX = /^(?:adapted\s+from|from|see|e\.g\.|cf\.|source|in)\s*:?\s+/i
+const CITATION_PREFIX = /^(?:adapted\s+from|summarised\s+in|reviewed\s+in|see\s+table\s+\d+\s+in|from|see|e\.g\.|cf\.|source|in)\s*:?\s+/i
 /** A month and year in parentheses: a date, not a citation. */
 const MONTH_YEAR = /^(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+(?:19|20)\d\d$/i
 
@@ -429,6 +437,13 @@ function lookup(index: CitationIndex, key: string): ReferenceEntry | null {
 		const byInitials = new Set(sameYear.filter(([k]) => initialsOf(k.slice(0, -(year.length + 1))) === name).map(([, e]) => e))
 		if (byInitials.size === 1) return [...byInitials][0] ?? null
 	}
+	// An organisation cited by its full name whose entry carries its abbreviation under
+	// another spelling: "British Society of Haematology 2020" is "British Society for
+	// Haematology (BSH) 2020".
+	if (name.includes(' ')) {
+		const byAbbreviation = index.byKey.get(`${initialsOf(name)} ${year}`)
+		if (byAbbreviation) return byAbbreviation
+	}
 	// An organisation cited under another form of its name: "Australian Government Department
 	// of Health 2017" for the list's "Commonwealth Department of Health 2017" — the same year,
 	// the same last three words or more, and one such entry.
@@ -461,6 +476,37 @@ function lookupByName(index: CitationIndex, key: string): ReferenceEntry | null 
 	if (!name) return null
 	const found = new Set([...index.byKey.entries()].filter(([k]) => k.startsWith(`${name} `) && /\s(?:19|20)\d\d[a-z]?$/.test(k)).map(([, e]) => e))
 	return found.size === 1 ? ([...found][0] ?? null) : null
+}
+
+/** The name a year-only citation belongs to. An organisation's name runs over several
+ *  words ("European Society for Medical Oncology (2018)", "Royal Commission into Aged Care
+ *  Quality and Safety (2021)", "Cancer Australia’s (2020c)"): the longest run of the words
+ *  before the bracket, opening with a capital, that the list resolves; else the last name
+ *  as NAME_BEFORE reads it, for the ledger's reason. */
+function nameBefore(before: string, inner: string, index: CitationIndex): string | undefined {
+	const words = before.trimEnd().split(/\s+/).slice(-10)
+	for (let k = words.length; k >= 1; k--) {
+		const candidate = words
+			.slice(-k)
+			.join(' ')
+			.replace(/^[(“‘"']+/, '')
+			.replace(/[’']s$/, '')
+		if (!/^\p{Lu}/u.test(candidate)) continue
+		const keys = partKeys(`${candidate} ${inner}`)
+		if (keys.length > 0 && keys.every((key) => lookup(index, key) !== null)) return candidate
+	}
+	// Nothing resolves: the ledger names what the print names — a person as NAME_BEFORE
+	// reads one ("Smith & Jones", "Smith et al."), an organisation by its whole name.
+	const person = NAME_BEFORE.exec(before)?.[1]?.replace(/[’']s$/, '')
+	if (!person || /&|\band\b|\bet al/.test(person)) return person
+	const run: string[] = []
+	for (const w of [...words].reverse()) {
+		const bare = w.replace(/[’']s$/, '')
+		if (/^\p{Lu}/u.test(bare) || (run.length > 0 && /^(?:of|for|and|the|into|on|in)$/.test(bare))) run.unshift(bare)
+		else break
+	}
+	while (run.length > 0 && /^(?:of|for|and|the|into|on|in)$/.test(run[0] ?? '')) run.shift()
+	return run.length > 0 ? run.join(' ') : person
 }
 
 /** Replace the author–year citations in a paragraph's inline nodes with citation atoms. */
@@ -501,7 +547,7 @@ function citeInline(nodes: JsonNode[], index: CitationIndex): JsonNode[] {
 			// A year alone takes the name the sentence just gave: "Fitch’s (2000) model". After
 			// anything else ("…Plan for Blood Cancer (2020)") it dates a title, not a source.
 			if (/^(?:19|20)\d\d[a-z]?(?:,\s*(?:19|20)\d\d[a-z]?)*$/.test(inner)) {
-				const name = NAME_BEFORE.exec(before)?.[1]?.replace(/[’']s$/, '')
+				const name = nameBefore(before, inner, index)
 				if (!name) continue
 				parts = [`${name} ${inner}`]
 				// The name stays in the sentence; only the bracketed year becomes the atom.
@@ -577,7 +623,11 @@ function explainMiss(parts: string[], index: CitationIndex): string {
 			const sameYear = sameName.filter((k) => k.slice(name.length + 1).startsWith(year.replace(/[a-z]$/, '')))
 			if (sameYear.length > 1 && !/[a-z]$/.test(year))
 				reasons.push(`"${part}": the list has ${sameYear.length} entries for that author in ${year} (${sameYear.map((k) => k.slice(name.length + 1)).join(', ')}) and the text names none of them`)
-			else if (sameName.length > 0) reasons.push(`"${part}": the list has that author only for ${sameName.map((k) => k.slice(name.length + 1)).join(', ')}`)
+			else if (sameName.length > 0) {
+				// The years the list has for that name, once each (an entry has several keys).
+				const years = [...new Set(sameName.map((k) => /((?:19|20)\d\d[a-z]?)$/.exec(k)?.[1] ?? k.slice(name.length + 1)))].sort()
+				reasons.push(`"${part}": the list has that author only for ${years.join(', ')}`)
+			}
 			else reasons.push(`"${part}": no entry in the printed reference list`)
 		}
 	}
