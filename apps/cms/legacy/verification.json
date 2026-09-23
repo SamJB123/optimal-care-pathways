@@ -351,5 +351,17 @@
 			"'First published in August 2018. This edition published in October 2024.' on the imprint page; second edition.",
 			"Back cover (page 126) carries only the cover artwork."
 		]
+	},
+	"neuroendocrine-tumours-1st-edition": {
+		"pages": "1-96 of 96",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10): step bands over their panels; the labels under a Timeframe box are its bold lead-ins; 'No treatment / active surveillance (watch and wait)' wraps over two lines and is one panel; 'Palliative care:' and 'Systemic therapy:' are panels over their text.",
+			"Table 1 is a cell grid whose white-lettered top row is its header; Table 2 is a ruled table.",
+			"Figure 4 (page 35) is a rendered figure; its two asterisked notes and its 'Source:' line are three paragraphs under it.",
+			"A step number printed with a space after its stop ('3. 6') is read as 3.6.",
+			"'Published in June 2022.' on the imprint page (page 4); first edition.",
+			"Page 2 is blank, page 95 carries only its footer, and the back cover (page 96) carries only the cover artwork."
+		]
 	}
 }
