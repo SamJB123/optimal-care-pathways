@@ -25,7 +25,7 @@ import {
 	type SectionWireRow,
 	sectionWireRow,
 } from '#/lib/live-topics.ts'
-import { OCP_NAMESPACE, ROLE_LADDER, type Role, roles } from '#/lib/roles.ts'
+import { OCP_NAMESPACE, ROLE_LADDER, type Role, organisationNameOf, roles } from '#/lib/roles.ts'
 import { TEMPLATES } from '#/template/templates.ts'
 import * as access from './access.ts'
 import { CENTRAL_ORG_NAME, CENTRAL_ORG_SLUG } from './access.ts'
@@ -546,7 +546,7 @@ export const createPathway = createServerFn({ method: 'POST' })
 		)[0]
 		if (!core) throw new Error(`No core document for ${data.kind} pathways has been seeded.`)
 		const created = await env.AUTH.createOrganizationForUser(userId, {
-			name: data.title,
+			name: organisationNameOf(data.title),
 			slug: data.slug,
 			namespace: OCP_NAMESPACE,
 		})

@@ -12,6 +12,16 @@ import { createOrgRoles } from '@aicolab/app-kit/org'
 /** The organisation namespace this application partitions memberships under. */
 export const OCP_NAMESPACE = 'ocp'
 
+/** The auth service keeps an organisation's name to 100 characters; a pathway's title
+ *  may run longer ("…keratinocyte cancer (basal cell carcinoma or squamous cell
+ *  carcinoma)"), so its organisation takes the title cut at a word, with an ellipsis. */
+export const organisationNameOf = (title: string): string => {
+	const name = title.trim()
+	if (name.length <= 100) return name
+	const cut = name.slice(0, 99)
+	return `${cut.slice(0, cut.lastIndexOf(' ') > 60 ? cut.lastIndexOf(' ') : 99).trimEnd()}…`
+}
+
 export const ROLE_LADDER = ['viewer', 'member', 'admin', 'owner'] as const
 export type Role = (typeof ROLE_LADDER)[number]
 

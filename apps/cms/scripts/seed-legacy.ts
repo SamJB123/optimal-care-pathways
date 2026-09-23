@@ -109,7 +109,10 @@ function insert(table: SQLiteTable, row: Record<string, unknown>): string[] {
 }
 
 const statements: string[] = []
+/** The documents this run writes. */
+const written: string[] = []
 const emit = (result: LegacyImport) => {
+	written.push(result.document.id)
 	statements.push(...insert(schema.legacyDocuments, result.legacyDocument))
 	for (const s of result.legacySections) {
 		parseBody(s.bodyJson)
@@ -157,6 +160,11 @@ for (const pathway of targets) {
 		`${JSON.stringify({ pathway: pathway.pathwaySlug, visualPass: verification[pathway.slug] ?? null, ...ledger, unplacedSections: result.sections.filter((s) => s.migrationNote).map((s) => ({ address: s.address, title: s.title, note: s.migrationNote })) }, null, '\t')}\n`,
 	)
 }
+
+// A full seed also removes an import it no longer writes — a pathway renamed in the
+// catalogue leaves its old document behind — but only one never finalised (its
+// organisation still the placeholder); sections, versions and the rest cascade.
+if (which === 'all') statements.push(`DELETE FROM documents WHERE org_id LIKE 'pending:%' AND id NOT IN (${written.map(q).join(', ')});`)
 
 const outDir = join(appDir, '.wrangler', 'seed')
 mkdirSync(outDir, { recursive: true })

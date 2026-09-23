@@ -33,10 +33,12 @@ const pathwaySlugOf = (slug: string): string =>
 		.replace(/-january-2020$/, '')
 		.replace(/-optimal-cancer-care-pathway$/, '')
 
-const cancer = (slug: string, subject: string, family: LegacyFamily = 'design-2021'): LegacyPathway => ({
+/** A pathway slug is also its organisation's slug, which the auth service keeps to 64
+ *  characters: a file name too long for one names its pathway explicitly. */
+const cancer = (slug: string, subject: string, family: LegacyFamily = 'design-2021', pathwaySlug = pathwaySlugOf(slug)): LegacyPathway => ({
 	slug,
 	file: `${slug}.pdf`,
-	pathwaySlug: pathwaySlugOf(slug),
+	pathwaySlug,
 	audience: 'cancer',
 	family,
 	subject,
@@ -68,7 +70,7 @@ export const LEGACY_PATHWAYS: readonly LegacyPathway[] = [
 	cancer('hepatocellular-carcinoma-2nd-edition', 'hepatocellular carcinoma'),
 	cancer('high-grade-glioma-2nd-edition', 'high-grade glioma'),
 	cancer('hodgkin-and-diffuse-large-b-cell-lymphoma-2nd-edition', 'Hodgkin and diffuse large B-cell lymphoma'),
-	cancer('keratinocyte-cancer-basal-cell-carcinoma-or-squamous-cell-carcinoma-2nd-edition', 'keratinocyte cancer'),
+	cancer('keratinocyte-cancer-basal-cell-carcinoma-or-squamous-cell-carcinoma-2nd-edition', 'keratinocyte cancer', 'design-2021', 'keratinocyte-cancer'),
 	cancer('low-grade-lymphomas-1st-edition', 'low-grade lymphomas'),
 	cancer('lung-cancer-2nd-edition', 'lung cancer'),
 	cancer('melanoma-2nd-edition', 'melanoma'),

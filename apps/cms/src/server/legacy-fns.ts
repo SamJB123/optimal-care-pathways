@@ -14,7 +14,7 @@ import { bodyToMarkdown } from '#/content/markdown.ts'
 import { renderBodyHtml } from '#/content/render-html.tsx'
 import type { JsonNode } from '#/content/schema.ts'
 import { schema } from '#/db/index.ts'
-import { OCP_NAMESPACE } from '#/lib/roles.ts'
+import { OCP_NAMESPACE, organisationNameOf } from '#/lib/roles.ts'
 import { documentRoleOf, isCentralMember } from './access.ts'
 import { envOf, requireUser } from './env.ts'
 import { outlineOrder } from './lifecycle.ts'
@@ -124,24 +124,33 @@ export const finaliseLegacyImports = createServerFn({ method: 'POST' }).handler(
 	const errors: string[] = []
 	for (const document of pending) {
 		const created = await env.AUTH.createOrganizationForUser(userId, {
-			name: document.title,
+			name: organisationNameOf(document.title),
 			slug: document.slug,
 			namespace: OCP_NAMESPACE,
 		})
-		if (!created.ok) {
-			errors.push(`${document.slug}: ${created.error}`)
+		// A re-seed puts a finalised pathway back to its placeholder while its organisation
+		// stays: the organisation with its slug is adopted when the caller owns it and no
+		// other document belongs to it.
+		let organizationId = created.ok ? created.organizationId : null
+		if (!created.ok && created.error === 'slug-taken') {
+			const membership = await env.AUTH.getOrgMembership(userId, document.slug, OCP_NAMESPACE)
+			const claimed = membership ? (await d.select({ id: schema.documents.id }).from(schema.documents).where(eq(schema.documents.orgId, membership.organizationId)).limit(1))[0] : undefined
+			if (membership?.role === 'owner' && !claimed) organizationId = membership.organizationId
+		}
+		if (!organizationId) {
+			errors.push(`${document.slug}: ${created.ok ? 'no organisation' : created.error}`)
 			continue
 		}
-		await d.update(schema.documents).set({ orgId: created.organizationId }).where(eq(schema.documents.id, document.id))
+		await d.update(schema.documents).set({ orgId: organizationId }).where(eq(schema.documents.id, document.id))
 		await d.insert(schema.events).values({
 			id: crypto.randomUUID(),
 			documentId: document.id,
 			kind: 'document.imported',
 			actorId: userId,
 			actorName: actor?.name ?? userId,
-			detail: { organizationId: created.organizationId, slug: document.slug },
+			detail: { organizationId, slug: document.slug },
 		})
-		finalised.push({ slug: document.slug, organizationId: created.organizationId })
+		finalised.push({ slug: document.slug, organizationId })
 	}
 
 	// Published sections the seed wrote without HTML: render them now, numbering

@@ -79,6 +79,14 @@ function spineOf(sections: Section[], out: string[] = []): string[] {
 
 const distinct = (values: string[]) => [...new Set(values)].sort()
 
+describe('legacy catalogue', () => {
+	it('names every pathway with a slug its organisation can take', () => {
+		// The auth service's organisation slug rule (createOrganizationForUser).
+		for (const p of LEGACY_PATHWAYS) expect(p.pathwaySlug).toMatch(/^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/)
+		expect(new Set(LEGACY_PATHWAYS.map((p) => p.pathwaySlug)).size).toBe(LEGACY_PATHWAYS.length)
+	})
+})
+
 for (const pathway of LEGACY_PATHWAYS) {
 	const modelPath = modelPathOf(pathway.slug)
 	describe.skipIf(!existsSync(join(appDir, modelPath)))(`legacy fixture: ${pathway.slug}`, () => {
