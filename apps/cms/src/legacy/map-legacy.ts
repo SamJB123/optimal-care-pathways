@@ -914,8 +914,23 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	const authorYear = citations.byKey.size > 0
 
 	/** A legacy node's blocks as content nodes, cited. */
+	// A figure's caption is printed over it ("Figure A1: Fitch's tiered approach …"); the
+	// reader keeps it as the figure's alternative text, which a page never shows, so the
+	// caption stands as the paragraph over the image too.
+	const captioned = (blocks: Block[]): Block[] =>
+		blocks.flatMap((b): Block[] => {
+			if (b.kind !== 'figure' || !/^Figure\s+[A-Z]?\d+\s*:/i.test(b.alt)) return [b]
+			const caption: Paragraph = {
+				kind: 'paragraph',
+				runs: [{ text: b.alt, bold: false, italic: false, underline: false, superscript: false, subscript: false, size: 0, colour: '#000000', background: null, link: null, footnote: null, endnote: null }],
+				page: b.page,
+				background: null,
+				align: 'left',
+			}
+			return [caption, b]
+		})
 	const nodesOf = (blocks: Block[], options: { cite?: boolean } = {}): JsonNode[] =>
-		options.cite === false || !authorYear ? mapper.blocks(blocks) : citeNodes(mapper.blocks(blocks), citations)
+		options.cite === false || !authorYear ? mapper.blocks(captioned(blocks)) : citeNodes(mapper.blocks(captioned(blocks)), citations)
 
 	// ---- legacy rows -----------------------------------------------------------------
 	const legacyDocument: LegacyDocumentInsert = {
