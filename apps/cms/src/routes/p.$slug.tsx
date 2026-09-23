@@ -11,6 +11,7 @@ import { createFileRoute } from '@tanstack/solid-router'
 import { For, Show } from 'solid-js'
 import { publishedDocumentFull } from '#/api/server-fns.ts'
 import { type DerivedView, stepNumberOfAddress, timeframeRows } from '#/content/derived.ts'
+import { ReferenceList } from '#/content/references.tsx'
 import { RenderedBody } from '#/content/render.tsx'
 import { numberLabel } from '#/lib/labels.ts'
 import './print.css'
@@ -101,23 +102,7 @@ function PublishedPage() {
 						<Show when={doc().references.length > 0}>
 							<section class="ocp-published-section ocp-published-references" id="references">
 								<h2 class="ocp-published-title">References</h2>
-								<ol>
-									<For each={doc().references}>
-										{(reference) => (
-											<li value={reference.number}>
-												{reference.citation}
-												<Show when={reference.url}>
-													{(url) => (
-														<>
-															{' '}
-															<a href={url()}>{url()}</a>
-														</>
-													)}
-												</Show>
-											</li>
-										)}
-									</For>
-								</ol>
+								<ReferenceList references={doc().references} />
 							</section>
 						</Show>
 					</main>

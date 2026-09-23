@@ -49,8 +49,10 @@
 	font-variant-numeric: tabular-nums;
 }
 
+/* Numbered as the text cites them: the list keeps its numbers against the page reset. */
 .ocp-published-references ol {
 	padding-inline-start: 2.5rem;
+	list-style: decimal;
 }
 
 .ocp-published-references li {
