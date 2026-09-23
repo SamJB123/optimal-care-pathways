@@ -330,6 +330,21 @@ describe('REST through chanfana', () => {
 		).toHaveLength(1)
 	})
 
+	it('routes "<slug>.pdf" to the PDF, not to the document named "<slug>.pdf"', async () => {
+		// The test runtime has no Browser Run binding, so the PDF route cannot render here;
+		// what matters is that it is the route that answers. Before the fix the REST
+		// operation `/documents/:slug` did, with a 404 for a document called "<slug>.pdf".
+		for (const path of [
+			`/api/v1/documents/${PARTNER_SLUG}.pdf`,
+			`/api/v1/documents/${PARTNER_SLUG}-quick-reference-guide.pdf`,
+		]) {
+			const response = await call(path)
+			const text = await response.text()
+			expect(text).not.toContain('No document is published')
+			expect(response.status).not.toBe(404)
+		}
+	})
+
 	it('publishes an OpenAPI 3.1 document naming every operation, and a Scalar page', async () => {
 		const spec = await call('/api/v1/openapi.json')
 		expect(spec.status).toBe(200)

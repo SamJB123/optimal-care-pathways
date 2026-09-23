@@ -56,26 +56,12 @@ export function createApiApp(): Hono<Bindings> {
 			slug ? `${PUBLISHED_CACHE_TAG},${cacheTagFor(slug)}` : PUBLISHED_CACHE_TAG,
 		)
 	})
-	registerRest(app, {
-		base: API_BASE,
-		title: API_TITLE,
-		docsPath: '/docs',
-		operations,
-		context: (c) => apiContext(c.env),
-		schema: {
-			info: {
-				title: API_TITLE,
-				version: '1',
-				description:
-					'Read the published versions of the Optimal Care Pathways and their core content: documents, outlines, sections as JSON, HTML and Markdown, numbered references, versions, a composed cancer-plus-population view and search. The same operations are available as MCP tools at /mcp.',
-			},
-		},
-	})
-
 	// The PDF of the current published version — the whole pathway, or its derived quick
 	// reference guide — rendered by Browser Run from the public read page and cached until
 	// the document is next published. (A Hono path parameter is a whole segment, so the
-	// file name is the parameter and the slug is read off it.)
+	// file name is the parameter and the slug is read off it.) Registered BEFORE the REST
+	// operations: Hono matches in registration order, and `/documents/:slug` would otherwise
+	// take "<slug>.pdf" as a document's slug.
 	app.get(`${API_BASE}/documents/:file{[a-zA-Z0-9-]+\\.pdf}`, async (c) => {
 		const file = c.req.param('file').replace(/\.pdf$/, '')
 		const guide = /-quick-reference-guide$/.test(file)
@@ -102,6 +88,22 @@ export function createApiApp(): Hono<Bindings> {
 				'cache-tag': `${PUBLISHED_CACHE_TAG},${cacheTagFor(v.slug)}`,
 			},
 		})
+	})
+
+	registerRest(app, {
+		base: API_BASE,
+		title: API_TITLE,
+		docsPath: '/docs',
+		operations,
+		context: (c) => apiContext(c.env),
+		schema: {
+			info: {
+				title: API_TITLE,
+				version: '1',
+				description:
+					'Read the published versions of the Optimal Care Pathways and their core content: documents, outlines, sections as JSON, HTML and Markdown, numbered references, versions, a composed cancer-plus-population view and search. The same operations are available as MCP tools at /mcp.',
+			},
+		},
 	})
 
 	return app
