@@ -28,6 +28,7 @@ import type { Db } from '#/db/index.ts'
 import { schema } from '#/db/index.ts'
 import { publishDocumentRows, publishSectionRows } from '#/lib/live-publish.ts'
 import { OCP_NAMESPACE, ROLE_LADDER, type Role } from '#/lib/roles.ts'
+import { cacheTagFor, PUBLISHED_CACHE_TAG } from '#/api/published.ts'
 import { documentRoomName } from '#/rooms/document-room.ts'
 
 type DocumentRow = typeof schema.documents.$inferSelect
@@ -734,9 +735,10 @@ export async function publish(
 	})
 	void publishDocumentRows([document])
 	if (lc.purge) {
-		const tags = [document.slug, ...(document.partnerSlug ? [document.partnerSlug] : [])].map(
-			(s) => `document-${s}`,
-		)
+		const tags = [
+			PUBLISHED_CACHE_TAG,
+			...[document.slug, ...(document.partnerSlug ? [document.partnerSlug] : [])].map(cacheTagFor),
+		]
 		try {
 			await lc.purge(tags)
 		} catch (error) {

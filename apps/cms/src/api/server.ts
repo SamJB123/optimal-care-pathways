@@ -20,8 +20,11 @@ import { db } from '#/db/index.ts'
 import { listDocuments, operations } from './operations.ts'
 import {
 	type ApiContext,
+	cacheTagFor,
 	documentUrl,
 	listPublished,
+	PUBLIC_CACHE_CONTROL,
+	PUBLISHED_CACHE_TAG,
 	sectionsOf,
 	sectionText,
 	versionOf,
@@ -29,9 +32,6 @@ import {
 
 export const API_BASE = '/api/v1'
 export const API_TITLE = 'Optimal Care Pathways — published content'
-
-/** The tag a document's cached responses carry; publishing purges it. */
-export const cacheTagFor = (slug: string): string => `document-${slug}`
 
 export const apiContext = (env: Cloudflare.Env): ApiContext => ({
 	d: db(env.DB),
@@ -43,6 +43,16 @@ type Bindings = { Bindings: Cloudflare.Env }
 /** REST + OpenAPI + Scalar + the PDF, on one Hono app under /api/v1. */
 export function createApiApp(): Hono<Bindings> {
 	const app = new Hono<Bindings>()
+	// Every successful GET here is published content: cached under the published tag and,
+	// for a document's own routes, the document's tag. A response that set its own header
+	// (the PDF) keeps it.
+	app.use(`${API_BASE}/*`, async (c, next) => {
+		await next()
+		if (c.req.method !== 'GET' || !c.res.ok || c.res.headers.has('cache-control')) return
+		c.res.headers.set('cache-control', PUBLIC_CACHE_CONTROL)
+		const slug = new RegExp(`^${API_BASE}/documents/([a-zA-Z0-9-]+)`).exec(c.req.path)?.[1]
+		c.res.headers.set('cache-tag', slug ? `${PUBLISHED_CACHE_TAG},${cacheTagFor(slug)}` : PUBLISHED_CACHE_TAG)
+	})
 	registerRest(app, {
 		base: API_BASE,
 		title: API_TITLE,
@@ -79,8 +89,8 @@ export function createApiApp(): Hono<Bindings> {
 			headers: {
 				'content-type': 'application/pdf',
 				'content-disposition': `inline; filename="${v.slug}-v${v.version}.pdf"`,
-				'cache-control': 'public, max-age=86400, stale-while-revalidate=3600',
-				'cache-tag': cacheTagFor(v.slug),
+				'cache-control': PUBLIC_CACHE_CONTROL,
+				'cache-tag': `${PUBLISHED_CACHE_TAG},${cacheTagFor(v.slug)}`,
 			},
 		})
 	})

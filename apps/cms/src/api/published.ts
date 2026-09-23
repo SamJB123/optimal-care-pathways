@@ -11,6 +11,13 @@
  */
 
 import { NotFound } from '@aicolab/app-kit/api'
+
+// Workers Cache (decision 126). Published content changes only at publish, so its public
+// responses are cached for a day and tagged; publishing purges the document's tag and the
+// tag every published response carries (lists and search span documents).
+export const PUBLIC_CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalidate=3600'
+export const PUBLISHED_CACHE_TAG = 'published'
+export const cacheTagFor = (slug: string): string => `document-${slug}`
 import { and, desc, eq, inArray, like, or, sql } from 'drizzle-orm'
 import { citationNumbers, inlineText } from '#/content/derived.ts'
 import type { JsonNode } from '#/content/schema.ts'
