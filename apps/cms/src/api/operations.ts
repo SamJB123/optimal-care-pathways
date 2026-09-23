@@ -11,7 +11,7 @@
 import { NotFound, operationsFor } from '@aicolab/app-kit/api'
 import { desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
-import { citationNumbers } from '#/content/derived.ts'
+import { citationNumbers, stepNumberOfAddress } from '#/content/derived.ts'
 import type { JsonNode } from '#/content/schema.ts'
 import { schema } from '#/db/index.ts'
 import {
@@ -306,8 +306,8 @@ export const getQuickReferenceGuide = define({
 		// A step section's address is its number ("2"); its parts' addresses open with it
 		// ("2.3.1", "2/quick-reference-guide").
 		const stepOf = (address: string) => {
-			const head = /^(\d+)(?:[./]|$)/.exec(address)?.[1]
-			const step = head ? guide.all.find((s) => s.address === head) : undefined
+			const n = stepNumberOfAddress(address)
+			const step = n !== null ? guide.all.find((s) => s.address === String(n)) : undefined
 			return step ? { address: step.address, title: step.title } : null
 		}
 		return {

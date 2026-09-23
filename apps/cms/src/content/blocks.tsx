@@ -318,14 +318,22 @@ export function TimeframeSnapshotBlock() {
 								</td>
 								<td>{row.carePoint}</td>
 								<td>
+									{/* Each statement on a line of its own; "or" only between a
+									    statement's alternatives. */}
 									<For each={row.statements}>
-										{(statement, j) => (
-											<>
-												<Show when={j() > 0}>
-													<em> or </em>
-												</Show>
-												{statement}
-											</>
+										{(alternatives) => (
+											<p>
+												<For each={alternatives}>
+													{(alternative, j) => (
+														<>
+															<Show when={j() > 0}>
+																<em> or </em>
+															</Show>
+															{alternative}
+														</>
+													)}
+												</For>
+											</p>
 										)}
 									</For>
 								</td>

@@ -904,7 +904,8 @@
 			"legacyKey": "summary-timeframes",
 			"legacyTitle": "Summary – optimal timeframes",
 			"destination": "snapshot-of-optimal-timeframes",
-			"how": "provenance"
+			"how": "rule",
+			"note": "the printed timeframes table and its caption are derived from the steps’ timeframe boxes"
 		},
 		{
 			"legacyKey": "summary-timeframes/optimal-timeframes",

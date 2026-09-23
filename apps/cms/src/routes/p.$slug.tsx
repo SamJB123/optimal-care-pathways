@@ -10,7 +10,7 @@ import { Eyebrow, Notice } from '@aicolab/ui-solid'
 import { createFileRoute } from '@tanstack/solid-router'
 import { For, Show } from 'solid-js'
 import { publishedDocumentFull } from '#/api/server-fns.ts'
-import type { DerivedView } from '#/content/derived.ts'
+import { type DerivedView, stepNumberOfAddress, timeframeRows } from '#/content/derived.ts'
 import { RenderedBody } from '#/content/render.tsx'
 import { numberLabel } from '#/lib/labels.ts'
 import './print.css'
@@ -59,7 +59,9 @@ function PublishedPage() {
 				const parentOf = () => new Map(doc().sections.map((s) => [s.address, s.parentAddress]))
 				const derived = (): DerivedView => ({
 					referenceNumbers: Object.fromEntries(doc().references.map((r) => [r.id, r.number])),
-					timeframes: [],
+					timeframes: timeframeRows(
+						doc().sections.map((s) => ({ stepNumber: stepNumberOfAddress(s.address), address: s.address, printedNumber: s.printedNumber, title: s.title, body: s.body })),
+					),
 					map: null,
 				})
 				return (

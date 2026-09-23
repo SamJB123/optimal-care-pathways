@@ -1490,7 +1490,11 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			const figureTables = multiColumn.filter((t) => t === main || (mainHeader !== null && headerOf(t) === mainHeader))
 			const isCaption = (b: Block) => figureTables.length > 0 && b.kind === 'paragraph' && /^Figure\s+\d+\s*:/.test(plainText(b.runs).trim())
 			for (const node of flatten([chapter])) {
-				const own = nodesOf(node.blocks.filter((b) => !(b.kind === 'table' && figureTables.includes(b)) && b.kind !== 'figure' && !isCaption(b)))
+				const printed = nodesOf(node.blocks.filter((b) => !(b.kind === 'table' && figureTables.includes(b)) && b.kind !== 'figure' && !isCaption(b)))
+				// Where the print had its Figure 3, the chapter's text is followed by the
+				// template's snapshot, which the page draws from the steps' timeframe boxes.
+				const snapshot: JsonNode = { type: 'timeframeSnapshot' }
+				const own = node === chapter && figureTables.length > 0 ? [...printed, snapshot] : printed
 				if (own.length > 0) place(destination, node, node === chapter ? own : [headingNode(titleOf(node.heading, node.number), 3), ...own], node === chapter ? 'rule' : 'merged', node === chapter ? { note: 'the printed timeframes table and its caption are derived from the steps’ timeframe boxes' } : {})
 				else provenance(destination, node)
 			}

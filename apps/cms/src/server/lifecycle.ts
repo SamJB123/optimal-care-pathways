@@ -20,7 +20,7 @@
 
 import { and, desc, eq, inArray } from 'drizzle-orm'
 import { type AnnotatedBody, annotateChanges, bodyHash } from '#/content/diff.ts'
-import { citationNumbers, type DerivedView, openItemsIn } from '#/content/derived.ts'
+import { citationNumbers, type DerivedView, openItemsIn, timeframeRows } from '#/content/derived.ts'
 import { bodyToMarkdown } from '#/content/markdown.ts'
 import { blockingPlaceholders, publishBody } from '#/content/publish.ts'
 import type { JsonNode } from '#/content/schema.ts'
@@ -662,7 +662,10 @@ export async function publish(
 	const publishedResolved = resolved.map((s) => ({ ...s, body: s.publishable }))
 	const derived: DerivedView = {
 		referenceNumbers: citationNumbers(publishedResolved.filter(live).map((s) => s.body)),
-		timeframes: [],
+		// The published snapshot is drawn from the timeframe boxes being published.
+		timeframes: timeframeRows(
+			publishedResolved.filter(live).map((s) => ({ stepNumber: s.row.stepNumber, address: s.row.address, printedNumber: s.row.printedNumber, title: s.row.title, body: s.body })),
+		),
 		map: null,
 	}
 	const coreVersionId = document.kind === 'pathway' ? await coreVersionFor(lc, resolved) : null

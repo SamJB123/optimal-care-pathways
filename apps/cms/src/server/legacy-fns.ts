@@ -10,7 +10,7 @@ import { createServerFn } from '@tanstack/solid-start'
 import { and, eq, isNull, like } from 'drizzle-orm'
 import { z } from 'zod'
 import { sectionsOf } from '#/api/published.ts'
-import { citationNumbers, type DerivedView } from '#/content/derived.ts'
+import { citationNumbers, type DerivedView, stepNumberOfAddress, timeframeRows } from '#/content/derived.ts'
 import { bodyToMarkdown } from '#/content/markdown.ts'
 import { renderBodyHtml } from '#/content/render-html.tsx'
 import type { JsonNode } from '#/content/schema.ts'
@@ -164,10 +164,12 @@ export const finaliseLegacyImports = createServerFn({ method: 'POST' }).handler(
 	let rendered = 0
 	for (const versionId of new Set(unrendered.map((r) => r.versionId))) {
 		const rows = await d.select().from(schema.versionSections).where(eq(schema.versionSections.versionId, versionId))
-		// Numbered in reading order, as the page and the publisher number them.
+		// Numbered in reading order, as the page and the publisher number them; the snapshot
+		// drawn from the version's own timeframe boxes.
+		const ordered = await sectionsOf(d, versionId)
 		const derived: DerivedView = {
-			referenceNumbers: citationNumbers((await sectionsOf(d, versionId)).map((r) => r.bodyJson ?? null)),
-			timeframes: [],
+			referenceNumbers: citationNumbers(ordered.map((r) => r.bodyJson ?? null)),
+			timeframes: timeframeRows(ordered.map((r) => ({ stepNumber: stepNumberOfAddress(r.address), address: r.address, printedNumber: r.printedNumber, title: r.title, body: r.bodyJson ?? null }))),
 			map: null,
 		}
 		const todo = rows.filter((r) => r.html === null && r.bodyJson)

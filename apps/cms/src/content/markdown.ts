@@ -183,7 +183,7 @@ function snapshot(derived: DerivedView): string {
 		t.stepNumber === null ? '' : `Step ${t.stepNumber}`,
 		t.section,
 		t.carePoint,
-		t.statements.join('; '),
+		t.statements.map((alternatives) => alternatives.join(' or ')).join('; '),
 	])
 	const line = (cells: string[]) => `| ${cells.map((c) => c.replace(/\|/g, '\\|')).join(' | ')} |`
 	return [

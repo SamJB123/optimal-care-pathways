@@ -14,8 +14,9 @@ export interface TimeframeRow {
 	section: string
 	address: string
 	carePoint: string
-	/** One entry per statement; alternatives are separate entries. */
-	statements: string[]
+	/** One entry per statement, each the statement's alternatives: a paragraph is one
+	 *  statement of one alternative, a `variants` block one statement of several. */
+	statements: string[][]
 }
 
 /** One box of the pathway map (decisions 63, 72, 74): a step's section with what the
@@ -254,6 +255,14 @@ export function citationNumbers(bodies: (JsonNode | null)[]): Record<string, num
 	return numbers
 }
 
+/** The step a published section belongs to, read off its address: a step's address is
+ *  its number ("2"), its parts' open with it ("2.3.1", "2/quick-reference-guide"). A
+ *  frozen section keeps no step number of its own. */
+export const stepNumberOfAddress = (address: string): number | null => {
+	const head = /^(\d+)(?:[./]|$)/.exec(address)?.[1]
+	return head ? Number(head) : null
+}
+
 /** The timeframe boxes of a document's sections, in reading order. */
 export function timeframeRows(
 	sections: {
@@ -270,18 +279,17 @@ export function timeframeRows(
 		walkNodes(s.body, (n) => {
 			if (n.type !== 'timeframe') return
 			const [carePoint, ...rest] = n.content ?? []
-			const statements: string[] = []
+			const statements: string[][] = []
 			for (const block of rest) {
-				if (block.type === 'variants') {
-					for (const variant of block.content ?? []) statements.push(inlineText(variant))
-				} else statements.push(inlineText(block))
+				const alternatives = (block.type === 'variants' ? (block.content ?? []) : [block]).map(inlineText).filter((t) => t !== '')
+				if (alternatives.length > 0) statements.push(alternatives)
 			}
 			rows.push({
 				stepNumber: s.stepNumber,
 				section: [s.printedNumber, s.title].filter(Boolean).join(' '),
 				address: s.address,
 				carePoint: carePoint?.type === 'carePoint' ? inlineText(carePoint) : '',
-				statements: statements.filter((t) => t !== ''),
+				statements,
 			})
 		})
 	}
