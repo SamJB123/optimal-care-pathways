@@ -2713,6 +2713,7 @@ export async function readLayoutDocument(
 		footnotes.push(...notes)
 		lines = lines.filter((l) => !consumed.has(l))
 		if (notes.length > 0) markFootnoteRefs(lines, notes, footnoteBase)
+		else markCarriedFootnoteRefs(lines, footnotes)
 		const noteList = noteLists.find((list) => list.serves(n))
 		if (noteList) markEndnoteRefs(lines, noteList.entries, warnings, n)
 
@@ -3049,6 +3050,32 @@ function markFootnoteRefs(lines: Line[], notes: Footnote[], base: number): void 
 			// Rewrite the run as a marker: the paragraph builder reads `footnoteIndex`.
 			footnoteRuns.set(run, index)
 		}
+	}
+}
+
+/**
+ * On a page with no footnotes of its own, a raised number right after the term an
+ * earlier page's footnote defines ("The lead clinician¹ and team's …", the note on the
+ * page before reading "Lead clinician – the clinician who …") cites that footnote.
+ */
+function markCarriedFootnoteRefs(lines: Line[], notes: Footnote[]): void {
+	for (const line of lines) {
+		line.runs.forEach((run, i) => {
+			if (run.size >= line.size - 1.5) return
+			const digit = run.text.trim()
+			if (!/^\d{1,2}$/.test(digit)) return
+			const before = joinRuns(line.runs.slice(0, i)).trim().toLowerCase()
+			for (let k = notes.length - 1; k >= 0; k--) {
+				const note = notes[k]
+				if (!note || note.label !== digit) continue
+				const first = note.blocks[0]
+				const term = first?.kind === 'paragraph' ? (plainText(first.runs).split(/\s+[–—-]\s+/)[0] ?? '').trim().toLowerCase() : ''
+				if (term.length >= 3 && before.endsWith(term)) {
+					footnoteRuns.set(run, k)
+					return
+				}
+			}
+		})
 	}
 }
 
