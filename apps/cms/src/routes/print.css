@@ -90,11 +90,13 @@
 }
 
 @media print {
-	/* The app's chrome is not part of the document. */
+	/* The app's chrome is not part of the document: the masthead (jump, sign in, account)
+	   by its own class — it is not the body's child, and the dev-only source attribute is
+	   absent from a production build. */
+	.ocp-mast,
 	body > header,
 	nav,
-	.ui-theme-toggle,
-	[data-tsd-source*="__root"] > header {
+	.ui-theme-toggle {
 		display: none;
 	}
 
