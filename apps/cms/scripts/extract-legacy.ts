@@ -30,7 +30,8 @@ const pdfDir = pdfDirFlag > 0 ? (args[pdfDirFlag + 1] ?? '') : join(appDir, 'leg
 const outDir = join(appDir, 'legacy', 'extracted')
 mkdirSync(outDir, { recursive: true })
 
-const targets = which === 'all' ? LEGACY_PATHWAYS : [legacyBySlug(which)].flatMap((p) => (p ? [p] : []))
+const targets =
+	which === 'all' ? LEGACY_PATHWAYS : [legacyBySlug(which)].flatMap((p) => (p ? [p] : []))
 if (targets.length === 0) {
 	console.error(`unknown pathway "${which}"`)
 	process.exit(2)
@@ -39,14 +40,19 @@ if (targets.length === 0) {
 // Complete entries of the corpus's gap-separated name lists (scripts/build-entry-lexicon.ts),
 // the evidence a tight list's lines are resolved against.
 const lexiconPath = join(appDir, 'legacy', 'entries.json')
-const entryLexicon: { entries: string[]; roles: string[]; names: string[] } = existsSync(lexiconPath)
+const entryLexicon: { entries: string[]; roles: string[]; names: string[] } = existsSync(
+	lexiconPath,
+)
 	? JSON.parse(readFileSync(lexiconPath, 'utf8'))
 	: { entries: [], roles: [], names: [] }
 
 for (const pathway of targets) {
 	const doc = await openPdf(join(pdfDir, pathway.file))
 	const model = await readLayoutDocument(doc, pathway.file, { entryLexicon })
-	writeFileSync(join(outDir, `${pathway.slug}.model.json`), `${JSON.stringify(model, null, '\t')}\n`)
+	writeFileSync(
+		join(outDir, `${pathway.slug}.model.json`),
+		`${JSON.stringify(model, null, '\t')}\n`,
+	)
 	const counts = { sections: 0, paragraphs: 0, lists: 0, items: 0, tables: 0, figures: 0 }
 	const countBlocks = (blocks: Block[]) => {
 		for (const b of blocks) {
@@ -76,7 +82,11 @@ for (const pathway of targets) {
 		`${pathway.slug}: "${model.title}" ${model.pages} pages, ${counts.sections} sections, ${counts.paragraphs} paragraphs, ${counts.lists} lists (${counts.items} items), ${counts.tables} tables, ${counts.figures} figures, ${model.footnotes.length} footnotes, ${model.warnings.length} warnings`,
 	)
 	if (!args.includes('--no-figures')) {
-		const written = await renderFigures(doc, model, join(appDir, 'public', 'legacy-figures', pathway.slug))
+		const written = await renderFigures(
+			doc,
+			model,
+			join(appDir, 'public', 'legacy-figures', pathway.slug),
+		)
 		console.log(`  ${written} figures rendered`)
 	}
 }

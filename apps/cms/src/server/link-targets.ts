@@ -24,58 +24,64 @@ export interface LinkTargets {
 	pathways: { slug: string; name: string }[]
 }
 
-export const linkTargets = createServerFn({ method: 'GET' }).handler(async ({ context }): Promise<LinkTargets> => {
-	requireUser(context.userId)
-	const { d } = await envOf()
-	const [principlesDoc, published] = await Promise.all([
-		d
-			.select({ id: schema.documents.id, slug: schema.documents.slug })
-			.from(schema.documents)
-			.where(and(eq(schema.documents.kind, 'core'), eq(schema.documents.audience, 'principles')))
-			.limit(1),
-		d
-			.select({
-				slug: schema.publishedVersions.slug,
-				kind: schema.publishedVersions.kind,
-				audience: schema.publishedVersions.audience,
-				subject: schema.publishedVersions.subject,
-			})
-			.from(schema.publishedVersions)
-			.where(eq(schema.publishedVersions.kind, 'pathway')),
-	])
-	const core = principlesDoc[0]
-	const sections = core
-		? await d
+export const linkTargets = createServerFn({ method: 'GET' }).handler(
+	async ({ context }): Promise<LinkTargets> => {
+		requireUser(context.userId)
+		const { d } = await envOf()
+		const [principlesDoc, published] = await Promise.all([
+			d
+				.select({ id: schema.documents.id, slug: schema.documents.slug })
+				.from(schema.documents)
+				.where(and(eq(schema.documents.kind, 'core'), eq(schema.documents.audience, 'principles')))
+				.limit(1),
+			d
 				.select({
-					id: schema.sections.id,
-					parentId: schema.sections.parentId,
-					orderIndex: schema.sections.orderIndex,
-					address: schema.sections.address,
-					printedNumber: schema.sections.printedNumber,
-					title: schema.sections.title,
-					hidden: schema.sections.hidden,
-					apparatus: schema.sections.apparatus,
+					slug: schema.publishedVersions.slug,
+					kind: schema.publishedVersions.kind,
+					audience: schema.publishedVersions.audience,
+					subject: schema.publishedVersions.subject,
 				})
-				.from(schema.sections)
-				.where(eq(schema.sections.documentId, core.id))
-		: []
-	const pathways = published
-		.map((p) => ({ slug: p.slug, name: documentName(p) }))
-		.sort((a, b) => a.name.localeCompare(b.name, 'en-AU'))
-	// A hidden or apparatus section takes its subtree with it: the published page shows none.
-	const left = new Set<string>()
-	const readable = outlineOrder(sections).filter((s) => {
-		const out = s.hidden || s.apparatus || (s.parentId !== null && left.has(s.parentId))
-		if (out) left.add(s.id)
-		return !out
-	})
-	return {
-		principles: core
-			? {
-					slug: core.slug,
-					sections: readable.map((s) => ({ address: s.address, printedNumber: s.printedNumber, title: s.title })),
-				}
-			: null,
-		pathways,
-	}
-})
+				.from(schema.publishedVersions)
+				.where(eq(schema.publishedVersions.kind, 'pathway')),
+		])
+		const core = principlesDoc[0]
+		const sections = core
+			? await d
+					.select({
+						id: schema.sections.id,
+						parentId: schema.sections.parentId,
+						orderIndex: schema.sections.orderIndex,
+						address: schema.sections.address,
+						printedNumber: schema.sections.printedNumber,
+						title: schema.sections.title,
+						hidden: schema.sections.hidden,
+						apparatus: schema.sections.apparatus,
+					})
+					.from(schema.sections)
+					.where(eq(schema.sections.documentId, core.id))
+			: []
+		const pathways = published
+			.map((p) => ({ slug: p.slug, name: documentName(p) }))
+			.sort((a, b) => a.name.localeCompare(b.name, 'en-AU'))
+		// A hidden or apparatus section takes its subtree with it: the published page shows none.
+		const left = new Set<string>()
+		const readable = outlineOrder(sections).filter((s) => {
+			const out = s.hidden || s.apparatus || (s.parentId !== null && left.has(s.parentId))
+			if (out) left.add(s.id)
+			return !out
+		})
+		return {
+			principles: core
+				? {
+						slug: core.slug,
+						sections: readable.map((s) => ({
+							address: s.address,
+							printedNumber: s.printedNumber,
+							title: s.title,
+						})),
+					}
+				: null,
+			pathways,
+		}
+	},
+)

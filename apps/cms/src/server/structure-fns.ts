@@ -16,7 +16,10 @@ const title = z.string().trim().min(1).max(200)
 export const setSectionHidden = createServerFn({ method: 'POST' })
 	.inputValidator(z.object({ sectionId: id, hidden: z.boolean() }))
 	.handler(async ({ data, context }) =>
-		structure.setSectionHidden(await lifecycleOf(), { ...data, userId: requireUser(context.userId) }),
+		structure.setSectionHidden(await lifecycleOf(), {
+			...data,
+			userId: requireUser(context.userId),
+		}),
 	)
 
 export const addSubsection = createServerFn({ method: 'POST' })

@@ -49,7 +49,8 @@ function existingLink(): ExistingLink | null {
 	const address = anchor.dataset.address
 	if (anchor.dataset.ocp === 'section' && address) return { tab: 'document', href: '', address }
 	const href = anchor.getAttribute('href') ?? ''
-	if (href.startsWith('/p/')) return { tab: href.includes('#') ? 'principles' : 'pathway', href, address: '' }
+	if (href.startsWith('/p/'))
+		return { tab: href.includes('#') ? 'principles' : 'pathway', href, address: '' }
 	return { tab: 'web', href, address: '' }
 }
 
@@ -59,13 +60,18 @@ const webProblem = (href: string): string | null => {
 	if (text === '') return 'Write the web address.'
 	const parsed = URL.canParse(text) ? new URL(text) : null
 	if (!parsed) return 'Write the whole address, starting with https://.'
-	if (parsed.protocol === 'http:' || parsed.protocol === 'https:' || parsed.protocol === 'mailto:') return null
+	if (parsed.protocol === 'http:' || parsed.protocol === 'https:' || parsed.protocol === 'mailto:')
+		return null
 	return 'A link must start with https://, http:// or mailto:.'
 }
 
 const NEED_WORDS = 'Select the words to link first'
 
-export function LinkPopover(props: { control: EditorControl | null; tab: LinkTab | null; close: () => void }) {
+export function LinkPopover(props: {
+	control: EditorControl | null
+	tab: LinkTab | null
+	close: () => void
+}) {
 	const workspace = useContext(DocumentContext)
 	// Read once as the tool opens: the selection and the link it already carries.
 	const selected = untrack(() => props.control?.selectedText().trim() ?? '')
@@ -80,7 +86,11 @@ export function LinkPopover(props: { control: EditorControl | null; tab: LinkTab
 	onSettled(() => {
 		loadTargets()
 			.then(setRemote)
-			.catch((e: unknown) => setRemoteError(e instanceof Error ? e.message : 'The Principles and pathways could not be read.'))
+			.catch((e: unknown) =>
+				setRemoteError(
+					e instanceof Error ? e.message : 'The Principles and pathways could not be read.',
+				),
+			)
 	})
 
 	const apply = (target: { href: string } | { address: string }) => {
@@ -119,7 +129,11 @@ export function LinkPopover(props: { control: EditorControl | null; tab: LinkTab
 
 	const pathways = createMemo(() => (remote()?.pathways ?? []).filter((p) => matches(p.name)))
 
-	const pickSection = (s: { address: string; printedNumber: string | null; title: string | null }) => {
+	const pickSection = (s: {
+		address: string
+		printedNumber: string | null
+		title: string | null
+	}) => {
 		if (selected !== '') {
 			apply({ address: s.address })
 			return
@@ -141,16 +155,29 @@ export function LinkPopover(props: { control: EditorControl | null; tab: LinkTab
 
 	return (
 		<div class="ocp-link">
-			<Segmented label="Link to" class="ocp-link-tabs" options={TABS} value={tab()} onChange={(next) => {
-				setTab(next)
-				setFilter('')
-			}} />
+			<Segmented
+				label="Link to"
+				class="ocp-link-tabs"
+				options={TABS}
+				value={tab()}
+				onChange={(next) => {
+					setTab(next)
+					setFilter('')
+				}}
+			/>
 			<p class="ocp-tool-caption">
-				{selected === '' ? (tab() === 'document' ? 'Nothing selected: the section’s heading goes in as the link.' : NEED_WORDS) : `Linking “${selected.length > 60 ? `${selected.slice(0, 60)}…` : selected}”`}
+				{selected === ''
+					? tab() === 'document'
+						? 'Nothing selected: the section’s heading goes in as the link.'
+						: NEED_WORDS
+					: `Linking “${selected.length > 60 ? `${selected.slice(0, 60)}…` : selected}”`}
 			</p>
 			<Show when={tab() === 'web'}>
 				<form class="ocp-tool-form" onSubmit={submitWeb}>
-					<Field label="Web address" hint="A page on the web (https://…) or an email address (mailto:…).">
+					<Field
+						label="Web address"
+						hint="A page on the web (https://…) or an email address (mailto:…)."
+					>
 						<TextInput
 							type="url"
 							value={href()}
@@ -167,7 +194,11 @@ export function LinkPopover(props: { control: EditorControl | null; tab: LinkTab
 								Remove link
 							</Button>
 						</Show>
-						<Button type="submit" disabled={selected === ''} title={selected === '' ? NEED_WORDS : undefined}>
+						<Button
+							type="submit"
+							disabled={selected === ''}
+							title={selected === '' ? NEED_WORDS : undefined}
+						>
 							{selected === '' ? NEED_WORDS : 'Apply'}
 						</Button>
 					</div>
@@ -178,7 +209,9 @@ export function LinkPopover(props: { control: EditorControl | null; tab: LinkTab
 					class="ocp-tool-filter"
 					type="search"
 					aria-label={tab() === 'pathway' ? 'Find a pathway' : 'Find a section'}
-					placeholder={tab() === 'pathway' ? 'A pathway’s name…' : 'A section number or words from its title…'}
+					placeholder={
+						tab() === 'pathway' ? 'A pathway’s name…' : 'A section number or words from its title…'
+					}
 					autocomplete="off"
 					value={filter()}
 					ref={focusSoon}
@@ -193,7 +226,10 @@ export function LinkPopover(props: { control: EditorControl | null; tab: LinkTab
 				</Show>
 				<ul class="ocp-link-list" aria-label={TABS.find((t) => t.id === tab())?.label}>
 					<Show when={tab() === 'document'}>
-						<For each={ownSections()} fallback={<li class="ocp-tool-empty">No section of this document matches.</li>}>
+						<For
+							each={ownSections()}
+							fallback={<li class="ocp-tool-empty">No section of this document matches.</li>}
+						>
 							{(s) => (
 								<li>
 									<TargetButton
@@ -207,11 +243,24 @@ export function LinkPopover(props: { control: EditorControl | null; tab: LinkTab
 						</For>
 					</Show>
 					<Show when={tab() === 'principles'}>
-						<Show when={remote()} fallback={<li class="ocp-tool-status">Reading the Principles…</li>}>
+						<Show
+							when={remote()}
+							fallback={<li class="ocp-tool-status">Reading the Principles…</li>}
+						>
 							{(r) => (
-								<Show when={r().principles} fallback={<li class="ocp-tool-empty">The Principles are not in this system yet.</li>}>
+								<Show
+									when={r().principles}
+									fallback={
+										<li class="ocp-tool-empty">The Principles are not in this system yet.</li>
+									}
+								>
 									{(p) => (
-										<For each={principleSections()} fallback={<li class="ocp-tool-empty">No section of the Principles matches.</li>}>
+										<For
+											each={principleSections()}
+											fallback={
+												<li class="ocp-tool-empty">No section of the Principles matches.</li>
+											}
+										>
 											{(s) => (
 												<li>
 													<TargetButton
@@ -219,7 +268,9 @@ export function LinkPopover(props: { control: EditorControl | null; tab: LinkTab
 														title={s.title ?? s.address}
 														disabled={selected === ''}
 														current={existing?.href === `${publishedHref(p().slug)}#${s.address}`}
-														onPick={() => apply({ href: `${publishedHref(p().slug)}#${s.address}` })}
+														onPick={() =>
+															apply({ href: `${publishedHref(p().slug)}#${s.address}` })
+														}
 													/>
 												</li>
 											)}
@@ -230,8 +281,14 @@ export function LinkPopover(props: { control: EditorControl | null; tab: LinkTab
 						</Show>
 					</Show>
 					<Show when={tab() === 'pathway'}>
-						<Show when={remote()} fallback={<li class="ocp-tool-status">Reading the published pathways…</li>}>
-							<For each={pathways()} fallback={<li class="ocp-tool-empty">No published pathway matches.</li>}>
+						<Show
+							when={remote()}
+							fallback={<li class="ocp-tool-status">Reading the published pathways…</li>}
+						>
+							<For
+								each={pathways()}
+								fallback={<li class="ocp-tool-empty">No published pathway matches.</li>}
+							>
 								{(p) => (
 									<li>
 										<TargetButton

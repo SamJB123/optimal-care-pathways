@@ -53,7 +53,11 @@ const MEMBER = `member@${ORG}`
 
 /** Review every changed section, approve it in full, publish as the central team. */
 async function publishNow(label: string | null, releaseNotes: string | null) {
-	const review = await lc.requestReview(lifecycle(), { documentId: DOC, userId: MEMBER, note: null })
+	const review = await lc.requestReview(lifecycle(), {
+		documentId: DOC,
+		userId: MEMBER,
+		note: null,
+	})
 	const pins = await db(env.DB)
 		.select()
 		.from(schema.reviewSections)
@@ -66,7 +70,12 @@ async function publishNow(label: string | null, releaseNotes: string | null) {
 			note: null,
 			userId: `admin@${ORG}`,
 		})
-	return lc.publish(lifecycle(), { documentId: DOC, userId: `owner@${CENTRAL}`, label, releaseNotes })
+	return lc.publish(lifecycle(), {
+		documentId: DOC,
+		userId: `owner@${CENTRAL}`,
+		label,
+		releaseNotes,
+	})
 }
 
 const compare = (from: editions.EditionRef, to: editions.EditionRef, userId = MEMBER) =>
@@ -89,7 +98,11 @@ const section = (
 	parentId,
 	address,
 	canonical: true,
-	printedNumber: address.startsWith('step-') ? `Step ${stepNumber}` : /^\d/.test(address) ? address : null,
+	printedNumber: address.startsWith('step-')
+		? `Step ${stepNumber}`
+		: /^\d/.test(address)
+			? address
+			: null,
 	title: `Title ${address}`,
 	orderIndex,
 	stepNumber,
@@ -130,7 +143,10 @@ describe('two editions and a draft', () => {
 	it('publishes edition 1, then edition 2 with a change, a hidden section and an added one', async () => {
 		const d = db(env.DB)
 		expect((await publishNow(null, 'First release.')).versionNo).toBe(1)
-		await d.update(schema.sections).set({ bodyJson: doc('Screening every two years.') }).where(eq(schema.sections.id, S11))
+		await d
+			.update(schema.sections)
+			.set({ bodyJson: doc('Screening every two years.') })
+			.where(eq(schema.sections.id, S11))
 		await d.update(schema.sections).set({ hidden: true }).where(eq(schema.sections.id, S12))
 		await d.insert(schema.sections).values({
 			...section(S13, STEP1, '1/nurse-navigation', 3, 1, 'Nurse navigation.'),
@@ -140,7 +156,10 @@ describe('two editions and a draft', () => {
 		})
 		expect((await publishNow('Second edition', 'Screening interval.')).versionNo).toBe(2)
 		// The draft of edition 3: a change, the hidden section shown again, the back matter deleted.
-		await d.update(schema.sections).set({ bodyJson: doc('Referral within two weeks.') }).where(eq(schema.sections.id, S21))
+		await d
+			.update(schema.sections)
+			.set({ bodyJson: doc('Referral within two weeks.') })
+			.where(eq(schema.sections.id, S21))
 		await d.update(schema.sections).set({ hidden: false }).where(eq(schema.sections.id, S12))
 		await d.delete(schema.sections).where(eq(schema.sections.id, BACK))
 	})
@@ -148,7 +167,12 @@ describe('two editions and a draft', () => {
 	it('compares edition 1 with edition 2', async () => {
 		const c = await compare(1, 2)
 		expect(c.from).toMatchObject({ ref: 1, versionNo: 1, status: 'archived', label: 'Edition 1' })
-		expect(c.to).toMatchObject({ ref: 2, versionNo: 2, status: 'published', label: 'Second edition' })
+		expect(c.to).toMatchObject({
+			ref: 2,
+			versionNo: 2,
+			status: 'published',
+			label: 'Second edition',
+		})
 		expect(c.to.publishedAt).toBeGreaterThan(0)
 		expect(c.totals).toEqual({ added: 1, removed: 0, changed: 1, hidden: 1, shown: 0 })
 		expect(shape(c)).toEqual([
@@ -164,7 +188,12 @@ describe('two editions and a draft', () => {
 		expect(c.groups[0]?.label).toBe('Step 1')
 		const [changed, hidden, added] = c.groups[0]?.entries ?? []
 		expect(changed?.annotated.inserted).toBeGreaterThan(0)
-		expect(changed).toMatchObject({ part: 'step-1', address: '1.1', printedNumber: '1.1', title: 'Title 1.1' })
+		expect(changed).toMatchObject({
+			part: 'step-1',
+			address: '1.1',
+			printedNumber: '1.1',
+			title: 'Title 1.1',
+		})
 		expect(hidden?.annotated).toMatchObject({ inserted: 0, changed: true })
 		expect(hidden?.annotated.deleted).toBeGreaterThan(0)
 		expect(added?.annotated).toMatchObject({ deleted: 0, changed: true })
@@ -173,7 +202,13 @@ describe('two editions and a draft', () => {
 
 	it('compares edition 2 with the draft: shown, changed, and the deleted section last', async () => {
 		const c = await compare(2, 'draft')
-		expect(c.to).toMatchObject({ ref: 'draft', versionNo: 3, status: 'draft', label: 'Draft of edition 3', publishedAt: null })
+		expect(c.to).toMatchObject({
+			ref: 'draft',
+			versionNo: 3,
+			status: 'draft',
+			label: 'Draft of edition 3',
+			publishedAt: null,
+		})
 		expect(c.totals).toEqual({ added: 0, removed: 1, changed: 1, hidden: 0, shown: 1 })
 		expect(shape(c)).toEqual([
 			[1, [[S12, 'shown']]],
@@ -182,7 +217,11 @@ describe('two editions and a draft', () => {
 		])
 		const gone = c.groups.at(-1)
 		expect(gone?.label).toBe('No longer in the document')
-		expect(gone?.entries[0]).toMatchObject({ part: null, address: 'appendix', title: 'Title appendix' })
+		expect(gone?.entries[0]).toMatchObject({
+			part: null,
+			address: 'appendix',
+			title: 'Title appendix',
+		})
 	})
 
 	it('compares edition 1 with the draft, and reads the other way round', async () => {
@@ -201,8 +240,12 @@ describe('two editions and a draft', () => {
 		])
 		const back = await compare('draft', 1)
 		expect(back.totals).toEqual({ added: 1, removed: 1, changed: 2, hidden: 0, shown: 0 })
-		expect(back.groups.flatMap((g) => g.entries).find((e) => e.sectionId === S13)?.kind).toBe('removed')
-		expect(back.groups.flatMap((g) => g.entries).find((e) => e.sectionId === BACK)?.kind).toBe('added')
+		expect(back.groups.flatMap((g) => g.entries).find((e) => e.sectionId === S13)?.kind).toBe(
+			'removed',
+		)
+		expect(back.groups.flatMap((g) => g.entries).find((e) => e.sectionId === BACK)?.kind).toBe(
+			'added',
+		)
 	})
 
 	it('refuses the same edition twice, a missing edition, the draft by number and a stranger', async () => {

@@ -30,7 +30,10 @@ export interface TeamClient {
 }
 
 function createTeamClient(orgId: string): TeamClient {
-	const members = createSyncedCollection<TeamMemberWireRow>({ id: `team:${orgId}`, getKey: (r) => r.userId })
+	const members = createSyncedCollection<TeamMemberWireRow>({
+		id: `team:${orgId}`,
+		getKey: (r) => r.userId,
+	})
 	let ready = false
 	let selfId: string | null = null
 	const listeners = new Set<() => void>()

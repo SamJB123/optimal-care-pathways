@@ -37,19 +37,31 @@ const PUBLIC_PAGE = /^\/(p|legacy)\/([a-zA-Z0-9-]+)$/
  * its cached copies vary by cookie: one shared copy for visitors, a private one per user.
  */
 function withCachePolicy(request: Request, response: Response): Response {
-	if (response.status === 101 || response.webSocket || response.headers.has('cache-control')) return response
+	if (response.status === 101 || response.webSocket || response.headers.has('cache-control'))
+		return response
 	const headers = new Headers(response.headers)
-	const page = request.method === 'GET' && response.ok ? PUBLIC_PAGE.exec(new URL(request.url).pathname) : null
+	const page =
+		request.method === 'GET' && response.ok ? PUBLIC_PAGE.exec(new URL(request.url).pathname) : null
 	if (page) {
 		headers.set('cache-control', PUBLIC_CACHE_CONTROL)
-		headers.set('cache-tag', `${PUBLISHED_CACHE_TAG},${page[1] === 'p' ? cacheTagFor(page[2] ?? '') : `legacy-${page[2]}`}`)
+		headers.set(
+			'cache-tag',
+			`${PUBLISHED_CACHE_TAG},${page[1] === 'p' ? cacheTagFor(page[2] ?? '') : `legacy-${page[2]}`}`,
+		)
 		headers.append('vary', 'Cookie')
 	} else headers.set('cache-control', 'no-store')
-	return new Response(response.body, { status: response.status, statusText: response.statusText, headers })
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers,
+	})
 }
 
 export default {
 	async fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext) {
-		return withCachePolicy(request, await serveCapnweb({ request, env, ctx, Root: CoreRpcRoot, handler }))
+		return withCachePolicy(
+			request,
+			await serveCapnweb({ request, env, ctx, Root: CoreRpcRoot, handler }),
+		)
 	},
 } satisfies ExportedHandler<Cloudflare.Env>

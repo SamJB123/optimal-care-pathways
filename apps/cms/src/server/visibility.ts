@@ -21,8 +21,12 @@ export async function visibleDocuments(userId: string) {
 		? await d.select().from(schema.documents)
 		: orgIds.length === 0
 			? []
-			: await inGroups(orgIds, (group) => d.select().from(schema.documents).where(inArray(schema.documents.orgId, group)))
-	const roleByOrg = new Map(memberships.map((m) => [m.organizationId, ROLE_LADDER.find((r) => r === m.role) ?? null]))
+			: await inGroups(orgIds, (group) =>
+					d.select().from(schema.documents).where(inArray(schema.documents.orgId, group)),
+				)
+	const roleByOrg = new Map(
+		memberships.map((m) => [m.organizationId, ROLE_LADDER.find((r) => r === m.role) ?? null]),
+	)
 	const withRole = rows.flatMap((row) => {
 		const role = roleByOrg.get(row.orgId) ?? (isCentral ? ('admin' as const) : null)
 		return role ? [{ row, role }] : []

@@ -22,7 +22,12 @@ function TeamPage() {
 				<p class="ocp-team-kicker">People</p>
 				<h1>Team</h1>
 			</header>
-			<TeamPanel team={view().team} standing={view().standing} members={view().members} onLeft={() => void navigate({ to: '/' })} />
+			<TeamPanel
+				team={view().team}
+				standing={view().standing}
+				members={view().members}
+				onLeft={() => void navigate({ to: '/' })}
+			/>
 		</div>
 	)
 }

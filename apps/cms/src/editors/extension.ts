@@ -8,7 +8,14 @@ import {
 	type CollaborativeExtensionOptions,
 	createCollaborativeExtension,
 } from '@aicolab/app-kit/prosekit/extension'
-import { defineCommands, defineKeymap, definePlugin, Priority, union, withPriority } from '@prosekit/core'
+import {
+	defineCommands,
+	defineKeymap,
+	definePlugin,
+	Priority,
+	union,
+	withPriority,
+} from '@prosekit/core'
 import { type Command, Plugin, type Transaction } from '@prosekit/pm/state'
 import { Decoration, DecorationSet } from '@prosekit/pm/view'
 import {
@@ -60,7 +67,11 @@ import { defineTable } from '@prosekit/extensions/table'
 import { defineTextAlignCommands, defineTextAlignKeymap } from '@prosekit/extensions/text-align'
 import { defineUnderlineCommands, defineUnderlineKeymap } from '@prosekit/extensions/underline'
 import { Fragment, Slice } from '@prosekit/pm/model'
-import { createDedentListCommand, createIndentListCommand, createToggleListCommand } from 'prosemirror-flat-list'
+import {
+	createDedentListCommand,
+	createIndentListCommand,
+	createToggleListCommand,
+} from 'prosemirror-flat-list'
 import type { GuidanceMode } from '#/content/blocks.tsx'
 import type { DerivedView } from '#/content/derived.ts'
 import { BLOCK_NODE_NAMES, defineContentSchema } from '#/content/schema.ts'
@@ -161,7 +172,8 @@ function defineJoinedCitations() {
 					const marks: Decoration[] = []
 					state.doc.descendants((node, pos) => {
 						if (node.type.name !== 'citation') return
-						if (state.doc.resolve(pos).nodeBefore?.type.name === 'citation') marks.push(Decoration.node(pos, pos + node.nodeSize, { 'data-joined': 'true' }))
+						if (state.doc.resolve(pos).nodeBefore?.type.name === 'citation')
+							marks.push(Decoration.node(pos, pos + node.nodeSize, { 'data-joined': 'true' }))
 					})
 					return DecorationSet.create(state.doc, marks)
 				},

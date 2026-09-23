@@ -52,10 +52,34 @@ function documentTargets(documents: readonly JumpDocument[]): JumpTarget[] {
 			: []),
 		...(d.published
 			? [
-					{ id: `pub:${d.slug}`, label: `${d.name}, published`, kind: 'Published', keywords: [d.subject, d.slug, 'read'], go: publishedHref(d.slug) },
-					{ id: `guide:${d.slug}`, label: `${d.name}, quick reference guide`, kind: 'Published', keywords: [d.subject, 'guide'], go: guideHref(d.slug) },
-					{ id: `pdf:${d.slug}`, label: `${d.name}, PDF`, kind: 'Download', keywords: [d.subject, 'pdf'], go: pdfHref(d.slug) },
-					{ id: `gpdf:${d.slug}`, label: `${d.name}, guide PDF`, kind: 'Download', keywords: [d.subject, 'pdf', 'guide'], go: guidePdfHref(d.slug) },
+					{
+						id: `pub:${d.slug}`,
+						label: `${d.name}, published`,
+						kind: 'Published',
+						keywords: [d.subject, d.slug, 'read'],
+						go: publishedHref(d.slug),
+					},
+					{
+						id: `guide:${d.slug}`,
+						label: `${d.name}, quick reference guide`,
+						kind: 'Published',
+						keywords: [d.subject, 'guide'],
+						go: guideHref(d.slug),
+					},
+					{
+						id: `pdf:${d.slug}`,
+						label: `${d.name}, PDF`,
+						kind: 'Download',
+						keywords: [d.subject, 'pdf'],
+						go: pdfHref(d.slug),
+					},
+					{
+						id: `gpdf:${d.slug}`,
+						label: `${d.name}, guide PDF`,
+						kind: 'Download',
+						keywords: [d.subject, 'pdf', 'guide'],
+						go: guidePdfHref(d.slug),
+					},
 				]
 			: []),
 	])
@@ -128,7 +152,12 @@ export function Jump(props: JumpContribution) {
 
 	return (
 		<>
-			<CommandPaletteTrigger target={JUMP_ID} label="Jump to a pathway, section or action" class="ocp-jump-trigger" shortcut={<kbd>⌘K</kbd>}>
+			<CommandPaletteTrigger
+				target={JUMP_ID}
+				label="Jump to a pathway, section or action"
+				class="ocp-jump-trigger"
+				shortcut={<kbd>⌘K</kbd>}
+			>
 				<span class="ocp-jump-trigger-text">Jump to…</span>
 			</CommandPaletteTrigger>
 			<CommandPalette
@@ -144,9 +173,11 @@ export function Jump(props: JumpContribution) {
 				onOpen={() => {
 					if (loaded) return
 					loaded = true
-					void jumpIndex().then(setDocuments).catch(() => {
-						loaded = false
-					})
+					void jumpIndex()
+						.then(setDocuments)
+						.catch(() => {
+							loaded = false
+						})
 				}}
 				onSelect={select}
 			/>

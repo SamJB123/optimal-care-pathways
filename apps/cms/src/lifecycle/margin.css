@@ -81,7 +81,9 @@
 		border-radius: 0.45rem;
 		background: color-mix(in oklab, var(--color-success) 8%, var(--color-base-100));
 		border: 1px solid color-mix(in oklab, var(--color-success) 28%, transparent);
-		transition: border-color var(--dur-quick) var(--ease-out), background var(--dur-quick) var(--ease-out);
+		transition:
+			border-color var(--dur-quick) var(--ease-out),
+			background var(--dur-quick) var(--ease-out);
 	}
 	.ocp-note:hover {
 		border-color: var(--color-success);

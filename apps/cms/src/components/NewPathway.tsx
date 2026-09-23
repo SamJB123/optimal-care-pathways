@@ -48,7 +48,13 @@ export function NewPathwaySheet(props: { open: boolean; onDismiss: () => void })
 		setError(null)
 		try {
 			const result = await createPathway({
-				data: { kind: kind(), subject: subject().trim(), title: shownTitle(), slug: shownSlug(), accent: accent() },
+				data: {
+					kind: kind(),
+					subject: subject().trim(),
+					title: shownTitle(),
+					slug: shownSlug(),
+					accent: accent(),
+				},
 			})
 			props.onDismiss()
 			await navigate({ to: '/d/$documentId', params: { documentId: result.documentId } })
@@ -60,29 +66,58 @@ export function NewPathwaySheet(props: { open: boolean; onDismiss: () => void })
 	}
 
 	return (
-		<AdaptiveModalSheet open={props.open} label="New pathway" title="New pathway" onDismiss={props.onDismiss}>
+		<AdaptiveModalSheet
+			open={props.open}
+			label="New pathway"
+			title="New pathway"
+			onDismiss={props.onDismiss}
+		>
 			<form class="ocp-new-pathway" onSubmit={(e) => void create(e)}>
 				<fieldset class="ocp-new-kind">
 					<legend>What it is for</legend>
 					<label>
-						<input type="radio" name="kind" value="cancer" checked={kind() === 'cancer'} onChange={() => setKind('cancer')} />
+						<input
+							type="radio"
+							name="kind"
+							value="cancer"
+							checked={kind() === 'cancer'}
+							onChange={() => setKind('cancer')}
+						/>
 						A cancer type
 						<span>from the cancer-specific template</span>
 					</label>
 					<label>
-						<input type="radio" name="kind" value="population" checked={kind() === 'population'} onChange={() => setKind('population')} />
+						<input
+							type="radio"
+							name="kind"
+							value="population"
+							checked={kind() === 'population'}
+							onChange={() => setKind('population')}
+						/>
 						A population group
 						<span>from the population template</span>
 					</label>
 				</fieldset>
 				<Field
 					label={kind() === 'cancer' ? 'The cancer type' : 'The population group'}
-					hint={kind() === 'cancer' ? 'As the text reads it: "breast cancer", "multiple myeloma"' : 'As the text reads it: "older people"'}
+					hint={
+						kind() === 'cancer'
+							? 'As the text reads it: "breast cancer", "multiple myeloma"'
+							: 'As the text reads it: "older people"'
+					}
 				>
-					<TextInput value={subject()} required onInput={(e) => setSubject(e.currentTarget.value)} />
+					<TextInput
+						value={subject()}
+						required
+						onInput={(e) => setSubject(e.currentTarget.value)}
+					/>
 				</Field>
 				<Field label="Title">
-					<TextInput value={shownTitle()} required onInput={(e) => setTitle(e.currentTarget.value)} />
+					<TextInput
+						value={shownTitle()}
+						required
+						onInput={(e) => setTitle(e.currentTarget.value)}
+					/>
 				</Field>
 				<Field label="Address" hint={`Published at /p/${shownSlug() || '…'}`}>
 					<TextInput
@@ -95,7 +130,11 @@ export function NewPathwaySheet(props: { open: boolean; onDismiss: () => void })
 				<FamilyColourField
 					value={accent()}
 					onChange={setAccent}
-					name={subject().trim() ? documentName({ kind: 'pathway', audience: kind(), subject: subject() }) : 'The new pathway'}
+					name={
+						subject().trim()
+							? documentName({ kind: 'pathway', audience: kind(), subject: subject() })
+							: 'The new pathway'
+					}
 				/>
 				<Show when={error()}>
 					{(text) => (

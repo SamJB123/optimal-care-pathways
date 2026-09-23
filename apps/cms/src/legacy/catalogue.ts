@@ -35,7 +35,12 @@ const pathwaySlugOf = (slug: string): string =>
 
 /** A pathway slug is also its organisation's slug, which the auth service keeps to 64
  *  characters: a file name too long for one names its pathway explicitly. */
-const cancer = (slug: string, subject: string, family: LegacyFamily = 'design-2021', pathwaySlug = pathwaySlugOf(slug)): LegacyPathway => ({
+const cancer = (
+	slug: string,
+	subject: string,
+	family: LegacyFamily = 'design-2021',
+	pathwaySlug = pathwaySlugOf(slug),
+): LegacyPathway => ({
 	slug,
 	file: `${slug}.pdf`,
 	pathwaySlug,
@@ -54,7 +59,10 @@ const population = (slug: string, subject: string): LegacyPathway => ({
 })
 
 export const LEGACY_PATHWAYS: readonly LegacyPathway[] = [
-	cancer('acute-leukaemia-in-children-adolescents-young-adults-1st-edition', 'acute leukaemia in children, adolescents and young adults'),
+	cancer(
+		'acute-leukaemia-in-children-adolescents-young-adults-1st-edition',
+		'acute leukaemia in children, adolescents and young adults',
+	),
 	cancer('acute-lymphoblastic-leukaemia', 'acute lymphoblastic leukaemia'),
 	cancer('acute-myeloid-leukaemia-2nd-edition', 'acute myeloid leukaemia'),
 	cancer('al-amyloidosis', 'AL amyloidosis'),
@@ -69,8 +77,16 @@ export const LEGACY_PATHWAYS: readonly LegacyPathway[] = [
 	cancer('head-and-neck-cancer-2nd-edition', 'head and neck cancer'),
 	cancer('hepatocellular-carcinoma-2nd-edition', 'hepatocellular carcinoma'),
 	cancer('high-grade-glioma-2nd-edition', 'high-grade glioma'),
-	cancer('hodgkin-and-diffuse-large-b-cell-lymphoma-2nd-edition', 'Hodgkin and diffuse large B-cell lymphoma'),
-	cancer('keratinocyte-cancer-basal-cell-carcinoma-or-squamous-cell-carcinoma-2nd-edition', 'keratinocyte cancer', 'design-2021', 'keratinocyte-cancer'),
+	cancer(
+		'hodgkin-and-diffuse-large-b-cell-lymphoma-2nd-edition',
+		'Hodgkin and diffuse large B-cell lymphoma',
+	),
+	cancer(
+		'keratinocyte-cancer-basal-cell-carcinoma-or-squamous-cell-carcinoma-2nd-edition',
+		'keratinocyte cancer',
+		'design-2021',
+		'keratinocyte-cancer',
+	),
 	cancer('low-grade-lymphomas-1st-edition', 'low-grade lymphomas'),
 	cancer('lung-cancer-2nd-edition', 'lung cancer'),
 	cancer('melanoma-2nd-edition', 'melanoma'),
@@ -82,10 +98,20 @@ export const LEGACY_PATHWAYS: readonly LegacyPathway[] = [
 	cancer('ovarian-cancer-2nd-edition', 'ovarian cancer'),
 	cancer('pancreatic-cancer-2nd-edition', 'pancreatic cancer'),
 	cancer('prostate-cancer-2nd-edition', 'prostate cancer'),
-	cancer('sarcoma-bone-soft-tissue-tumours-january-2020', 'sarcoma (bone and soft tissue tumours)', 'design-2020'),
+	cancer(
+		'sarcoma-bone-soft-tissue-tumours-january-2020',
+		'sarcoma (bone and soft tissue tumours)',
+		'design-2020',
+	),
 	cancer('waldenstroms-macroglobulinaemia', 'Waldenström’s macroglobulinaemia'),
-	population('optimal-care-pathway-for-aboriginal-and-torres-strait-islander-people-with-cancer', 'Aboriginal and Torres Strait Islander people with cancer'),
-	population('optimal-care-pathway-for-adolescents-and-young-adults-with-cancer', 'adolescents and young adults with cancer'),
+	population(
+		'optimal-care-pathway-for-aboriginal-and-torres-strait-islander-people-with-cancer',
+		'Aboriginal and Torres Strait Islander people with cancer',
+	),
+	population(
+		'optimal-care-pathway-for-adolescents-and-young-adults-with-cancer',
+		'adolescents and young adults with cancer',
+	),
 	population('optimal-care-pathway-for-older-people-with-cancer', 'older people with cancer'),
 ]
 

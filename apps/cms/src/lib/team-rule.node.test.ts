@@ -18,8 +18,12 @@ import {
 	type TeamStanding,
 } from './team-rule.ts'
 
-const change = (standing: TeamStanding, from: (typeof TEAM_ROLES)[number], to: (typeof TEAM_ROLES)[number] | null, opts: { self?: boolean; leads?: number } = {}) =>
-	mayChange({ standing, self: opts.self ?? false, from, to, leads: opts.leads ?? 2 })
+const change = (
+	standing: TeamStanding,
+	from: (typeof TEAM_ROLES)[number],
+	to: (typeof TEAM_ROLES)[number] | null,
+	opts: { self?: boolean; leads?: number } = {},
+) => mayChange({ standing, self: opts.self ?? false, from, to, leads: opts.leads ?? 2 })
 
 describe('standing', () => {
 	it('is the own role, or steward for a central member over another team', () => {
@@ -40,7 +44,8 @@ describe('standing', () => {
 describe('the lead', () => {
 	it('changes anyone to anything, the lead included', () => {
 		for (const from of TEAM_ROLES)
-			for (const to of TEAM_ROLES) expect(change('owner', from, to, { leads: 2 }).ok, `${from} → ${to}`).toBe(true)
+			for (const to of TEAM_ROLES)
+				expect(change('owner', from, to, { leads: 2 }).ok, `${from} → ${to}`).toBe(true)
 	})
 	it('removes anyone while another lead remains', () => {
 		for (const from of TEAM_ROLES) expect(change('owner', from, null, { leads: 2 }).ok).toBe(true)
@@ -55,13 +60,25 @@ describe('the lead', () => {
 describe('the last lead', () => {
 	it('cannot leave, be removed or be given another role, by anyone', () => {
 		for (const standing of ['owner', 'steward'] as const) {
-			expect(change(standing, 'owner', null, { leads: 1 })).toEqual({ ok: false, reason: 'last-lead' })
-			expect(change(standing, 'owner', 'admin', { leads: 1 })).toEqual({ ok: false, reason: 'last-lead' })
+			expect(change(standing, 'owner', null, { leads: 1 })).toEqual({
+				ok: false,
+				reason: 'last-lead',
+			})
+			expect(change(standing, 'owner', 'admin', { leads: 1 })).toEqual({
+				ok: false,
+				reason: 'last-lead',
+			})
 		}
 		// A reviewer may not touch a lead at all: that is the refusal they hear.
 		expect(change('admin', 'owner', null, { leads: 1 })).toEqual({ ok: false, reason: 'forbidden' })
-		expect(change('owner', 'owner', null, { self: true, leads: 1 })).toEqual({ ok: false, reason: 'last-lead' })
-		expect(change('owner', 'owner', 'viewer', { self: true, leads: 1 })).toEqual({ ok: false, reason: 'last-lead' })
+		expect(change('owner', 'owner', null, { self: true, leads: 1 })).toEqual({
+			ok: false,
+			reason: 'last-lead',
+		})
+		expect(change('owner', 'owner', 'viewer', { self: true, leads: 1 })).toEqual({
+			ok: false,
+			reason: 'last-lead',
+		})
 	})
 	it('stays a lead: no change at all is fine', () => {
 		expect(change('owner', 'owner', 'owner', { leads: 1 }).ok).toBe(true)
@@ -82,7 +99,10 @@ describe('a reviewer', () => {
 		expect(change('admin', 'owner', null, { leads: 2 })).toEqual({ ok: false, reason: 'forbidden' })
 	})
 	it('cannot demote themself, but may leave', () => {
-		expect(change('admin', 'admin', 'member', { self: true })).toEqual({ ok: false, reason: 'forbidden' })
+		expect(change('admin', 'admin', 'member', { self: true })).toEqual({
+			ok: false,
+			reason: 'forbidden',
+		})
 		expect(change('admin', 'admin', null, { self: true }).ok).toBe(true)
 	})
 	it('brings people in as drafters and viewers', () => {
@@ -109,16 +129,27 @@ describe('drafters, viewers and outsiders', () => {
 		}
 		expect(change('member', 'member', null, { self: true }).ok).toBe(true)
 		expect(change('viewer', 'viewer', null, { self: true }).ok).toBe(true)
-		expect(change('member', 'member', 'admin', { self: true })).toEqual({ ok: false, reason: 'forbidden' })
+		expect(change('member', 'member', 'admin', { self: true })).toEqual({
+			ok: false,
+			reason: 'forbidden',
+		})
 	})
 })
 
 describe('the pickers', () => {
 	it('offer a role list only where the reader may change the member', () => {
-		expect(rolesFor({ standing: 'admin', self: false, from: 'member', leads: 1 })).toEqual(['viewer', 'member'])
+		expect(rolesFor({ standing: 'admin', self: false, from: 'member', leads: 1 })).toEqual([
+			'viewer',
+			'member',
+		])
 		expect(rolesFor({ standing: 'admin', self: false, from: 'admin', leads: 1 })).toEqual([])
 		expect(rolesFor({ standing: 'owner', self: true, from: 'owner', leads: 1 })).toEqual([])
-		expect(rolesFor({ standing: 'owner', self: true, from: 'owner', leads: 2 })).toEqual(['viewer', 'member', 'admin', 'owner'])
+		expect(rolesFor({ standing: 'owner', self: true, from: 'owner', leads: 2 })).toEqual([
+			'viewer',
+			'member',
+			'admin',
+			'owner',
+		])
 		expect(rolesFor({ standing: 'viewer', self: true, from: 'viewer', leads: 1 })).toEqual([])
 	})
 	it('sort the roster leads first, then by name', () => {

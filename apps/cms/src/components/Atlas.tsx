@@ -20,9 +20,21 @@ import { Button, withScopedViewTransition } from '@aicolab/ui-solid'
 import { createMemo, createSignal, For, onSettled, Show } from 'solid-js'
 import { familyStyle } from '#/lib/family.ts'
 import { ago, monthDate } from '#/lib/labels.ts'
-import { guideHref, partHref, pdfHref, publishedHref, sectionHref, workspaceHref } from '#/lib/links.ts'
+import {
+	guideHref,
+	partHref,
+	pdfHref,
+	publishedHref,
+	sectionHref,
+	workspaceHref,
+} from '#/lib/links.ts'
 import { bandFrom, bandLabel, type SpineBand } from '#/lib/outline.ts'
-import { type AtlasCellSection, type AtlasRow, type AtlasSnapshot, atlasCell } from '#/server/atlas.ts'
+import {
+	type AtlasCellSection,
+	type AtlasRow,
+	type AtlasSnapshot,
+	atlasCell,
+} from '#/server/atlas.ts'
 import { TickKey, TickRuns, Ticks, ticksSummary } from './Ticks.tsx'
 import './atlas.css'
 
@@ -30,14 +42,26 @@ type Sort = 'name' | 'changed' | 'recent'
 type Filter = 'all' | 'review' | 'changed' | 'unpublished' | 'pending'
 
 const GROUPS: { key: string; label: string; test: (row: AtlasRow) => boolean }[] = [
-	{ key: 'cancer', label: 'Cancer-specific pathways', test: (r) => r.kind === 'pathway' && r.audience === 'cancer' },
-	{ key: 'population', label: 'Population pathways', test: (r) => r.kind === 'pathway' && r.audience === 'population' },
+	{
+		key: 'cancer',
+		label: 'Cancer-specific pathways',
+		test: (r) => r.kind === 'pathway' && r.audience === 'cancer',
+	},
+	{
+		key: 'population',
+		label: 'Population pathways',
+		test: (r) => r.kind === 'pathway' && r.audience === 'population',
+	},
 	{ key: 'core', label: 'Core templates', test: (r) => r.kind === 'core' },
 ]
 
 const FILTERS: { key: Filter; label: string; test: (row: AtlasRow) => boolean }[] = [
 	{ key: 'all', label: 'Everything', test: () => true },
-	{ key: 'review', label: 'In review', test: (r) => r.review !== null && r.review.decision === null },
+	{
+		key: 'review',
+		label: 'In review',
+		test: (r) => r.review !== null && r.review.decision === null,
+	},
 	{ key: 'changed', label: 'Changed in the draft', test: (r) => r.draft.changed > 0 },
 	{ key: 'unpublished', label: 'Not yet published', test: (r) => r.published === null },
 	{ key: 'pending', label: 'Awaiting an organisation', test: (r) => r.pending },
@@ -68,7 +92,13 @@ function edition(row: AtlasRow): string {
 function columnsFor(rows: readonly AtlasRow[]): string {
 	const most = (i: number) => Math.max(4, ...rows.map((r) => r.bands[i]?.ticks.length ?? 0))
 	const bands = Array.from({ length: 9 }, (_, i) => `minmax(${most(i) * 2 + 6}px, ${most(i)}fr)`)
-	return ['[name] minmax(10rem, 150fr)', ...bands, '[state] minmax(10rem, 140fr)', '[last] minmax(6.5rem, 90fr)', '[links] max-content'].join(' ')
+	return [
+		'[name] minmax(10rem, 150fr)',
+		...bands,
+		'[state] minmax(10rem, 140fr)',
+		'[last] minmax(6.5rem, 90fr)',
+		'[links] max-content',
+	].join(' ')
 }
 
 /** A view-transition name for a row: stable, and a valid identifier. */
@@ -94,19 +124,25 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 		const q = query().trim().toLowerCase()
 		const test = FILTERS.find((f) => f.key === filter())?.test ?? (() => true)
 		return props.snapshot.rows.filter(
-			(r) => test(r) && (!q || [r.name, r.title, r.subject, r.slug].some((s) => s.toLowerCase().includes(q))),
+			(r) =>
+				test(r) &&
+				(!q || [r.name, r.title, r.subject, r.slug].some((s) => s.toLowerCase().includes(q))),
 		)
 	})
 
 	const ordered = (rows: AtlasRow[]): AtlasRow[] =>
 		[...rows].sort((a, b) => {
-			if (sort() === 'changed') return b.draft.changed - a.draft.changed || a.name.localeCompare(b.name)
-			if (sort() === 'recent') return (b.lastChange?.at ?? 0) - (a.lastChange?.at ?? 0) || a.name.localeCompare(b.name)
+			if (sort() === 'changed')
+				return b.draft.changed - a.draft.changed || a.name.localeCompare(b.name)
+			if (sort() === 'recent')
+				return (b.lastChange?.at ?? 0) - (a.lastChange?.at ?? 0) || a.name.localeCompare(b.name)
 			return a.name.localeCompare(b.name, 'en-AU')
 		})
 
 	const groups = createMemo(() =>
-		GROUPS.map((g) => ({ ...g, rows: ordered(visible().filter(g.test)) })).filter((g) => g.rows.length > 0),
+		GROUPS.map((g) => ({ ...g, rows: ordered(visible().filter(g.test)) })).filter(
+			(g) => g.rows.length > 0,
+		),
 	)
 
 	const moving = (update: () => void) => withScopedViewTransition(grid, update)
@@ -115,7 +151,8 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 	const [cardFor, setCardFor] = createSignal<{ row: AtlasRow; band: SpineBand } | null>(null)
 	const [cardSections, setCardSections] = createSignal<AtlasCellSection[] | null>(null)
 	const cache = new Map<string, AtlasCellSection[]>()
-	const declarative = () => typeof HTMLAnchorElement !== 'undefined' && 'interestForElement' in HTMLAnchorElement.prototype
+	const declarative = () =>
+		typeof HTMLAnchorElement !== 'undefined' && 'interestForElement' in HTMLAnchorElement.prototype
 	let pending: ReturnType<typeof setTimeout> | undefined
 
 	/** The card sits against the band it is about: that band carries the anchor name. */
@@ -171,7 +208,8 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 						{' · '}
 						{props.snapshot.rows.filter((r) => r.draft.changed > 0).length} changed in the draft
 						{' · '}
-						{props.snapshot.rows.filter((r) => r.review && r.review.decision === null).length} in review
+						{props.snapshot.rows.filter((r) => r.review && r.review.decision === null).length} in
+						review
 					</p>
 				</div>
 				<div class="ocp-atlas-tools">
@@ -195,20 +233,37 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 								moving(() => setFilter(value))
 							}}
 						>
-							<For each={FILTERS}>{(f) => <option value={f.key} selected={filter() === f.key}>{f.label}</option>}</For>
+							<For each={FILTERS}>
+								{(f) => (
+									<option value={f.key} selected={filter() === f.key}>
+										{f.label}
+									</option>
+								)}
+							</For>
 						</select>
 					</label>
 					<label class="ocp-atlas-select">
 						<span>Order</span>
 						<select
 							onChange={(e) => {
-								const value: Sort = e.currentTarget.value === 'changed' ? 'changed' : e.currentTarget.value === 'recent' ? 'recent' : 'name'
+								const value: Sort =
+									e.currentTarget.value === 'changed'
+										? 'changed'
+										: e.currentTarget.value === 'recent'
+											? 'recent'
+											: 'name'
 								moving(() => setSort(value))
 							}}
 						>
-							<option value="name" selected={sort() === 'name'}>A to Z</option>
-							<option value="changed" selected={sort() === 'changed'}>Most changed</option>
-							<option value="recent" selected={sort() === 'recent'}>Last changed</option>
+							<option value="name" selected={sort() === 'name'}>
+								A to Z
+							</option>
+							<option value="changed" selected={sort() === 'changed'}>
+								Most changed
+							</option>
+							<option value="recent" selected={sort() === 'recent'}>
+								Last changed
+							</option>
 						</select>
 					</label>
 					<Show when={props.onNew}>
@@ -235,7 +290,12 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 					</span>
 					<For each={['front', 1, 2, 3, 4, 5, 6, 7, 'back'] as const}>
 						{(band) => (
-							<span role="columnheader" class="ocp-atlas-col-band" data-band={band} title={bandLabel(band)}>
+							<span
+								role="columnheader"
+								class="ocp-atlas-col-band"
+								data-band={band}
+								title={bandLabel(band)}
+							>
 								{band === 'front' ? 'Front' : band === 'back' ? 'Back' : band}
 							</span>
 						)}
@@ -280,17 +340,23 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 												...familyStyle(row.accent),
 												'view-transition-name': rowName(row.id),
 												// On a phone the nine bands share one strip, each as wide as its sections.
-												'--strip': row.bands.map((b) => `minmax(0, ${Math.max(1, b.ticks.length)}fr)`).join(' '),
+												'--strip': row.bands
+													.map((b) => `minmax(0, ${Math.max(1, b.ticks.length)}fr)`)
+													.join(' '),
 											}}
 										>
 											<span role="rowheader" class="ocp-atlas-name">
-												<a href={workspaceHref(row.id)} title={row.title} style={{ 'view-transition-name': `ocp-name-${row.slug}` }}>
+												<a
+													href={workspaceHref(row.id)}
+													title={row.title}
+													style={{ 'view-transition-name': `ocp-name-${row.slug}` }}
+												>
 													{row.name}
 												</a>
 												<Show when={row.present.length > 0}>
 													<span
 														class="ocp-atlas-here"
-													role="img"
+														role="img"
 														title={`Open now: ${row.present.map((p) => p.name || 'someone').join(', ')}`}
 														aria-label={`${row.present.length} ${row.present.length === 1 ? 'person has' : 'people have'} it open`}
 													/>
@@ -299,9 +365,14 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 											<For each={row.bands}>
 												{(band) => (
 													<span role="cell" class="ocp-atlas-band">
-														<Show when={band.ticks.length > 0} fallback={<span class="ocp-atlas-band-none" />}>
+														<Show
+															when={band.ticks.length > 0}
+															fallback={<span class="ocp-atlas-band-none" />}
+														>
 															<a
-																href={band.part ? partHref(row.id, band.part) : workspaceHref(row.id)}
+																href={
+																	band.part ? partHref(row.id, band.part) : workspaceHref(row.id)
+																}
 																data-row={row.id}
 																data-band={String(band.band)}
 																interestfor={CARD_ID}
@@ -323,11 +394,16 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 												<span class="ocp-atlas-standing">{standing(row)}</span>
 											</span>
 											<span role="cell" class="ocp-atlas-last">
-												<Show when={row.lastChange} fallback={<span class="ocp-muted">No edits yet</span>}>
+												<Show
+													when={row.lastChange}
+													fallback={<span class="ocp-muted">No edits yet</span>}
+												>
 													{(last) => (
 														<>
 															<span class="ocp-figure">{ago(last().at, clock())}</span>
-															<Show when={last().by}>{(by) => <span class="ocp-muted"> · {by()}</span>}</Show>
+															<Show when={last().by}>
+																{(by) => <span class="ocp-muted"> · {by()}</span>}
+															</Show>
 														</>
 													)}
 												</Show>
@@ -357,7 +433,8 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 				ref={(el) => {
 					card = el
 					el.addEventListener('interest', (event) => {
-						const source = 'source' in event && event.source instanceof HTMLElement ? event.source : null
+						const source =
+							'source' in event && event.source instanceof HTMLElement ? event.source : null
 						if (source) show(source)
 					})
 				}}

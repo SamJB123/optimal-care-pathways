@@ -12,7 +12,10 @@ import { lifecycleOf } from '#/server/lifecycle-env.ts'
 import { documentOf, LifecycleRefusal, roleOn } from '#/server/lifecycle.ts'
 
 const plain = (status: number, text: string) =>
-	new Response(text, { status, headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } })
+	new Response(text, {
+		status,
+		headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' },
+	})
 
 /** A Cookie header's pairs, as cookies for `url`. */
 const cookiesFor = (header: string, url: string) =>
@@ -25,7 +28,13 @@ const cookiesFor = (header: string, url: string) =>
 			return { name: pair.slice(0, at), value: pair.slice(at + 1), url }
 		})
 
-const serve = async ({ request, params }: { request: Request; params: { documentId: string } }): Promise<Response> => {
+const serve = async ({
+	request,
+	params,
+}: {
+	request: Request
+	params: { documentId: string }
+}): Promise<Response> => {
 	// biome-ignore lint/correctness/noUnresolvedImports: provided by the Workers runtime
 	const { env } = await import('cloudflare:workers')
 	const cookie = request.headers.get('cookie') ?? ''
@@ -39,7 +48,8 @@ const serve = async ({ request, params }: { request: Request; params: { document
 		if (error instanceof LifecycleRefusal) return plain(404, 'Document not found.')
 		throw error
 	}
-	if (!(await roleOn(lc, userId, document))) return plain(403, 'You are not a member of this document.')
+	if (!(await roleOn(lc, userId, document)))
+		return plain(403, 'You are not a member of this document.')
 
 	const origin = new URL(request.url).origin
 	let rendered: Response
@@ -57,9 +67,13 @@ const serve = async ({ request, params }: { request: Request; params: { document
 	} catch (error) {
 		// Browser Run is not reachable (local development, an outage).
 		console.error('[draft.pdf] Browser Run failed:', error instanceof Error ? error.message : error)
-		return plain(502, 'The PDF could not be made just now. The Word file and the preview still work.')
+		return plain(
+			502,
+			'The PDF could not be made just now. The Word file and the preview still work.',
+		)
 	}
-	if (!rendered.ok) return plain(502, `The PDF could not be made (${rendered.status}). Try again in a moment.`)
+	if (!rendered.ok)
+		return plain(502, `The PDF could not be made (${rendered.status}). Try again in a moment.`)
 	return new Response(rendered.body, {
 		headers: {
 			'content-type': 'application/pdf',

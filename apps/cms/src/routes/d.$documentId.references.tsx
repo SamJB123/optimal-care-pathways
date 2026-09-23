@@ -16,7 +16,12 @@ import { numberLabel } from '#/lib/labels.ts'
 import { sectionAnchor } from '#/lib/links.ts'
 import { atLeast, DocumentContext } from '#/lifecycle/workspace.ts'
 import type { ReferenceEntry } from '#/server/references.ts'
-import { addReference, deleteReference, editReference, listReferences } from '#/server/references-fns.ts'
+import {
+	addReference,
+	deleteReference,
+	editReference,
+	listReferences,
+} from '#/server/references-fns.ts'
 import './references.css'
 
 export const Route = createFileRoute('/d/$documentId/references')({
@@ -52,7 +57,14 @@ function ReferencesPage() {
 					{unused().length > 0 ? `; ${unused().length} not cited yet` : ''}.
 				</p>
 				<Show when={canEdit()}>
-					<Show when={adding()} fallback={<Button variant="outline" onClick={() => setAdding(true)}>Add a reference</Button>}>
+					<Show
+						when={adding()}
+						fallback={
+							<Button variant="outline" onClick={() => setAdding(true)}>
+								Add a reference
+							</Button>
+						}
+					>
 						<ReferenceForm
 							submit="Add the reference"
 							onCancel={() => setAdding(false)}
@@ -65,14 +77,27 @@ function ReferencesPage() {
 					</Show>
 				</Show>
 			</header>
-			<Show when={data().references.length > 0} fallback={<EmptyState title="Nothing is cited yet" hint="Cite a reference from the editor's Cite tool, or add one here." pad="1.5rem" />}>
+			<Show
+				when={data().references.length > 0}
+				fallback={
+					<EmptyState
+						title="Nothing is cited yet"
+						hint="Cite a reference from the editor's Cite tool, or add one here."
+						pad="1.5rem"
+					/>
+				}
+			>
 				<ol class="ocp-reference-list">
-					<For each={cited()}>{(r) => <ReferenceRowView entry={r} canEdit={canEdit()} partOf={partOf} />}</For>
+					<For each={cited()}>
+						{(r) => <ReferenceRowView entry={r} canEdit={canEdit()} partOf={partOf} />}
+					</For>
 				</ol>
 				<Show when={unused().length > 0}>
 					<h2 class="ocp-references-sub">Not cited yet</h2>
 					<ul class="ocp-reference-list" data-unused="">
-						<For each={unused()}>{(r) => <ReferenceRowView entry={r} canEdit={canEdit()} partOf={partOf} />}</For>
+						<For each={unused()}>
+							{(r) => <ReferenceRowView entry={r} canEdit={canEdit()} partOf={partOf} />}
+						</For>
 					</ul>
 				</Show>
 			</Show>
@@ -80,7 +105,11 @@ function ReferencesPage() {
 	)
 }
 
-function ReferenceRowView(props: { entry: ReferenceEntry; canEdit: boolean; partOf: (sectionId: string) => string | null }) {
+function ReferenceRowView(props: {
+	entry: ReferenceEntry
+	canEdit: boolean
+	partOf: (sectionId: string) => string | null
+}) {
 	const workspace = useContext(DocumentContext)
 	const router = useRouter()
 	const [editing, setEditing] = createSignal(false)
@@ -88,7 +117,12 @@ function ReferenceRowView(props: { entry: ReferenceEntry; canEdit: boolean; part
 	const [said, setSaid] = createSignal<string | null>(null)
 	const [error, setError] = createSignal<string | null>(null)
 	return (
-		<li class="ocp-reference" id={`ref-${props.entry.id}`} data-own={props.entry.own ? '' : undefined} data-missing={props.entry.missing ? '' : undefined}>
+		<li
+			class="ocp-reference"
+			id={`ref-${props.entry.id}`}
+			data-own={props.entry.own ? '' : undefined}
+			data-missing={props.entry.missing ? '' : undefined}
+		>
 			<span class="ocp-reference-number">{props.entry.number ?? '–'}</span>
 			<div class="ocp-reference-body">
 				<Show
@@ -109,14 +143,21 @@ function ReferenceRowView(props: { entry: ReferenceEntry; canEdit: boolean; part
 								</Show>
 							</p>
 							<p class="ocp-reference-meta">
-								<Show when={props.entry.citedIn.length > 0} fallback={<span>Not cited in the text</span>}>
+								<Show
+									when={props.entry.citedIn.length > 0}
+									fallback={<span>Not cited in the text</span>}
+								>
 									<span>Cited in </span>
 									<For each={props.entry.citedIn}>
 										{(place, i) => (
 											<>
 												{i() > 0 ? ', ' : ''}
-												<a href={`/d/${workspace.documentId}/${encodeURIComponent(props.partOf(place.sectionId) ?? place.address)}#${sectionAnchor(place.address)}`}>
-													{place.printedNumber ? numberLabel(place.printedNumber) : (place.title ?? place.address)}
+												<a
+													href={`/d/${workspace.documentId}/${encodeURIComponent(props.partOf(place.sectionId) ?? place.address)}#${sectionAnchor(place.address)}`}
+												>
+													{place.printedNumber
+														? numberLabel(place.printedNumber)
+														: (place.title ?? place.address)}
 												</a>
 											</>
 										)}
@@ -129,7 +170,14 @@ function ReferenceRowView(props: { entry: ReferenceEntry; canEdit: boolean; part
 									<span> · in the published edition</span>
 								</Show>
 							</p>
-							<Show when={props.canEdit && props.entry.own && !props.entry.missing && !props.entry.supersededBy}>
+							<Show
+								when={
+									props.canEdit &&
+									props.entry.own &&
+									!props.entry.missing &&
+									!props.entry.supersededBy
+								}
+							>
 								<div class="ocp-reference-actions">
 									<button type="button" class="ocp-link-button" onClick={() => setEditing(true)}>
 										Edit
@@ -138,7 +186,11 @@ function ReferenceRowView(props: { entry: ReferenceEntry; canEdit: boolean; part
 										<Show
 											when={asking()}
 											fallback={
-												<button type="button" class="ocp-link-button" onClick={() => setAsking(true)}>
+												<button
+													type="button"
+													class="ocp-link-button"
+													onClick={() => setAsking(true)}
+												>
 													Delete
 												</button>
 											}
@@ -149,7 +201,12 @@ function ReferenceRowView(props: { entry: ReferenceEntry; canEdit: boolean; part
 												class="ocp-link-button"
 												onClick={async () => {
 													try {
-														await deleteReference({ data: { documentId: workspace.documentId, referenceId: props.entry.id } })
+														await deleteReference({
+															data: {
+																documentId: workspace.documentId,
+																referenceId: props.entry.id,
+															},
+														})
 														await router.invalidate()
 													} catch (e) {
 														setError(e instanceof Error ? e.message : String(e))
@@ -159,7 +216,11 @@ function ReferenceRowView(props: { entry: ReferenceEntry; canEdit: boolean; part
 											>
 												Delete it
 											</button>
-											<button type="button" class="ocp-link-button" onClick={() => setAsking(false)}>
+											<button
+												type="button"
+												class="ocp-link-button"
+												onClick={() => setAsking(false)}
+											>
 												Keep it
 											</button>
 										</Show>
@@ -172,18 +233,45 @@ function ReferenceRowView(props: { entry: ReferenceEntry; canEdit: boolean; part
 					<ReferenceForm
 						submit="Save"
 						initial={{ citation: props.entry.citation, url: props.entry.url ?? '' }}
-						note={props.entry.inPublished ? 'The published edition cites this reference as it stands: saving writes a new reference for the draft, and the edition keeps its own.' : null}
+						note={
+							props.entry.inPublished
+								? 'The published edition cites this reference as it stands: saving writes a new reference for the draft, and the edition keeps its own.'
+								: null
+						}
 						onCancel={() => setEditing(false)}
 						onSave={async (citation, url) => {
-							const r = await editReference({ data: { documentId: workspace.documentId, referenceId: props.entry.id, citation, url } })
+							const r = await editReference({
+								data: {
+									documentId: workspace.documentId,
+									referenceId: props.entry.id,
+									citation,
+									url,
+								},
+							})
 							setEditing(false)
-							setSaid(r.copied ? 'Saved as a new reference for the draft; the published edition keeps the old wording.' : 'Saved.')
+							setSaid(
+								r.copied
+									? 'Saved as a new reference for the draft; the published edition keeps the old wording.'
+									: 'Saved.',
+							)
 							await router.invalidate()
 						}}
 					/>
 				</Show>
-				<Show when={said()}>{(text) => <p class="ocp-reference-said" role="status">{text()}</p>}</Show>
-				<Show when={error()}>{(text) => <p class="ocp-reference-error" role="alert">{text()}</p>}</Show>
+				<Show when={said()}>
+					{(text) => (
+						<p class="ocp-reference-said" role="status">
+							{text()}
+						</p>
+					)}
+				</Show>
+				<Show when={error()}>
+					{(text) => (
+						<p class="ocp-reference-error" role="alert">
+							{text()}
+						</p>
+					)}
+				</Show>
 			</div>
 		</li>
 	)
@@ -217,13 +305,29 @@ function ReferenceForm(props: {
 			}}
 		>
 			<Field label="The reference, as it should print">
-				<TextArea rows={3} value={citation()} onInput={(e) => setCitation(e.currentTarget.value)} required />
+				<TextArea
+					rows={3}
+					value={citation()}
+					onInput={(e) => setCitation(e.currentTarget.value)}
+					required
+				/>
 			</Field>
 			<Field label="Link to the source (optional)">
-				<TextInput type="url" placeholder="https://" value={url()} onInput={(e) => setUrl(e.currentTarget.value)} />
+				<TextInput
+					type="url"
+					placeholder="https://"
+					value={url()}
+					onInput={(e) => setUrl(e.currentTarget.value)}
+				/>
 			</Field>
 			<Show when={props.note}>{(note) => <p class="ocp-muted">{note()}</p>}</Show>
-			<Show when={error()}>{(text) => <p class="ocp-reference-error" role="alert">{text()}</p>}</Show>
+			<Show when={error()}>
+				{(text) => (
+					<p class="ocp-reference-error" role="alert">
+						{text()}
+					</p>
+				)}
+			</Show>
 			<div class="ocp-reference-actions">
 				<Button type="submit" variant="solid" disabled={busy() || !citation().trim()}>
 					{props.submit}

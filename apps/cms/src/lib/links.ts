@@ -8,7 +8,8 @@ export const publishedHref = (slug: string): string => `/p/${slug}`
 export const editionHref = (slug: string, versionNo: number): string => `/p/${slug}/v/${versionNo}`
 export const guideHref = (slug: string): string => `/p/${slug}/quick-reference-guide`
 export const pdfHref = (slug: string): string => `/api/v1/documents/${slug}.pdf`
-export const guidePdfHref = (slug: string): string => `/api/v1/documents/${slug}-quick-reference-guide.pdf`
+export const guidePdfHref = (slug: string): string =>
+	`/api/v1/documents/${slug}-quick-reference-guide.pdf`
 export const workspaceHref = (documentId: string): string => `/d/${documentId}`
 export const partHref = (documentId: string, part: string): string =>
 	`/d/${documentId}/${encodeURIComponent(part)}`
@@ -26,8 +27,12 @@ export const editionsHref = (documentId: string): string => `/d/${documentId}/ve
 /** The document's team: who works on it, and the ways in. */
 export const teamHref = (documentId: string): string => `/d/${documentId}/team`
 /** Two editions side by side; `draft` stands for the draft in work. */
-export const compareHref = (documentId: string, from: number | 'draft', to: number | 'draft'): string =>
-	`/d/${documentId}/versions?from=${from}&to=${to}`
+export const compareHref = (
+	documentId: string,
+	from: number | 'draft',
+	to: number | 'draft',
+): string => `/d/${documentId}/versions?from=${from}&to=${to}`
 
 /** The fragment a section is reached by on a page: its address, made a valid id. */
-export const sectionAnchor = (address: string): string => `s-${address.replace(/[^a-z0-9]+/gi, '-')}`
+export const sectionAnchor = (address: string): string =>
+	`s-${address.replace(/[^a-z0-9]+/gi, '-')}`

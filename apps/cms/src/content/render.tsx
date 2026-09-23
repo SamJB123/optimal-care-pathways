@@ -44,7 +44,11 @@ import '#/editors/section.css'
 
 /** A body, rendered. `derived` is the page's derived view; without it citations show
  *  '?' and the snapshot is empty. */
-export function RenderedBody(props: { body: JsonNode; derived?: DerivedView; guidance?: GuidanceMode }) {
+export function RenderedBody(props: {
+	body: JsonNode
+	derived?: DerivedView
+	guidance?: GuidanceMode
+}) {
 	// Where guidance shows is a constant of the document a body belongs to.
 	const guidance = untrack(() => props.guidance ?? 'inline')
 	return (
@@ -251,7 +255,10 @@ export function Inline(props: { nodes: JsonNode[] }) {
 						<br />
 					</Match>
 					<Match when={node.type === 'citation'}>
-						<CitationInline referenceId={str(node.attrs?.referenceId)} joined={props.nodes[i() - 1]?.type === 'citation'} />
+						<CitationInline
+							referenceId={str(node.attrs?.referenceId)}
+							joined={props.nodes[i() - 1]?.type === 'citation'}
+						/>
 					</Match>
 					<Match when={node.type === 'footnote'}>
 						<FootnoteInline text={str(node.attrs?.text)} />

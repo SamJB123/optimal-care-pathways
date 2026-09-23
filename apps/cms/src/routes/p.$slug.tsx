@@ -32,7 +32,10 @@ function PublishedPage() {
 			<Masthead
 				crumbs={[
 					{ label: 'Published library', href: '/library' },
-					{ label: data().document?.document.title ?? 'Not found', accent: data().document?.accent ?? null },
+					{
+						label: data().document?.document.title ?? 'Not found',
+						accent: data().document?.accent ?? null,
+					},
 				]}
 			/>
 			<Show

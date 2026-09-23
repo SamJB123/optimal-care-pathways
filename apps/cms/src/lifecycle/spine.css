@@ -172,7 +172,9 @@
 		block-size: 0.5rem;
 		border-radius: 50%;
 		box-shadow: inset 0 0 0 1.5px var(--family, var(--color-primary));
-		transition: background-color var(--dur-move) var(--ease-out), box-shadow var(--dur-move) var(--ease-out);
+		transition:
+			background-color var(--dur-move) var(--ease-out),
+			box-shadow var(--dur-move) var(--ease-out);
 	}
 	.ocp-spine-section[data-decision="approved"] .ocp-spine-section-button::after {
 		background: var(--color-success);

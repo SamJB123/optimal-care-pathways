@@ -99,7 +99,11 @@ export function StageToolbar() {
 			<p class="ocp-stage-where" title={where() ?? undefined} data-empty={where() ? undefined : ''}>
 				{where() ?? 'Select a section to edit'}
 			</p>
-			<EditorToolbar items={control()?.toolbar() ?? []} class="ocp-stage-tools" label="Editing tools">
+			<EditorToolbar
+				items={control()?.toolbar() ?? []}
+				class="ocp-stage-tools"
+				label="Editing tools"
+			>
 				<span class="aic-prosekit-toolbar-separator" aria-hidden="true" />
 				<ToolButton
 					label="Insert"
@@ -146,8 +150,18 @@ export function StageToolbar() {
 					)}
 				</Show>
 				<span class="aic-prosekit-toolbar-separator" aria-hidden="true" />
-				<ToolButton label="Undo" title="Undo (⌘Z)" disabled={!canEdit() || !control()?.canUndo()} onPress={() => control()?.undo()} />
-				<ToolButton label="Redo" title="Redo (⌘⇧Z)" disabled={!canEdit() || !control()?.canRedo()} onPress={() => control()?.redo()} />
+				<ToolButton
+					label="Undo"
+					title="Undo (⌘Z)"
+					disabled={!canEdit() || !control()?.canUndo()}
+					onPress={() => control()?.undo()}
+				/>
+				<ToolButton
+					label="Redo"
+					title="Redo (⌘⇧Z)"
+					disabled={!canEdit() || !control()?.canRedo()}
+					onPress={() => control()?.redo()}
+				/>
 			</EditorToolbar>
 
 			<Show when={slashAt()}>
@@ -165,7 +179,13 @@ export function StageToolbar() {
 				)}
 			</Show>
 
-			<ToolPopover handle={insert} anchor={insertAnchor()} label="Insert" class="ocp-insert-popover" onEscape={refocus}>
+			<ToolPopover
+				handle={insert}
+				anchor={insertAnchor()}
+				label="Insert"
+				class="ocp-insert-popover"
+				onEscape={refocus}
+			>
 				<InsertMenu
 					control={control()}
 					documentId={workspace.documentId}
@@ -177,10 +197,26 @@ export function StageToolbar() {
 					}}
 				/>
 			</ToolPopover>
-			<ToolPopover handle={cite} anchor={ANCHOR.cite} label="Cite a reference" class="ocp-cite-popover" onEscape={refocus}>
-				<CitePopover control={control()} documentId={workspace.documentId} close={() => cite.hide()} />
+			<ToolPopover
+				handle={cite}
+				anchor={ANCHOR.cite}
+				label="Cite a reference"
+				class="ocp-cite-popover"
+				onEscape={refocus}
+			>
+				<CitePopover
+					control={control()}
+					documentId={workspace.documentId}
+					close={() => cite.hide()}
+				/>
 			</ToolPopover>
-			<ToolPopover handle={link} anchor={ANCHOR.link} label="Link" class="ocp-link-popover" onEscape={refocus}>
+			<ToolPopover
+				handle={link}
+				anchor={ANCHOR.link}
+				label="Link"
+				class="ocp-link-popover"
+				onEscape={refocus}
+			>
 				<LinkPopover control={control()} tab={linkTab()} close={() => link.hide()} />
 			</ToolPopover>
 		</div>
@@ -199,7 +235,8 @@ function ToolButton(props: {
 	disabled?: boolean
 	onPress?: () => void
 }) {
-	const style = (): JSX.CSSProperties | undefined => (props.anchor ? { 'anchor-name': props.anchor } : undefined)
+	const style = (): JSX.CSSProperties | undefined =>
+		props.anchor ? { 'anchor-name': props.anchor } : undefined
 	return (
 		<button
 			type="button"

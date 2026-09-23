@@ -139,14 +139,18 @@ export interface GuideItem {
  * — every section flagged point of care, in reading order, plus every check list flagged
  * point of care inside the other sections, each with the section it sits in.
  */
-export async function guideOf(d: Db, versionId: string): Promise<{ sections: FrozenSection[]; items: GuideItem[]; all: FrozenSection[] }> {
+export async function guideOf(
+	d: Db,
+	versionId: string,
+): Promise<{ sections: FrozenSection[]; items: GuideItem[]; all: FrozenSection[] }> {
 	const all = await sectionsOf(d, versionId)
 	const sections = all.filter((s) => s.pointOfCare)
 	const items: GuideItem[] = []
 	for (const s of all) {
 		if (s.pointOfCare || !s.bodyJson) continue
 		walkNodes(s.bodyJson, (n) => {
-			if (n.type === 'list' && n.attrs?.kind === 'check' && n.attrs.pointOfCare === true) items.push({ section: s, list: n })
+			if (n.type === 'list' && n.attrs?.kind === 'check' && n.attrs.pointOfCare === true)
+				items.push({ section: s, list: n })
 		})
 	}
 	return { sections, items, all }
@@ -204,10 +208,14 @@ export async function referencesFor(
 	d: Db,
 	sections: Pick<FrozenSection, 'titleCitations' | 'bodyJson'>[],
 ): Promise<NumberedReference[]> {
-	const numbers = citationNumbers(sections.map((s) => citedBody(s.titleCitations, s.bodyJson ?? null)))
+	const numbers = citationNumbers(
+		sections.map((s) => citedBody(s.titleCitations, s.bodyJson ?? null)),
+	)
 	const ids = Object.keys(numbers)
 	if (ids.length === 0) return []
-	const rows = await inGroups(ids, (group) => d.select().from(schema.references).where(inArray(schema.references.id, group)))
+	const rows = await inGroups(ids, (group) =>
+		d.select().from(schema.references).where(inArray(schema.references.id, group)),
+	)
 	const byId = new Map(rows.map((r) => [r.id, r]))
 	return ids
 		.map((id) => ({ id, number: numbers[id] ?? 0, row: byId.get(id) }))

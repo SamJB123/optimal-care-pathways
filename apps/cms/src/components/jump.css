@@ -13,7 +13,9 @@
 		font: inherit;
 		font-size: var(--t-sm);
 		cursor: pointer;
-		transition: border-color var(--dur-quick) var(--ease-out), color var(--dur-quick) var(--ease-out);
+		transition:
+			border-color var(--dur-quick) var(--ease-out),
+			color var(--dur-quick) var(--ease-out);
 	}
 	:scope:hover {
 		border-color: var(--hair-strong);

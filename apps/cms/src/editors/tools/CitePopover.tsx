@@ -17,7 +17,8 @@ import { citation } from './insert.ts'
 const FIRST = 30
 const DEBOUNCE_MS = 200
 
-const messageOf = (error: unknown, fallback: string): string => (error instanceof Error ? error.message : fallback)
+const messageOf = (error: unknown, fallback: string): string =>
+	error instanceof Error ? error.message : fallback
 
 /** A web address as a reference may carry it: blank, or http(s). */
 const urlProblem = (url: string): string | null => {
@@ -29,7 +30,11 @@ const urlProblem = (url: string): string | null => {
 		: 'A link must be a web address starting with http:// or https://.'
 }
 
-export function CitePopover(props: { control: EditorControl | null; documentId: string; close: () => void }) {
+export function CitePopover(props: {
+	control: EditorControl | null
+	documentId: string
+	close: () => void
+}) {
 	const documentId = untrack(() => props.documentId)
 	const listId = `ocp-cite-${createUniqueId()}`
 	const [query, setQuery] = createSignal('')
@@ -50,7 +55,9 @@ export function CitePopover(props: { control: EditorControl | null; documentId: 
 		const found =
 			q === ''
 				? listReferences({ data: { documentId } }).then((list) =>
-						list.references.filter((r) => !r.missing && !(r.unused && r.supersededBy !== null)).slice(0, FIRST),
+						list.references
+							.filter((r) => !r.missing && !(r.unused && r.supersededBy !== null))
+							.slice(0, FIRST),
 					)
 				: searchReferences({ data: { documentId, query: q } })
 		found
@@ -100,7 +107,9 @@ export function CitePopover(props: { control: EditorControl | null; documentId: 
 		<div class="ocp-cite">
 			<Show
 				when={!adding()}
-				fallback={<NewReference documentId={documentId} onCreated={cite} onBack={() => setAdding(false)} />}
+				fallback={
+					<NewReference documentId={documentId} onCreated={cite} onBack={() => setAdding(false)} />
+				}
 			>
 				<input
 					class="ocp-tool-filter"
@@ -118,7 +127,9 @@ export function CitePopover(props: { control: EditorControl | null; documentId: 
 					onKeyDown={onKey}
 				/>
 				<p class="ocp-tool-caption">
-					{query().trim() === '' ? 'Cited in this document, in order' : 'References this document can cite'}
+					{query().trim() === ''
+						? 'Cited in this document, in order'
+						: 'References this document can cite'}
 				</p>
 				<Show when={error()}>
 					{(message) => (
@@ -157,7 +168,10 @@ export function CitePopover(props: { control: EditorControl | null; documentId: 
 												if (event.key === 'Enter' && props.control) cite(row.id)
 											}}
 										>
-											<span class="ocp-cite-number" data-uncited={row.number === null ? '' : undefined}>
+											<span
+												class="ocp-cite-number"
+												data-uncited={row.number === null ? '' : undefined}
+											>
 												{row.number === null ? 'not yet cited' : row.number}
 											</span>
 											<span class="ocp-cite-text">{row.citation}</span>
@@ -172,7 +186,12 @@ export function CitePopover(props: { control: EditorControl | null; documentId: 
 					)}
 				</Show>
 				<div class="ocp-tool-actions">
-					<Button type="button" variant="outline" colorBase="neutral" onClick={() => setAdding(true)}>
+					<Button
+						type="button"
+						variant="outline"
+						colorBase="neutral"
+						onClick={() => setAdding(true)}
+					>
 						New reference
 					</Button>
 				</div>
@@ -181,7 +200,11 @@ export function CitePopover(props: { control: EditorControl | null; documentId: 
 	)
 }
 
-function NewReference(props: { documentId: string; onCreated: (referenceId: string) => void; onBack: () => void }) {
+function NewReference(props: {
+	documentId: string
+	onCreated: (referenceId: string) => void
+	onBack: () => void
+}) {
 	const [text, setText] = createSignal('')
 	const [url, setUrl] = createSignal('')
 	const [busy, setBusy] = createSignal(false)
@@ -195,7 +218,9 @@ function NewReference(props: { documentId: string; onCreated: (referenceId: stri
 		if (text().trim() === '' || urlProblem(url())) return
 		setBusy(true)
 		setError(null)
-		addReference({ data: { documentId: props.documentId, citation: text().trim(), url: url().trim() || null } })
+		addReference({
+			data: { documentId: props.documentId, citation: text().trim(), url: url().trim() || null },
+		})
 			.then((row) => props.onCreated(row.id))
 			.catch((e: unknown) => {
 				setError(messageOf(e, 'The reference was not added. Try again.'))
@@ -206,7 +231,10 @@ function NewReference(props: { documentId: string; onCreated: (referenceId: stri
 	return (
 		<form class="ocp-tool-form" onSubmit={submit}>
 			<p class="ocp-tool-heading">New reference</p>
-			<Field label="Citation" hint="As it should appear in the reference list: authors, title, source, year.">
+			<Field
+				label="Citation"
+				hint="As it should appear in the reference list: authors, title, source, year."
+			>
 				<TextArea
 					rows={4}
 					value={text()}
@@ -220,7 +248,10 @@ function NewReference(props: { documentId: string; onCreated: (referenceId: stri
 			<Show when={tried() && text().trim() === ''}>
 				<p class="ocp-tool-error">Write the citation first.</p>
 			</Show>
-			<Field label="Link (optional)" hint="Where a reader can find it: a web address starting with https://.">
+			<Field
+				label="Link (optional)"
+				hint="Where a reader can find it: a web address starting with https://."
+			>
 				<TextInput
 					type="url"
 					value={url()}

@@ -339,9 +339,7 @@ describe('adding, editing and deleting', () => {
 			bodyJson: p2Body,
 			lastChangedVersionNo: 1,
 		})
-		const before = (
-			await d.select().from(schema.sections).where(eq(schema.sections.id, P2))
-		)[0]
+		const before = (await d.select().from(schema.sections).where(eq(schema.sections.id, P2)))[0]
 		const listed = await refs.listReferences(lifecycle(), {
 			documentId: PATHWAY_ID,
 			userId: `member@${PATHWAY_ORG}`,
@@ -382,12 +380,14 @@ describe('adding, editing and deleting', () => {
 			'Lee M. Lung referral audit, revised. 2022.',
 		)
 
-		const events = await d.select().from(schema.events).where(eq(schema.events.documentId, PATHWAY_ID))
+		const events = await d
+			.select()
+			.from(schema.events)
+			.where(eq(schema.events.documentId, PATHWAY_ID))
 		expect(
 			events.some(
 				(e) =>
-					e.kind === 'reference.edited' &&
-					JSON.stringify(e.detail).includes(`"to":"${result.id}"`),
+					e.kind === 'reference.edited' && JSON.stringify(e.detail).includes(`"to":"${result.id}"`),
 			),
 		).toBe(true)
 

@@ -37,7 +37,9 @@ import { deterministicId } from './ids.ts'
 const args = process.argv.slice(2)
 const which = args[0]
 if (!which) {
-	console.error('usage: tsx scripts/seed-legacy.ts <slug|design-2021|design-2020|population|all> [--out <file>]')
+	console.error(
+		'usage: tsx scripts/seed-legacy.ts <slug|design-2021|design-2020|population|all> [--out <file>]',
+	)
 	process.exit(2)
 }
 const appDir = join(import.meta.dirname, '..')
@@ -66,13 +68,24 @@ const readModel = (dir: string, key: string): ExtractedDocument =>
 const principles = TEMPLATES.find((t) => t.kind === 'principles')
 if (!principles) throw new Error('the Principles template is not catalogued')
 const hyperlinks = hyperlinkTargets(
-	mapTemplate({ model: readModel('template/2026/extracted', principles.key), template: principles, orgId: 'central', id: deterministicId }),
+	mapTemplate({
+		model: readModel('template/2026/extracted', principles.key),
+		template: principles,
+		orgId: 'central',
+		id: deterministicId,
+	}),
 	LEGACY_PATHWAYS,
 )
 const cores = new Map(
 	TEMPLATES.filter((t) => t.kind !== 'principles').map((t) => [
 		t.kind,
-		mapTemplate({ model: readModel('template/2026/extracted', t.key), template: t, orgId: 'central', id: deterministicId, hyperlinks }),
+		mapTemplate({
+			model: readModel('template/2026/extracted', t.key),
+			template: t,
+			orgId: 'central',
+			id: deterministicId,
+			hyperlinks,
+		}),
 	]),
 )
 
@@ -95,12 +108,18 @@ const PIECE_CHARS = 20_000
  *  too long for one statement (the older-people pathway's reference list) goes in with its
  *  longest value empty, which then grows by `col = col || '…'` appends on its primary key. */
 function insert(table: SQLiteTable, row: Record<string, unknown>): string[] {
-	const present = Object.entries(getTableColumns(table)).filter(([key]) => key in row && row[key] !== undefined)
+	const present = Object.entries(getTableColumns(table)).filter(
+		([key]) => key in row && row[key] !== undefined,
+	)
 	const values = present.map(([key]) => q(row[key]))
-	const statement = (vals: string[]) => `INSERT OR REPLACE INTO "${getTableName(table)}" (${present.map(([, c]) => `"${c.name}"`).join(', ')}) VALUES (${vals.join(', ')});`
+	const statement = (vals: string[]) =>
+		`INSERT OR REPLACE INTO "${getTableName(table)}" (${present.map(([, c]) => `"${c.name}"`).join(', ')}) VALUES (${vals.join(', ')});`
 	const whole = statement(values)
 	if (Buffer.byteLength(whole) <= STATEMENT_BYTES) return [whole]
-	const longest = values.reduce((best, v, i) => (v.length > (values[best]?.length ?? 0) ? i : best), 0)
+	const longest = values.reduce(
+		(best, v, i) => (v.length > (values[best]?.length ?? 0) ? i : best),
+		0,
+	)
 	const entry = present[longest]
 	if (!entry) return [whole]
 	const [key, column] = entry
@@ -110,20 +129,27 @@ function insert(table: SQLiteTable, row: Record<string, unknown>): string[] {
 	const keyColumns = config.primaryKeys[0]?.columns ?? config.columns.filter((c) => c.primary)
 	const where = keyColumns
 		.map((c) => {
-			const field = Object.entries(getTableColumns(table)).find(([, col]) => col.name === c.name)?.[0]
+			const field = Object.entries(getTableColumns(table)).find(
+				([, col]) => col.name === c.name,
+			)?.[0]
 			return `"${c.name}" = ${q(field ? row[field] : null)}`
 		})
 		.join(' AND ')
 	const out = [statement(values.map((v, i) => (i === longest ? "''" : v)))]
 	// Pieces cut on code points, never inside a surrogate pair.
 	const points = Array.from(text)
-	for (let at = 0; at < points.length; at += PIECE_CHARS) out.push(`UPDATE "${getTableName(table)}" SET "${column.name}" = "${column.name}" || ${q(points.slice(at, at + PIECE_CHARS).join(''))} WHERE ${where};`)
+	for (let at = 0; at < points.length; at += PIECE_CHARS)
+		out.push(
+			`UPDATE "${getTableName(table)}" SET "${column.name}" = "${column.name}" || ${q(points.slice(at, at + PIECE_CHARS).join(''))} WHERE ${where};`,
+		)
 	return out
 }
 
 /** Every core section's body: what a pathway's shared section renders until the core
  *  publishes, and so what its change hash starts from. */
-const coreBodies = new Map([...cores.values()].flatMap((c) => c.sections.map((s) => [s.id, s.bodyJson ?? null] as const)))
+const coreBodies = new Map(
+	[...cores.values()].flatMap((c) => c.sections.map((s) => [s.id, s.bodyJson ?? null] as const)),
+)
 
 /** The import with its change hashes: a draft section's (`publishableHash` of what it
  *  would publish) and each published section's (`bodyHash` of the published body). */
@@ -141,7 +167,9 @@ async function withHashes(result: LegacyImport): Promise<LegacyImport> {
 					...s,
 					bodyJson,
 					draftHash: await publishableHash(
-						s.ownership === 'shared' && s.coreSectionId ? normal(coreBodies.get(s.coreSectionId)) : bodyJson,
+						s.ownership === 'shared' && s.coreSectionId
+							? normal(coreBodies.get(s.coreSectionId))
+							: bodyJson,
 						subject,
 					),
 				}
@@ -168,7 +196,9 @@ const emit = (result: LegacyImport) => {
 	}
 	statements.push(...insert(schema.documents, result.document))
 	// A re-run must not leave sections of an earlier import behind.
-	statements.push(`DELETE FROM sections WHERE document_id = ${q(result.document.id)} AND id NOT IN (${result.sections.map((s) => q(s.id)).join(', ')});`)
+	statements.push(
+		`DELETE FROM sections WHERE document_id = ${q(result.document.id)} AND id NOT IN (${result.sections.map((s) => q(s.id)).join(', ')});`,
+	)
 	for (const s of result.sections) {
 		if (s.bodyJson) parseBody(s.bodyJson)
 		statements.push(...insert(schema.sections, s))
@@ -183,12 +213,16 @@ const emit = (result: LegacyImport) => {
 			)
 	for (const r of result.references) statements.push(...insert(schema.references, r))
 	for (const v of result.versions) statements.push(...insert(schema.versions, v))
-	statements.push(`DELETE FROM version_sections WHERE version_id = ${q(result.versions[0]?.id ?? '')};`)
+	statements.push(
+		`DELETE FROM version_sections WHERE version_id = ${q(result.versions[0]?.id ?? '')};`,
+	)
 	for (const vs of result.versionSections) {
 		if (vs.bodyJson) parseBody(vs.bodyJson)
 		statements.push(...insert(schema.versionSections, vs))
 	}
-	statements.push(`DELETE FROM section_origins WHERE section_id IN (${result.sections.map((s) => q(s.id)).join(', ')});`)
+	statements.push(
+		`DELETE FROM section_origins WHERE section_id IN (${result.sections.map((s) => q(s.id)).join(', ')});`,
+	)
 	for (const o of result.origins) statements.push(...insert(schema.sectionOrigins, o))
 }
 
@@ -196,12 +230,23 @@ const ledgerDir = join(appDir, 'legacy', 'ledgers')
 mkdirSync(ledgerDir, { recursive: true })
 /** The visual pass over each pathway's pages (decision 141), kept by hand beside the ledgers. */
 const verificationPath = join(appDir, 'legacy', 'verification.json')
-const verification: Record<string, unknown> = existsSync(verificationPath) ? JSON.parse(readFileSync(verificationPath, 'utf8')) : {}
+const verification: Record<string, unknown> = existsSync(verificationPath)
+	? JSON.parse(readFileSync(verificationPath, 'utf8'))
+	: {}
 for (const pathway of targets) {
 	const core = cores.get(pathway.audience)
 	if (!core) throw new Error(`no core mapping for ${pathway.audience}`)
 	const model = readModel('legacy/extracted', pathway.slug)
-	const result = await withHashes(mapLegacy({ model, pathway, core, id: deterministicId, orgId: `pending:${pathway.pathwaySlug}`, actorId: ACTOR }))
+	const result = await withHashes(
+		mapLegacy({
+			model,
+			pathway,
+			core,
+			id: deterministicId,
+			orgId: `pending:${pathway.pathwaySlug}`,
+			actorId: ACTOR,
+		}),
+	)
 	emit(result)
 	const { ledger } = result
 	const by = (how: string) => ledger.placements.filter((p) => p.how === how).length
@@ -221,11 +266,15 @@ for (const pathway of targets) {
 // catalogue leaves its old document behind — but only one never finalised (its
 // organisation still the placeholder); sections, versions and the rest cascade.
 // Pathways only: the core documents wait on a placeholder too (`pending:central`).
-if (which === 'all') statements.push(`DELETE FROM documents WHERE kind = 'pathway' AND org_id LIKE 'pending:%' AND id NOT IN (${written.map(q).join(', ')});`)
+if (which === 'all')
+	statements.push(
+		`DELETE FROM documents WHERE kind = 'pathway' AND org_id LIKE 'pending:%' AND id NOT IN (${written.map(q).join(', ')});`,
+	)
 
 const outDir = join(appDir, '.wrangler', 'seed')
 mkdirSync(outDir, { recursive: true })
 const outFlag = args.indexOf('--out')
-const target = outFlag > 0 && args[outFlag + 1] ? args[outFlag + 1] : join(outDir, `legacy-${which}.sql`)
+const target =
+	outFlag > 0 && args[outFlag + 1] ? args[outFlag + 1] : join(outDir, `legacy-${which}.sql`)
 writeFileSync(target, `${statements.join('\n')}\n`)
 console.log(`${statements.length} statements → ${target}`)

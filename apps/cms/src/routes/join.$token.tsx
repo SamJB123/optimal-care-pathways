@@ -54,7 +54,12 @@ function JoinPage() {
 			<main class="ocp-join">
 				<Show
 					when={live()}
-					fallback={<EmptyState title="This invite link no longer works" hint="It has expired or been revoked. Ask the team for a fresh one." />}
+					fallback={
+						<EmptyState
+							title="This invite link no longer works"
+							hint="It has expired or been revoked. Ask the team for a fresh one."
+						/>
+					}
 				>
 					{(valid) => (
 						<>

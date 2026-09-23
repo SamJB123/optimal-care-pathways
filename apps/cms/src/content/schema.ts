@@ -807,14 +807,25 @@ const isNodeName = (name: string): name is NodeName => name in contentSchema.nod
 const isMarkName = (name: string): name is MarkName => name in contentSchema.marks
 
 function jsonAttr(value: unknown, where: string): JsonAttr {
-	if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value
+	if (
+		value === null ||
+		typeof value === 'string' ||
+		typeof value === 'number' ||
+		typeof value === 'boolean'
+	)
+		return value
 	if (Array.isArray(value)) return value.map((v) => jsonAttr(v, where))
 	throw new Error(`[content] ${where} holds an attribute that is not JSON: ${String(value)}`)
 }
 
-function jsonAttrs(attrs: Readonly<Record<string, unknown>>, where: string): Record<string, JsonAttr> | undefined {
+function jsonAttrs(
+	attrs: Readonly<Record<string, unknown>>,
+	where: string,
+): Record<string, JsonAttr> | undefined {
 	const entries = Object.entries(attrs)
-	return entries.length === 0 ? undefined : Object.fromEntries(entries.map(([k, v]) => [k, jsonAttr(v, where)]))
+	return entries.length === 0
+		? undefined
+		: Object.fromEntries(entries.map(([k, v]) => [k, jsonAttr(v, where)]))
 }
 
 /**
@@ -838,7 +849,8 @@ export function jsonOf(node: PmNode): JsonNode {
 	if (node.marks.length > 0)
 		json.marks = node.marks.map((mark): JsonMark => {
 			const markName = mark.type.name
-			if (!isMarkName(markName)) throw new Error(`[content] "${markName}" is not a mark of the content schema`)
+			if (!isMarkName(markName))
+				throw new Error(`[content] "${markName}" is not a mark of the content schema`)
 			const markAttrs = jsonAttrs(mark.attrs, markName)
 			return markAttrs ? { type: markName, attrs: markAttrs } : { type: markName }
 		})

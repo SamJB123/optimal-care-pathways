@@ -147,8 +147,12 @@ export interface Part {
 }
 
 /** The heading of a section as the page sets it. */
-export const sectionLabel = (s: Pick<SectionWireRow, 'printedNumber' | 'title' | 'address'>): string =>
-	s.printedNumber ? `${numberLabel(s.printedNumber)} ${s.title ?? ''}`.trim() : (s.title ?? s.address)
+export const sectionLabel = (
+	s: Pick<SectionWireRow, 'printedNumber' | 'title' | 'address'>,
+): string =>
+	s.printedNumber
+		? `${numberLabel(s.printedNumber)} ${s.title ?? ''}`.trim()
+		: (s.title ?? s.address)
 
 /** The document's parts in reading order. Apparatus (the cover banner, the contents page)
  *  is never a part; a hidden part is one only while hidden sections are shown. */
@@ -178,7 +182,13 @@ export const markOf = (
 				: s.coreSectionId
 					? 'diverged'
 					: 'owned'
-export const MARK_GLYPH: Record<SectionMark, string> = { shared: '○', diverged: '◐', owned: '●', scaffold: '◑', instructions: '◇' }
+export const MARK_GLYPH: Record<SectionMark, string> = {
+	shared: '○',
+	diverged: '◐',
+	owned: '●',
+	scaffold: '◑',
+	instructions: '◇',
+}
 export const MARK_WORDS: Record<SectionMark, string> = {
 	shared: 'Shared: every pathway reads it as written',
 	diverged: 'This pathway’s own copy of a shared section',

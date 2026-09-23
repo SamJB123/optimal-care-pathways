@@ -28,7 +28,14 @@ import { composeNsSlug, type OrgRole } from '@aicolab/better-auth/cloudflare/sha
 import type { OrgRef } from '@aicolab/better-auth/cloudflare/shared/types'
 import { AuthService as BaseAuthService } from '@aicolab/better-auth/cloudflare/d1/worker'
 import { Resend } from 'resend'
-import { mayChange, mayGrant, roleFrom, standingOf, type TeamRefusal, type TeamStanding } from '../../cms/src/lib/team-rule.ts'
+import {
+	mayChange,
+	mayGrant,
+	roleFrom,
+	standingOf,
+	type TeamRefusal,
+	type TeamStanding,
+} from '../../cms/src/lib/team-rule.ts'
 
 export interface NotificationMail {
 	to: string[]
@@ -36,7 +43,9 @@ export interface NotificationMail {
 	text: string
 }
 
-export type NotificationResult = { sent: number } | { sent: 0; skipped: 'no-recipients' | 'no-mail-key' }
+export type NotificationResult =
+	| { sent: number }
+	| { sent: 0; skipped: 'no-recipients' | 'no-mail-key' }
 
 /** A team door's answer: done, with its detail, or refused with a reason. */
 export type TeamDoorResult<T> = ({ ok: true } & T) | { ok: false; reason: TeamRefusal }
@@ -87,7 +96,8 @@ export class AuthService extends BaseAuthService {
 	): Promise<TeamDoorResult<{ role: OrgRole | null }>> {
 		try {
 			if (role !== null && roleFrom(role) === null) return { ok: false, reason: 'invalid' }
-			if (!(await this.#teamExists(organizationId, namespace))) return { ok: false, reason: 'not-found' }
+			if (!(await this.#teamExists(organizationId, namespace)))
+				return { ok: false, reason: 'not-found' }
 			const from = await this.#roleIn(targetUserId, organizationId)
 			if (!from) return { ok: false, reason: 'not-member' }
 			const verdict = mayChange({
@@ -104,10 +114,9 @@ export class AuthService extends BaseAuthService {
 			const anotherLead = `(role <> 'owner' OR (SELECT count(*) FROM member WHERE organization_id = ?1 AND role = 'owner') > 1)`
 			const write =
 				role === null
-					? this.env.AUTH_DB.prepare(`DELETE FROM member WHERE organization_id = ?1 AND user_id = ?2 AND ${anotherLead}`).bind(
-							organizationId,
-							targetUserId,
-						)
+					? this.env.AUTH_DB.prepare(
+							`DELETE FROM member WHERE organization_id = ?1 AND user_id = ?2 AND ${anotherLead}`,
+						).bind(organizationId, targetUserId)
 					: this.env.AUTH_DB.prepare(
 							`UPDATE member SET role = ?3 WHERE organization_id = ?1 AND user_id = ?2 AND (?3 = 'owner' OR ${anotherLead})`,
 						).bind(organizationId, targetUserId, role)
@@ -132,10 +141,13 @@ export class AuthService extends BaseAuthService {
 	): Promise<TeamDoorResult<{ role: string; added: boolean }>> {
 		try {
 			if (roleFrom(role) === null) return { ok: false, reason: 'invalid' }
-			if (!(await this.#teamExists(organizationId, namespace))) return { ok: false, reason: 'not-found' }
+			if (!(await this.#teamExists(organizationId, namespace)))
+				return { ok: false, reason: 'not-found' }
 			const verdict = mayGrant(await this.#standing(actorUserId, organizationId, steward), role)
 			if (!verdict.ok) return verdict
-			const user = await this.env.AUTH_DB.prepare('SELECT id FROM user WHERE id = ?1').bind(targetUserId).first<{ id: string }>()
+			const user = await this.env.AUTH_DB.prepare('SELECT id FROM user WHERE id = ?1')
+				.bind(targetUserId)
+				.first<{ id: string }>()
 			if (!user) return { ok: false, reason: 'not-found' }
 			const inserted = await this.env.AUTH_DB.prepare(
 				'INSERT INTO member (id, organization_id, user_id, role, created_at) VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT DO NOTHING',
@@ -143,7 +155,11 @@ export class AuthService extends BaseAuthService {
 				.bind(crypto.randomUUID(), organizationId, targetUserId, role, Date.now())
 				.run()
 			if (inserted.meta.changes > 0) return { ok: true, role, added: true }
-			return { ok: true, role: (await this.#roleIn(targetUserId, organizationId)) ?? role, added: false }
+			return {
+				ok: true,
+				role: (await this.#roleIn(targetUserId, organizationId)) ?? role,
+				added: false,
+			}
 		} catch (error) {
 			console.error('[AuthService] grantTeamMember error:', error)
 			return { ok: false, reason: 'invalid' }
@@ -166,8 +182,10 @@ export class AuthService extends BaseAuthService {
 	): Promise<TeamDoorResult<{ invitationId: string; expiresAt: number }>> {
 		try {
 			const address = email.trim().toLowerCase()
-			if (!address.includes('@') || roleFrom(role) === null || role === 'owner') return { ok: false, reason: 'invalid' }
-			if (!(await this.#teamExists(organizationId, namespace))) return { ok: false, reason: 'not-found' }
+			if (!address.includes('@') || roleFrom(role) === null || role === 'owner')
+				return { ok: false, reason: 'invalid' }
+			if (!(await this.#teamExists(organizationId, namespace)))
+				return { ok: false, reason: 'not-found' }
 			const verdict = mayGrant(await this.#standing(actorUserId, organizationId, steward), role)
 			if (!verdict.ok) return verdict
 			const invitationId = crypto.randomUUID()
@@ -210,7 +228,9 @@ export class AuthService extends BaseAuthService {
 
 	/** The organisation exists in the namespace. */
 	async #teamExists(organizationId: string, namespace: string): Promise<boolean> {
-		const row = await this.env.AUTH_DB.prepare('SELECT 1 AS found FROM organization WHERE id = ?1 AND namespace = ?2')
+		const row = await this.env.AUTH_DB.prepare(
+			'SELECT 1 AS found FROM organization WHERE id = ?1 AND namespace = ?2',
+		)
 			.bind(organizationId, namespace)
 			.first<{ found: number }>()
 		return row !== null
@@ -218,14 +238,18 @@ export class AuthService extends BaseAuthService {
 
 	/** A user's role in an organisation, as the ladder names it. */
 	async #roleIn(userId: string, organizationId: string): Promise<OrgRole | null> {
-		const row = await this.env.AUTH_DB.prepare('SELECT role FROM member WHERE organization_id = ?1 AND user_id = ?2')
+		const row = await this.env.AUTH_DB.prepare(
+			'SELECT role FROM member WHERE organization_id = ?1 AND user_id = ?2',
+		)
 			.bind(organizationId, userId)
 			.first<{ role: string }>()
 		return roleFrom(row?.role)
 	}
 
 	async #leads(organizationId: string): Promise<number> {
-		const row = await this.env.AUTH_DB.prepare("SELECT count(*) AS n FROM member WHERE organization_id = ?1 AND role = 'owner'")
+		const row = await this.env.AUTH_DB.prepare(
+			"SELECT count(*) AS n FROM member WHERE organization_id = ?1 AND role = 'owner'",
+		)
 			.bind(organizationId)
 			.first<{ n: number }>()
 		return row?.n ?? 0
@@ -233,12 +257,20 @@ export class AuthService extends BaseAuthService {
 
 	/** The actor's standing over a team: steward as a member of the steward organisation
 	 *  (never over the steward organisation itself), else their own role. */
-	async #standing(actorUserId: string, organizationId: string, steward: OrgRef): Promise<TeamStanding> {
-		const stewardOrg = await this.env.AUTH_DB.prepare('SELECT id FROM organization WHERE slug = ?1 AND namespace = ?2')
+	async #standing(
+		actorUserId: string,
+		organizationId: string,
+		steward: OrgRef,
+	): Promise<TeamStanding> {
+		const stewardOrg = await this.env.AUTH_DB.prepare(
+			'SELECT id FROM organization WHERE slug = ?1 AND namespace = ?2',
+		)
 			.bind(composeNsSlug(steward.namespace, steward.slug), steward.namespace)
 			.first<{ id: string }>()
 		const stewardOfThis =
-			stewardOrg !== null && stewardOrg.id !== organizationId && (await this.#roleIn(actorUserId, stewardOrg.id)) !== null
+			stewardOrg !== null &&
+			stewardOrg.id !== organizationId &&
+			(await this.#roleIn(actorUserId, stewardOrg.id)) !== null
 		return standingOf(await this.#roleIn(actorUserId, organizationId), stewardOfThis)
 	}
 }

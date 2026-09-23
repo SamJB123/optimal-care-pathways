@@ -16,14 +16,30 @@ import { citationNumbers, citedBody, type DerivedView, timeframeRows } from '#/c
 import { type Db, schema } from '#/db/index.ts'
 import { draftDocx } from '#/export/docx.ts'
 import { lifecycleOf } from '#/server/lifecycle-env.ts'
-import { documentOf, foldRoom, LifecycleRefusal, live, resolveSections, roleOn } from '#/server/lifecycle.ts'
+import {
+	documentOf,
+	foldRoom,
+	LifecycleRefusal,
+	live,
+	resolveSections,
+	roleOn,
+} from '#/server/lifecycle.ts'
 
 const FILES_PREFIX = '/files/'
 
 const plain = (status: number, text: string) =>
-	new Response(text, { status, headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } })
+	new Response(text, {
+		status,
+		headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' },
+	})
 
-const serve = async ({ request, params }: { request: Request; params: { documentId: string } }): Promise<Response> => {
+const serve = async ({
+	request,
+	params,
+}: {
+	request: Request
+	params: { documentId: string }
+}): Promise<Response> => {
 	// biome-ignore lint/correctness/noUnresolvedImports: provided by the Workers runtime
 	const { env } = await import('cloudflare:workers')
 	const cookie = request.headers.get('cookie') ?? ''
@@ -37,7 +53,8 @@ const serve = async ({ request, params }: { request: Request; params: { document
 		if (error instanceof LifecycleRefusal) return plain(404, 'Document not found.')
 		throw error
 	}
-	if (!(await roleOn(lc, userId, document))) return plain(403, 'You are not a member of this document.')
+	if (!(await roleOn(lc, userId, document)))
+		return plain(403, 'You are not a member of this document.')
 
 	await foldRoom(lc, document.id)
 	const resolved = await resolveSections(lc, document.id)
@@ -50,7 +67,10 @@ const serve = async ({ request, params }: { request: Request; params: { document
 	// What publish freezes: the publishable bodies of the live sections, numbered (headings'
 	// own citations first) and snapshotted over those alone.
 	const sections = resolved.filter(live)
-	const cited = sections.map((s) => ({ titleCitations: s.row.titleCitations, bodyJson: s.publishable }))
+	const cited = sections.map((s) => ({
+		titleCitations: s.row.titleCitations,
+		bodyJson: s.publishable,
+	}))
 	const derived: DerivedView = {
 		referenceNumbers: citationNumbers(cited.map((s) => citedBody(s.titleCitations, s.bodyJson))),
 		timeframes: timeframeRows(
@@ -75,7 +95,9 @@ const serve = async ({ request, params }: { request: Request; params: { document
 		const url = new URL(src, origin)
 		if (url.origin !== origin) return null
 		if (url.pathname.startsWith(FILES_PREFIX)) {
-			const object = await env.FILES.get(decodeURIComponent(url.pathname.slice(FILES_PREFIX.length)))
+			const object = await env.FILES.get(
+				decodeURIComponent(url.pathname.slice(FILES_PREFIX.length)),
+			)
 			return object ? new Uint8Array(await object.arrayBuffer()) : null
 		}
 		// The template's figures are the site's own static files: read through the assets

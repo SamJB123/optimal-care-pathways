@@ -38,7 +38,13 @@ describe('the team topic', () => {
 		expect(client.selfId()).toBe(MEMBER)
 		expect([...client.members.values()]).toEqual([])
 
-		const row = { userId: `member@${ORG}-2`, role: 'member' as const, name: 'Nia Newcomer', image: null, joinedAt: 1 }
+		const row = {
+			userId: `member@${ORG}-2`,
+			role: 'member' as const,
+			name: 'Nia Newcomer',
+			image: null,
+			joinedAt: 1,
+		}
 		await publishTeamChange(ORG, { row })
 		await until(() => client.members.has(row.userId), 'the join')
 		expect(client.members.get(row.userId)).toMatchObject(row)
@@ -52,7 +58,9 @@ describe('the team topic', () => {
 		// central team either: the door stays shut.
 		const outsider = new CoreRpcRoot({ env, userId: 'member@org-elsewhere' })
 		await expect(outsider.connectTeamTopic({ organizationId: ORG })).rejects.toThrow()
-		await expect(outsider.connectTeamTopic({ organizationId: 'not an id' })).rejects.toThrow('invalid organizationId')
+		await expect(outsider.connectTeamTopic({ organizationId: 'not an id' })).rejects.toThrow(
+			'invalid organizationId',
+		)
 		const member = new CoreRpcRoot({ env, userId: MEMBER })
 		expect(await member.connectTeamTopic({ organizationId: ORG })).toBeInstanceOf(TeamLiveTopic)
 	})

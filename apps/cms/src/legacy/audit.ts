@@ -65,7 +65,8 @@ function collectBlocks(blocks: Block[], out: PlacedText[]): void {
 				break
 			case 'list':
 				for (const item of b.items) {
-					if (item.marker === 'number' || item.marker === 'other') out.push({ page: b.page, text: item.label })
+					if (item.marker === 'number' || item.marker === 'other')
+						out.push({ page: b.page, text: item.label })
 					collectBlocks(item.blocks, out)
 				}
 				break
@@ -98,11 +99,15 @@ export function modelTexts(model: ExtractedDocument): PlacedText[] {
 		out.push({ page: f.page, text: f.label })
 		collectBlocks(f.blocks, out)
 	}
-	for (const e of model.endnotes) out.push({ page: e.page, text: `${e.number} ${runsText(e.runs)}` })
+	for (const e of model.endnotes)
+		out.push({ page: e.page, text: `${e.number} ${runsText(e.runs)}` })
 	return out
 }
 
-export async function auditCoverage(doc: PDFDocumentProxy, model: ExtractedDocument): Promise<CoverageReport> {
+export async function auditCoverage(
+	doc: PDFDocumentProxy,
+	model: ExtractedDocument,
+): Promise<CoverageReport> {
 	// One pool per page. A block carries the page of its first line, so a word printed
 	// on page n may sit in the pool of n − 1 (a paragraph carried over) — those are
 	// tried next; the front matter's blocks are pooled where they were printed.
@@ -127,9 +132,11 @@ export async function auditCoverage(doc: PDFDocumentProxy, model: ExtractedDocum
 	const figuresByPage = new Map<number, [number, number, number, number][]>()
 	const walkFigures = (blocks: Block[]) => {
 		for (const b of blocks) {
-			if (b.kind === 'figure' && b.bbox) figuresByPage.set(b.page, [...(figuresByPage.get(b.page) ?? []), b.bbox])
+			if (b.kind === 'figure' && b.bbox)
+				figuresByPage.set(b.page, [...(figuresByPage.get(b.page) ?? []), b.bbox])
 			else if (b.kind === 'list') for (const item of b.items) walkFigures(item.blocks)
-			else if (b.kind === 'table') for (const row of b.rows) for (const cell of row.cells) walkFigures(cell.blocks)
+			else if (b.kind === 'table')
+				for (const row of b.rows) for (const cell of row.cells) walkFigures(cell.blocks)
 		}
 	}
 	const walkSections = (sections: Section[]) => {
@@ -144,12 +151,24 @@ export async function auditCoverage(doc: PDFDocumentProxy, model: ExtractedDocum
 	// What the reader dropped or merged on purpose, recorded in its warnings: furniture
 	// lines, and "… continued" headings — merged into the open section (the line is not
 	// in the model) or opened as a new one (the word "continued" is not).
-	const tagged = (tag: string) => new Set(model.warnings.filter((w) => w.message.startsWith(`${tag}: `)).map((w) => `${w.page}|${w.message.slice(tag.length + 2)}`))
+	const tagged = (tag: string) =>
+		new Set(
+			model.warnings
+				.filter((w) => w.message.startsWith(`${tag}: `))
+				.map((w) => `${w.page}|${w.message.slice(tag.length + 2)}`),
+		)
 	const furniture = tagged('furniture')
 	const mergedContinued = tagged('continued-merged')
 	const headingContinued = tagged('continued-heading')
 
-	const report: CoverageReport = { pages: doc.numPages, printed: 0, matched: 0, missingLines: [], figureLines: [], extras: [] }
+	const report: CoverageReport = {
+		pages: doc.numPages,
+		printed: 0,
+		matched: 0,
+		missingLines: [],
+		figureLines: [],
+		extras: [],
+	}
 	// First pass: every page against its own pool. Second pass: what is left tries the
 	// neighbouring pages' leftovers, so a word a page does have is never taken from a
 	// neighbour ahead of that neighbour's own lines.
@@ -160,7 +179,10 @@ export async function auditCoverage(doc: PDFDocumentProxy, model: ExtractedDocum
 		const pageLines = joinUrlBreaks(pageTextLines(page))
 		for (const line of pageLines) {
 			// A label's baseline lies inside the figure's box; a caption just above it does not.
-			const inFigure = figures.some(([x0, y0, x1, y1]) => line.x0 >= x0 - 6 && line.x1 <= x1 + 6 && line.y >= y0 - 3 && line.y <= y1 - 3)
+			const inFigure = figures.some(
+				([x0, y0, x1, y1]) =>
+					line.x0 >= x0 - 6 && line.x1 <= x1 + 6 && line.y >= y0 - 3 && line.y <= y1 - 3,
+			)
 			if (inFigure) {
 				report.figureLines.push({ page: n, text: line.text })
 				continue
@@ -199,8 +221,11 @@ export async function auditCoverage(doc: PDFDocumentProxy, model: ExtractedDocum
 	}
 	const extras = new Map<string, number>()
 	for (const [page, pool] of pools)
-		for (const [word, count] of pool) if (count > 0) extras.set(`p.${page} ${word}`, (extras.get(`p.${page} ${word}`) ?? 0) + count)
-	report.extras = [...extras.entries()].map(([word, count]) => ({ word, count })).sort((a, b) => b.count - a.count)
+		for (const [word, count] of pool)
+			if (count > 0) extras.set(`p.${page} ${word}`, (extras.get(`p.${page} ${word}`) ?? 0) + count)
+	report.extras = [...extras.entries()]
+		.map(([word, count]) => ({ word, count }))
+		.sort((a, b) => b.count - a.count)
 	return report
 }
 
@@ -218,7 +243,13 @@ function joinUrlBreaks(lines: PageLine[]): PageLine[] {
 		for (;;) {
 			if (!OPEN_URL.test(joined.text)) break
 			const next = lines.find(
-				(l) => !consumed.has(l) && l !== line && l.y < joined.y - 2 && l.y > joined.y - joined.size * 1.8 && Math.abs(l.x0 - joined.x0) <= 14 && l.x0 < joined.x0 + 30,
+				(l) =>
+					!consumed.has(l) &&
+					l !== line &&
+					l.y < joined.y - 2 &&
+					l.y > joined.y - joined.size * 1.8 &&
+					Math.abs(l.x0 - joined.x0) <= 14 &&
+					l.x0 < joined.x0 + 30,
 			)
 			if (!next) break
 			consumed.add(next)
@@ -238,9 +269,12 @@ export function formatReport(report: CoverageReport, options: { maxLines?: numbe
 	lines.push(
 		`pages ${report.pages}; printed words ${report.printed}; matched ${report.matched}; missing ${missingWords} in ${report.missingLines.length} lines; extra ${extraWords}; figure lettering lines ${report.figureLines.length}`,
 	)
-	for (const l of report.missingLines.slice(0, max)) lines.push(`  p.${l.page} MISSING [${l.missing.join(' ')}] ← ${l.text}`)
-	if (report.missingLines.length > max) lines.push(`  … ${report.missingLines.length - max} more lines`)
+	for (const l of report.missingLines.slice(0, max))
+		lines.push(`  p.${l.page} MISSING [${l.missing.join(' ')}] ← ${l.text}`)
+	if (report.missingLines.length > max)
+		lines.push(`  … ${report.missingLines.length - max} more lines`)
 	const extras = report.extras.slice(0, 40)
-	if (extras.length > 0) lines.push(`  EXTRA ${extras.map((e) => `${e.word}×${e.count}`).join(' ')}`)
+	if (extras.length > 0)
+		lines.push(`  EXTRA ${extras.map((e) => `${e.word}×${e.count}`).join(' ')}`)
 	return lines.join('\n')
 }

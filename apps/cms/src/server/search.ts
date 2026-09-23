@@ -40,7 +40,12 @@ function matchQuery(query: string): string | null {
 type Row = { section_id: string; document_id: string; snip: string }
 
 export const searchSections = createServerFn({ method: 'GET' })
-	.inputValidator(z.object({ query: z.string().trim().min(2).max(200), documentId: z.string().min(1).max(64).nullable() }))
+	.inputValidator(
+		z.object({
+			query: z.string().trim().min(2).max(200),
+			documentId: z.string().min(1).max(64).nullable(),
+		}),
+	)
 	.handler(async ({ data, context }): Promise<SearchHit[]> => {
 		const userId = requireUser(context.userId)
 		const match = matchQuery(data.query)
@@ -58,7 +63,9 @@ export const searchSections = createServerFn({ method: 'GET' })
 					.from(schema.sections)
 					.where(and(eq(schema.sections.documentId, here), eq(schema.sections.ownership, 'shared')))
 			: []
-		const sharedByCore = new Map(shared.flatMap((s) => (s.coreSectionId ? [[s.coreSectionId, s.id] as const] : [])))
+		const sharedByCore = new Map(
+			shared.flatMap((s) => (s.coreSectionId ? [[s.coreSectionId, s.id] as const] : [])),
+		)
 		const coreDocs = here
 			? (
 					await inGroups([...sharedByCore.keys()], (group) =>
@@ -93,7 +100,12 @@ export const searchSections = createServerFn({ method: 'GET' })
 					: [],
 		)
 		const elsewhere = central
-			? (await search([...visible.keys()].filter((id) => id !== here), 12)).map((r) => ({
+			? (
+					await search(
+						[...visible.keys()].filter((id) => id !== here),
+						12,
+					)
+				).map((r) => ({
 					...r,
 					target: r.section_id,
 					targetDocument: r.document_id,

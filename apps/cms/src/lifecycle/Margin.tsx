@@ -18,27 +18,65 @@
  * shows the template's instructions for the whole document.
  */
 
-import { Button, Chip, Field, TextArea, TextInput, ToolPanelActions, ToolPanelSection } from '@aicolab/ui-solid'
+import {
+	Button,
+	Chip,
+	Field,
+	TextArea,
+	TextInput,
+	ToolPanelActions,
+	ToolPanelSection,
+} from '@aicolab/ui-solid'
 import type { JSX } from '@solidjs/web'
-import { createMemo, createSignal, For, Loading, onSettled, Show, untrack, useContext } from 'solid-js'
+import {
+	createMemo,
+	createSignal,
+	For,
+	Loading,
+	onSettled,
+	Show,
+	untrack,
+	useContext,
+} from 'solid-js'
 import { RenderedBody } from '#/content/render.tsx'
 import type { JsonNode } from '#/content/schema.ts'
 import { forgetBody, restingBody } from '#/editors/SectionView.tsx'
 import { ago, shortDate } from '#/lib/labels.ts'
 import { sectionAnchor } from '#/lib/links.ts'
 import { legacyOriginsOf } from '#/server/legacy-fns.ts'
-import { addComment, decideSection, divergeSection, revertSection, suggestionsForCore } from '#/server/lifecycle-fns.ts'
-import { addSubsection, deleteSection, renameSection, setPointOfCare, setSectionHidden } from '#/server/structure-fns.ts'
+import {
+	addComment,
+	decideSection,
+	divergeSection,
+	revertSection,
+	suggestionsForCore,
+} from '#/server/lifecycle-fns.ts'
+import {
+	addSubsection,
+	deleteSection,
+	renameSection,
+	setPointOfCare,
+	setSectionHidden,
+} from '#/server/structure-fns.ts'
 import type { SectionChange } from '#/server/lifecycle.ts'
 import { divergedFrom, instructionsFor } from '#/server/workspace-fns.ts'
 import { type MarginNote, marginNotesOf } from './guidance.ts'
 import { CommentThread, Composer, SuggestionCard } from './Thread.tsx'
-import { atLeast, DocumentContext, MARK_GLYPH, MARK_WORDS, markOf, sectionLabel } from './workspace.ts'
+import {
+	atLeast,
+	DocumentContext,
+	MARK_GLYPH,
+	MARK_WORDS,
+	markOf,
+	sectionLabel,
+} from './workspace.ts'
 import './margin.css'
 
 export function Margin() {
 	const workspace = useContext(DocumentContext)
-	const section = createMemo(() => workspace.sections().find((s) => s.id === workspace.focused()) ?? null)
+	const section = createMemo(
+		() => workspace.sections().find((s) => s.id === workspace.focused()) ?? null,
+	)
 	return (
 		<div class="ocp-margin" data-guidance={workspace.guidance}>
 			<Show when={section()} keyed fallback={<WholeDocument />}>
@@ -51,14 +89,19 @@ export function Margin() {
 /** A pathway's margin with no section in view: the template's instructions. */
 function WholeDocument() {
 	const workspace = useContext(DocumentContext)
-	const instructions = createMemo(() => instructionsFor({ data: { documentId: workspace.documentId } }))
+	const instructions = createMemo(() =>
+		instructionsFor({ data: { documentId: workspace.documentId } }),
+	)
 	return (
 		<Show
 			when={workspace.guidance === 'margin'}
 			fallback={
 				<section class="ocp-margin-quiet">
 					<p class="ocp-margin-kicker">This template</p>
-					<p>Scroll to a section, or click into one, and its actions and comments appear here. The marks in the spine say what each pathway gets:</p>
+					<p>
+						Scroll to a section, or click into one, and its actions and comments appear here. The
+						marks in the spine say what each pathway gets:
+					</p>
 					<MarkKey />
 				</section>
 			}
@@ -68,8 +111,13 @@ function WholeDocument() {
 					For the whole document
 				</p>
 				<Loading fallback={<p class="ocp-muted">Reading the template’s instructions…</p>}>
-					<Show when={instructions().sections.length > 0} fallback={<p class="ocp-muted">The template gives no instructions of its own.</p>}>
-						<p class="ocp-muted">From the {instructions().source}. Scroll to a section for its own notes.</p>
+					<Show
+						when={instructions().sections.length > 0}
+						fallback={<p class="ocp-muted">The template gives no instructions of its own.</p>}
+					>
+						<p class="ocp-muted">
+							From the {instructions().source}. Scroll to a section for its own notes.
+						</p>
 						<For each={instructions().sections}>
 							{(s) => (
 								<div class="ocp-margin-instruction" data-depth={s.depth}>
@@ -87,10 +135,13 @@ function WholeDocument() {
 
 /** What changed in a section since the published edition, in words. */
 function changeLine(c: SectionChange, added: boolean, published: boolean): string {
-	if (c.change === 'removal') return 'Hidden since the published edition: it and everything under it are left out.'
+	if (c.change === 'removal')
+		return 'Hidden since the published edition: it and everything under it are left out.'
 	if (added || !published) {
 		const lead = published ? 'New in this draft' : 'Written for the first edition'
-		return c.annotated.inserted > 0 ? `${lead}: ${c.annotated.inserted} characters` : `${lead}, not yet written`
+		return c.annotated.inserted > 0
+			? `${lead}: ${c.annotated.inserted} characters`
+			: `${lead}, not yet written`
 	}
 	// The diff counts words; links, formatting and layout can move without them.
 	if (c.annotated.inserted === 0 && c.annotated.deleted === 0)
@@ -116,8 +167,12 @@ function MarkKey() {
 function SectionMargin(props: { sectionId: string }) {
 	const workspace = useContext(DocumentContext)
 	const s = createMemo(() => workspace.sections().find((row) => row.id === props.sectionId) ?? null)
-	const change = createMemo(() => workspace.state().changes.find((c) => c.sectionId === props.sectionId) ?? null)
-	const thread = createMemo(() => workspace.comments().filter((c) => c.sectionId === props.sectionId))
+	const change = createMemo(
+		() => workspace.state().changes.find((c) => c.sectionId === props.sectionId) ?? null,
+	)
+	const thread = createMemo(() =>
+		workspace.comments().filter((c) => c.sectionId === props.sectionId),
+	)
 	const canEdit = () => atLeast(workspace.role, 'member')
 	const [busy, setBusy] = createSignal(false)
 	const [error, setError] = createSignal<string | null>(null)
@@ -172,8 +227,16 @@ function SectionMargin(props: { sectionId: string }) {
 	}
 
 	// ---- what the previous edition said -----------------------------------------------
-	const origins = createMemo(() => (workspace.document.kind === 'pathway' ? legacyOriginsOf({ data: { sectionId: props.sectionId } }) : null))
-	const diverged = createMemo(() => (workspace.document.kind === 'core' ? divergedFrom({ data: { sectionId: props.sectionId } }) : null))
+	const origins = createMemo(() =>
+		workspace.document.kind === 'pathway'
+			? legacyOriginsOf({ data: { sectionId: props.sectionId } })
+			: null,
+	)
+	const diverged = createMemo(() =>
+		workspace.document.kind === 'core'
+			? divergedFrom({ data: { sectionId: props.sectionId } })
+			: null,
+	)
 
 	return (
 		<Show when={s()}>
@@ -200,13 +263,23 @@ function SectionMargin(props: { sectionId: string }) {
 							</Show>
 						</p>
 						<Show when={row().updatedAt}>
-							{(at) => <p class="ocp-margin-meta ocp-muted">Last changed {ago(at(), Date.now())}</p>}
+							{(at) => (
+								<p class="ocp-margin-meta ocp-muted">Last changed {ago(at(), Date.now())}</p>
+							)}
 						</Show>
 						<Show when={change()}>
-							{(c) => <p class="ocp-margin-meta">{changeLine(c(), row().added, workspace.state().published !== null)}</p>}
+							{(c) => (
+								<p class="ocp-margin-meta">
+									{changeLine(c(), row().added, workspace.state().published !== null)}
+								</p>
+							)}
 						</Show>
 						<Show when={row().migrationNote}>
-							{(note) => <p class="ocp-margin-meta ocp-muted">{note().replace(/^(unplaced|proposed):\s*/, 'From the previous edition: ')}</p>}
+							{(note) => (
+								<p class="ocp-margin-meta ocp-muted">
+									{note().replace(/^(unplaced|proposed):\s*/, 'From the previous edition: ')}
+								</p>
+							)}
 						</Show>
 					</header>
 
@@ -230,7 +303,11 @@ function SectionMargin(props: { sectionId: string }) {
 								{(note) => (
 									<NoteView
 										note={note}
-										canTick={canEdit() && row().ownership === 'owned' && workspace.editors.get(row().id) !== undefined}
+										canTick={
+											canEdit() &&
+											row().ownership === 'owned' &&
+											workspace.editors.get(row().id) !== undefined
+										}
 										onTick={tick}
 										onLight={light}
 									/>
@@ -243,13 +320,23 @@ function SectionMargin(props: { sectionId: string }) {
 						<ToolPanelSection title="This section">
 							<div class="ocp-margin-actions">
 								<Confirming
-									label={row().hidden ? 'Show again' : `Hide ${row().printedNumber ?? 'this section'} from this ${workspace.document.kind === 'core' ? 'template' : 'pathway'}`}
-									question={row().hidden ? null : 'Hide it and everything under it? Its number stays reserved, the published page leaves it out, and your review request lists it. Show again brings it back as it was.'}
+									label={
+										row().hidden
+											? 'Show again'
+											: `Hide ${row().printedNumber ?? 'this section'} from this ${workspace.document.kind === 'core' ? 'template' : 'pathway'}`
+									}
+									question={
+										row().hidden
+											? null
+											: 'Hide it and everything under it? Its number stays reserved, the published page leaves it out, and your review request lists it. Show again brings it back as it was.'
+									}
 									confirm="Hide it"
 									busy={busy()}
 									onGo={() =>
 										run(async () => {
-											await setSectionHidden({ data: { sectionId: row().id, hidden: !row().hidden } })
+											await setSectionHidden({
+												data: { sectionId: row().id, hidden: !row().hidden },
+											})
 											await workspace.refreshState()
 										})
 									}
@@ -259,8 +346,13 @@ function SectionMargin(props: { sectionId: string }) {
 										busy={busy()}
 										onAdd={(title) =>
 											run(async () => {
-												const children = workspace.sections().filter((c) => c.parentId === row().id).sort((a, b) => a.orderIndex - b.orderIndex)
-												await addSubsection({ data: { parentId: row().id, title, afterId: children.at(-1)?.id ?? null } })
+												const children = workspace
+													.sections()
+													.filter((c) => c.parentId === row().id)
+													.sort((a, b) => a.orderIndex - b.orderIndex)
+												await addSubsection({
+													data: { parentId: row().id, title, afterId: children.at(-1)?.id ?? null },
+												})
 												await workspace.refreshState()
 											})
 										}
@@ -278,7 +370,9 @@ function SectionMargin(props: { sectionId: string }) {
 											/>
 											<span>
 												In the quick reference guide
-												<small>The guide gathers the sections marked for use at the point of care.</small>
+												<small>
+													The guide gathers the sections marked for use at the point of care.
+												</small>
 											</span>
 										</label>
 									</Show>
@@ -287,7 +381,9 @@ function SectionMargin(props: { sectionId: string }) {
 									<RenameSection
 										current={row().title ?? ''}
 										busy={busy()}
-										onRename={(title) => run(() => renameSection({ data: { sectionId: row().id, title } }))}
+										onRename={(title) =>
+											run(() => renameSection({ data: { sectionId: row().id, title } }))
+										}
 									/>
 									<Confirming
 										label="Delete this subsection"
@@ -311,8 +407,8 @@ function SectionMargin(props: { sectionId: string }) {
 					<Show when={row().ownership === 'shared' && canEdit() && workspace.mode() === 'edit'}>
 						<ToolPanelSection title="Shared content">
 							<p class="ocp-muted">
-								Every pathway reads this section from the core template. Suggest a change to the central team, or take your
-								own copy to write it here.
+								Every pathway reads this section from the core template. Suggest a change to the
+								central team, or take your own copy to write it here.
 							</p>
 							<Composer
 								label="Suggest a change"
@@ -320,7 +416,14 @@ function SectionMargin(props: { sectionId: string }) {
 								busy={busy()}
 								onSubmit={(text) =>
 									run(async () => {
-										await addComment({ data: { documentId: workspace.documentId, sectionId: row().id, kind: 'suggestion', body: text } })
+										await addComment({
+											data: {
+												documentId: workspace.documentId,
+												sectionId: row().id,
+												kind: 'suggestion',
+												body: text,
+											},
+										})
 										await workspace.refreshComments()
 									})
 								}
@@ -342,7 +445,14 @@ function SectionMargin(props: { sectionId: string }) {
 						</ToolPanelSection>
 					</Show>
 
-					<Show when={row().ownership === 'owned' && row().coreSectionId && canEdit() && workspace.mode() === 'edit'}>
+					<Show
+						when={
+							row().ownership === 'owned' &&
+							row().coreSectionId &&
+							canEdit() &&
+							workspace.mode() === 'edit'
+						}
+					>
 						<ToolPanelSection title="Your own copy of a shared section">
 							<Confirming
 								label="Return to the shared version"
@@ -389,7 +499,10 @@ function SectionMargin(props: { sectionId: string }) {
 						<SectionSuggestions coreSectionId={row().id} />
 					</Show>
 
-					<ToolPanelSection title="Comments" meta={thread().length > 0 ? `${thread().length}` : undefined}>
+					<ToolPanelSection
+						title="Comments"
+						meta={thread().length > 0 ? `${thread().length}` : undefined}
+					>
 						<CommentThread
 							documentId={workspace.documentId}
 							sectionId={row().id}
@@ -403,7 +516,10 @@ function SectionMargin(props: { sectionId: string }) {
 						{(found) => (
 							<Loading fallback={<p class="ocp-muted">Looking up the previous edition…</p>}>
 								<Show when={found().origins.length > 0}>
-									<ToolPanelSection title="The previous edition said" meta={`${found().origins.length}`}>
+									<ToolPanelSection
+										title="The previous edition said"
+										meta={`${found().origins.length}`}
+									>
 										<p class="ocp-muted">
 											From{' '}
 											<Show when={found().legacySlug} fallback={found().legacyTitle}>
@@ -416,7 +532,10 @@ function SectionMargin(props: { sectionId: string }) {
 												<details class="ocp-origin">
 													<summary>
 														<strong>{origin.heading ?? origin.key}</strong>
-														<span class="ocp-muted"> · {origin.chars.toLocaleString()} characters</span>
+														<span class="ocp-muted">
+															{' '}
+															· {origin.chars.toLocaleString()} characters
+														</span>
 													</summary>
 													<Show when={origin.body}>{(b) => <RenderedBody body={b()} />}</Show>
 												</details>
@@ -434,7 +553,12 @@ function SectionMargin(props: { sectionId: string }) {
 }
 
 /** One note from the template: open, or folded once done. */
-function NoteView(props: { note: MarginNote; canTick: boolean; onTick: (index: number, done: boolean) => void; onLight: (index: number | null) => void }) {
+function NoteView(props: {
+	note: MarginNote
+	canTick: boolean
+	onTick: (index: number, done: boolean) => void
+	onLight: (index: number | null) => void
+}) {
 	const [open, setOpen] = createSignal(false)
 	return (
 		<Show
@@ -442,7 +566,10 @@ function NoteView(props: { note: MarginNote; canTick: boolean; onTick: (index: n
 			fallback={
 				<div class="ocp-note" data-kind="instruction">
 					<p>{props.note.kind === 'instruction' ? props.note.text : ''}</p>
-					<p class="ocp-muted ocp-note-sub">Written into the shared text: keep or leave out the words it names by taking your own copy.</p>
+					<p class="ocp-muted ocp-note-sub">
+						Written into the shared text: keep or leave out the words it names by taking your own
+						copy.
+					</p>
 				</div>
 			}
 		>
@@ -456,7 +583,12 @@ function NoteView(props: { note: MarginNote; canTick: boolean; onTick: (index: n
 					<Show
 						when={!g().done || open()}
 						fallback={
-							<button type="button" class="ocp-note-folded" onClick={() => setOpen(true)} title="Read the note">
+							<button
+								type="button"
+								class="ocp-note-folded"
+								onClick={() => setOpen(true)}
+								title="Read the note"
+							>
 								Done{g().doneBy ? ` · ${g().doneBy}` : ''}
 								{g().doneAt ? ` · ${shortDate(g().doneAt)}` : ''}
 							</button>
@@ -536,7 +668,14 @@ function AddSubsection(props: { busy: boolean; onAdd: (title: string) => void })
 	const [adding, setAdding] = createSignal(false)
 	const [title, setTitle] = createSignal('')
 	return (
-		<Show when={adding()} fallback={<Button variant="outline" disabled={props.busy} onClick={() => setAdding(true)}>Add a subsection</Button>}>
+		<Show
+			when={adding()}
+			fallback={
+				<Button variant="outline" disabled={props.busy} onClick={() => setAdding(true)}>
+					Add a subsection
+				</Button>
+			}
+		>
 			<form
 				class="ocp-inline-form"
 				onSubmit={(e) => {
@@ -548,7 +687,10 @@ function AddSubsection(props: { busy: boolean; onAdd: (title: string) => void })
 					setAdding(false)
 				}}
 			>
-				<Field label="Heading of the new subsection" hint="Unnumbered, under this section. Your review request lists it.">
+				<Field
+					label="Heading of the new subsection"
+					hint="Unnumbered, under this section. Your review request lists it."
+				>
 					<TextInput value={title()} onInput={(e) => setTitle(e.currentTarget.value)} autofocus />
 				</Field>
 				<ToolPanelActions>
@@ -564,7 +706,11 @@ function AddSubsection(props: { busy: boolean; onAdd: (title: string) => void })
 	)
 }
 
-function RenameSection(props: { current: string; busy: boolean; onRename: (title: string) => void }) {
+function RenameSection(props: {
+	current: string
+	busy: boolean
+	onRename: (title: string) => void
+}) {
 	const [editing, setEditing] = createSignal(false)
 	const [title, setTitle] = createSignal('')
 	return (
@@ -613,11 +759,15 @@ function RenameSection(props: { current: string; busy: boolean; onRename: (title
  *  review mode the way on to the next change. */
 function ReviewDecision(props: { sectionId: string }) {
 	const workspace = useContext(DocumentContext)
-	const change = createMemo(() => workspace.state().changes.find((c) => c.sectionId === props.sectionId) ?? null)
+	const change = createMemo(
+		() => workspace.state().changes.find((c) => c.sectionId === props.sectionId) ?? null,
+	)
 	const review = () => workspace.state().review
 	const canDecide = () => {
 		const r = review()
-		return r !== null && r.decision === null && r.superseded === 0 && atLeast(workspace.role, 'admin')
+		return (
+			r !== null && r.decision === null && r.superseded === 0 && atLeast(workspace.role, 'admin')
+		)
 	}
 	const [busy, setBusy] = createSignal(false)
 	const [error, setError] = createSignal<string | null>(null)
@@ -627,7 +777,9 @@ function ReviewDecision(props: { sectionId: string }) {
 		setBusy(true)
 		setError(null)
 		try {
-			await decideSection({ data: { reviewId: r.reviewId, sectionId: props.sectionId, decision, note } })
+			await decideSection({
+				data: { reviewId: r.reviewId, sectionId: props.sectionId, decision, note },
+			})
 			await workspace.refreshState()
 		} catch (e) {
 			setError(e instanceof Error ? e.message : String(e))
@@ -641,20 +793,35 @@ function ReviewDecision(props: { sectionId: string }) {
 				<ToolPanelSection title="Review decision">
 					<Show
 						when={c().decision}
-						fallback={<p class="ocp-muted">Changed after the review was requested, so this review does not cover it. Ask for review again to include it.</p>}
+						fallback={
+							<p class="ocp-muted">
+								Changed after the review was requested, so this review does not cover it. Ask for
+								review again to include it.
+							</p>
+						}
 					>
 						{(pinned) => (
 							<>
-								<Show when={pinned().decision} fallback={<p class="ocp-muted">Waiting for a decision.</p>}>
+								<Show
+									when={pinned().decision}
+									fallback={<p class="ocp-muted">Waiting for a decision.</p>}
+								>
 									{(decision) => (
 										<p>
-											<Chip tone={decision() === 'approved' ? 'live' : 'accent'}>{decision() === 'approved' ? 'Approved' : 'Changes asked for'}</Chip>
-											<Show when={pinned().note}>{(note) => <span class="ocp-muted"> {note()}</span>}</Show>
+											<Chip tone={decision() === 'approved' ? 'live' : 'accent'}>
+												{decision() === 'approved' ? 'Approved' : 'Changes asked for'}
+											</Chip>
+											<Show when={pinned().note}>
+												{(note) => <span class="ocp-muted"> {note()}</span>}
+											</Show>
 										</p>
 									)}
 								</Show>
 								<Show when={canDecide()}>
-									<DecisionStrip busy={busy()} onDecide={(decision, note) => void decide(decision, note)} />
+									<DecisionStrip
+										busy={busy()}
+										onDecide={(decision, note) => void decide(decision, note)}
+									/>
 								</Show>
 							</>
 						)}
@@ -677,7 +844,10 @@ function ReviewDecision(props: { sectionId: string }) {
 	)
 }
 
-function DecisionStrip(props: { busy: boolean; onDecide: (decision: 'approved' | 'changes_requested', note: string | null) => void }) {
+function DecisionStrip(props: {
+	busy: boolean
+	onDecide: (decision: 'approved' | 'changes_requested', note: string | null) => void
+}) {
 	let note: HTMLTextAreaElement | undefined
 	const written = () => note?.value.trim() || null
 	return (
@@ -691,10 +861,20 @@ function DecisionStrip(props: { busy: boolean; onDecide: (decision: 'approved' |
 				/>
 			</Field>
 			<ToolPanelActions>
-				<Button variant="solid" colorBase="success" disabled={props.busy} onClick={() => props.onDecide('approved', written())}>
+				<Button
+					variant="solid"
+					colorBase="success"
+					disabled={props.busy}
+					onClick={() => props.onDecide('approved', written())}
+				>
 					Approve
 				</Button>
-				<Button variant="outline" colorBase="warning" disabled={props.busy} onClick={() => props.onDecide('changes_requested', written())}>
+				<Button
+					variant="outline"
+					colorBase="warning"
+					disabled={props.busy}
+					onClick={() => props.onDecide('changes_requested', written())}
+				>
 					Ask for changes
 				</Button>
 			</ToolPanelActions>
@@ -716,7 +896,10 @@ function SectionSuggestions(props: { coreSectionId: string }) {
 	return (
 		<Loading fallback={null}>
 			<Show when={here().length > 0}>
-				<ToolPanelSection title="Suggestions from pathways" meta={open() > 0 ? `${open()} open` : 'all resolved'}>
+				<ToolPanelSection
+					title="Suggestions from pathways"
+					meta={open() > 0 ? `${open()} open` : 'all resolved'}
+				>
 					<For each={here()}>
 						{(suggestion) => (
 							<SuggestionCard

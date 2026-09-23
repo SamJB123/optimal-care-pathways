@@ -95,7 +95,11 @@ interface Line {
 const isAccent = (colour: string): boolean => {
 	const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(colour)
 	if (!m) return false
-	const parts = [Number.parseInt(m[1] ?? '0', 16), Number.parseInt(m[2] ?? '0', 16), Number.parseInt(m[3] ?? '0', 16)]
+	const parts = [
+		Number.parseInt(m[1] ?? '0', 16),
+		Number.parseInt(m[2] ?? '0', 16),
+		Number.parseInt(m[3] ?? '0', 16),
+	]
 	return Math.max(...parts) - Math.min(...parts) > 60
 }
 
@@ -136,7 +140,8 @@ function runsOf(page: PdfPage): Run[] {
 		const face = page.fonts.get(r.fontName)
 		const name = face?.name ?? r.fontName
 		const size = Math.round(r.box.height * 2) / 2
-		if (r.box.x < -5 || r.box.x > page.width + 5 || r.box.y < -5 || r.box.y > page.height + 5) continue
+		if (r.box.x < -5 || r.box.x > page.width + 5 || r.box.y < -5 || r.box.y > page.height + 5)
+			continue
 		out.push({
 			text: r.text,
 			box: r.box,
@@ -175,10 +180,16 @@ function linesFrom(runs: Run[], page: number): Line[] {
 		const last = baselines.at(-1)
 		// Runs of one line share a baseline; a superscript or a dingbat marker sits a
 		// little off it, so a size difference widens the tolerance.
-		const tolerance = Math.min(lastSize, run.size) / Math.max(lastSize, run.size) < 0.85 ? Math.max(3.5, Math.min(lastSize, run.size) * 0.6) : 2.5
+		const tolerance =
+			Math.min(lastSize, run.size) / Math.max(lastSize, run.size) < 0.85
+				? Math.max(3.5, Math.min(lastSize, run.size) * 0.6)
+				: 2.5
 		// Two runs that overlap horizontally cannot be one line (a foot line drawn across
 		// the page two points below a column's last line).
-		const overlaps = last?.some((r) => r.box.x < run.box.x + run.box.width - 1 && run.box.x < r.box.x + r.box.width - 1) ?? false
+		const overlaps =
+			last?.some(
+				(r) => r.box.x < run.box.x + run.box.width - 1 && run.box.x < r.box.x + r.box.width - 1,
+			) ?? false
 		if (last && !overlaps && Math.abs(lastY - run.box.y) <= tolerance) {
 			last.push(run)
 			continue
@@ -195,7 +206,16 @@ function linesFrom(runs: Run[], page: number): Line[] {
 		for (const [i, run] of baseline.entries()) {
 			const previous = baseline[i - 1]
 			if (!previous || run.box.x - (previous.box.x + previous.box.width) < 3) continue
-			if (LABEL.test(baseline.slice(0, i).map((r) => r.text).join('').trim())) continue
+			if (
+				LABEL.test(
+					baseline
+						.slice(0, i)
+						.map((r) => r.text)
+						.join('')
+						.trim(),
+				)
+			)
+				continue
 			seen.add(Math.round(run.box.x / 2) * 2)
 		}
 		for (const x of seen) besideCounts.set(x, (besideCounts.get(x) ?? 0) + 1)
@@ -211,15 +231,30 @@ function linesFrom(runs: Run[], page: number): Line[] {
 			const gap = previous ? run.box.x - (previous.box.x + previous.box.width) : 0
 			// A list label keeps its text beside it; a small digit is a raised footnote marker
 			// that happens to share a baseline with another column, not a label.
-			const label = LABEL.test(piece.map((r) => r.text).join('').trim()) && !piece.every((r) => r.size <= 7)
+			const label =
+				LABEL.test(
+					piece
+						.map((r) => r.text)
+						.join('')
+						.trim(),
+				) && !piece.every((r) => r.size <= 7)
 			// Headings run across columns and are never split at a column edge; nor is a line
 			// whose word gap merely falls on one (a gutter is wider than a word space, which
 			// justified text stretches to four points or so; a bullet sits five from the text
 			// before it).
-			const atEdge = gap >= 4.5 && atColumnEdge(run.box.x) && Math.max(run.size, previous?.size ?? 0) < 10.5
+			const atEdge =
+				gap >= 4.5 && atColumnEdge(run.box.x) && Math.max(run.size, previous?.size ?? 0) < 10.5
 			// A contents entry's page number is set at the text's size; a small digit is a
 			// footnote marker, which belongs to the word it follows, not to this piece.
-			const pageNumber = run.size >= 8 && PAGE_NUMBER.test(baseline.slice(i).map((r) => r.text).join('').trim())
+			const pageNumber =
+				run.size >= 8 &&
+				PAGE_NUMBER.test(
+					baseline
+						.slice(i)
+						.map((r) => r.text)
+						.join('')
+						.trim(),
+				)
 			if (previous && (gap > SIDE_BY_SIDE_GAP || atEdge) && !label && !pageNumber) {
 				lines.push(lineOf(piece, page))
 				piece = []
@@ -233,10 +268,18 @@ function linesFrom(runs: Run[], page: number): Line[] {
 	// (a small digit alone) rejoins the line it ends.
 	const out: Line[] = []
 	const consumed = new Set<Line>()
-	const isText = (l: Line) => !consumed.has(l) && !l.runs.every((r) => r.dingbat) && !isRaisedMarker(l)
+	const isText = (l: Line) =>
+		!consumed.has(l) && !l.runs.every((r) => r.dingbat) && !isRaisedMarker(l)
 	for (const line of lines) {
 		if (line.runs.every((r) => r.dingbat)) {
-			const text = lines.find((l) => l !== line && isText(l) && Math.abs(l.y - line.y) <= 8 && l.x0 >= line.x1 - 2 && l.x0 - line.x1 <= 30)
+			const text = lines.find(
+				(l) =>
+					l !== line &&
+					isText(l) &&
+					Math.abs(l.y - line.y) <= 8 &&
+					l.x0 >= line.x1 - 2 &&
+					l.x0 - line.x1 <= 30,
+			)
 			if (text) {
 				text.runs.unshift(...line.runs)
 				finishLine(text)
@@ -246,14 +289,29 @@ function linesFrom(runs: Run[], page: number): Line[] {
 		} else if (isRaisedMarker(line)) {
 			// The marker ends a line, or sits inside one ("lead clinician² to guide"): the runs
 			// re-sort by x when the line is finished.
-			const word = lines.find((l) => l !== line && isText(l) && Math.abs(l.y - line.y) <= 8 && line.x0 >= l.x0 - 2 && line.x0 - l.x1 <= 6)
+			const word = lines.find(
+				(l) =>
+					l !== line &&
+					isText(l) &&
+					Math.abs(l.y - line.y) <= 8 &&
+					line.x0 >= l.x0 - 2 &&
+					line.x0 - l.x1 <= 6,
+			)
 			if (word) {
 				word.runs.push(...line.runs)
 				finishLine(word)
 				// The marker stood in the word gap the baseline was split at ("remain unmet.²⁵
 				// High levels …", "colorectal,²⁴¹ breast²⁴⁴ and"): the text that goes on right
 				// after it, on the word's baseline, is the same line.
-				const tail = lines.find((l) => l !== word && l !== line && isText(l) && Math.abs(l.y - word.y) <= 1.5 && l.x0 >= line.x1 - 2 && l.x0 - line.x1 <= 6)
+				const tail = lines.find(
+					(l) =>
+						l !== word &&
+						l !== line &&
+						isText(l) &&
+						Math.abs(l.y - word.y) <= 1.5 &&
+						l.x0 >= line.x1 - 2 &&
+						l.x0 - line.x1 <= 6,
+				)
 				if (tail) {
 					word.runs.push(...tail.runs)
 					finishLine(word)
@@ -268,10 +326,22 @@ function linesFrom(runs: Run[], page: number): Line[] {
 }
 
 /** A line that is only small digits ("2", "11,12", "4–6"): a marker set apart from its word. */
-const isRaisedMarker = (line: Line): boolean => line.runs.every((r) => r.size <= 7) && /^\d{1,3}(?:\s*[,–-]\s*\d{1,3})*$/.test(line.text.trim())
+const isRaisedMarker = (line: Line): boolean =>
+	line.runs.every((r) => r.size <= 7) && /^\d{1,3}(?:\s*[,–-]\s*\d{1,3})*$/.test(line.text.trim())
 
 const lineOf = (runs: Run[], page: number): Line => {
-	const line: Line = { page, y: 0, x0: 0, x1: 0, size: 0, weight: 'light', colour: '#000000', runs, text: '', columnX: 0 }
+	const line: Line = {
+		page,
+		y: 0,
+		x0: 0,
+		x1: 0,
+		size: 0,
+		weight: 'light',
+		colour: '#000000',
+		runs,
+		text: '',
+		columnX: 0,
+	}
 	finishLine(line)
 	line.columnX = line.x0
 	return line
@@ -285,7 +355,9 @@ function finishLine(line: Line): void {
 	// has any (a raised marker's "25,34,46,65–67" outcounts the "remain unmet." it follows
 	// and never wins).
 	const byChars = new Map<string, { size: number; weight: Weight; chars: number }>()
-	const measured = line.runs.some((r) => r.size > 7) ? line.runs.filter((r) => r.size > 7) : line.runs
+	const measured = line.runs.some((r) => r.size > 7)
+		? line.runs.filter((r) => r.size > 7)
+		: line.runs
 	for (const r of measured) {
 		const key = `${r.size}|${r.weight}`
 		const entry = byChars.get(key) ?? { size: r.size, weight: r.weight, chars: 0 }
@@ -315,8 +387,17 @@ function joinRuns(runs: Run[]): string {
 			const gap = r.box.x - (prev.box.x + prev.box.width)
 			// A raised footnote marker is followed by a word only across a word space
 			// ("clinician² to"); the marker's own narrow set never measures that gap.
-			const afterMarker = prev.size <= 7 && /^\d{1,2}$/.test(prev.text.trim()) && r.size > 7 && /^[\p{L}(]/u.test(r.text)
-			if ((afterMarker || gap > Math.min(prev.size, r.size) * 0.18) && !out.endsWith(' ') && !r.text.startsWith(' ')) out += ' '
+			const afterMarker =
+				prev.size <= 7 &&
+				/^\d{1,2}$/.test(prev.text.trim()) &&
+				r.size > 7 &&
+				/^[\p{L}(]/u.test(r.text)
+			if (
+				(afterMarker || gap > Math.min(prev.size, r.size) * 0.18) &&
+				!out.endsWith(' ') &&
+				!r.text.startsWith(' ')
+			)
+				out += ' '
 		}
 		out += r.text
 		prev = r
@@ -331,9 +412,11 @@ function joinRuns(runs: Run[]): string {
 const FOOTER_Y = 40
 
 /** Vector art: filled paths that are not rectangles (5 segments) nor rounded cells (11). */
-const isArt = (p: PaintedPath): boolean => p.kind === 'fill' && p.segments > 6 && p.segments !== 11 && p.segments !== 14
+const isArt = (p: PaintedPath): boolean =>
+	p.kind === 'fill' && p.segments > 6 && p.segments !== 11 && p.segments !== 14
 
-const isRoundedCell = (p: PaintedPath): boolean => p.kind === 'fill' && p.segments === 11 && p.box.width > 40 && p.box.height > 14
+const isRoundedCell = (p: PaintedPath): boolean =>
+	p.kind === 'fill' && p.segments === 11 && p.box.width > 40 && p.box.height > 14
 
 const area = (b: Box): number => b.width * b.height
 
@@ -364,7 +447,8 @@ const lineBox = (line: Line): Box => ({
  */
 function ornamentKeys(pages: PdfPage[]): Set<string> {
 	const seen = new Map<string, number>()
-	const key = (p: PaintedPath) => `${Math.round(p.box.x)},${Math.round(p.box.y)},${Math.round(p.box.width)},${Math.round(p.box.height)}`
+	const key = (p: PaintedPath) =>
+		`${Math.round(p.box.x)},${Math.round(p.box.y)},${Math.round(p.box.width)},${Math.round(p.box.height)}`
 	for (const page of pages) {
 		const onPage = new Set<string>()
 		for (const p of page.paths) if (isArt(p)) onPage.add(key(p))
@@ -374,7 +458,10 @@ function ornamentKeys(pages: PdfPage[]): Set<string> {
 }
 
 const isOffPage = (p: PaintedPath, page: PdfPage): boolean =>
-	p.box.x < -2 || p.box.y < -2 || p.box.x + p.box.width > page.width + 2 || p.box.y + p.box.height > page.height + 2
+	p.box.x < -2 ||
+	p.box.y < -2 ||
+	p.box.x + p.box.width > page.width + 2 ||
+	p.box.y + p.box.height > page.height + 2
 
 // ---------------------------------------------------------------------------
 // Columns and reading order
@@ -393,9 +480,19 @@ interface ColumnModel {
  *  middle a pitch apart) separates nothing. */
 function separatorsOf(page: PdfPage, lines: Line[]): number[] {
 	const textWidth = textWidthOf(lines)
-	const crossed = (y: number): boolean => lines.some((a) => a.y > y && lines.some((b) => b.y < y && a.y - b.y < 20 && Math.abs(a.x0 - b.x0) <= 10))
+	const crossed = (y: number): boolean =>
+		lines.some(
+			(a) => a.y > y && lines.some((b) => b.y < y && a.y - b.y < 20 && Math.abs(a.x0 - b.x0) <= 10),
+		)
 	return page.paths
-		.filter((p) => p.kind === 'fill' && p.colour !== '#ffffff' && p.box.width >= textWidth * 0.7 && p.box.height >= 15 && p.box.height <= 60)
+		.filter(
+			(p) =>
+				p.kind === 'fill' &&
+				p.colour !== '#ffffff' &&
+				p.box.width >= textWidth * 0.7 &&
+				p.box.height >= 15 &&
+				p.box.height <= 60,
+		)
 		.map((p) => p.box.y + p.box.height / 2)
 		.filter((y) => !crossed(y))
 }
@@ -434,16 +531,29 @@ function columnsOf(lines: Line[], page?: PdfPage): ColumnModel {
 		// line to its left within a few lines' reach ends before it.
 		if (x - previous < 60) continue
 		const leftLines = lines.filter((l) => l.x0 >= (columns[0] ?? 0) - 3 && l.x0 < x - 3)
-		const shared = cluster.lines.filter((l) => leftLines.some((p) => Math.abs(p.y - l.y) <= 3 && p.x1 < l.x0 - 4)).length
-		const clear = cluster.lines.length >= 3 && cluster.lines.every((l) => leftLines.filter((p) => Math.abs(p.y - l.y) <= 40).every((p) => p.x1 < l.x0 - 4))
+		const shared = cluster.lines.filter((l) =>
+			leftLines.some((p) => Math.abs(p.y - l.y) <= 3 && p.x1 < l.x0 - 4),
+		).length
+		const clear =
+			cluster.lines.length >= 3 &&
+			cluster.lines.every((l) =>
+				leftLines.filter((p) => Math.abs(p.y - l.y) <= 40).every((p) => p.x1 < l.x0 - 4),
+			)
 		if (shared >= 3 || (shared >= 1 && clear)) columns.push(x)
 	}
-	return { starts: columns.length > 0 ? columns : [Math.min(...lines.map((l) => l.x0))], separators }
+	return {
+		starts: columns.length > 0 ? columns : [Math.min(...lines.map((l) => l.x0))],
+		separators,
+	}
 }
 
 /** Split a baseline's runs at the column boundaries the page has. A heading runs across
  *  the columns and stays whole (its "continued" tag may start inside the last column). */
-function splitByColumns(lines: Line[], columns: ColumnModel, headingSize = Number.POSITIVE_INFINITY): Line[] {
+function splitByColumns(
+	lines: Line[],
+	columns: ColumnModel,
+	headingSize = Number.POSITIVE_INFINITY,
+): Line[] {
 	if (columns.starts.length <= 1) return lines
 	const out: Line[] = []
 	for (const line of lines) {
@@ -462,7 +572,8 @@ function splitByColumns(lines: Line[], columns: ColumnModel, headingSize = Numbe
 			// A run a word space (or less — a raised marker glued to its word) from the run
 			// before it is that run's text, whatever column start it happens to fall at: a
 			// gutter is wider than a word space.
-			if (previous && run.box.x - (previous.run.box.x + previous.run.box.width) < 6) index = previous.index
+			if (previous && run.box.x - (previous.run.box.x + previous.run.box.width) < 6)
+				index = previous.index
 			groups[index]?.push(run)
 			previous = { run, index }
 		}
@@ -484,7 +595,8 @@ function assignColumns(lines: Line[], columns: ColumnModel): void {
 /** Which column a line starts in. */
 const columnIndex = (line: Line, columns: ColumnModel): number => {
 	let index = 0
-	for (let i = 0; i < columns.starts.length; i++) if (line.x0 >= (columns.starts[i] ?? 0) - 8) index = i
+	for (let i = 0; i < columns.starts.length; i++)
+		if (line.x0 >= (columns.starts[i] ?? 0) - 8) index = i
 	return index
 }
 
@@ -508,7 +620,9 @@ function orderLines(lines: Line[], columns: ColumnModel): Line[] {
 	// in: a step's two-column row shares the page with the three-column row under it, and
 	// its long lines run across where that row's middle column stands.
 	const inBand = (band: Line[]): ColumnModel => {
-		const starts = columns.starts.filter((s, i) => band.some((l) => columnIndex(l, columns) === i && l.x0 <= s + 14))
+		const starts = columns.starts.filter((s, i) =>
+			band.some((l) => columnIndex(l, columns) === i && l.x0 <= s + 14),
+		)
 		return { starts: starts.length > 0 ? starts : columns.starts, separators: [] }
 	}
 	const out: Line[] = []
@@ -614,8 +728,14 @@ function runsOfLines(lines: Line[], boldWeights: Set<Weight>, strip?: RegExp): T
 				// A raised marker is followed by a word only across a word space ("clinician²
 				// to"); its own narrow set never measures that gap, and the space belongs to
 				// the word, not to the marker (which the mapper replaces with a citation).
-				const afterMarker = previousRun !== null && previousRun.size < line.size - 1.5 && /^\d{1,3}$/.test(previousRun.text.trim()) && /^[\p{L}(]/u.test(text)
-				const markerBefore = (previous.superscript || previous.footnote !== null || previous.endnote !== null) && /^\d{1,3}\s*$/.test(previous.text)
+				const afterMarker =
+					previousRun !== null &&
+					previousRun.size < line.size - 1.5 &&
+					/^\d{1,3}$/.test(previousRun.text.trim()) &&
+					/^[\p{L}(]/u.test(text)
+				const markerBefore =
+					(previous.superscript || previous.footnote !== null || previous.endnote !== null) &&
+					/^\d{1,3}\s*$/.test(previous.text)
 				if (startsLine || previousRun === null) {
 					const hyphenated = /-$/.test(previous.text) && /^[a-z]/.test(text)
 					const inUrl = OPEN_URL.test(out.map((o) => o.text).join(''))
@@ -687,7 +807,8 @@ function learnLadder(lines: Line[]): Ladder {
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7
 
 /** A heading set at body size (numbered or not). */
-const runIn = (level: HeadingLevel | null): boolean => level === 4 || level === 5 || level === 6 || level === 7
+const runIn = (level: HeadingLevel | null): boolean =>
+	level === 4 || level === 5 || level === 6 || level === 7
 
 /** A line set wholly in one weight (a superscript or dingbat aside). */
 /** … an italic run inside a line set in that weight counts too: a family without an italic
@@ -724,7 +845,13 @@ function opensBoldStatement(lines: Line[], index: number, pitch: number): boolea
 		// The statement is complete once a line closes it: the bold heading set under it a
 		// line apart ("… screening for Lynch syndrome." over "Surgery") is not its tail.
 		if (/[.!?:]$/.test(last.text.trim())) break
-		if (last.y - next.y <= 0 || last.y - next.y >= pitch * 1.3 || Math.abs(next.columnX - first.columnX) > 4 || Math.abs(next.size - first.size) > 0.6) break
+		if (
+			last.y - next.y <= 0 ||
+			last.y - next.y >= pitch * 1.3 ||
+			Math.abs(next.columnX - first.columnX) > 4 ||
+			Math.abs(next.size - first.size) > 0.6
+		)
+			break
 		block.push(next)
 	}
 	// The block closes as a sentence or a lead-in ("… the lead clinician's / responsibilities
@@ -749,7 +876,13 @@ function opensBoldStatement(lines: Line[], index: number, pitch: number): boolea
 	if (block.length < 2 || !/[.!?:]$/.test(closing)) return false
 	if (/:$/.test(closing)) {
 		const after = lines[index + block.length]
-		if (after && after.page === first.page && Math.abs(after.columnX - first.columnX) <= 4 && !markerOf(after)) return false
+		if (
+			after &&
+			after.page === first.page &&
+			Math.abs(after.columnX - first.columnX) <= 4 &&
+			!markerOf(after)
+		)
+			return false
 	}
 	const right = Math.max(...block.map((l) => l.x1))
 	return first.x1 >= right - (right - first.x0) * 0.35
@@ -757,7 +890,13 @@ function opensBoldStatement(lines: Line[], index: number, pitch: number): boolea
 
 /** What heading level a line is, or null for text. `standalone` = the line opens after a
  *  paragraph gap (or a page), which an italic run-in heading must. */
-function headingLevelOf(line: Line, ladder: Ladder, next: Line | undefined, standalone = true, following: Line[] = []): HeadingLevel | null {
+function headingLevelOf(
+	line: Line,
+	ladder: Ladder,
+	next: Line | undefined,
+	standalone = true,
+	following: Line[] = [],
+): HeadingLevel | null {
 	if (line.runs.every((r) => r.dingbat)) return null
 	// The wholly-bold lines set one under this one, a line apart in its column: a wrapped
 	// heading ("Cancer Australia's Leadership Group on / Aboriginal and Torres Strait Islander
@@ -767,8 +906,15 @@ function headingLevelOf(line: Line, ladder: Ladder, next: Line | undefined, stan
 		const block: Line[] = [line]
 		for (const l of following) {
 			const last = block.at(-1)
-			if (!last || l.page !== last.page || !wholly(l, 'medium') || Math.abs(l.size - line.size) > 0.6) break
-			if (last.y - l.y <= 0 || last.y - l.y >= line.size * 1.55 || Math.abs(l.x0 - line.x0) > 4) break
+			if (
+				!last ||
+				l.page !== last.page ||
+				!wholly(l, 'medium') ||
+				Math.abs(l.size - line.size) > 0.6
+			)
+				break
+			if (last.y - l.y <= 0 || last.y - l.y >= line.size * 1.55 || Math.abs(l.x0 - line.x0) > 4)
+				break
 			block.push(l)
 		}
 		if (block.length < 2 || block.length > 4) return false
@@ -779,7 +925,13 @@ function headingLevelOf(line: Line, ladder: Ladder, next: Line | undefined, stan
 		// over "The role of the general practitioner …").
 		if (/:$/.test(text)) {
 			const after = following[block.length - 1]
-			return after !== undefined && after.page === line.page && Math.abs(after.columnX - line.columnX) <= 4 && !markerOf(after) && !wholly(after, 'medium')
+			return (
+				after !== undefined &&
+				after.page === line.page &&
+				Math.abs(after.columnX - line.columnX) <= 4 &&
+				!markerOf(after) &&
+				!wholly(after, 'medium')
+			)
 		}
 		return !/[.!?;,]$/.test(text)
 	}
@@ -788,7 +940,10 @@ function headingLevelOf(line: Line, ladder: Ladder, next: Line | undefined, stan
 	// next does — the first line of a bold lead, not a heading over it.
 	const leadOpens = (l: Line): boolean => {
 		const runs = l.runs.filter((r) => !r.dingbat && r.size >= l.size - 1.5)
-		if (!(runs.length > 1 && runs[0]?.weight === 'medium' && runs.some((r) => r.weight === 'light'))) return false
+		if (
+			!(runs.length > 1 && runs[0]?.weight === 'medium' && runs.some((r) => r.weight === 'light'))
+		)
+			return false
 		// A bold opening that closes on a colon is a label of its own ("Patients fit for
 		// intensive chemotherapy: Induction …"), not the tail of the term above it.
 		let n = 0
@@ -828,14 +983,23 @@ function headingLevelOf(line: Line, ladder: Ladder, next: Line | undefined, stan
 		Math.abs(next.size - ladder.body) <= 1
 	)
 		return 7
-	if (line.size >= ladder.part - 0.75 && (line.weight === 'roman' || line.weight === 'medium')) return 2
-	if (line.size >= ladder.section - 0.5 && line.size < ladder.part - 0.75 && line.weight !== 'light') return 3
+	if (line.size >= ladder.part - 0.75 && (line.weight === 'roman' || line.weight === 'medium'))
+		return 2
+	if (
+		line.size >= ladder.section - 0.5 &&
+		line.size < ladder.part - 0.75 &&
+		line.weight !== 'light'
+	)
+		return 3
 	// A run-in heading at body size: one whole line in the medium weight, short, not a
 	// sentence, not a bullet, and not the first line of a bold paragraph (the next line
 	// does not continue it in lower case). A lead-in ends in a colon and is not one — unless
 	// the design set it in its accent colour, which it gives headings alone ("Further
 	// information:" over a callout's list).
-	const accentLabel = isAccent(line.colour) && /:$/.test(line.text.trim()) && line.text.trim().split(/\s+/).length <= 3
+	const accentLabel =
+		isAccent(line.colour) &&
+		/:$/.test(line.text.trim()) &&
+		line.text.trim().split(/\s+/).length <= 3
 	if (
 		Math.abs(line.size - ladder.body) <= 0.75 &&
 		wholly(line, 'medium') &&
@@ -853,13 +1017,18 @@ function headingLevelOf(line: Line, ladder: Ladder, next: Line | undefined, stan
 				// The next line may start in lower case only as the heading's own wrapped
 				// tail: short, bold and not ending like a sentence ("Governance – project
 				// steering" / "committee representation").
-				(!/^[a-z]/.test(next.text) || (wholly(next, 'medium') && next.text.length <= 40 && !/[.:;]$/.test(next.text.trim())) || wrappedHeading()) &&
+				(!/^[a-z]/.test(next.text) ||
+					(wholly(next, 'medium') && next.text.length <= 40 && !/[.:;]$/.test(next.text.trim())) ||
+					wrappedHeading()) &&
 				// The first line of a bold paragraph is followed by more bold text; a heading
 				// over a bold lead-in ("Communication" over "The GP's role is:", "Training,
 				// experience and treatment centre characteristics" over "The following … is
 				// required of the appropriate specialist(s):") is not — a whole bold line that
 				// ends in a colon is a lead-in.
-				(!wholly(next, 'medium') || line.text.length <= 40 || wrappedHeading() || (/:$/.test(next.text.trim()) && next.text.trim().length > 30))))
+				(!wholly(next, 'medium') ||
+					line.text.length <= 40 ||
+					wrappedHeading() ||
+					(/:$/.test(next.text.trim()) && next.text.trim().length > 30))))
 	) {
 		// The design sets two run-in levels apart by colour alone: a black bold heading over
 		// its groups, an accent-coloured one over each group ("Medical colleges and peak
@@ -889,11 +1058,17 @@ interface Draft {
  * the gap to the next line is under 1.5 lines, the size class holds and no marker starts.
  */
 /** How a list of names opens an entry: a title before the name. */
-const HONORIFIC = /^(?:Prof\.?|Professor|Dr|Ms|Mr|Mrs|Miss|Mx|Assoc\.?|Associate|A\/Prof(?:essor)?|Adj\.?|Emeritus)\b/
+const HONORIFIC =
+	/^(?:Prof\.?|Professor|Dr|Ms|Mr|Mrs|Miss|Mx|Assoc\.?|Associate|A\/Prof(?:essor)?|Adj\.?|Emeritus)\b/
 /** A name closing on post-nominals ("Ian Olver AM MD PhD"): a person, not a heading. */
-const POST_NOMINALS = /^\p{Lu}[\p{L}'’-]+(?:\s\p{Lu}[\p{L}'’.-]+)+(?:\s(?:AM|AO|AC|OAM|PSM|MD|PhD|MBBS|FRACP|FAChPM|FRANZCR|FRACS|RN)){1,4}$/u
+const POST_NOMINALS =
+	/^\p{Lu}[\p{L}'’-]+(?:\s\p{Lu}[\p{L}'’.-]+)+(?:\s(?:AM|AO|AC|OAM|PSM|MD|PhD|MBBS|FRACP|FAChPM|FRANZCR|FRACS|RN)){1,4}$/u
 
-function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean; lexicon?: EntryLexicon } = {}): Draft[] {
+function draftsOf(
+	lines: Line[],
+	ladder: Ladder,
+	options: { entryLines?: boolean; lexicon?: EntryLexicon } = {},
+): Draft[] {
 	const drafts: Draft[] = []
 	// A list set TIGHT — one entry per line with no gap between entries — is the case the
 	// entry rules are for; where entries are spaced, the gaps already separate them.
@@ -931,7 +1106,9 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 		const firstWord = line.text.trim().split(/\s+/)[0] ?? ''
 		const run = line.runs.find((r) => !r.dingbat && r.text.trim().length > 0)
 		const runText = run?.text.trimStart() ?? line.text.trim()
-		const wordWidth = ((run?.box.width ?? line.x1 - line.x0) * Math.min(runText.length, firstWord.length + 1)) / Math.max(1, runText.length)
+		const wordWidth =
+			((run?.box.width ?? line.x1 - line.x0) * Math.min(runText.length, firstWord.length + 1)) /
+			Math.max(1, runText.length)
 		return last.x1 + wordWidth <= columnRight - 6
 	}
 	for (const [index, line] of lines.entries()) {
@@ -939,7 +1116,8 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 		// lines) is an artefact of the setting, not text.
 		if (line.size < ladder.body - 2 && !/[\p{L}\p{N}]/u.test(line.text)) continue
 		const marker = markerOf(line)
-		const gap = previous && previous.page === line.page ? previous.y - line.y : Number.POSITIVE_INFINITY
+		const gap =
+			previous && previous.page === line.page ? previous.y - line.y : Number.POSITIVE_INFINITY
 		const pitch = Math.max(line.size, previous?.size ?? line.size) * 1.55
 		const sizeBreak = previous ? Math.abs(previous.size - line.size) > 0.75 : true
 		// Reading order jumps UP the page at a column break; text flows across it only when
@@ -947,7 +1125,11 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 		const columnBreak = previous !== null && previous.page === line.page && line.y > previous.y + 2
 		// Two pieces of one baseline (a line the column edges split) are one line.
 		const sameBaseline =
-			previous !== null && previous.page === line.page && previous.columnX === line.columnX && Math.abs(previous.y - line.y) <= 2 && line.x0 > previous.x1 - 2
+			previous !== null &&
+			previous.page === line.page &&
+			previous.columnX === line.columnX &&
+			Math.abs(previous.y - line.y) <= 2 &&
+			line.x0 > previous.x1 - 2
 		// A sentence left unfinished and carried on in lower case is one paragraph even where
 		// the print widened the leading a little (a bold run in the line above).
 		// … and only when the line above filled its measure: a short last line ended its
@@ -961,15 +1143,40 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 			/^[a-z]/.test(line.text) &&
 			!/[.!?:;]\s*$/.test(previous.text.trim()) &&
 			previous.x1 - previous.x0 >= measure * 0.7
-		const near: boolean = sameBaseline || carriesOn || (columnBreak ? previous !== null && current !== null && current.kind !== 'heading' && textFlows(previous, line) : gap < pitch)
+		const near: boolean =
+			sameBaseline ||
+			carriesOn ||
+			(columnBreak
+				? previous !== null &&
+					current !== null &&
+					current.kind !== 'heading' &&
+					textFlows(previous, line)
+				: gap < pitch)
 		const captionLike = CAPTION.test(line.text) && line.weight === 'medium'
 		// A signature at the foot of a letter (a bold name over a role, far below the text —
 		// or a titled name, "Professor Meera Agar", in a row of signatories) is not a heading;
 		// nor is the first line of a bold statement set over several lines. Both open a
 		// paragraph the lines under them join (the role under the name, the statement's rest).
-		const signature = (index >= lines.length - 2 && gap > pitch * 3) || HONORIFIC.test(line.text.trim()) || POST_NOMINALS.test(line.text.trim())
-		const standalone: boolean = previous === null || previous.page !== line.page || columnBreak || gap >= pitch || current?.kind === 'heading'
-		const candidate: HeadingLevel | null = captionLike || sameBaseline ? null : headingLevelOf(line, ladder, lines[index + 1], standalone, lines.slice(index + 1, index + 5))
+		const signature =
+			(index >= lines.length - 2 && gap > pitch * 3) ||
+			HONORIFIC.test(line.text.trim()) ||
+			POST_NOMINALS.test(line.text.trim())
+		const standalone: boolean =
+			previous === null ||
+			previous.page !== line.page ||
+			columnBreak ||
+			gap >= pitch ||
+			current?.kind === 'heading'
+		const candidate: HeadingLevel | null =
+			captionLike || sameBaseline
+				? null
+				: headingLevelOf(
+						line,
+						ladder,
+						lines[index + 1],
+						standalone,
+						lines.slice(index + 1, index + 5),
+					)
 		// A bold paragraph or item that wraps: its second line is wholly medium too, but it
 		// hangs under the first (an item's indent) or follows a wholly-medium line closely.
 		const continuesBold: boolean =
@@ -979,8 +1186,13 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 			!columnBreak &&
 			near &&
 			!sizeBreak &&
-			(indentOf(line) > indentOf(current.lines[0] ?? line) + 4 || (previous !== null && wholly(previous, 'medium')))
-		if (runIn(candidate) && !continuesBold && (signature || opensBoldStatement(lines, index, pitch))) {
+			(indentOf(line) > indentOf(current.lines[0] ?? line) + 4 ||
+				(previous !== null && wholly(previous, 'medium')))
+		if (
+			runIn(candidate) &&
+			!continuesBold &&
+			(signature || opensBoldStatement(lines, index, pitch))
+		) {
 			close()
 			current = { kind: 'paragraph', lines: [line] }
 			signatureBlock = signature
@@ -992,7 +1204,11 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 		// one line below (a chapter title over two lines, a long step title).
 		// A numbered run-in heading's tail hangs under its number and carries no number of
 		// its own ("5.1.1 Transitioning … for blast" / "phase CML"): a wrap all the same.
-		const hangsUnder = current?.kind === 'heading' && runIn(current.level ?? null) && runIn(level) && indentOf(line) > indentOf(current.lines[0] ?? line) + 4
+		const hangsUnder =
+			current?.kind === 'heading' &&
+			runIn(current.level ?? null) &&
+			runIn(level) &&
+			indentOf(line) > indentOf(current.lines[0] ?? line) + 4
 		// Two run-in headings set one under the other are one heading only where the print
 		// had to break it. Two lines that each open in capitals, with no connective left
 		// hanging, are two headings when the second's first word would have fitted on the
@@ -1000,7 +1216,11 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 		const hadToBreak = (): boolean => {
 			const last = current?.lines.at(-1)
 			if (!last || !runIn(level)) return true
-			if (!/^\p{Lu}/u.test(line.text) || /\b(and|or|the|of|for|to|with|in|a|an|on)$/i.test(last.text.trim())) return true
+			if (
+				!/^\p{Lu}/u.test(line.text) ||
+				/\b(and|or|the|of|for|to|with|in|a|an|on)$/i.test(last.text.trim())
+			)
+				return true
 			return !wouldHaveFitted(last, line)
 		}
 		const wraps =
@@ -1028,15 +1248,30 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 			// run-in heading at body size never wraps: bold text under it is a bold lead-in —
 			// unless that text carries the heading on in lower case ("Initial investigations
 			// by the GP should" / "include:"), which no lead-in does.
-			const ownTail = runIn(current.level ?? null) && /^[a-z]/.test(line.text) && wholly(line, 'medium')
-			if (level === null && (!runIn(current.level ?? null) || ownTail) && !columnBreak && gap < pitch && !sizeBreak && line.weight === current.lines[0]?.weight && !marker) {
+			const ownTail =
+				runIn(current.level ?? null) && /^[a-z]/.test(line.text) && wholly(line, 'medium')
+			if (
+				level === null &&
+				(!runIn(current.level ?? null) || ownTail) &&
+				!columnBreak &&
+				gap < pitch &&
+				!sizeBreak &&
+				line.weight === current.lines[0]?.weight &&
+				!marker
+			) {
 				current.lines.push(line)
 				previous = line
 				continue
 			}
 			close()
 		}
-		if (current?.kind === 'caption' && level === null && previous !== null && !columnBreak && captionWraps(previous, line)) {
+		if (
+			current?.kind === 'caption' &&
+			level === null &&
+			previous !== null &&
+			!columnBreak &&
+			captionWraps(previous, line)
+		) {
 			current.lines.push(line)
 			previous = line
 			continue
@@ -1059,13 +1294,22 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 			!/[.:;!?]$/.test(previous.text.trim())
 		if (marker && !sameBaseline && !dashInProse) {
 			close()
-			current = { kind: 'item', lines: [line], marker: marker.marker, label: marker.label, indent: indentOf(line) }
+			current = {
+				kind: 'item',
+				lines: [line],
+				marker: marker.marker,
+				label: marker.label,
+				indent: indentOf(line),
+			}
 			previous = line
 			continue
 		}
 		// A numbered reference entry ("12. Author, A.; …") hangs its wrapped lines under
 		// the text, past the number.
-		const hanging = current?.kind === 'paragraph' && /^\d{1,3}\.(?!\d)/.test(current.lines[0]?.text ?? '') ? 30 : 14
+		const hanging =
+			current?.kind === 'paragraph' && /^\d{1,3}\.(?!\d)/.test(current.lines[0]?.text ?? '')
+				? 30
+				: 14
 		// A list of names or organisations set one entry per line with no gap between
 		// entries (an acknowledgements page): a line continues the entry above when the
 		// entry opened with a title and this line has none, when the line above was left
@@ -1082,21 +1326,36 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 			options.lexicon !== undefined &&
 			options.lexicon.complete(clausesSoFar.at(-1) ?? '') &&
 			options.lexicon.opensPerson(current?.lines[0]?.text ?? '')
-		const knownComplete = tight && current !== null && options.lexicon !== undefined && (options.lexicon.complete(soFar) || closesOnKnown)
-		const knownOpen = tight && current !== null && options.lexicon !== undefined && !knownComplete && options.lexicon.opens(soFar)
+		const knownComplete =
+			tight &&
+			current !== null &&
+			options.lexicon !== undefined &&
+			(options.lexicon.complete(soFar) || closesOnKnown)
+		const knownOpen =
+			tight &&
+			current !== null &&
+			options.lexicon !== undefined &&
+			!knownComplete &&
+			options.lexicon.opens(soFar)
 		// What the print itself says comes first: a comma or connective leaves the entry
 		// open whatever the corpus knows of the words before it.
 		const dangling = previous !== null && /(?:[,&]|\s[–—-])$/.test(previous.text.trim())
-		const leftOpen = previous !== null && (dangling || /\b(?:and|of|for|the|in|at|on)$/i.test(previous.text.trim()) || /^[a-z(&]/.test(line.text))
+		const leftOpen =
+			previous !== null &&
+			(dangling ||
+				/\b(?:and|of|for|the|in|at|on)$/i.test(previous.text.trim()) ||
+				/^[a-z(&]/.test(line.text))
 		// A person's entry opens with a title, or with a name and a role the corpus knows.
-		const opensPerson = (text: string): boolean => (options.lexicon ? options.lexicon.opensPerson(text) : HONORIFIC.test(text))
+		const opensPerson = (text: string): boolean =>
+			options.lexicon ? options.lexicon.opensPerson(text) : HONORIFIC.test(text)
 		// No entry opens after a dangling comma or dash: the line above was left mid-entry.
 		const newPerson = opensPerson(line.text) && !dangling
 		const entryOpen =
 			!tight ||
 			previous === null ||
 			current === null ||
-			(!newPerson && (leftOpen || (!knownComplete && (knownOpen || opensPerson(current.lines[0]?.text ?? '')))))
+			(!newPerson &&
+				(leftOpen || (!knownComplete && (knownOpen || opensPerson(current.lines[0]?.text ?? '')))))
 		// In a numbered reference list set tight, the next entry opens at the list's left edge
 		// with its own number ("2. Loh KP, …" under "1. Dale W, …").
 		const nextEntry =
@@ -1107,7 +1366,12 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 		// A signature block's roles are set one per line: a line opening in capitals whose
 		// first word had room at the end of the line above begins a line of its own.
 		const forcedBreak =
-			signatureBlock && current?.kind === 'paragraph' && previous !== null && /^\p{Lu}/u.test(line.text) && !/[,–—-]$/.test(previous.text.trim()) && wouldHaveFitted(previous, line)
+			signatureBlock &&
+			current?.kind === 'paragraph' &&
+			previous !== null &&
+			/^\p{Lu}/u.test(line.text) &&
+			!/[,–—-]$/.test(previous.text.trim()) &&
+			wouldHaveFitted(previous, line)
 		// A paragraph set inside a list item: the item's text closes on a colon and the next
 		// line opens a sentence under the item's text ("• tissue biopsy to reliably diagnose
 		// brain cancer:" / "The histological diagnosis …"). Such a paragraph hangs its wrapped
@@ -1131,8 +1395,10 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 			line.y - lineAfter.y > 0 &&
 			line.y - lineAfter.y < pitch &&
 			indentOf(lineAfter) > indentOf(line) + 4
-		const inItemFirst = current?.kind === 'paragraph' && current.inItem ? current.lines[0] : undefined
-		const inItemWrap = current?.kind === 'paragraph' && current.inItem ? current.lines[1] : undefined
+		const inItemFirst =
+			current?.kind === 'paragraph' && current.inItem ? current.lines[0] : undefined
+		const inItemWrap =
+			current?.kind === 'paragraph' && current.inItem ? current.lines[1] : undefined
 		const nextInItem =
 			inItemFirst !== undefined &&
 			previous !== null &&
@@ -1170,7 +1436,8 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 			(columnBreak ||
 				sameBaseline ||
 				(current.kind === 'item'
-					? indentOf(line) >= (current.indent ?? 0) + 4 || (Math.abs(indentOf(line) - (current.indent ?? 0)) <= 1.5 && /^[a-z]/.test(line.text))
+					? indentOf(line) >= (current.indent ?? 0) + 4 ||
+						(Math.abs(indentOf(line) - (current.indent ?? 0)) <= 1.5 && /^[a-z]/.test(line.text))
 					: Math.abs(indentOf(line) - indentOf(current.lines[0] ?? line)) <= hanging))
 		if (continues && current) current.lines.push(line)
 		else {
@@ -1181,7 +1448,11 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 			// few lines of roles under it ("Dr Hui-Peng Lee" over its three roles). A titled
 			// name in a list of contributors is no signature. Any other new paragraph leaves
 			// the block.
-			const signatureAt = HONORIFIC.test(line.text.trim()) && gap > pitch * 2.5 && lines.length - index <= 6 && lines.slice(index).every((l) => l.page === line.page)
+			const signatureAt =
+				HONORIFIC.test(line.text.trim()) &&
+				gap > pitch * 2.5 &&
+				lines.length - index <= 6 &&
+				lines.slice(index).every((l) => l.page === line.page)
 			signatureBlock = forcedBreak || signatureAt
 		}
 		previous = line
@@ -1193,7 +1464,9 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 /** Whether text carried over a column break: the sentence before is unfinished and the
  *  line after does not begin like a new one. */
 const textFlows = (before: Line, after: Line): boolean =>
-	!/[.!?:;]\s*$/.test(before.text) && !markerOf(after) && (/^[a-z(]/.test(after.text) || /[,–—-]$/.test(before.text.trim()) || !/^[A-Z]/.test(after.text))
+	!/[.!?:;]\s*$/.test(before.text) &&
+	!markerOf(after) &&
+	(/^[a-z(]/.test(after.text) || /[,–—-]$/.test(before.text.trim()) || !/^[A-Z]/.test(after.text))
 
 function markerOf(line: Line): { marker: ListMarker; label: string } | null {
 	const first = line.runs[0]
@@ -1205,7 +1478,8 @@ function markerOf(line: Line): { marker: ListMarker; label: string } | null {
 		return { marker: 'bullet', label: glyph || '•' }
 	}
 	if (BULLET.test(line.text)) return { marker: 'bullet', label: '•' }
-	if (DASH.test(line.text) && line.runs[0] && /^[–—-]/.test(line.runs[0].text)) return { marker: 'dash', label: '–' }
+	if (DASH.test(line.text) && line.runs[0] && /^[–—-]/.test(line.runs[0].text))
+		return { marker: 'dash', label: '–' }
 	// A third level set with chevrons ("> FBE and differential").
 	if (CHEVRON.test(line.text)) return { marker: 'other', label: '>' }
 	return null
@@ -1250,7 +1524,19 @@ function blocksOf(drafts: Draft[], ctx: PageContext): Event[] {
 			const item: ListItem = {
 				label: draft.label ?? '•',
 				marker: draft.marker ?? 'bullet',
-				blocks: [paragraphOf(draft.lines, ctx, draft.marker === 'check' || draft.marker === 'cross' ? undefined : draft.marker === 'dash' ? DASH_STRIP : draft.marker === 'other' ? CHEVRON_STRIP : BULLET)],
+				blocks: [
+					paragraphOf(
+						draft.lines,
+						ctx,
+						draft.marker === 'check' || draft.marker === 'cross'
+							? undefined
+							: draft.marker === 'dash'
+								? DASH_STRIP
+								: draft.marker === 'other'
+									? CHEVRON_STRIP
+									: BULLET,
+					),
+				],
 			}
 			// Strip a dingbat marker run outright: it is the marker, not text.
 			if (draft.marker === 'check' || draft.marker === 'cross') stripLeadingDingbat(item.blocks[0])
@@ -1277,7 +1563,8 @@ function blocksOf(drafts: Draft[], ctx: PageContext): Event[] {
 			continue
 		}
 		// A paragraph set inside the open list's last item is that item's.
-		const holder = draft.kind === 'paragraph' && draft.inItem ? stack.at(-1)?.list.items.at(-1) : undefined
+		const holder =
+			draft.kind === 'paragraph' && draft.inItem ? stack.at(-1)?.list.items.at(-1) : undefined
 		if (holder) {
 			holder.blocks.push(paragraphOf(draft.lines, ctx))
 			continue
@@ -1362,22 +1649,33 @@ const roundedCells = (page: PdfPage, ornaments: Set<string>, figureBoxes: Box[])
 	page.paths.filter(
 		(p) =>
 			isRoundedCell(p) &&
-			!ornaments.has(`${Math.round(p.box.x)},${Math.round(p.box.y)},${Math.round(p.box.width)},${Math.round(p.box.height)}`) &&
+			!ornaments.has(
+				`${Math.round(p.box.x)},${Math.round(p.box.y)},${Math.round(p.box.width)},${Math.round(p.box.height)}`,
+			) &&
 			!figureBoxes.some((f) => overlapsBox(f, p.box)),
 	)
 
-const textWidthOf = (lines: Line[]): number => Math.max(...lines.map((l) => l.x1)) - Math.min(...lines.map((l) => l.x0))
+const textWidthOf = (lines: Line[]): number =>
+	Math.max(...lines.map((l) => l.x1)) - Math.min(...lines.map((l) => l.x0))
 
 /**
  * The cell grid (the timeframe table): many NARROW rounded fills in at least two
  * x-positions, each position holding at least two cells.
  */
-function gridRegion(page: PdfPage, lines: Line[], ornaments: Set<string>, figureBoxes: Box[]): Region | null {
+function gridRegion(
+	page: PdfPage,
+	lines: Line[],
+	ornaments: Set<string>,
+	figureBoxes: Box[],
+): Region | null {
 	const textWidth = textWidthOf(lines)
 	const rounded = roundedCells(page, ornaments, figureBoxes)
-	const cells = rounded.filter((c) => c.box.width < textWidth * 0.6 && c.box.height <= page.height * 0.5)
+	const cells = rounded.filter(
+		(c) => c.box.width < textWidth * 0.6 && c.box.height <= page.height * 0.5,
+	)
 	const perColumn = new Map<number, number>()
-	for (const c of cells) perColumn.set(Math.round(c.box.x / 10), (perColumn.get(Math.round(c.box.x / 10)) ?? 0) + 1)
+	for (const c of cells)
+		perColumn.set(Math.round(c.box.x / 10), (perColumn.get(Math.round(c.box.x / 10)) ?? 0) + 1)
 	const gridColumns = [...perColumn.values()].filter((n) => n >= 2).length
 	if (cells.length < 6 || gridColumns < 2) return null
 	// A fill as wide as the grid that sits against it is a row spanning its columns (the
@@ -1389,7 +1687,8 @@ function gridRegion(page: PdfPage, lines: Line[], ornaments: Set<string>, figure
 			c.box.height <= 90 &&
 			Math.abs(c.box.x - grid.x) <= 6 &&
 			Math.abs(c.box.x + c.box.width - (grid.x + grid.width)) <= 6 &&
-			(Math.abs(c.box.y - (grid.y + grid.height)) <= 12 || Math.abs(c.box.y + c.box.height - grid.y) <= 12),
+			(Math.abs(c.box.y - (grid.y + grid.height)) <= 12 ||
+				Math.abs(c.box.y + c.box.height - grid.y) <= 12),
 	)
 	const all = [...cells, ...spanning]
 	return {
@@ -1402,7 +1701,13 @@ function gridRegion(page: PdfPage, lines: Line[], ornaments: Set<string>, figure
 
 /** Regions drawn on the page that group text: stroked callouts, filled bands, the grid.
  *  Fills inside a figure belong to the figure. */
-function regionsOf(page: PdfPage, lines: Line[], ornaments: Set<string>, figureBoxes: Box[], grid: Region | null): Region[] {
+function regionsOf(
+	page: PdfPage,
+	lines: Line[],
+	ornaments: Set<string>,
+	figureBoxes: Box[],
+	grid: Region | null,
+): Region[] {
 	const regions: Region[] = grid ? [grid] : []
 	const textWidth = textWidthOf(lines)
 	// Stroked rounded rectangles wide enough to hold text: callouts.
@@ -1415,13 +1720,19 @@ function regionsOf(page: PdfPage, lines: Line[], ornaments: Set<string>, figureB
 	// A wide, short rounded fill is a band behind a statement; a tall one is a panel
 	// behind a column (the quick guide's) and groups nothing.
 	const rounded = roundedCells(page, ornaments, figureBoxes)
-	const bandLike = (p: PaintedPath) => p.box.width >= textWidth * 0.5 && p.box.height >= 18 && p.box.height <= 90
+	const bandLike = (p: PaintedPath) =>
+		p.box.width >= textWidth * 0.5 && p.box.height >= 18 && p.box.height <= 90
 	// A band carries a statement (a few lines); a quick guide's short step panel, with its
 	// checklist panel drawn beside it at the same height, carries a column of text.
-	const panelPair = (c: PaintedPath) => rounded.some((o) => o !== c && Math.abs(o.box.y - c.box.y) <= 2 && Math.abs(o.box.height - c.box.height) <= 2)
+	const panelPair = (c: PaintedPath) =>
+		rounded.some(
+			(o) =>
+				o !== c && Math.abs(o.box.y - c.box.y) <= 2 && Math.abs(o.box.height - c.box.height) <= 2,
+		)
 	for (const c of rounded) {
 		if (!bandLike(c) || panelPair(c) || linesWithin(lines, c.box).length > 4) continue
-		if (!regions.some((r) => r.kind === 'table' && contains(r.box, c.box, 2))) regions.push({ box: c.box, kind: 'band', colour: c.colour })
+		if (!regions.some((r) => r.kind === 'table' && contains(r.box, c.box, 2)))
+			regions.push({ box: c.box, kind: 'band', colour: c.colour })
 	}
 	// Plain filled rectangles behind a statement (5 segments), wide and short — or a tall
 	// one behind a titled passage of body text (a tinted box: "National action", an
@@ -1431,12 +1742,19 @@ function regionsOf(page: PdfPage, lines: Line[], ornaments: Set<string>, figureB
 		if (p.kind !== 'fill' || p.segments > 6 || p.colour === '#ffffff') continue
 		if (figureBoxes.some((f) => overlapsBox(f, p.box)) || pageSized(p.box, page)) continue
 		if (regions.some((r) => contains(r.box, p.box, 2))) continue
-		const tallBox = p.box.height > 90 && p.box.width >= textWidth * 0.5 && p.box.width < page.width * 0.9 && linesWithin(lines, p.box).filter((l) => l.text.length >= 40).length >= 3
+		const tallBox =
+			p.box.height > 90 &&
+			p.box.width >= textWidth * 0.5 &&
+			p.box.width < page.width * 0.9 &&
+			linesWithin(lines, p.box).filter((l) => l.text.length >= 40).length >= 3
 		if (!bandLike(p) && !tallBox) continue
 		regions.push({ box: p.box, kind: 'band', colour: p.colour })
 	}
 	// A band whose text is a heading is the heading's decoration, not a box.
-	return regions.filter((r) => !(r.kind === 'band' && linesWithin(lines, r.box).every((l) => l.size >= ladderPartOf(lines))))
+	return regions.filter(
+		(r) =>
+			!(r.kind === 'band' && linesWithin(lines, r.box).every((l) => l.size >= ladderPartOf(lines))),
+	)
 }
 
 /** The part-heading size on this page's lines: the smallest size ≥ 1.35× the body size. */
@@ -1448,7 +1766,8 @@ function ladderPartOf(lines: Line[]): number {
 }
 
 /** Text lines inside a region's box. */
-const linesWithin = (lines: Line[], box: Box): Line[] => lines.filter((l) => contains(box, lineBox(l), 4))
+const linesWithin = (lines: Line[], box: Box): Line[] =>
+	lines.filter((l) => contains(box, lineBox(l), 4))
 
 /** A callout or band as a one-cell table the mapper reads as a box. A heading inside
  *  a callout is its title: a bold paragraph where it stood. */
@@ -1484,9 +1803,10 @@ function boxTable(region: Region, lines: Line[], ctx: PageContext): Table {
 
 /** Cell blocks: the lines inside one table cell, read as a single column. */
 function cellBlocks(lines: Line[], x: number, ctx: PageContext): Block[] {
-	return blocksOf(draftsOf(orderLines(lines, { starts: [x], separators: [] }), ctx.ladder), ctx).flatMap((e) =>
-		e.block ? [e.block] : e.heading ? [paragraphOf(e.heading.lines, ctx)] : [],
-	)
+	return blocksOf(
+		draftsOf(orderLines(lines, { starts: [x], separators: [] }), ctx.ladder),
+		ctx,
+	).flatMap((e) => (e.block ? [e.block] : e.heading ? [paragraphOf(e.heading.lines, ctx)] : []))
 }
 
 /**
@@ -1498,18 +1818,24 @@ function cellTable(region: Region, lines: Line[], headerLines: Line[], ctx: Page
 	// A cell spanning the grid's width is a row of its own across every column.
 	const spans = (c: { box: Box }) => c.box.width >= region.box.width * 0.9
 	const cells = all.filter((c) => !spans(c))
-	const columnX = [...new Set(cells.map((c) => Math.round(c.box.x / 10) * 10))].sort((a, b) => a - b)
-	const columnOf = (b: Box) => columnX.findIndex((x) => Math.abs(Math.round(b.x / 10) * 10 - x) <= 10)
+	const columnX = [...new Set(cells.map((c) => Math.round(c.box.x / 10) * 10))].sort(
+		(a, b) => a - b,
+	)
+	const columnOf = (b: Box) =>
+		columnX.findIndex((x) => Math.abs(Math.round(b.x / 10) * 10 - x) <= 10)
 	// Row bands from the column with the most cells, plus one per spanning cell.
 	const perColumn = columnX.map((_, i) => cells.filter((c) => columnOf(c.box) === i))
 	const finest = perColumn.reduce((a, b) => (b.length > a.length ? b : a), perColumn[0] ?? [])
-	const bands = [...finest, ...all.filter(spans)].map((c) => ({ top: c.box.y + c.box.height, bottom: c.box.y })).sort((a, b) => b.top - a.top)
+	const bands = [...finest, ...all.filter(spans)]
+		.map((c) => ({ top: c.box.y + c.box.height, bottom: c.box.y }))
+		.sort((a, b) => b.top - a.top)
 	const rowOf = (b: Box): { first: number; count: number } => {
 		const top = b.y + b.height
 		const bottom = b.y
 		const first = bands.findIndex((band) => band.top <= top + 4)
 		let count = 0
-		for (let i = Math.max(0, first); i < bands.length; i++) if ((bands[i]?.bottom ?? 0) >= bottom - 4) count++
+		for (let i = Math.max(0, first); i < bands.length; i++)
+			if ((bands[i]?.bottom ?? 0) >= bottom - 4) count++
 		return { first: Math.max(0, first), count: Math.max(1, count) }
 	}
 	const rows: TableRow[] = bands.map(() => ({ cells: [] }))
@@ -1555,12 +1881,21 @@ function cellTable(region: Region, lines: Line[], headerLines: Line[], ctx: Page
 	// NET | Lung NET | …" over the light cells of the tests).
 	const top = body[0]
 	const whiteText = (c: TableCell): boolean => {
-		const runs = allParagraphs(c.blocks).flatMap((p) => p.runs).filter((r) => r.text.trim().length > 0)
+		const runs = allParagraphs(c.blocks)
+			.flatMap((p) => p.runs)
+			.filter((r) => r.text.trim().length > 0)
 		return runs.length > 0 && runs.every((r) => r.colour === '#ffffff')
 	}
-	if (!header && top && body.length > 1 && top.cells.length === columnX.length && top.cells.every((c) => c.background !== null && whiteText(c))) {
+	if (
+		!header &&
+		top &&
+		body.length > 1 &&
+		top.cells.length === columnX.length &&
+		top.cells.every((c) => c.background !== null && whiteText(c))
+	) {
 		const fills = new Set(top.cells.map((c) => c.background))
-		if (body.slice(1).every((r) => r.cells.every((c) => !fills.has(c.background)))) for (const c of top.cells) c.header = true
+		if (body.slice(1).every((r) => r.cells.every((c) => !fills.has(c.background))))
+			for (const c of top.cells) c.header = true
 	}
 	return {
 		kind: 'table',
@@ -1572,7 +1907,13 @@ function cellTable(region: Region, lines: Line[], headerLines: Line[], ctx: Page
 
 /** Every paragraph in a block list, lists' items included. */
 function allParagraphs(blocks: Block[]): Paragraph[] {
-	return blocks.flatMap((b) => (b.kind === 'paragraph' ? [b] : b.kind === 'list' ? b.items.flatMap((i) => allParagraphs(i.blocks)) : []))
+	return blocks.flatMap((b) =>
+		b.kind === 'paragraph'
+			? [b]
+			: b.kind === 'list'
+				? b.items.flatMap((i) => allParagraphs(i.blocks))
+				: [],
+	)
 }
 
 /**
@@ -1582,8 +1923,12 @@ function allParagraphs(blocks: Block[]): Paragraph[] {
  * consecutive rules; each cell's lines read as one column.
  */
 function ruledTables(page: PdfPage, lines: Line[], ctx: PageContext): { box: Box; table: Table }[] {
-	const horizontals = page.paths.filter((p) => p.kind === 'stroke' && p.box.height < 1.5 && p.box.width >= 60)
-	const verticals = page.paths.filter((p) => p.kind === 'stroke' && p.box.width < 1.5 && p.box.height >= 8)
+	const horizontals = page.paths.filter(
+		(p) => p.kind === 'stroke' && p.box.height < 1.5 && p.box.width >= 60,
+	)
+	const verticals = page.paths.filter(
+		(p) => p.kind === 'stroke' && p.box.width < 1.5 && p.box.height >= 8,
+	)
 	if (horizontals.length < 3) return []
 	// Column edges: x positions the vertical rules repeat at — or, in a table ruled only
 	// between its rows, the x where the rules' per-cell segments start and end on three or
@@ -1591,28 +1936,64 @@ function ruledTables(page: PdfPage, lines: Line[], ctx: PageContext): { box: Box
 	const repeated = (xs: number[]): number[] => {
 		const counts = new Map<number, number>()
 		for (const x of xs) counts.set(Math.round(x), (counts.get(Math.round(x)) ?? 0) + 1)
-		const sorted = [...counts.entries()].filter(([, n]) => n >= 3).map(([x]) => x).sort((a, b) => a - b)
+		const sorted = [...counts.entries()]
+			.filter(([, n]) => n >= 3)
+			.map(([x]) => x)
+			.sort((a, b) => a - b)
 		return sorted.filter((x, i) => i === 0 || x - (sorted[i - 1] ?? 0) > 2)
 	}
 	let edges = repeated(verticals.map((v) => v.box.x))
-	if (edges.length < 3) edges = repeated(horizontals.flatMap((h) => [h.box.x, h.box.x + h.box.width]))
+	if (edges.length < 3)
+		edges = repeated(horizontals.flatMap((h) => [h.box.x, h.box.x + h.box.width]))
 	if (edges.length < 3) return []
 	const left = edges[0] ?? 0
 	const right = edges.at(-1) ?? 0
 	// Row boundaries: y positions of the rules that lie between the outer column edges.
-	const ys = [...new Set(horizontals.filter((h) => h.box.x >= left - 3 && h.box.x + h.box.width <= right + 3).map((h) => Math.round(h.box.y)))].sort((a, b) => a - b)
+	const ys = [
+		...new Set(
+			horizontals
+				.filter((h) => h.box.x >= left - 3 && h.box.x + h.box.width <= right + 3)
+				.map((h) => Math.round(h.box.y)),
+		),
+	].sort((a, b) => a - b)
 	if (ys.length < 3) return []
 	const topRule = ys.at(-1) ?? 0
-	const spansTable = (p: PaintedPath) => p.kind === 'fill' && p.colour !== '#ffffff' && p.box.x <= left + 3 && p.box.x + p.box.width >= right - 3 && p.box.height <= 40
+	const spansTable = (p: PaintedPath) =>
+		p.kind === 'fill' &&
+		p.colour !== '#ffffff' &&
+		p.box.x <= left + 3 &&
+		p.box.x + p.box.width >= right - 3 &&
+		p.box.height <= 40
 	// The header row is a filled band the table's width: above the top rule, within a
 	// row's height of it (the first body row then lies between band and rule with no rule
 	// of its own) — or between the top two rules.
-	const headerFill = page.paths.find((p) => spansTable(p) && p.box.y >= topRule - 3 && p.box.y - topRule <= 45)
+	const headerFill = page.paths.find(
+		(p) => spansTable(p) && p.box.y >= topRule - 3 && p.box.y - topRule <= 45,
+	)
 	const secondRule = ys.at(-2) ?? topRule
-	const bandHeader = headerFill === undefined && page.paths.some((p) => spansTable(p) && p.box.y >= secondRule - 3 && p.box.y + p.box.height <= topRule + 3)
-	const bounds = headerFill ? [...new Set([...ys, Math.round(headerFill.box.y), Math.round(headerFill.box.y + headerFill.box.height)])].sort((a, b) => a - b) : ys
-	const box: Box = { x: left, y: bounds[0] ?? 0, width: right - left, height: (bounds.at(-1) ?? 0) - (bounds[0] ?? 0) }
-	const fills = page.paths.filter((p) => p.kind === 'fill' && p.colour !== '#ffffff' && !pageSized(p.box, page))
+	const bandHeader =
+		headerFill === undefined &&
+		page.paths.some(
+			(p) => spansTable(p) && p.box.y >= secondRule - 3 && p.box.y + p.box.height <= topRule + 3,
+		)
+	const bounds = headerFill
+		? [
+				...new Set([
+					...ys,
+					Math.round(headerFill.box.y),
+					Math.round(headerFill.box.y + headerFill.box.height),
+				]),
+			].sort((a, b) => a - b)
+		: ys
+	const box: Box = {
+		x: left,
+		y: bounds[0] ?? 0,
+		width: right - left,
+		height: (bounds.at(-1) ?? 0) - (bounds[0] ?? 0),
+	}
+	const fills = page.paths.filter(
+		(p) => p.kind === 'fill' && p.colour !== '#ffffff' && !pageSized(p.box, page),
+	)
 	const rows: TableRow[] = []
 	for (let r = bounds.length - 1; r > 0; r--) {
 		const bottom = bounds[r - 1] ?? 0
@@ -1623,13 +2004,26 @@ function ruledTables(page: PdfPage, lines: Line[], ctx: PageContext): { box: Box
 			const x0 = edges[c] ?? 0
 			const x1 = edges[c + 1] ?? 0
 			const cellBox: Box = { x: x0, y: bottom, width: x1 - x0, height: top - bottom }
-			const own = lines.filter((l) => l.y > bottom + 1 && l.y <= top + 1 && l.x0 >= x0 - 2 && l.x0 < x1 - 2)
+			const own = lines.filter(
+				(l) => l.y > bottom + 1 && l.y <= top + 1 && l.x0 >= x0 - 2 && l.x0 < x1 - 2,
+			)
 			const shade = fills.find((f) => contains(f.box, cellBox, 3))
-			cells.push({ header, rowSpan: 1, colSpan: 1, background: shade?.colour ?? null, blocks: cellBlocks(own, x0, ctx) })
+			cells.push({
+				header,
+				rowSpan: 1,
+				colSpan: 1,
+				background: shade?.colour ?? null,
+				blocks: cellBlocks(own, x0, ctx),
+			})
 		}
 		rows.push({ cells })
 	}
-	return [{ box, table: { kind: 'table', rows, page: ctx.pageNumber, border: horizontals[0]?.colour ?? null } }]
+	return [
+		{
+			box,
+			table: { kind: 'table', rows, page: ctx.pageNumber, border: horizontals[0]?.colour ?? null },
+		},
+	]
 }
 
 /**
@@ -1639,23 +2033,43 @@ function ruledTables(page: PdfPage, lines: Line[], ctx: PageContext): { box: Box
  * beside it continues the row above. A term is no bullet item, and two pieces set on
  * separate drawn shapes (a flowchart's side-by-side boxes) are the drawing's, not a row.
  */
-function definitionTables(page: PdfPage, lines: Line[], ctx: PageContext): { box: Box; table: Table }[] {
+function definitionTables(
+	page: PdfPage,
+	lines: Line[],
+	ctx: PageContext,
+): { box: Box; table: Table }[] {
 	const byY = new Map<number, Line[]>()
 	for (const l of lines) {
 		const key = [...byY.keys()].find((y) => Math.abs(y - l.y) <= 2) ?? l.y
 		byY.set(key, [...(byY.get(key) ?? []), l])
 	}
-	const fills = page.paths.filter((p) => p.kind === 'fill' && p.colour !== '#ffffff' && !pageSized(p.box, page))
-	const shapeUnder = (l: Line): PaintedPath | undefined => fills.find((f) => contains(f.box, lineBox(l), 3))
+	const fills = page.paths.filter(
+		(p) => p.kind === 'fill' && p.colour !== '#ffffff' && !pageSized(p.box, page),
+	)
+	const shapeUnder = (l: Line): PaintedPath | undefined =>
+		fills.find((f) => contains(f.box, lineBox(l), 3))
 	const pairs = [...byY.values()]
 		.map((ls) => [...ls].sort((a, b) => a.x0 - b.x0))
-		.filter((ls): ls is [Line, Line] => ls.length === 2 && ls[0] !== undefined && ls[1] !== undefined)
-		.filter(([left, right]) => left.text.trim().length <= 12 && left.x1 < right.x0 && right.x0 - left.x0 >= 30 && right.x0 - left.x0 <= 120 && Math.abs(left.size - right.size) <= 0.75)
+		.filter(
+			(ls): ls is [Line, Line] => ls.length === 2 && ls[0] !== undefined && ls[1] !== undefined,
+		)
+		.filter(
+			([left, right]) =>
+				left.text.trim().length <= 12 &&
+				left.x1 < right.x0 &&
+				right.x0 - left.x0 >= 30 &&
+				right.x0 - left.x0 <= 120 &&
+				Math.abs(left.size - right.size) <= 0.75,
+		)
 		.filter(([left, right]) => !markerOf(left) && shapeUnder(left) === shapeUnder(right))
 	if (pairs.length < 5) return []
-	const leftX = pairs.map(([l]) => Math.round(l.x0)).sort((a, b) => a - b)[Math.floor(pairs.length / 2)] ?? 0
-	const rightX = pairs.map(([, r]) => Math.round(r.x0)).sort((a, b) => a - b)[Math.floor(pairs.length / 2)] ?? 0
-	const rows = pairs.filter(([l, r]) => Math.abs(l.x0 - leftX) <= 3 && Math.abs(r.x0 - rightX) <= 3).sort((a, b) => b[0].y - a[0].y)
+	const leftX =
+		pairs.map(([l]) => Math.round(l.x0)).sort((a, b) => a - b)[Math.floor(pairs.length / 2)] ?? 0
+	const rightX =
+		pairs.map(([, r]) => Math.round(r.x0)).sort((a, b) => a - b)[Math.floor(pairs.length / 2)] ?? 0
+	const rows = pairs
+		.filter(([l, r]) => Math.abs(l.x0 - leftX) <= 3 && Math.abs(r.x0 - rightX) <= 3)
+		.sort((a, b) => b[0].y - a[0].y)
 	if (rows.length < 5) return []
 	// Wrapped definitions: right-column lines between two rows, at the right indent.
 	const used = new Set(rows.flat())
@@ -1663,13 +2077,32 @@ function definitionTables(page: PdfPage, lines: Line[], ctx: PageContext): { box
 	for (const [i, [term, definition]] of rows.entries()) {
 		const below = rows[i + 1]?.[0].y ?? Number.NEGATIVE_INFINITY
 		const continuation = lines
-			.filter((l) => !used.has(l) && Math.abs(l.x0 - rightX) <= 3 && l.y < term.y - 2 && l.y > below + 2 && term.y - l.y < term.size * 3.2)
+			.filter(
+				(l) =>
+					!used.has(l) &&
+					Math.abs(l.x0 - rightX) <= 3 &&
+					l.y < term.y - 2 &&
+					l.y > below + 2 &&
+					term.y - l.y < term.size * 3.2,
+			)
 			.sort((a, b) => b.y - a.y)
 		for (const l of continuation) used.add(l)
 		tableRows.push({
 			cells: [
-				{ header: false, rowSpan: 1, colSpan: 1, background: null, blocks: [paragraphOf([term], ctx)] },
-				{ header: false, rowSpan: 1, colSpan: 1, background: null, blocks: [paragraphOf([definition, ...continuation], ctx)] },
+				{
+					header: false,
+					rowSpan: 1,
+					colSpan: 1,
+					background: null,
+					blocks: [paragraphOf([term], ctx)],
+				},
+				{
+					header: false,
+					rowSpan: 1,
+					colSpan: 1,
+					background: null,
+					blocks: [paragraphOf([definition, ...continuation], ctx)],
+				},
 			],
 		})
 	}
@@ -1686,14 +2119,22 @@ function definitionTables(page: PdfPage, lines: Line[], ctx: PageContext): { box
  * regions with the small labels inside them. The cover's icon field and page ornaments
  * are excluded by the caller.
  */
-function figureRegions(page: PdfPage, lines: Line[], ladder: Ladder, ornaments: Set<string>, images: Box[]): { box: Box; labels: Line[] }[] {
+function figureRegions(
+	page: PdfPage,
+	lines: Line[],
+	ladder: Ladder,
+	ornaments: Set<string>,
+	images: Box[],
+): { box: Box; labels: Line[] }[] {
 	const art = page.paths.filter(
 		(p) =>
 			isArt(p) &&
 			p.colour !== '#ffffff' &&
 			area(p.box) > 30 &&
 			!isOffPage(p, page) &&
-			!ornaments.has(`${Math.round(p.box.x)},${Math.round(p.box.y)},${Math.round(p.box.width)},${Math.round(p.box.height)}`),
+			!ornaments.has(
+				`${Math.round(p.box.x)},${Math.round(p.box.y)},${Math.round(p.box.width)},${Math.round(p.box.height)}`,
+			),
 	)
 	// A diagram of labelled tiles (the bubbles of a needs diagram, each a plain fill with a
 	// word or two on it): four or more plain fills, each narrower than half the measure and
@@ -1701,14 +2142,29 @@ function figureRegions(page: PdfPage, lines: Line[], ladder: Ladder, ornaments: 
 	const textWidth = textWidthOf(lines)
 	// Not the rounded cells of the timeframe grid (a table), nor anything drawn inside a
 	// stroked callout (a booklet's thumbnail).
-	const callouts = page.paths.filter((p) => p.kind === 'stroke' && p.segments >= 8 && p.box.width >= 120)
+	const callouts = page.paths.filter(
+		(p) => p.kind === 'stroke' && p.segments >= 8 && p.box.width >= 120,
+	)
 	const tiles = page.paths.filter((p) => {
-		if (p.kind !== 'fill' || p.segments > 6 || p.colour === '#ffffff' || area(p.box) < 2000 || pageSized(p.box, page) || isOffPage(p, page)) return false
-		if (p.box.width >= textWidth * 0.5 || callouts.some((c) => contains(c.box, p.box, 4))) return false
+		if (
+			p.kind !== 'fill' ||
+			p.segments > 6 ||
+			p.colour === '#ffffff' ||
+			area(p.box) < 2000 ||
+			pageSized(p.box, page) ||
+			isOffPage(p, page)
+		)
+			return false
+		if (p.box.width >= textWidth * 0.5 || callouts.some((c) => contains(c.box, p.box, 4)))
+			return false
 		const inside = lines.filter((l) => contains(p.box, lineBox(l), 3))
 		return inside.length > 0 && inside.every((l) => l.text.trim().length <= 30)
 	})
-	const seeds: Box[] = [...art.map((p) => p.box), ...(tiles.length >= 4 ? tiles.map((p) => p.box) : []), ...images]
+	const seeds: Box[] = [
+		...art.map((p) => p.box),
+		...(tiles.length >= 4 ? tiles.map((p) => p.box) : []),
+		...images,
+	]
 	if (seeds.length === 0) return []
 	// Cluster boxes that touch or overlap (grown by 12pt).
 	const clusters: Box[][] = []
@@ -1726,7 +2182,9 @@ function figureRegions(page: PdfPage, lines: Line[], ladder: Ladder, ornaments: 
 			for (let j = i + 1; j < clusters.length && !merged; j++) {
 				const a = union(clusters[i] ?? [])
 				const b = union(clusters[j] ?? [])
-				if (overlapsBox({ x: a.x - 12, y: a.y - 12, width: a.width + 24, height: a.height + 24 }, b)) {
+				if (
+					overlapsBox({ x: a.x - 12, y: a.y - 12, width: a.width + 24, height: a.height + 24 }, b)
+				) {
 					clusters[i] = [...(clusters[i] ?? []), ...(clusters[j] ?? [])]
 					clusters.splice(j, 1)
 					merged = true
@@ -1745,7 +2203,10 @@ function figureRegions(page: PdfPage, lines: Line[], ladder: Ladder, ornaments: 
 				p.colour !== '#ffffff' &&
 				!pageSized(p.box, page) &&
 				!isOffPage(p, page) &&
-				overlapsBox({ x: box.x - 12, y: box.y - 12, width: box.width + 24, height: box.height + 24 }, p.box),
+				overlapsBox(
+					{ x: box.x - 12, y: box.y - 12, width: box.width + 24, height: box.height + 24 },
+					p.box,
+				),
 		)
 		if (owned.length > 0) box = union([box, ...owned.map((p) => p.box)])
 		// Labels: short lines inside the region (or its horizontal reach), smaller than body
@@ -1753,7 +2214,13 @@ function figureRegions(page: PdfPage, lines: Line[], ladder: Ladder, ornaments: 
 		// A line in the region's reach: on it, or level with it and within 40pt of its sides.
 		const reaches = (l: Line) => {
 			const lb = lineBox(l)
-			return overlapsBox(box, lb) || (lb.y >= box.y - 6 && lb.y <= box.y + box.height + 6 && lb.x >= box.x - 40 && lb.x <= box.x + box.width + 40)
+			return (
+				overlapsBox(box, lb) ||
+				(lb.y >= box.y - 6 &&
+					lb.y <= box.y + box.height + 6 &&
+					lb.x >= box.x - 40 &&
+					lb.x <= box.x + box.width + 40)
+			)
 		}
 		// Body-size text is ON the drawing only when at least half its height lies on it: a
 		// signature's image grazing the ascenders of the name set under it claims nothing.
@@ -1764,10 +2231,16 @@ function figureRegions(page: PdfPage, lines: Line[], ladder: Ladder, ornaments: 
 		}
 		// Drawing with paragraphs of body text in its reach is a panel behind text (a tinted
 		// table column, a page tint, the population pathways' art layer), not a figure.
-		const prose = lines.filter((l) => reaches(l) && l.size >= ladder.body - 0.5 && l.text.length >= 40)
+		const prose = lines.filter(
+			(l) => reaches(l) && l.size >= ladder.body - 0.5 && l.text.length >= 40,
+		)
 		if (prose.length >= 3) continue
 		const labels = lines.filter(
-			(l) => (l.size < ladder.body - 0.5 ? reaches(l) : on(l)) && (l.size < ladder.body - 0.5 || (l.weight !== 'light' && l.text.length < 60) || (l.size <= ladder.body + 1.5 && l.text.length < 40)),
+			(l) =>
+				(l.size < ladder.body - 0.5 ? reaches(l) : on(l)) &&
+				(l.size < ladder.body - 0.5 ||
+					(l.weight !== 'light' && l.text.length < 60) ||
+					(l.size <= ladder.body + 1.5 && l.text.length < 40)),
 		)
 		regions.push({ box: labels.length > 0 ? union([box, ...labels.map(lineBox)]) : box, labels })
 	}
@@ -1778,24 +2251,31 @@ const overlapsBox = (a: Box, b: Box): boolean =>
 	a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
 
 /** A page-sized fill is a background, not a figure panel. */
-const pageSized = (box: Box, page: PdfPage): boolean => box.width > page.width * 0.8 && box.height > page.height * 0.5
+const pageSized = (box: Box, page: PdfPage): boolean =>
+	box.width > page.width * 0.8 && box.height > page.height * 0.5
 
 /**
  * Figure panels: a large rounded fill with other drawing inside it (the pathway wheel's
  * plate) is a figure, and every line on it is a label.
  */
-function panelRegions(page: PdfPage, lines: Line[], ladder: Ladder): { box: Box; labels: Line[] }[] {
+function panelRegions(
+	page: PdfPage,
+	lines: Line[],
+	ladder: Ladder,
+): { box: Box; labels: Line[] }[] {
 	const drawn = page.paths.filter((p) => p.colour !== '#ffffff' && !isOffPage(p, page))
 	const regions: { box: Box; labels: Line[] }[] = []
 	for (const p of drawn) {
-		if (p.kind !== 'fill' || p.segments !== 11 || area(p.box) < 20000 || pageSized(p.box, page)) continue
+		if (p.kind !== 'fill' || p.segments !== 11 || area(p.box) < 20000 || pageSized(p.box, page))
+			continue
 		const inside = drawn.filter((q) => q !== p && contains(p.box, q.box, 2))
 		if (inside.length < 2) continue
 		const labels = lines.filter((l) => overlapsBox(p.box, lineBox(l)))
 		// A panel carrying columns of body text in the light face (a quick guide's step panel
 		// with the design's art on it) is a tinted background, not a figure; a diagram's
 		// lettering is bold, small or a handful of lines.
-		if (labels.filter((l) => l.size >= ladder.body - 0.5 && l.weight === 'light').length >= 10) continue
+		if (labels.filter((l) => l.size >= ladder.body - 0.5 && l.weight === 'light').length >= 10)
+			continue
 		regions.push({ box: union([p.box, ...labels.map(lineBox)]), labels })
 	}
 	return regions
@@ -1824,22 +2304,34 @@ function captionBand(caption: Line, lines: Line[], ladder: Ladder): { top: numbe
 		(l) =>
 			Math.abs(l.x0 - caption.x0) <= 8 &&
 			l.size >= ladder.body - 0.25 &&
-			(l.weight === 'light' || l.weight === 'roman' || l.size >= ladder.section - 0.5 || l.text.length >= 40),
+			(l.weight === 'light' ||
+				l.weight === 'roman' ||
+				l.size >= ladder.section - 0.5 ||
+				l.text.length >= 40),
 	)
 	return { top: last.y, floor: stop ? stop.y + stop.size : FOOTER_Y }
 }
 
-function captionRegion(caption: Line, page: PdfPage, lines: Line[], ladder: Ladder, grid: Region | null): { box: Box; labels: Line[] } | null {
+function captionRegion(
+	caption: Line,
+	page: PdfPage,
+	lines: Line[],
+	ladder: Ladder,
+	grid: Region | null,
+): { box: Box; labels: Line[] } | null {
 	const band = captionBand(caption, lines, ladder)
 	const last = { y: band.top }
 	const below = lines.filter((l) => l.y < last.y - 4).sort((a, b) => b.y - a.y)
 	const floor = band.floor
 	// The caption names the cell grid (the timeframes table) when the grid lies under it,
 	// even with a key band between: that is a table, not a drawing.
-	if (grid && grid.box.y + grid.box.height < last.y && grid.box.y + grid.box.height > floor - 2) return null
+	if (grid && grid.box.y + grid.box.height < last.y && grid.box.y + grid.box.height > floor - 2)
+		return null
 	const labels = below.filter((l) => l.y > floor)
 	const drawn = [
-		...page.paths.filter((p) => p.colour !== '#ffffff' && !isOffPage(p, page) && !pageSized(p.box, page)).map((p) => p.box),
+		...page.paths
+			.filter((p) => p.colour !== '#ffffff' && !isOffPage(p, page) && !pageSized(p.box, page))
+			.map((p) => p.box),
 		...page.images.filter((b) => !pageSized(b, page)),
 	].filter((b) => b.y + b.height <= last.y + 2 && b.y >= floor - 2)
 	if (drawn.length === 0 && labels.length < 2) return null
@@ -1862,12 +2354,18 @@ const captionWraps = (above: Line, line: Line): boolean =>
 // ---------------------------------------------------------------------------
 
 /** Footnote texts: small lines near the page foot that begin with a marker digit. */
-function footnotesOf(lines: Line[], ladder: Ladder, pageNumber: number): { notes: Footnote[]; consumed: Set<Line> } {
+function footnotesOf(
+	lines: Line[],
+	ladder: Ladder,
+	pageNumber: number,
+): { notes: Footnote[]; consumed: Set<Line> } {
 	const notes: Footnote[] = []
 	const consumed = new Set<Line>()
 	// The foot of the text area: under 150pt, above the footer (a design with art along the
 	// page foot sets its notes higher than one without).
-	const small = lines.filter((l) => l.size < ladder.body - 1 && l.y < 150 && l.y > FOOTER_Y).sort((a, b) => b.y - a.y)
+	const small = lines
+		.filter((l) => l.size < ladder.body - 1 && l.y < 150 && l.y > FOOTER_Y)
+		.sort((a, b) => b.y - a.y)
 	let current: { label: string; lines: Line[] } | null = null
 	const flush = () => {
 		if (!current) return
@@ -1921,7 +2419,8 @@ interface GuideRow {
 }
 
 /** A stroked rounded rectangle wide enough to hold text: a callout. */
-const isCalloutStroke = (p: PaintedPath): boolean => p.kind === 'stroke' && p.segments >= 8 && p.box.width >= 120 && p.box.height >= 18
+const isCalloutStroke = (p: PaintedPath): boolean =>
+	p.kind === 'stroke' && p.segments >= 8 && p.box.width >= 120 && p.box.height >= 18
 
 /**
  * The page's step rows: a narrow rounded cell at the left margin holding "Step N" at
@@ -1929,12 +2428,21 @@ const isCalloutStroke = (p: PaintedPath): boolean => p.kind === 'stroke' && p.se
  */
 function guideRowsOf(page: PdfPage, lines: Line[], ladder: Ladder): GuideRow[] {
 	const cells = page.paths
-		.filter((p) => isRoundedCell(p) && p.box.width < 100 && p.box.x < 100 && p.box.height >= 50 && !isOffPage(p, page))
+		.filter(
+			(p) =>
+				isRoundedCell(p) &&
+				p.box.width < 100 &&
+				p.box.x < 100 &&
+				p.box.height >= 50 &&
+				!isOffPage(p, page),
+		)
 		.sort((a, b) => b.box.y - a.box.y)
 	const rows: GuideRow[] = []
 	for (const cell of cells) {
 		const inside = lines.filter((l) => contains(cell.box, lineBox(l), 3))
-		const step = inside.find((l) => /^Step\s+\d+$/i.test(l.text.trim()) && l.size >= ladder.part - 0.75)
+		const step = inside.find(
+			(l) => /^Step\s+\d+$/i.test(l.text.trim()) && l.size >= ladder.part - 0.75,
+		)
 		if (!step) continue
 		const top = cell.box.y + cell.box.height
 		const bottom = cell.box.y
@@ -1967,7 +2475,9 @@ function guideRowsOf(page: PdfPage, lines: Line[], ladder: Ladder): GuideRow[] {
 
 /** A copy of the line with its last run's text rewritten. */
 function withLastRun(line: Line, rewrite: (text: string) => string): Line {
-	const runs = line.runs.map((r, i) => (i === line.runs.length - 1 ? { ...r, text: rewrite(r.text) } : r))
+	const runs = line.runs.map((r, i) =>
+		i === line.runs.length - 1 ? { ...r, text: rewrite(r.text) } : r,
+	)
 	const copy = lineOf(runs, line.page)
 	copy.columnX = line.columnX
 	return copy
@@ -1983,7 +2493,11 @@ const boldLine = (line: Line, boldWeights: Set<Weight>): boolean => {
 
 /** `below` sits one line under `above`, in the same column of the same page. */
 const closeBelow = (above: Line | undefined, below: Line): boolean =>
-	above !== undefined && above.page === below.page && below.y < above.y && above.y - below.y < Math.max(above.size, below.size) * 1.9 && Math.abs(above.columnX - below.columnX) <= 8
+	above !== undefined &&
+	above.page === below.page &&
+	below.y < above.y &&
+	above.y - below.y < Math.max(above.size, below.size) * 1.9 &&
+	Math.abs(above.columnX - below.columnX) <= 8
 
 /**
  * A bold "Label:" opening a line names a panel: the bold runs up to the colon are the
@@ -2019,17 +2533,35 @@ function labelOf(line: Line, boldWeights: Set<Weight>): { head: Line; rest: Line
  * A label that wraps: bold lines, the last of them ending in the colon ("General/primary
  * practitioner" / "investigations: The five-yearly …"), over the text that follows.
  */
-function labelOfLines(lines: Line[], boldWeights: Set<Weight>): { head: Line[]; rest: Line[]; inline: boolean } | null {
+function labelOfLines(
+	lines: Line[],
+	boldWeights: Set<Weight>,
+): { head: Line[]; rest: Line[]; inline: boolean } | null {
 	const head: Line[] = []
 	for (const [j, line] of lines.entries()) {
 		const label = labelOf(line, boldWeights)
 		if (label) {
 			const all = [...head, label.head]
-			if (all.map((l) => l.text).join(' ').split(/\s+/).length > 8) return null
+			if (
+				all
+					.map((l) => l.text)
+					.join(' ')
+					.split(/\s+/).length > 8
+			)
+				return null
 			// `inline`: the label's text follows it on its own line ("Presentation: Some …").
-			return { head: all, rest: [...(label.rest ? [label.rest] : []), ...lines.slice(j + 1)], inline: label.rest !== null }
+			return {
+				head: all,
+				rest: [...(label.rest ? [label.rest] : []), ...lines.slice(j + 1)],
+				inline: label.rest !== null,
+			}
 		}
-		if (j < 2 && boldLine(line, boldWeights) && !markerOf(line) && !/[.!?:]$/.test(line.text.trim())) {
+		if (
+			j < 2 &&
+			boldLine(line, boldWeights) &&
+			!markerOf(line) &&
+			!/[.!?:]$/.test(line.text.trim())
+		) {
 			head.push(line)
 			continue
 		}
@@ -2045,7 +2577,11 @@ function labelOfLines(lines: Line[], boldWeights: Set<Weight>): { head: Line[]; 
  * under it; a label that wraps ("Risk factors for bone" / "sarcoma include:") is one
  * heading.
  */
-function labelDrafts(drafts: Draft[], ctx: PageContext, options: { rows: boolean } = { rows: true }): Draft[] {
+function labelDrafts(
+	drafts: Draft[],
+	ctx: PageContext,
+	options: { rows: boolean } = { rows: true },
+): Draft[] {
 	const out: Draft[] = []
 	// A panel whose text opens with a label directly under its heading ("Timeframe" over
 	// "Surgery: Patients will usually …") sets its own text with bold lead-ins: every
@@ -2060,8 +2596,12 @@ function labelDrafts(drafts: Draft[], ctx: PageContext, options: { rows: boolean
 		if (!options.rows && draft.kind === 'paragraph' && !draft.closed) {
 			const label = labelOfLines(draft.lines, ctx.boldWeights)
 			const above = out.at(-1)
-			const underHeading = above?.kind === 'heading' && runIn(above.level ?? null) && Math.abs(columnOfDraft(above) - columnOfDraft(draft)) <= 4
-			const inLeadInColumn = leadInColumn !== null && Math.abs(leadInColumn - columnOfDraft(draft)) <= 4
+			const underHeading =
+				above?.kind === 'heading' &&
+				runIn(above.level ?? null) &&
+				Math.abs(columnOfDraft(above) - columnOfDraft(draft)) <= 4
+			const inLeadInColumn =
+				leadInColumn !== null && Math.abs(leadInColumn - columnOfDraft(draft)) <= 4
 			if (label && (label.inline || label.rest.length > 0) && (underHeading || inLeadInColumn)) {
 				leadInColumn = columnOfDraft(draft)
 				out.push(draft)
@@ -2069,12 +2609,24 @@ function labelDrafts(drafts: Draft[], ctx: PageContext, options: { rows: boolean
 			}
 		}
 		if (draft.kind === 'heading' && runIn(draft.level ?? null)) {
-			const text = draft.lines.map((l) => l.text).join(' ').trim()
+			const text = draft.lines
+				.map((l) => l.text)
+				.join(' ')
+				.trim()
 			const nextLine = next?.kind === 'paragraph' && !next.closed ? next.lines[0] : undefined
-			const nextBold = nextLine !== undefined && boldLine(nextLine, ctx.boldWeights) && closeBelow(draft.lines.at(-1), nextLine)
+			const nextBold =
+				nextLine !== undefined &&
+				boldLine(nextLine, ctx.boldWeights) &&
+				closeBelow(draft.lines.at(-1), nextLine)
 			// A heading ending in a dash over a bold lead-in ("Support and communication –" /
 			// "lead clinician to:") is the panel over its lead-in, in either design.
-			if (next && nextLine && nextBold && /[–—]$/.test(text) && /:$/.test(next.lines.at(-1)?.text.trim() ?? '')) {
+			if (
+				next &&
+				nextLine &&
+				nextBold &&
+				/[–—]$/.test(text) &&
+				/:$/.test(next.lines.at(-1)?.text.trim() ?? '')
+			) {
 				const split = splitAtDash([...draft.lines, ...next.lines])
 				if (split && split.rest.length > 0) {
 					out.push({ kind: 'heading', level: draft.level ?? 5, lines: split.head })
@@ -2099,13 +2651,19 @@ function labelDrafts(drafts: Draft[], ctx: PageContext, options: { rows: boolean
 						.sort((a, b) => b - a)
 					const columnRight = rights[Math.floor(rights.length * 0.1)] ?? headLast.x1
 					const firstWord = labelLine.text.trim().split(/\s+/)[0] ?? ''
-					const wordWidth = ((labelLine.x1 - labelLine.x0) * (firstWord.length + 1)) / Math.max(1, labelLine.text.trim().length)
+					const wordWidth =
+						((labelLine.x1 - labelLine.x0) * (firstWord.length + 1)) /
+						Math.max(1, labelLine.text.trim().length)
 					return headLast.x1 + wordWidth > columnRight - 6
 				}
 				// … and it carries on as one does, in lower case or a bracket, not with the
 				// capital a label of its own opens with ("Patients fit for intensive …").
 				const wrapped =
-					labelLine !== undefined && closeBelow(headLast, labelLine) && !/[.:;!?]$/.test(text) && !/^\p{Lu}/u.test(labelLine.text.trim()) && hadNoRoom()
+					labelLine !== undefined &&
+					closeBelow(headLast, labelLine) &&
+					!/[.:;!?]$/.test(text) &&
+					!/^\p{Lu}/u.test(labelLine.text.trim()) &&
+					hadNoRoom()
 						? labelOf(labelLine, ctx.boldWeights)
 						: null
 				if (wrapped && next) {
@@ -2125,7 +2683,8 @@ function labelDrafts(drafts: Draft[], ctx: PageContext, options: { rows: boolean
 			// over one bold line ending in the colon ("General/primary practitioner" /
 			// "investigations:" is one heading). Every panel of a guide row is the step's own:
 			// one level, whatever its colour.
-			const withLeadIn = next && nextLine && nextBold && next.lines.length === 1 && /:$/.test(nextLine.text.trim())
+			const withLeadIn =
+				next && nextLine && nextBold && next.lines.length === 1 && /:$/.test(nextLine.text.trim())
 			const titleLines = withLeadIn ? [...draft.lines, nextLine] : draft.lines
 			if (withLeadIn || /:$/.test(text)) {
 				const split = splitAtDash(titleLines)
@@ -2134,13 +2693,20 @@ function labelDrafts(drafts: Draft[], ctx: PageContext, options: { rows: boolean
 					out.push({ kind: 'paragraph', lines: split.rest })
 				} else {
 					const last = titleLines.at(-1)
-					out.push({ kind: 'heading', level: 5, lines: last ? [...titleLines.slice(0, -1), withoutColon(last)] : titleLines })
+					out.push({
+						kind: 'heading',
+						level: 5,
+						lines: last ? [...titleLines.slice(0, -1), withoutColon(last)] : titleLines,
+					})
 				}
 				if (withLeadIn) i++
 				continue
 			}
 			if (/[.!?]$/.test(text) || (next && nextBold)) {
-				out.push({ kind: 'paragraph', lines: [...draft.lines, ...(next && nextBold ? next.lines : [])] })
+				out.push({
+					kind: 'paragraph',
+					lines: [...draft.lines, ...(next && nextBold ? next.lines : [])],
+				})
 				if (next && nextBold) i++
 				continue
 			}
@@ -2161,9 +2727,22 @@ function labelDrafts(drafts: Draft[], ctx: PageContext, options: { rows: boolean
 			// over "Early referral to palliative care …"), or over dash sub-items ("Systemic
 			// therapy:" over "– SSAs are …"), names a panel; over a bulleted list it is the
 			// list's lead-in.
-			const underLabel = next?.kind === 'paragraph' || (next?.kind === 'item' && next.marker === 'dash')
-			const overProse = label !== null && !label.inline && label.rest.length === 0 && underLabel && label.head.map((l) => l.text).join(' ').split(/\s+/).length <= 4
-			if (label && !leadIn && (options.rows || label.inline || label.rest.length > 0 || overProse)) {
+			const underLabel =
+				next?.kind === 'paragraph' || (next?.kind === 'item' && next.marker === 'dash')
+			const overProse =
+				label !== null &&
+				!label.inline &&
+				label.rest.length === 0 &&
+				underLabel &&
+				label.head
+					.map((l) => l.text)
+					.join(' ')
+					.split(/\s+/).length <= 4
+			if (
+				label &&
+				!leadIn &&
+				(options.rows || label.inline || label.rest.length > 0 || overProse)
+			) {
 				out.push({ kind: 'heading', level: 5, lines: label.head })
 				if (label.rest.length > 0) out.push({ kind: 'paragraph', lines: label.rest })
 				continue
@@ -2174,14 +2753,28 @@ function labelDrafts(drafts: Draft[], ctx: PageContext, options: { rows: boolean
 				const split = splitAtDash(label.head)
 				if (split && split.rest.length > 0) {
 					out.push({ kind: 'heading', level: 5, lines: split.head })
-					out.push({ kind: 'paragraph', lines: [...split.rest.slice(0, -1), ...split.rest.slice(-1).map((l) => withLastRun(l, (t) => `${t.replace(/\s*:\s*$/, '')}:`))] })
+					out.push({
+						kind: 'paragraph',
+						lines: [
+							...split.rest.slice(0, -1),
+							...split.rest
+								.slice(-1)
+								.map((l) => withLastRun(l, (t) => `${t.replace(/\s*:\s*$/, '')}:`)),
+						],
+					})
 					continue
 				}
 			}
 			// A panel's one-word title the print set in the light face by mistake ("Checklist"
 			// over its check items) is the heading it was meant to be.
 			const only = draft.lines[0]
-			if (draft.lines.length === 1 && only && /^\p{Lu}[\p{Ll}]{2,19}$/u.test(only.text.trim()) && next?.kind === 'item' && (next.marker === 'check' || next.marker === 'cross')) {
+			if (
+				draft.lines.length === 1 &&
+				only &&
+				/^\p{Lu}[\p{Ll}]{2,19}$/u.test(only.text.trim()) &&
+				next?.kind === 'item' &&
+				(next.marker === 'check' || next.marker === 'cross')
+			) {
 				out.push({ kind: 'heading', level: isAccent(only.colour) ? 6 : 5, lines: draft.lines })
 				continue
 			}
@@ -2204,11 +2797,34 @@ function splitAtDash(lines: Line[]): { head: Line[]; rest: Line[] } | null {
 			const before = run.text.slice(0, at).trimEnd()
 			const after = run.text.slice(at + 1).trimStart()
 			const ratio = run.text.length > 0 ? before.length / run.text.length : 0
-			const headRuns = [...line.runs.slice(0, i), ...(before ? [{ ...run, text: before, box: { ...run.box, width: run.box.width * ratio } }] : [])]
-			const restRuns = [...(after ? [{ ...run, text: after, box: { ...run.box, x: run.box.x + run.box.width * ratio, width: run.box.width * (1 - ratio) } }] : []), ...line.runs.slice(i + 1)]
+			const headRuns = [
+				...line.runs.slice(0, i),
+				...(before
+					? [{ ...run, text: before, box: { ...run.box, width: run.box.width * ratio } }]
+					: []),
+			]
+			const restRuns = [
+				...(after
+					? [
+							{
+								...run,
+								text: after,
+								box: {
+									...run.box,
+									x: run.box.x + run.box.width * ratio,
+									width: run.box.width * (1 - ratio),
+								},
+							},
+						]
+					: []),
+				...line.runs.slice(i + 1),
+			]
 			if (headRuns.length === 0) return null
 			const head = [...lines.slice(0, j), lineOf(headRuns, line.page)]
-			const rest = [...(restRuns.length > 0 ? [lineOf(restRuns, line.page)] : []), ...lines.slice(j + 1)]
+			const rest = [
+				...(restRuns.length > 0 ? [lineOf(restRuns, line.page)] : []),
+				...lines.slice(j + 1),
+			]
 			for (const l of [...head, ...rest]) l.columnX = line.columnX
 			return { head, rest }
 		}
@@ -2224,15 +2840,24 @@ function calloutEvents(within: Line[], ctx: PageContext): Event[] {
 	const events: Event[] = []
 	const first = drafts[0]
 	const firstLine = first?.lines[0]
-	if (first && firstLine && (first.kind === 'heading' || (first.kind === 'paragraph' && boldLine(firstLine, ctx.boldWeights)))) {
+	if (
+		first &&
+		firstLine &&
+		(first.kind === 'heading' ||
+			(first.kind === 'paragraph' && boldLine(firstLine, ctx.boldWeights)))
+	) {
 		const titleLines = first.kind === 'heading' ? first.lines : [firstLine]
 		const split = splitAtDash(titleLines)
 		const head = split ? split.head : titleLines
 		const last = head.at(-1)
 		const heading = last ? [...head.slice(0, -1), withoutColon(last)] : head
 		events.push({ y: firstLine.y, heading: { kind: 'heading', level: 5, lines: heading } })
-		const rest = [...(split ? split.rest : []), ...(first.kind === 'paragraph' ? first.lines.slice(1) : [])]
-		if (rest.length > 0) events.push({ y: rest[0]?.y ?? firstLine.y, block: paragraphOf(rest, ctx) })
+		const rest = [
+			...(split ? split.rest : []),
+			...(first.kind === 'paragraph' ? first.lines.slice(1) : []),
+		]
+		if (rest.length > 0)
+			events.push({ y: rest[0]?.y ?? firstLine.y, block: paragraphOf(rest, ctx) })
 		drafts.shift()
 	}
 	events.push(...blocksOf(labelDrafts(drafts, ctx), ctx))
@@ -2251,7 +2876,9 @@ function splitAtColumnStarts(line: Line, starts: number[]): Line[] {
 		const previous = runs.at(-1)
 		if (previous) {
 			const end = previous.box.x + previous.box.width
-			const atEdge = starts.some((s) => s > line.x0 + 30 && run.box.x >= s - 8 && end < s - 2) && run.box.x - end >= 4
+			const atEdge =
+				starts.some((s) => s > line.x0 + 30 && run.box.x >= s - 8 && end < s - 2) &&
+				run.box.x - end >= 4
 			if (atEdge) {
 				pieces.push(lineOf(runs, line.page))
 				runs = []
@@ -2306,9 +2933,14 @@ function guideRowEvents(content: Line[], callouts: PaintedPath[], ctx: PageConte
 	const columnOrder = (band: Line[], bandBoxes: PaintedPath[]) => {
 		for (const c of starts.keys()) {
 			const own = band.filter((l) => columnOf(l.x0) === c).sort((a, b) => b.y - a.y)
-			const inColumn = bandBoxes.filter((p) => columnOf(p.box.x + 6) === c).sort((a, b) => b.box.y - a.box.y)
+			const inColumn = bandBoxes
+				.filter((p) => columnOf(p.box.x + 6) === c)
+				.sort((a, b) => b.box.y - a.box.y)
 			for (const line of own) {
-				while (inColumn.length > 0 && (inColumn[0]?.box.y ?? 0) + (inColumn[0]?.box.height ?? 0) > line.y + 2) {
+				while (
+					inColumn.length > 0 &&
+					(inColumn[0]?.box.y ?? 0) + (inColumn[0]?.box.height ?? 0) > line.y + 2
+				) {
 					const callout = inColumn.shift()
 					if (callout) sequence.push({ callout })
 				}
@@ -2352,7 +2984,15 @@ function guideRowEvents(content: Line[], callouts: PaintedPath[], ctx: PageConte
  * the chapter. The rotated side band at the margin repeats on every guide page: it is
  * furniture the mapper places once.
  */
-function readGuidePage(page: PdfPage, rows: GuideRow[], lines: Line[], ctx: PageContext, outline: Outline, front: Block[], warnings: Warning[]): void {
+function readGuidePage(
+	page: PdfPage,
+	rows: GuideRow[],
+	lines: Line[],
+	ctx: PageContext,
+	outline: Outline,
+	front: Block[],
+	warnings: Warning[],
+): void {
 	const n = ctx.pageNumber
 	const margin = Math.min(...rows.map((r) => r.cell.box.x))
 	const labelLines = new Set(rows.flatMap((r) => [r.step, ...r.title, ...r.notes]))
@@ -2362,11 +3002,17 @@ function readGuidePage(page: PdfPage, rows: GuideRow[], lines: Line[], ctx: Page
 		if (labelLines.has(l)) continue
 		// The side band runs up the margin alongside the rows; the guide's note above the
 		// first row starts at the page margin too and is text.
-		if (l.x0 < margin - 5 && l.x1 - l.x0 > 200 && rows.some((r) => l.y >= r.bottom - 2 && l.y <= r.top + 2)) {
+		if (
+			l.x0 < margin - 5 &&
+			l.x1 - l.x0 > 200 &&
+			rows.some((r) => l.y >= r.bottom - 2 && l.y <= r.top + 2)
+		) {
 			warnings.push({ page: n, message: `furniture: ${l.text}` })
 			continue
 		}
-		const row = rows.find((r) => l.y >= r.bottom - 2 && l.y <= r.top + 2 && l.x0 > r.cell.box.x + r.cell.box.width - 2)
+		const row = rows.find(
+			(r) => l.y >= r.bottom - 2 && l.y <= r.top + 2 && l.x0 > r.cell.box.x + r.cell.box.width - 2,
+		)
 		if (row) {
 			row.content.push(l)
 			continue
@@ -2394,13 +3040,20 @@ function readGuidePage(page: PdfPage, rows: GuideRow[], lines: Line[], ctx: Page
 		return blocksOf(draftsOf(orderLines(ls, columns), ctx.ladder), ctx)
 	}
 	const calloutsBetween = (top: number, bottom: number): PaintedPath[] =>
-		page.paths.filter((p) => isCalloutStroke(p) && p.box.y + p.box.height <= top + 2 && p.box.y >= bottom - 2)
+		page.paths.filter(
+			(p) => isCalloutStroke(p) && p.box.y + p.box.height <= top + 2 && p.box.y >= bottom - 2,
+		)
 	emit(flowOf(before))
 	for (const [i, row] of rows.entries()) {
 		// "Step 4" over "Treatment:" is the heading "Step 4: Treatment", as every other
 		// design prints it.
 		const step = withLastRun(row.step, (t) => `${t.trimEnd()}:`)
-		emit([{ y: row.top, heading: { kind: 'heading', level: 2, lines: [step, ...row.title.map(withoutColon)] } }])
+		emit([
+			{
+				y: row.top,
+				heading: { kind: 'heading', level: 2, lines: [step, ...row.title.map(withoutColon)] },
+			},
+		])
 		if (row.notes.length > 0) {
 			const x = Math.min(...row.notes.map((l) => l.x0))
 			for (const l of row.notes) l.columnX = x
@@ -2451,13 +3104,20 @@ interface EntryLexicon {
 
 /** "Name, Role" at the start of a line: two to four capitalised words (particles allowed),
  *  a comma, then the role clause. */
-const NAME_ROLE = /^((?:\p{Lu}[\p{L}’'.-]*|van|de|der|von)(?:\s(?:\p{Lu}[\p{L}’'.-]*|van|de|der|von)){1,3}),\s*([^,]+?)\s*(?:,|$)/u
+const NAME_ROLE =
+	/^((?:\p{Lu}[\p{L}’'.-]*|van|de|der|von)(?:\s(?:\p{Lu}[\p{L}’'.-]*|van|de|der|von)){1,3}),\s*([^,]+?)\s*(?:,|$)/u
 
-function entryLexiconOf(lexicon: { entries: readonly string[]; roles: readonly string[]; names: readonly string[] }): EntryLexicon {
+function entryLexiconOf(lexicon: {
+	entries: readonly string[]
+	roles: readonly string[]
+	names: readonly string[]
+}): EntryLexicon {
 	const { entries, roles, names } = lexicon
 	const roleKeys = new Set(roles.map(nameKey))
 	// The last word of a role names the occupation ("Senior Physiotherapist" → physiotherapist).
-	const roleTails = new Set(roles.map((r) => nameKey(r).split(' ').at(-1) ?? '').filter((w) => w.length > 3))
+	const roleTails = new Set(
+		roles.map((r) => nameKey(r).split(' ').at(-1) ?? '').filter((w) => w.length > 3),
+	)
 	const nameKeys = new Set(names.map(nameKey))
 	const opensPerson = (text: string): boolean => {
 		if (HONORIFIC.test(text)) return true
@@ -2536,26 +3196,44 @@ const titleOf = (headingText: string, number: string | null): string => {
 /** Where each section's heading starts on its page: which column of a guide row it heads. */
 const headingX = new WeakMap<Section, number>()
 
-function pushSection(outline: Outline, level: HeadingLevel, heading: Line[], page: number, boldWeights: Set<Weight>, warnings: Warning[]): Section {
+function pushSection(
+	outline: Outline,
+	level: HeadingLevel,
+	heading: Line[],
+	page: number,
+	boldWeights: Set<Weight>,
+	warnings: Warning[],
+): Section {
 	// A heading is styled by its level; its weight is not a bold mark. A run-in heading set
 	// as a label ("Further information:") sheds its colon.
-	const headingLines = runIn(level) ? heading.map((l, i) => (i === heading.length - 1 && /:$/.test(l.text.trim()) ? withoutColon(l) : l)) : heading
+	const headingLines = runIn(level)
+		? heading.map((l, i) =>
+				i === heading.length - 1 && /:$/.test(l.text.trim()) ? withoutColon(l) : l,
+			)
+		: heading
 	let runs = runsOfLines(headingLines, boldWeights).map((r) => ({ ...r, bold: false }))
-	const printed = headingLines.map((l) => l.text).join(' ').replace(/\s+/g, ' ').trim()
+	const printed = headingLines
+		.map((l) => l.text)
+		.join(' ')
+		.replace(/\s+/g, ' ')
+		.trim()
 	let text = printed
 	// "Step 2: … continued" carries a section over a page: the section continues, and the
 	// word is the page's, not the heading's. The warning records what the page printed.
 	const continued = /\s+continued$/i.test(text)
 	if (continued) {
 		text = text.replace(/\s+continued$/i, '')
-		while (runs.length > 0 && /^\s*continued\s*$/i.test(runs.at(-1)?.text ?? '')) runs = runs.slice(0, -1)
+		while (runs.length > 0 && /^\s*continued\s*$/i.test(runs.at(-1)?.text ?? ''))
+			runs = runs.slice(0, -1)
 		const last = runs.at(-1)
 		if (last) last.text = last.text.replace(/\s*continued\s*$/i, '')
 	}
 	// A section number the print set with a stray space after its first stop ("3. 6 Support
 	// and communication") is the number it means: 3.6.
 	const spaced = /^(\d+)\.\s(\d+(?:\.\d+)*)\s+(?=\p{Lu})/u.exec(text)
-	const numbered = spaced ? ([spaced[0], `${spaced[1]}.${spaced[2]}`] as const) : NUMBERED.exec(text)
+	const numbered = spaced
+		? ([spaced[0], `${spaced[1]}.${spaced[2]}`] as const)
+		: NUMBERED.exec(text)
 	const step = STEP.exec(text)
 	// A continued step band may name the subsection it resumes: "Step 1: … – Screening
 	// recommendations continued".
@@ -2564,7 +3242,10 @@ function pushSection(outline: Outline, level: HeadingLevel, heading: Line[], pag
 	// or a step that runs over a page in the quick guide and repeats its title band (the
 	// wording may differ slightly) by its number.
 	const open = outline.stack.find(
-		(s) => s.level === level && ((continued && s.headingText === text) || (step !== null && s.number?.toLowerCase() === step[1]?.toLowerCase())),
+		(s) =>
+			s.level === level &&
+			((continued && s.headingText === text) ||
+				(step !== null && s.number?.toLowerCase() === step[1]?.toLowerCase())),
 	)
 	if (open) {
 		if (continued) warnings.push({ page, message: `continued-merged: ${printed}` })
@@ -2575,7 +3256,10 @@ function pushSection(outline: Outline, level: HeadingLevel, heading: Line[], pag
 		while (outline.stack.at(-1) !== open) outline.stack.pop()
 		if (resumed) {
 			// Back into the named subsection, so what follows the band continues it.
-			const path = pathTo(open, (s) => titleOf(s.headingText, s.number).toLowerCase() === resumed.toLowerCase())
+			const path = pathTo(
+				open,
+				(s) => titleOf(s.headingText, s.number).toLowerCase() === resumed.toLowerCase(),
+			)
 			if (path) {
 				outline.stack.push(...path)
 				return path.at(-1) ?? open
@@ -2609,7 +3293,8 @@ function pushSection(outline: Outline, level: HeadingLevel, heading: Line[], pag
 		blocks: [],
 		children: [],
 	}
-	while (outline.stack.length > 0 && (outline.stack.at(-1)?.level ?? 0) >= level) outline.stack.pop()
+	while (outline.stack.length > 0 && (outline.stack.at(-1)?.level ?? 0) >= level)
+		outline.stack.pop()
 	const parent = outline.stack.at(-1)
 	headingX.set(section, heading[0]?.x0 ?? 0)
 	if (parent) parent.children.push(section)
@@ -2656,7 +3341,12 @@ export async function readLayoutDocument(
 	const repeatKey = (l: Line) => `${l.size}|${l.text}`
 	const furnitureLike = (l: Line) => {
 		const page = pages[l.page - 1]
-		return l.text.length > 40 && l.size < ladder.section - 0.5 && page !== undefined && (l.x1 > page.width - 20 || l.x0 < 30)
+		return (
+			l.text.length > 40 &&
+			l.size < ladder.section - 0.5 &&
+			page !== undefined &&
+			(l.x1 > page.width - 20 || l.x0 < 30)
+		)
 	}
 	const repeats = new Map<string, number>()
 	for (const lines of pageLines.values())
@@ -2665,7 +3355,8 @@ export async function readLayoutDocument(
 	for (const [n, lines] of pageLines) {
 		const kept: Line[] = []
 		for (const l of lines) {
-			if (furnitureLike(l) && (repeats.get(repeatKey(l)) ?? 0) >= 3) warnings.push({ page: n, message: `furniture: ${l.text}` })
+			if (furnitureLike(l) && (repeats.get(repeatKey(l)) ?? 0) >= 3)
+				warnings.push({ page: n, message: `furniture: ${l.text}` })
 			else kept.push(l)
 		}
 		pageLines.set(n, kept)
@@ -2673,8 +3364,9 @@ export async function readLayoutDocument(
 	// The contents page opens the document proper; what precedes it (title page,
 	// endorsements, imprint) is front matter.
 	const contentsPage =
-		[...pageLines.entries()].find(([, lines]) => lines.some((l) => l.size >= ladder.chapter - 0.75 && /^contents$/i.test(l.text.trim())))?.[0] ??
-		2
+		[...pageLines.entries()].find(([, lines]) =>
+			lines.some((l) => l.size >= ladder.chapter - 0.75 && /^contents$/i.test(l.text.trim())),
+		)?.[0] ?? 2
 
 	// A numbered reference list ("12. Author, A.; …" under a References title) is cited by
 	// raised numbers: its entries become the document's endnotes, as the template's own. The
@@ -2697,7 +3389,11 @@ export async function readLayoutDocument(
 		// The cover: the largest text is the document's title; everything else is art.
 		if (n === 1) {
 			const big = lines.filter((l) => l.size >= ladder.chapter - 0.75).sort((a, b) => b.y - a.y)
-			title = big.map((l) => l.text).join(' ').replace(/\s+/g, ' ').trim()
+			title = big
+				.map((l) => l.text)
+				.join(' ')
+				.replace(/\s+/g, ' ')
+				.trim()
 			const rest = lines.filter((l) => !big.includes(l) && l.size >= ladder.body - 0.5)
 			for (const d of draftsOf(rest, ladder)) front.push(paragraphOf(d.lines, ctx))
 			continue
@@ -2714,16 +3410,31 @@ export async function readLayoutDocument(
 				// the endorsing organisations' marks).
 				const beside =
 					region.labels.length === 0
-						? lines.find((l) => l.y >= region.box.y - 6 && l.y <= region.box.y + region.box.height + 6 && l.x1 <= region.box.x + 2 && region.box.x - l.x1 < 160)
+						? lines.find(
+								(l) =>
+									l.y >= region.box.y - 6 &&
+									l.y <= region.box.y + region.box.height + 6 &&
+									l.x1 <= region.box.x + 2 &&
+									region.box.x - l.x1 < 160,
+							)
 						: undefined
 				const labels = beside ? [beside] : region.labels
 				if (labels.length === 0) continue
 				const box = union([region.box, ...labels.map(lineBox)])
-				marks.push({ kind: 'figure', alt: labels.map((l) => l.text).join(' '), page: n, bbox: [box.x, box.y, box.x + box.width, box.y + box.height] })
+				marks.push({
+					kind: 'figure',
+					alt: labels.map((l) => l.text).join(' '),
+					page: n,
+					bbox: [box.x, box.y, box.x + box.width, box.y + box.height],
+				})
 				lines = lines.filter((l) => !labels.includes(l))
 			}
 			for (const d of draftsOf(lines, ladder)) {
-				const p = paragraphOf(d.lines, ctx, d.marker === 'dash' ? DASH_STRIP : d.marker ? BULLET : undefined)
+				const p = paragraphOf(
+					d.lines,
+					ctx,
+					d.marker === 'dash' ? DASH_STRIP : d.marker ? BULLET : undefined,
+				)
 				if (d.kind === 'heading') for (const r of p.runs) r.bold = true
 				front.push(p)
 			}
@@ -2760,7 +3471,12 @@ export async function readLayoutDocument(
 				kind: 'figure',
 				alt: '',
 				page: n,
-				bbox: [region.box.x, region.box.y, region.box.x + region.box.width, region.box.y + region.box.height],
+				bbox: [
+					region.box.x,
+					region.box.y,
+					region.box.x + region.box.width,
+					region.box.y + region.box.height,
+				],
 			}
 			ctx.figures.push(figure)
 			figureBoxes.push(region.box)
@@ -2768,7 +3484,14 @@ export async function readLayoutDocument(
 		}
 		for (const region of panelRegions(page, lines, ladder)) claim(region)
 		// Images: off-page and tiny ones (a bleed, a bullet glyph) are not figures.
-		const images = page.images.filter((b) => b.width * b.height >= 400 && b.x >= -2 && b.y >= -2 && b.x + b.width <= page.width + 2 && b.y + b.height <= page.height + 2)
+		const images = page.images.filter(
+			(b) =>
+				b.width * b.height >= 400 &&
+				b.x >= -2 &&
+				b.y >= -2 &&
+				b.x + b.width <= page.width + 2 &&
+				b.y + b.height <= page.height + 2,
+		)
 		for (const region of figureRegions(page, lines, ladder, ornaments, images)) {
 			// A region with no labels and little area is decoration (a booklet's cover
 			// thumbnail beside its description is a picture, not a figure, until it is large);
@@ -2779,27 +3502,65 @@ export async function readLayoutDocument(
 			if (pageSized(region.box, page)) continue
 			// Art along the page foot, the page's width, with no lettering: the design's
 			// decoration (a population pathway's wave and dots), not a figure.
-			if (region.labels.length === 0 && region.box.width >= page.width * 0.9 && region.box.y + region.box.height <= 150) continue
+			if (
+				region.labels.length === 0 &&
+				region.box.width >= page.width * 0.9 &&
+				region.box.y + region.box.height <= 150
+			)
+				continue
 			if (figureBoxes.some((f) => overlapsBox(f, region.box))) continue
 			if (tableBoxes.some((t) => overlapsBox(t, region.box))) continue
 			// A picture inside a stroked callout with no lettering of its own is the
 			// callout's decoration (a booklet's cover beside its description).
-			if (region.labels.length === 0 && page.paths.some((p) => p.kind === 'stroke' && p.segments >= 8 && p.box.width >= 120 && contains(p.box, region.box, 4))) continue
+			if (
+				region.labels.length === 0 &&
+				page.paths.some(
+					(p) =>
+						p.kind === 'stroke' &&
+						p.segments >= 8 &&
+						p.box.width >= 120 &&
+						contains(p.box, region.box, 4),
+				)
+			)
+				continue
 			claim(region)
 		}
 		let grid = gridRegion(page, lines, ornaments, figureBoxes)
 		// A cell grid with connectors drawn between its cells (thin lines, arrowheads) is a
 		// flowchart, not a table: a figure, every line on it lettering.
 		if (grid) {
-			const reach = { x: grid.box.x - 30, y: grid.box.y - 30, width: grid.box.width + 60, height: grid.box.height + 60 }
+			const reach = {
+				x: grid.box.x - 30,
+				y: grid.box.y - 30,
+				width: grid.box.width + 60,
+				height: grid.box.height + 60,
+			}
 			const connectors = page.paths.filter(
-				(p) => p.kind === 'stroke' && p.segments <= 5 && (p.box.width < 2 || p.box.height < 2) && Math.max(p.box.width, p.box.height) >= 10 && overlapsBox(reach, p.box),
+				(p) =>
+					p.kind === 'stroke' &&
+					p.segments <= 5 &&
+					(p.box.width < 2 || p.box.height < 2) &&
+					Math.max(p.box.width, p.box.height) >= 10 &&
+					overlapsBox(reach, p.box),
 			)
 			if (connectors.length >= 2) {
 				// What the connectors reach is part of the chart too (a band above the grid).
 				const joined = union([grid.box, ...connectors.map((c) => c.box)])
-				const wider = { x: joined.x - 16, y: joined.y - 16, width: joined.width + 32, height: joined.height + 32 }
-				const drawn = page.paths.filter((p) => p.colour !== '#ffffff' && !isOffPage(p, page) && !pageSized(p.box, page) && overlapsBox(wider, p.box)).map((p) => p.box)
+				const wider = {
+					x: joined.x - 16,
+					y: joined.y - 16,
+					width: joined.width + 32,
+					height: joined.height + 32,
+				}
+				const drawn = page.paths
+					.filter(
+						(p) =>
+							p.colour !== '#ffffff' &&
+							!isOffPage(p, page) &&
+							!pageSized(p.box, page) &&
+							overlapsBox(wider, p.box),
+					)
+					.map((p) => p.box)
 				const box = union([grid.box, ...drawn])
 				claim({ box, labels: linesWithin(lines, box) })
 				grid = null
@@ -2810,24 +3571,65 @@ export async function readLayoutDocument(
 			// caption names — a flowchart's shapes, connectors, legend and lettering, however
 			// many pieces the drawing came in. The timeframes grid is a table, not a figure.
 			const band = captionBand(caption, lines, ladder)
-			const gridInBand = grid !== null && grid.box.y + grid.box.height < band.top && grid.box.y + grid.box.height > band.floor - 2
-			const pieces = ctx.figures.filter((f) => f.bbox !== undefined && f.bbox !== null && f.bbox[3] <= band.top + 2 && f.bbox[1] >= band.floor - 2)
+			const gridInBand =
+				grid !== null &&
+				grid.box.y + grid.box.height < band.top &&
+				grid.box.y + grid.box.height > band.floor - 2
+			const pieces = ctx.figures.filter(
+				(f) =>
+					f.bbox !== undefined &&
+					f.bbox !== null &&
+					f.bbox[3] <= band.top + 2 &&
+					f.bbox[1] >= band.floor - 2,
+			)
 			if (pieces.length > 0 && !gridInBand) {
 				const drawn = [
-					...page.paths.filter((p) => p.colour !== '#ffffff' && !isOffPage(p, page) && !pageSized(p.box, page)).map((p) => p.box),
+					...page.paths
+						.filter((p) => p.colour !== '#ffffff' && !isOffPage(p, page) && !pageSized(p.box, page))
+						.map((p) => p.box),
 					...images,
 				].filter((b) => b.y + b.height <= band.top + 2 && b.y >= band.floor - 2)
 				// Lettering lies on the drawing; small print under it (a source note) is prose.
-				const drawnBottom = Math.min(...pieces.map((f) => f.bbox?.[1] ?? band.floor), ...drawn.map((b) => b.y))
-				const lettering = lines.filter((l) => l !== caption && l.y < band.top && l.y > band.floor && l.y >= drawnBottom - 4)
-				const box = union([...pieces.map((f) => ({ x: f.bbox?.[0] ?? 0, y: f.bbox?.[1] ?? 0, width: (f.bbox?.[2] ?? 0) - (f.bbox?.[0] ?? 0), height: (f.bbox?.[3] ?? 0) - (f.bbox?.[1] ?? 0) })), ...drawn, ...lettering.map(lineBox)])
+				const drawnBottom = Math.min(
+					...pieces.map((f) => f.bbox?.[1] ?? band.floor),
+					...drawn.map((b) => b.y),
+				)
+				const lettering = lines.filter(
+					(l) => l !== caption && l.y < band.top && l.y > band.floor && l.y >= drawnBottom - 4,
+				)
+				const box = union([
+					...pieces.map((f) => ({
+						x: f.bbox?.[0] ?? 0,
+						y: f.bbox?.[1] ?? 0,
+						width: (f.bbox?.[2] ?? 0) - (f.bbox?.[0] ?? 0),
+						height: (f.bbox?.[3] ?? 0) - (f.bbox?.[1] ?? 0),
+					})),
+					...drawn,
+					...lettering.map(lineBox),
+				])
 				for (const piece of pieces) ctx.figures.splice(ctx.figures.indexOf(piece), 1)
 				figureBoxes.length = 0
-				figureBoxes.push(...ctx.figures.flatMap((f) => (f.bbox ? [{ x: f.bbox[0], y: f.bbox[1], width: f.bbox[2] - f.bbox[0], height: f.bbox[3] - f.bbox[1] }] : [])))
+				figureBoxes.push(
+					...ctx.figures.flatMap((f) =>
+						f.bbox
+							? [
+									{
+										x: f.bbox[0],
+										y: f.bbox[1],
+										width: f.bbox[2] - f.bbox[0],
+										height: f.bbox[3] - f.bbox[1],
+									},
+								]
+							: [],
+					),
+				)
 				claim({ box, labels: lettering })
 				continue
 			}
-			if (figureBoxes.some((f) => f.y + f.height > caption.y - 60 && f.y + f.height < caption.y + 4)) continue
+			if (
+				figureBoxes.some((f) => f.y + f.height > caption.y - 60 && f.y + f.height < caption.y + 4)
+			)
+				continue
 			const region = captionRegion(caption, page, lines, ladder, grid)
 			if (region) claim(region)
 		}
@@ -2847,9 +3649,18 @@ export async function readLayoutDocument(
 				// The header labels sit just above the grid; the figure's caption above them is
 				// the caption, not a label.
 				const header = lines.filter(
-					(l) => l.y > region.box.y + region.box.height && l.y < region.box.y + region.box.height + 24 && l.weight === 'medium' && l.x1 <= region.box.x + region.box.width + 20 && !CAPTION.test(l.text) && !TABLE_CAPTION.test(l.text),
+					(l) =>
+						l.y > region.box.y + region.box.height &&
+						l.y < region.box.y + region.box.height + 24 &&
+						l.weight === 'medium' &&
+						l.x1 <= region.box.x + region.box.width + 20 &&
+						!CAPTION.test(l.text) &&
+						!TABLE_CAPTION.test(l.text),
 				)
-				extras.push({ y: region.box.y + region.box.height, block: cellTable(region, within, header, ctx) })
+				extras.push({
+					y: region.box.y + region.box.height,
+					block: cellTable(region, within, header, ctx),
+				})
 				lines = lines.filter((l) => !within.includes(l) && !header.includes(l))
 				continue
 			}
@@ -2861,10 +3672,14 @@ export async function readLayoutDocument(
 		const ordered = orderLines(splitByColumns(lines, columns, ladder.section - 0.5), columns)
 		// Contributors and acknowledgements list one name per line.
 		const namesChapter = /^(?:acknowledgements|contributors)/i
-		const entryLines = outline.stack.some((s) => s.level === 1 && namesChapter.test(s.headingText.trim())) || lines.some((l) => l.size >= ladder.chapter - 0.75 && namesChapter.test(l.text.trim()))
+		const entryLines =
+			outline.stack.some((s) => s.level === 1 && namesChapter.test(s.headingText.trim())) ||
+			lines.some((l) => l.size >= ladder.chapter - 0.75 && namesChapter.test(l.text.trim()))
 		// The quick reference guide (the Summary chapter) names its panels with bold
 		// "Label:" lead-ins where the body sets headings on lines of their own.
-		const inGuide = outline.stack.some((s) => s.level === 1 && /^summary$/i.test(s.headingText.trim())) || lines.some((l) => l.size >= ladder.chapter - 0.75 && /^summary$/i.test(l.text.trim()))
+		const inGuide =
+			outline.stack.some((s) => s.level === 1 && /^summary$/i.test(s.headingText.trim())) ||
+			lines.some((l) => l.size >= ladder.chapter - 0.75 && /^summary$/i.test(l.text.trim()))
 		const drafts = draftsOf(ordered, ladder, { entryLines, lexicon })
 		const flow = blocksOf(inGuide ? labelDrafts(drafts, ctx, { rows: false }) : drafts, ctx)
 		// A figure no caption claimed stands where its top sits.
@@ -2874,7 +3689,10 @@ export async function readLayoutDocument(
 		}
 		// Headings open sections where they fall; boxes and figures drop in by y among
 		// the flow. A column page keeps the reading order its columns gave.
-		const sequence = columns.starts.length > 1 ? mergeByY(flow, extras) : [...flow, ...extras].sort((a, b) => b.y - a.y)
+		const sequence =
+			columns.starts.length > 1
+				? mergeByY(flow, extras)
+				: [...flow, ...extras].sort((a, b) => b.y - a.y)
 		// A paragraph the page break cut in two: the page's first text carries a sentence on
 		// in lower case (or inside a web address) and joins the paragraph the last page left
 		// unfinished — wherever in the open section it stood (a list item's, a column's) —
@@ -2883,13 +3701,25 @@ export async function readLayoutDocument(
 			const first = sequence[at]?.block
 			if (first?.kind !== 'paragraph') return
 			const opening = plainText(first.runs).trimStart()
-			const dangling = lastParagraphOf(section, (p) => !/[.!?:;]\s*$/.test(plainText(p.runs).trimEnd()) || OPEN_URL.test(plainText(p.runs)))
+			const dangling = lastParagraphOf(
+				section,
+				(p) => !/[.!?:;]\s*$/.test(plainText(p.runs).trimEnd()) || OPEN_URL.test(plainText(p.runs)),
+			)
 			if (!dangling) return
 			const before = plainText(dangling.runs).trimEnd()
-			if (!(/^[a-z]/.test(opening) || (OPEN_URL.test(before) && /^[a-z0-9]/.test(opening)) || /-$/.test(before))) return
+			if (
+				!(
+					/^[a-z]/.test(opening) ||
+					(OPEN_URL.test(before) && /^[a-z0-9]/.test(opening)) ||
+					/-$/.test(before)
+				)
+			)
+				return
 			joinParagraphs(dangling, first)
 			sequence.splice(at, 1)
-			const path = section.blocks.includes(dangling) ? [] : pathTo(section, (s) => holdsParagraph(s.blocks, dangling))
+			const path = section.blocks.includes(dangling)
+				? []
+				: pathTo(section, (s) => holdsParagraph(s.blocks, dangling))
 			if (path) {
 				while (outline.stack.at(-1) !== section) outline.stack.pop()
 				outline.stack.push(...path)
@@ -2913,7 +3743,11 @@ export async function readLayoutDocument(
 		}
 		// A checklist panel stands in a column of its own beside the text, read after it:
 		// the list the page break cut may stand in the panel before it.
-		const isChecklist = (s: Section): boolean => s.blocks.every((b) => b.kind === 'list' && b.items.every((i) => i.marker === 'check' || i.marker === 'cross'))
+		const isChecklist = (s: Section): boolean =>
+			s.blocks.every(
+				(b) =>
+					b.kind === 'list' && b.items.every((i) => i.marker === 'check' || i.marker === 'cross'),
+			)
 		const carryList = (at: number, section: Section): void => {
 			const next0 = sequence[at]?.block
 			if (next0?.kind !== 'list') return
@@ -2956,7 +3790,14 @@ export async function readLayoutDocument(
 		for (const [i, e] of sequence.entries()) {
 			if (e.heading) {
 				const wasOpen = [...outline.stack]
-				const section = pushSection(outline, e.heading.level ?? 5, e.heading.lines, n, boldWeights, warnings)
+				const section = pushSection(
+					outline,
+					e.heading.level ?? 5,
+					e.heading.lines,
+					n,
+					boldWeights,
+					warnings,
+				)
 				// A step band carried over the page ("… continued") continues the step: its
 				// first text may carry on the sentence, or the list, the last page left
 				// unfinished.
@@ -2968,10 +3809,16 @@ export async function readLayoutDocument(
 					// and symptoms"): the last panel headed left of the side column, which holds
 					// the checklist and timeframe. A step with no such panel keeps it as its own.
 					const first = sequence[i + 1]
-					if (section.level === 2 && outline.stack.at(-1) === section && (first?.block?.kind === 'paragraph' || first?.block?.kind === 'list')) {
+					if (
+						section.level === 2 &&
+						outline.stack.at(-1) === section &&
+						(first?.block?.kind === 'paragraph' || first?.block?.kind === 'list')
+					) {
 						const xs = section.children.map((c) => headingX.get(c) ?? 0)
 						const side = Math.max(...xs)
-						const panel = [...section.children].reverse().find((c) => (headingX.get(c) ?? 0) < side - 50)
+						const panel = [...section.children]
+							.reverse()
+							.find((c) => (headingX.get(c) ?? 0) < side - 50)
 						if (panel) outline.stack.push(panel)
 					}
 				}
@@ -2990,7 +3837,13 @@ export async function readLayoutDocument(
 		const flattened: Block[] = [...section.blocks]
 		const walk = (children: Section[]) => {
 			for (const child of children) {
-				const heading: Paragraph = { kind: 'paragraph', runs: child.heading.map((r) => ({ ...r, bold: true })), page: child.page, background: null, align: 'left' }
+				const heading: Paragraph = {
+					kind: 'paragraph',
+					runs: child.heading.map((r) => ({ ...r, bold: true })),
+					page: child.page,
+					background: null,
+					align: 'left',
+				}
 				flattened.push(heading, ...child.blocks)
 				walk(child.children)
 			}
@@ -3007,7 +3860,11 @@ export async function readLayoutDocument(
 	// prose of its own. Two lists printing the same number would collide in the endnotes.
 	const endnotes: Endnote[] = []
 	for (const list of noteLists) {
-		const section = findSection(outline.sections, (s) => s.page === list.page && s.headingText.trim().toLowerCase() === list.heading.toLowerCase())
+		const section = findSection(
+			outline.sections,
+			(s) =>
+				s.page === list.page && s.headingText.trim().toLowerCase() === list.heading.toLowerCase(),
+		)
 		if (!section) {
 			warnings.push({ page: list.page, message: `reference-list-section-missing: ${list.heading}` })
 			continue
@@ -3015,10 +3872,14 @@ export async function readLayoutDocument(
 		const take = (s: Section) => {
 			const kept: Block[] = []
 			for (const b of s.blocks) {
-				const m = b.kind === 'paragraph' ? /^(\d{1,3})\.\s*(?=\p{L})/u.exec(b.runs.map((r) => r.text).join('')) : null
+				const m =
+					b.kind === 'paragraph'
+						? /^(\d{1,3})\.\s*(?=\p{L})/u.exec(b.runs.map((r) => r.text).join(''))
+						: null
 				if (b.kind === 'paragraph' && m?.[1]) {
 					const number = Number(m[1])
-					if (endnotes.some((e) => e.number === number)) warnings.push({ page: b.page, message: `endnote-number-clash: ${number}` })
+					if (endnotes.some((e) => e.number === number))
+						warnings.push({ page: b.page, message: `endnote-number-clash: ${number}` })
 					endnotes.push({ number, page: b.page, runs: cutPrefix(b.runs, m[0].length) })
 				} else kept.push(b)
 			}
@@ -3030,7 +3891,10 @@ export async function readLayoutDocument(
 
 	// The PDF's creation date ("D:20200118105544+11'00'"), for a print that names no date.
 	const info = (await doc.getMetadata()).info as { CreationDate?: unknown }
-	const created = typeof info.CreationDate === 'string' ? /^D:(\d{4})(\d{2})(\d{2})/.exec(info.CreationDate) : null
+	const created =
+		typeof info.CreationDate === 'string'
+			? /^D:(\d{4})(\d{2})(\d{2})/.exec(info.CreationDate)
+			: null
 	const createdAt = created ? `${created[1]}-${created[2]}-${created[3]}` : undefined
 
 	return {
@@ -3093,7 +3957,10 @@ function markCarriedFootnoteRefs(lines: Line[], notes: Footnote[]): void {
 				const note = notes[k]
 				if (!note || note.label !== digit) continue
 				const first = note.blocks[0]
-				const term = first?.kind === 'paragraph' ? (plainText(first.runs).split(/\s+[–—-]\s+/)[0] ?? '').trim().toLowerCase() : ''
+				const term =
+					first?.kind === 'paragraph'
+						? (plainText(first.runs).split(/\s+[–—-]\s+/)[0] ?? '').trim().toLowerCase()
+						: ''
 				if (term.length >= 3 && before.endsWith(term)) {
 					footnoteRuns.set(run, k)
 					return
@@ -3132,13 +3999,19 @@ const NUMBERED_ENTRY = /^(\d{1,3})\.\s*(?=\p{L})/u
  */
 function referenceLists(pageLines: Map<number, Line[]>, ladder: Ladder): ReferenceList[] {
 	const isChapterTitle = (l: Line) => l.size >= ladder.chapter - 0.75
-	const chapterPages = [...pageLines.entries()].filter(([, lines]) => lines.some(isChapterTitle)).map(([n]) => n)
+	const chapterPages = [...pageLines.entries()]
+		.filter(([, lines]) => lines.some(isChapterTitle))
+		.map(([n]) => n)
 	const lists: ReferenceList[] = []
 	for (const [page, lines] of pageLines) {
 		for (const heading of lines) {
 			if (!REFERENCES_TITLE.test(heading.text.trim())) continue
 			const chapter = isChapterTitle(heading)
-			if (!chapter && !(heading.weight === 'medium' && Math.abs(heading.size - ladder.body) <= 0.75)) continue
+			if (
+				!chapter &&
+				!(heading.weight === 'medium' && Math.abs(heading.size - ladder.body) <= 0.75)
+			)
+				continue
 			const entries = new Set<number>()
 			for (const [n, pageText] of pageLines) {
 				if (n < page) continue
@@ -3175,7 +4048,9 @@ function lastParagraphIn(blocks: Block[]): Paragraph | undefined {
 
 /** Whether `blocks` holds `p`, inside a list or not. */
 const holdsParagraph = (blocks: Block[], p: Paragraph): boolean =>
-	blocks.some((b) => b === p || (b.kind === 'list' && b.items.some((i) => holdsParagraph(i.blocks, p))))
+	blocks.some(
+		(b) => b === p || (b.kind === 'list' && b.items.some((i) => holdsParagraph(i.blocks, p))),
+	)
 
 /** The last paragraph in a section's subtree (reading order), when it satisfies `test`:
  *  the paragraph a page break may have cut — the very last one set, never an earlier one. */
@@ -3200,7 +4075,8 @@ function joinParagraphs(before: Paragraph, after: Paragraph): void {
 	const first = after.runs[0]
 	const beforeText = plainText(before.runs)
 	const glue = OPEN_URL.test(beforeText) || /-$/.test(beforeText.trimEnd())
-	if (last && first && !glue && !last.text.endsWith(' ') && !first.text.startsWith(' ')) last.text += ' '
+	if (last && first && !glue && !last.text.endsWith(' ') && !first.text.startsWith(' '))
+		last.text += ' '
 	before.runs.push(...after.runs)
 }
 
@@ -3222,7 +4098,9 @@ function mergeContinuedTables(sections: Section[], warnings: Warning[]): void {
 	const headerCells = (t: Table): string[] | null => {
 		const first = t.rows[0]
 		if (!first || !first.cells.every((c) => c.header)) return null
-		return first.cells.map((c) => c.blocks.map((b) => (b.kind === 'paragraph' ? plainText(b.runs) : '')).join(' '))
+		return first.cells.map((c) =>
+			c.blocks.map((b) => (b.kind === 'paragraph' ? plainText(b.runs) : '')).join(' '),
+		)
 	}
 	for (const s of sections) {
 		const merged: Block[] = []
@@ -3234,7 +4112,11 @@ function mergeContinuedTables(sections: Section[], warnings: Warning[]): void {
 				if (head !== null && head.join('|') === headerCells(last)?.join('|')) {
 					// The repeated header is the page's furniture: recorded so the audit knows
 					// where its words went.
-					for (const text of head) warnings.push({ page: b.page, message: `furniture: ${text.replace(/\s+/g, ' ').trim()}` })
+					for (const text of head)
+						warnings.push({
+							page: b.page,
+							message: `furniture: ${text.replace(/\s+/g, ' ').trim()}`,
+						})
 					last.rows.push(...b.rows.slice(1))
 					lastPage = b.page
 					continue
@@ -3272,22 +4154,37 @@ function markerPieces(text: string): { text: string; number: number | null }[] {
  * raised run of numbers becomes one endnote marker per number the list has. A number the
  * list lacks stays as printed and is recorded.
  */
-function markEndnoteRefs(lines: Line[], entries: Set<number>, warnings: Warning[], page: number): void {
+function markEndnoteRefs(
+	lines: Line[],
+	entries: Set<number>,
+	warnings: Warning[],
+	page: number,
+): void {
 	for (const line of lines) {
 		const runs: Run[] = []
 		let changed = false
 		for (const run of line.runs) {
 			const text = run.text.trim()
-			const raised = !run.dingbat && run.size < line.size - 1.5 && footnoteRuns.get(run) === undefined
+			const raised =
+				!run.dingbat && run.size < line.size - 1.5 && footnoteRuns.get(run) === undefined
 			if (!raised || !/^\d{1,3}(?:\s*[,–-]\s*\d{1,3})*$/.test(text)) {
 				runs.push(run)
 				continue
 			}
 			const pieces = markerPieces(text)
-			const unit = run.box.width / Math.max(1, pieces.reduce((n, p) => n + p.text.length, 0))
+			const unit =
+				run.box.width /
+				Math.max(
+					1,
+					pieces.reduce((n, p) => n + p.text.length, 0),
+				)
 			let x = run.box.x
 			for (const piece of pieces) {
-				const part: Run = { ...run, text: piece.text, box: { ...run.box, x, width: unit * piece.text.length } }
+				const part: Run = {
+					...run,
+					text: piece.text,
+					box: { ...run.box, x, width: unit * piece.text.length },
+				}
 				x += unit * piece.text.length
 				if (piece.number !== null) {
 					if (entries.has(piece.number)) endnoteRuns.set(part, piece.number)
@@ -3324,20 +4221,31 @@ function cutPrefix(runs: TextRun[], count: number): TextRun[] {
 }
 
 /** URL and internal link annotations attached to the runs they cover. */
-async function resolveLinks(doc: PDFDocumentProxy, page: PdfPage, runs: Run[], pageOfRef: Map<string, number>): Promise<void> {
+async function resolveLinks(
+	doc: PDFDocumentProxy,
+	page: PdfPage,
+	runs: Run[],
+	pageOfRef: Map<string, number>,
+): Promise<void> {
 	for (const link of page.links) {
 		const target = await linkTarget(doc, link, pageOfRef)
 		if (!target) continue
 		for (const run of runs) {
 			const b = run.box
-			const overlapX = Math.min(b.x + b.width, link.box.x + link.box.width) - Math.max(b.x, link.box.x)
-			const overlapY = Math.min(b.y + b.height, link.box.y + link.box.height) - Math.max(b.y, link.box.y)
+			const overlapX =
+				Math.min(b.x + b.width, link.box.x + link.box.width) - Math.max(b.x, link.box.x)
+			const overlapY =
+				Math.min(b.y + b.height, link.box.y + link.box.height) - Math.max(b.y, link.box.y)
 			if (overlapX > Math.min(b.width, 6) * 0.5 && overlapY > 0) run.link = target
 		}
 	}
 }
 
-async function linkTarget(doc: PDFDocumentProxy, link: LinkAnnotation, pageOfRef: Map<string, number>): Promise<TextRun['link']> {
+async function linkTarget(
+	doc: PDFDocumentProxy,
+	link: LinkAnnotation,
+	pageOfRef: Map<string, number>,
+): Promise<TextRun['link']> {
 	if (link.url) return { url: link.url }
 	if (!link.dest) return null
 	try {

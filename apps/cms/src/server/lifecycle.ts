@@ -20,7 +20,13 @@
 
 import { and, desc, eq, inArray } from 'drizzle-orm'
 import { type AnnotatedBody, annotateChanges, bodyHash } from '#/content/diff.ts'
-import { citationNumbers, citedBody, type DerivedView, openItemsIn, timeframeRows } from '#/content/derived.ts'
+import {
+	citationNumbers,
+	citedBody,
+	type DerivedView,
+	openItemsIn,
+	timeframeRows,
+} from '#/content/derived.ts'
 import { bodyToMarkdown } from '#/content/markdown.ts'
 import {
 	blockingPlaceholders,
@@ -87,7 +93,11 @@ export function refuse(message: string): never {
 // ---------------------------------------------------------------------------
 
 /** The one access rule (access.ts), with the lifecycle's own central-organisation source. */
-export async function roleOn(lc: Lifecycle, userId: string, document: DocumentRow): Promise<Role | null> {
+export async function roleOn(
+	lc: Lifecycle,
+	userId: string,
+	document: DocumentRow,
+): Promise<Role | null> {
 	return documentRole(lc.auth, userId, document.orgId, await lc.centralOrgId())
 }
 
@@ -282,7 +292,10 @@ export async function changedSections(
 }
 
 /** Section id → hidden, as the published version froze it; empty when never published. */
-async function hiddenWhenPublished(lc: Lifecycle, documentId: string): Promise<Map<string, boolean>> {
+async function hiddenWhenPublished(
+	lc: Lifecycle,
+	documentId: string,
+): Promise<Map<string, boolean>> {
 	const published = await publishedVersion(lc, documentId)
 	if (!published) return new Map()
 	const frozen = await lc.d
@@ -293,8 +306,10 @@ async function hiddenWhenPublished(lc: Lifecycle, documentId: string): Promise<M
 }
 
 /** A hidden section that stands for its subtree: hidden, and its parent is not. */
-const topHidden = <T extends { hidden: boolean; parentId: string | null }>(row: T, byId: Map<string, T>): boolean =>
-	row.hidden && !(row.parentId !== null && byId.get(row.parentId)?.hidden)
+const topHidden = <T extends { hidden: boolean; parentId: string | null }>(
+	row: T,
+	byId: Map<string, T>,
+): boolean => row.hidden && !(row.parentId !== null && byId.get(row.parentId)?.hidden)
 
 /**
  * What a review decides and a publish carries, against the published version: the TEXT
@@ -415,7 +430,8 @@ export async function requestReview(
 	await foldRoom(lc, document.id)
 	const draft = await ensureDraft(lc, document.id, input.userId)
 	const { text, removals } = await reviewableChanges(lc, document.id)
-	if (text.length + removals.length === 0) refuse('Nothing has changed since the published version.')
+	if (text.length + removals.length === 0)
+		refuse('Nothing has changed since the published version.')
 	// The template asks teams to report the sections they removed and the subheadings they
 	// added when they submit for review: the request says so, in the reviewers' mail.
 	const structure = await structureChanges(lc, document.id)
@@ -426,7 +442,10 @@ export async function requestReview(
 		change,
 		bodyHash: await bodyHash(s.publishable),
 	})
-	const pins = await Promise.all([...text.map((s) => pin(s, 'text')), ...removals.map((s) => pin(s, 'removal'))])
+	const pins = await Promise.all([
+		...text.map((s) => pin(s, 'text')),
+		...removals.map((s) => pin(s, 'removal')),
+	])
 	await lc.d.batch([
 		lc.d.insert(schema.reviews).values({
 			id: reviewId,
@@ -446,7 +465,9 @@ export async function requestReview(
 	const listed = (label: string, items: StructureItem[]) =>
 		items.length > 0 ? `\n\n${label}: ${items.map(structureLabel).join('; ')}.` : ''
 	const changedLine =
-		text.length > 0 ? ` (${text.length} changed section${text.length === 1 ? '' : 's'})` : ' (sections removed only)'
+		text.length > 0
+			? ` (${text.length} changed section${text.length === 1 ? '' : 's'})`
+			: ' (sections removed only)'
 	await notify(
 		lc,
 		await recipients(lc, document, 'admin'),
@@ -483,7 +504,10 @@ const structureLabel = (item: StructureItem): string =>
 /** The document's structure report against its published version, in reading order. A
  *  hidden subtree is reported by its top section alone; apparatus is template
  *  scaffolding, never shown, so it is never reported. */
-export async function structureChanges(lc: Lifecycle, documentId: string): Promise<StructureReport> {
+export async function structureChanges(
+	lc: Lifecycle,
+	documentId: string,
+): Promise<StructureReport> {
 	const rows = await lc.d
 		.select({
 			id: schema.sections.id,
@@ -621,7 +645,9 @@ export async function publishReadiness(
 		(document.kind === 'pathway' || s.row.pathwayOwnership !== 'owned')
 	// Measured on the body as it would publish: a placeholder in drafting guidance (which a
 	// pathway publishes without) is not text readers would see.
-	const placeholders = resolved.filter((s) => asWritten(s) && blockingPlaceholders(s.publishable) > 0)
+	const placeholders = resolved.filter(
+		(s) => asWritten(s) && blockingPlaceholders(s.publishable) > 0,
+	)
 	items.push(
 		placeholders.length > 0
 			? {
@@ -657,7 +683,9 @@ export async function publishReadiness(
 			level: 'ok',
 			message: [
 				text.length > 0 ? `${text.length} section${text.length === 1 ? '' : 's'} changed` : null,
-				removals.length > 0 ? `${removals.length} section${removals.length === 1 ? '' : 's'} removed` : null,
+				removals.length > 0
+					? `${removals.length} section${removals.length === 1 ? '' : 's'} removed`
+					: null,
 			]
 				.filter((part) => part !== null)
 				.join(' and ')
@@ -682,7 +710,10 @@ export async function publishReadiness(
 					: `The review is open: ${review.decided} of ${review.total} sections decided.`,
 		})
 	else {
-		const { stale, unreviewed } = await reviewDrift(lc, review.reviewId, resolved, { text, removals })
+		const { stale, unreviewed } = await reviewDrift(lc, review.reviewId, resolved, {
+			text,
+			removals,
+		})
 		if (stale.length > 0)
 			items.push({
 				key: 'review',
@@ -745,7 +776,9 @@ async function reviewDrift(
 		const section = byId.get(pin.sectionId)
 		if (!section) continue
 		const moved =
-			pin.change === 'removal' ? !section.row.hidden : (await bodyHash(section.publishable)) !== pin.bodyHash
+			pin.change === 'removal'
+				? !section.row.hidden
+				: (await bodyHash(section.publishable)) !== pin.bodyHash
 		if (moved) stale.push(section.row.address)
 	}
 	const pinned = new Map(pins.map((p) => [p.sectionId, p.change]))
@@ -754,7 +787,10 @@ async function reviewDrift(
 		...current.removals.filter((s) => pinned.get(s.row.id) !== 'removal').map((s) => s.row.id),
 	])
 	// `resolved` is in reading order; the two lists are read back through it.
-	return { stale, unreviewed: resolved.filter((s) => unreviewed.has(s.row.id)).map((s) => s.row.address) }
+	return {
+		stale,
+		unreviewed: resolved.filter((s) => unreviewed.has(s.row.id)).map((s) => s.row.address),
+	}
 }
 
 /**
@@ -779,7 +815,10 @@ export async function publish(
 	const incumbent = await publishedVersion(lc, document.id)
 	// The incumbent edition's own rows, hidden ones included: a section is unchanged when
 	// its body and its hidden flag are both as they were.
-	const before = new Map<string, { bodyJson: JsonNode | null; hidden: boolean; lastChangedVersionNo: number }>()
+	const before = new Map<
+		string,
+		{ bodyJson: JsonNode | null; hidden: boolean; lastChangedVersionNo: number }
+	>()
 	if (incumbent) {
 		const rows = await lc.d
 			.select({
@@ -790,15 +829,30 @@ export async function publish(
 			})
 			.from(schema.versionSections)
 			.where(eq(schema.versionSections.versionId, incumbent.versionId))
-		for (const r of rows) before.set(r.sectionId, { bodyJson: r.bodyJson ?? null, hidden: r.hidden, lastChangedVersionNo: r.lastChangedVersionNo })
+		for (const r of rows)
+			before.set(r.sectionId, {
+				bodyJson: r.bodyJson ?? null,
+				hidden: r.hidden,
+				lastChangedVersionNo: r.lastChangedVersionNo,
+			})
 	}
 	const resolved = await resolveSections(lc, document.id)
 	const publishedResolved = resolved.map((s) => ({ ...s, body: s.publishable }))
 	const derived: DerivedView = {
-		referenceNumbers: citationNumbers(publishedResolved.filter(live).map((s) => citedBody(s.row.titleCitations, s.body))),
+		referenceNumbers: citationNumbers(
+			publishedResolved.filter(live).map((s) => citedBody(s.row.titleCitations, s.body)),
+		),
 		// The published snapshot is drawn from the timeframe boxes being published.
 		timeframes: timeframeRows(
-			publishedResolved.filter(live).map((s) => ({ stepNumber: s.row.stepNumber, address: s.row.address, printedNumber: s.row.printedNumber, title: s.row.title, body: s.body })),
+			publishedResolved
+				.filter(live)
+				.map((s) => ({
+					stepNumber: s.row.stepNumber,
+					address: s.row.address,
+					printedNumber: s.row.printedNumber,
+					title: s.row.title,
+					body: s.body,
+				})),
 		),
 		map: null,
 	}
@@ -868,10 +922,7 @@ export async function publish(
 	// A core document's published bodies are what the pathways' shared sections render:
 	// their draft hashes move with it.
 	if (document.kind === 'core')
-		await refreshSharedHashes(
-			lc,
-			new Map(rows.map((r) => [r.sectionId, r.bodyJson])),
-		)
+		await refreshSharedHashes(lc, new Map(rows.map((r) => [r.sectionId, r.bodyJson])))
 	void publishDocumentRows([document])
 	if (lc.purge) {
 		const tags = [
@@ -929,7 +980,9 @@ async function refreshSharedHashes(
 			})
 			.from(schema.sections)
 			.innerJoin(schema.documents, eq(schema.documents.id, schema.sections.documentId))
-			.where(and(eq(schema.sections.ownership, 'shared'), inArray(schema.sections.coreSectionId, group))),
+			.where(
+				and(eq(schema.sections.ownership, 'shared'), inArray(schema.sections.coreSectionId, group)),
+			),
 	)
 	const updates = []
 	for (const s of shared) {
@@ -999,7 +1052,9 @@ export interface DocumentState {
 		releaseNotes: string | null
 		publishedAt: number | null
 	} | null
-	review: (Omit<ReviewStateRow, 'requestedAt'> & { requestedAt: number; requestedByName: string }) | null
+	review:
+		| (Omit<ReviewStateRow, 'requestedAt'> & { requestedAt: number; requestedByName: string })
+		| null
 	/** What changed since the published version — text changes and removals, in reading
 	 *  order — with their annotated bodies and review decisions: what review mode paints
 	 *  (decision 108, 112). */
@@ -1070,7 +1125,11 @@ export async function documentState(
 				}
 			: null,
 		review: review
-			? { ...review, requestedAt: review.requestedAt.getTime(), requestedByName: requester?.name ?? 'Someone' }
+			? {
+					...review,
+					requestedAt: review.requestedAt.getTime(),
+					requestedByName: requester?.name ?? 'Someone',
+				}
 			: null,
 		changes,
 		structure: await structureChanges(lc, documentId),
@@ -1149,8 +1208,15 @@ export async function addComment(
 	if (input.kind === 'suggestion' && section.ownership !== 'shared')
 		refuse('A suggestion is for a shared section; comment on an owned one instead.')
 	if (input.replyTo) {
-		const parent = (await lc.d.select().from(schema.comments).where(eq(schema.comments.id, input.replyTo)).limit(1))[0]
-		if (!parent || parent.sectionId !== input.sectionId) refuse('That comment is not in this section’s thread.')
+		const parent = (
+			await lc.d
+				.select()
+				.from(schema.comments)
+				.where(eq(schema.comments.id, input.replyTo))
+				.limit(1)
+		)[0]
+		if (!parent || parent.sectionId !== input.sectionId)
+			refuse('That comment is not in this section’s thread.')
 	}
 	const body = input.body.trim()
 	if (body.length === 0) refuse('Write something first.')
@@ -1223,8 +1289,11 @@ export async function resolveComment(
 }
 
 /** A section as mail names it: its number and title. */
-const sectionName = (s: { printedNumber: string | null; title: string | null; address: string }): string =>
-	[s.printedNumber, s.title].filter((part) => part).join(' ') || s.address
+const sectionName = (s: {
+	printedNumber: string | null
+	title: string | null
+	address: string
+}): string => [s.printedNumber, s.title].filter((part) => part).join(' ') || s.address
 
 /** Email each person a comment names (with @), if they may read the document. Best-effort,
  *  like every notification. */
@@ -1263,7 +1332,13 @@ export async function replyToSuggestion(
 	input: { suggestionId: string; body: string | null; resolve: boolean; userId: string },
 ): Promise<CommentRow | null> {
 	await requireCentral(lc, input.userId, 'answer a suggestion')
-	const suggestion = (await lc.d.select().from(schema.comments).where(eq(schema.comments.id, input.suggestionId)).limit(1))[0]
+	const suggestion = (
+		await lc.d
+			.select()
+			.from(schema.comments)
+			.where(eq(schema.comments.id, input.suggestionId))
+			.limit(1)
+	)[0]
 	if (!suggestion || suggestion.kind !== 'suggestion') return refuse('Suggestion not found.')
 	const body = input.body?.trim() ?? ''
 	if (body.length === 0 && !input.resolve) refuse('Write a reply, or resolve the suggestion.')
@@ -1292,7 +1367,10 @@ export async function replyToSuggestion(
 			.update(schema.comments)
 			.set({ resolvedAt: new Date(), resolvedBy: input.userId })
 			.where(eq(schema.comments.id, suggestion.id))
-	await record(lc, document.id, 'suggestion.answered', input.userId, { suggestionId: suggestion.id, resolved: input.resolve })
+	await record(lc, document.id, 'suggestion.answered', input.userId, {
+		suggestionId: suggestion.id,
+		resolved: input.resolve,
+	})
 	const drafter = await lc.auth.getUserById(suggestion.authorId)
 	if (drafter?.email)
 		await notify(
@@ -1322,7 +1400,11 @@ export interface SuggestionWire {
 
 /** Suggestions made on any pathway's shared sections that render this core document's
  *  sections, for the central team (decision 26), newest first, with their replies. */
-export async function suggestionsForCore(lc: Lifecycle, coreDocumentId: string, userId: string): Promise<SuggestionWire[]> {
+export async function suggestionsForCore(
+	lc: Lifecycle,
+	coreDocumentId: string,
+	userId: string,
+): Promise<SuggestionWire[]> {
 	await requireCentral(lc, userId, 'read suggestions')
 	const shared = lc.d
 		.select({ id: schema.sections.id })
@@ -1346,7 +1428,11 @@ export async function suggestionsForCore(lc: Lifecycle, coreDocumentId: string, 
 	const replies =
 		ids.length > 0
 			? await inGroups(ids, (group) =>
-					lc.d.select().from(schema.comments).where(inArray(schema.comments.replyTo, group)).orderBy(schema.comments.createdAt),
+					lc.d
+						.select()
+						.from(schema.comments)
+						.where(inArray(schema.comments.replyTo, group))
+						.orderBy(schema.comments.createdAt),
 				)
 			: []
 	return rows.map((r) => ({
@@ -1356,10 +1442,20 @@ export async function suggestionsForCore(lc: Lifecycle, coreDocumentId: string, 
 		createdAt: r.comment.createdAt.getTime(),
 		resolvedAt: r.comment.resolvedAt?.getTime() ?? null,
 		coreSectionId: r.coreSectionId,
-		pathway: { documentId: r.comment.documentId, title: r.pathwayTitle, sectionId: r.comment.sectionId, diverged: r.ownership === 'owned' },
+		pathway: {
+			documentId: r.comment.documentId,
+			title: r.pathwayTitle,
+			sectionId: r.comment.sectionId,
+			diverged: r.ownership === 'owned',
+		},
 		replies: replies
 			.filter((reply) => reply.replyTo === r.comment.id)
-			.map((reply) => ({ id: reply.id, body: reply.body, authorName: reply.authorName, createdAt: reply.createdAt.getTime() })),
+			.map((reply) => ({
+				id: reply.id,
+				body: reply.body,
+				authorName: reply.authorName,
+				createdAt: reply.createdAt.getTime(),
+			})),
 	}))
 }
 

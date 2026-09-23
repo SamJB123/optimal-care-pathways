@@ -47,7 +47,10 @@ export interface PublishedEditionData {
 }
 
 /** What a document is, in the words its readers use. */
-export const kickerOf = (kind: 'core' | 'pathway', audience: 'cancer' | 'population' | 'principles'): string =>
+export const kickerOf = (
+	kind: 'core' | 'pathway',
+	audience: 'cancer' | 'population' | 'principles',
+): string =>
 	kind === 'core'
 		? audience === 'principles'
 			? 'Principles for optimal care'
@@ -57,7 +60,8 @@ export const kickerOf = (kind: 'core' | 'pathway', audience: 'cancer' | 'populat
 			: 'Cancer-specific pathway'
 
 /** An edition's name as the imprint sets it: its label, else its number. */
-const editionName = (e: { version: number; label: string | null }) => e.label ?? `Edition ${e.version}`
+const editionName = (e: { version: number; label: string | null }) =>
+	e.label ?? `Edition ${e.version}`
 const dated = (iso: string | null) => (iso ? imprintDate(Date.parse(iso)) : null)
 
 export function PublishedEdition(props: { data: PublishedEditionData }) {
@@ -70,7 +74,9 @@ export function PublishedEdition(props: { data: PublishedEditionData }) {
 			document={{
 				title: doc().title,
 				kicker: kickerOf(doc().kind, doc().audience),
-				editionLine: [editionName(doc()), dated(doc().publishedAt)].filter((part) => part).join(' · '),
+				editionLine: [editionName(doc()), dated(doc().publishedAt)]
+					.filter((part) => part)
+					.join(' · '),
 				releaseNotes: doc().releaseNotes,
 				sections: props.data.sections,
 				references: props.data.references,
@@ -94,7 +100,8 @@ export function PublishedEdition(props: { data: PublishedEditionData }) {
 					<Show when={earlier() ? current() : null}>
 						{(now) => (
 							<p class="ocp-imprint-note" role="note">
-								An earlier edition. The current one is <a href={publishedHref(doc().slug)}>{editionName(now())}</a>
+								An earlier edition. The current one is{' '}
+								<a href={publishedHref(doc().slug)}>{editionName(now())}</a>
 								{now().publishedAt ? `, ${dated(now().publishedAt)}` : ''}.
 							</p>
 						)}
@@ -104,8 +111,19 @@ export function PublishedEdition(props: { data: PublishedEditionData }) {
 							<For each={props.data.editions}>
 								{(e) => (
 									<li aria-current={e.version === doc().version ? 'page' : undefined}>
-										<Show when={e.version !== doc().version} fallback={<span>{editionName(e)}</span>}>
-											<a href={e.status === 'published' ? publishedHref(doc().slug) : editionHref(doc().slug, e.version)}>{editionName(e)}</a>
+										<Show
+											when={e.version !== doc().version}
+											fallback={<span>{editionName(e)}</span>}
+										>
+											<a
+												href={
+													e.status === 'published'
+														? publishedHref(doc().slug)
+														: editionHref(doc().slug, e.version)
+												}
+											>
+												{editionName(e)}
+											</a>
 										</Show>
 										{e.publishedAt ? ` · ${dated(e.publishedAt)}` : ''}
 										{e.status === 'published' ? ' · current' : ''}

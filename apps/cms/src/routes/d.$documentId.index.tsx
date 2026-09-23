@@ -22,7 +22,10 @@ import { instructionsFor } from '#/server/workspace-fns.ts'
 import './hub.css'
 
 export const Route = createFileRoute('/d/$documentId/')({
-	loader: async ({ params }) => ({ ...(await hubSnapshot({ data: { documentId: params.documentId } })), now: Date.now() }),
+	loader: async ({ params }) => ({
+		...(await hubSnapshot({ data: { documentId: params.documentId } })),
+		now: Date.now(),
+	}),
 	component: OverviewPage,
 })
 
@@ -32,9 +35,15 @@ function describe(event: ActivityRow): string {
 	const where = typeof d.address === 'string' ? ` ${d.address}` : ''
 	switch (event.kind) {
 		case 'review.requested': {
-			const count = (n: unknown, one: string, many: string) => (typeof n === 'number' && n > 0 ? `${n} ${n === 1 ? one : many}` : null)
-			const covered = [count(d.sections, 'changed section', 'changed sections'), count(d.hidden, 'hidden section', 'hidden sections')].filter((p) => p !== null)
-			return covered.length > 0 ? `asked for a review of ${covered.join(' and ')}` : 'asked for a review'
+			const count = (n: unknown, one: string, many: string) =>
+				typeof n === 'number' && n > 0 ? `${n} ${n === 1 ? one : many}` : null
+			const covered = [
+				count(d.sections, 'changed section', 'changed sections'),
+				count(d.hidden, 'hidden section', 'hidden sections'),
+			].filter((p) => p !== null)
+			return covered.length > 0
+				? `asked for a review of ${covered.join(' and ')}`
+				: 'asked for a review'
 		}
 		case 'review.decided':
 			return d.decision === 'approved' ? 'approved the review' : 'asked for changes in the review'
@@ -78,7 +87,11 @@ function OverviewPage() {
 	const workspace = useContext(DocumentContext)
 	const router = useRouter()
 	const state = () => workspace.state()
-	const instructions = createMemo(() => (workspace.guidance === 'margin' ? instructionsFor({ data: { documentId: workspace.documentId } }) : null))
+	const instructions = createMemo(() =>
+		workspace.guidance === 'margin'
+			? instructionsFor({ data: { documentId: workspace.documentId } })
+			: null,
+	)
 	const partOf = (address: string) => {
 		const row = workspace.sections().find((s) => s.address === address)
 		let at = row
@@ -89,7 +102,12 @@ function OverviewPage() {
 		return at?.address ?? address
 	}
 	const lastChange = () => {
-		const latest = workspace.sections().reduce<number | null>((max, s) => (s.updatedAt && (!max || s.updatedAt > max) ? s.updatedAt : max), null)
+		const latest = workspace
+			.sections()
+			.reduce<number | null>(
+				(max, s) => (s.updatedAt && (!max || s.updatedAt > max) ? s.updatedAt : max),
+				null,
+			)
 		return latest ? ago(latest, hub().now) : null
 	}
 
@@ -98,10 +116,23 @@ function OverviewPage() {
 		const s = state()
 		const r = s.review
 		if (r && r.decision === null && atLeast(workspace.role, 'admin'))
-			return { text: `The review waits on ${r.total - r.decided} of ${r.total} changes.`, label: 'Decide the review', go: workspace.startReview }
-		if (r?.decision === 'approved' && s.central) return { text: 'The review is approved in full.', label: 'Publish…', go: workspace.openPublish }
+			return {
+				text: `The review waits on ${r.total - r.decided} of ${r.total} changes.`,
+				label: 'Decide the review',
+				go: workspace.startReview,
+			}
+		if (r?.decision === 'approved' && s.central)
+			return {
+				text: 'The review is approved in full.',
+				label: 'Publish…',
+				go: workspace.openPublish,
+			}
 		if (r?.decision === 'changes_requested' && atLeast(workspace.role, 'member'))
-			return { text: 'The review asked for changes. Make them, then ask again.', label: 'Read the decisions', go: workspace.startReview }
+			return {
+				text: 'The review asked for changes. Make them, then ask again.',
+				label: 'Read the decisions',
+				go: workspace.startReview,
+			}
 		if (!r && s.changes.length > 0 && atLeast(workspace.role, 'member'))
 			return {
 				text: s.published
@@ -114,14 +145,25 @@ function OverviewPage() {
 	}
 
 	// ---- the review, summed up ------------------------------------------------------
-	const sentBack = createMemo(() => workspace.changeOrder().filter((e) => e.change.decision?.decision === 'changes_requested'))
-	const notCovered = createMemo(() => (state().review ? workspace.changeOrder().filter((e) => e.change.decision === null).length : 0))
-	const hrefOf = (e: ChangeEntry) => `${partHref(workspace.documentId, e.part)}#${sectionAnchor(e.section.address)}`
+	const sentBack = createMemo(() =>
+		workspace.changeOrder().filter((e) => e.change.decision?.decision === 'changes_requested'),
+	)
+	const notCovered = createMemo(() =>
+		state().review ? workspace.changeOrder().filter((e) => e.change.decision === null).length : 0,
+	)
+	const hrefOf = (e: ChangeEntry) =>
+		`${partHref(workspace.documentId, e.part)}#${sectionAnchor(e.section.address)}`
 
 	return (
 		<div class="ocp-overview">
 			<header class="ocp-imprint">
-				<p class="ocp-imprint-kicker">{workspace.document.kind === 'core' ? 'Core template' : workspace.document.audience === 'population' ? 'Population pathway' : 'Cancer-specific pathway'}</p>
+				<p class="ocp-imprint-kicker">
+					{workspace.document.kind === 'core'
+						? 'Core template'
+						: workspace.document.audience === 'population'
+							? 'Population pathway'
+							: 'Cancer-specific pathway'}
+				</p>
 				<h1>{workspace.document.title}</h1>
 				<dl class="ocp-imprint-facts">
 					<div>
@@ -130,7 +172,9 @@ function OverviewPage() {
 							<Show when={state().published} fallback="Not yet published">
 								{(p) => (
 									<>
-										<a href={publishedHref(workspace.document.slug)}>{p().label ?? `Edition ${p().versionNo}`}</a>
+										<a href={publishedHref(workspace.document.slug)}>
+											{p().label ?? `Edition ${p().versionNo}`}
+										</a>
 										{p().publishedAt ? `, ${imprintDate(p().publishedAt ?? 0)}` : ''}
 									</>
 								)}
@@ -166,18 +210,28 @@ function OverviewPage() {
 							<div>
 								<dt>Review</dt>
 								<dd>
-									{r().decision === 'approved' ? 'Approved in full' : r().decision === 'changes_requested' ? 'Changes asked for' : `Open, ${r().decided} of ${r().total} decided`}
+									{r().decision === 'approved'
+										? 'Approved in full'
+										: r().decision === 'changes_requested'
+											? 'Changes asked for'
+											: `Open, ${r().decided} of ${r().total} decided`}
 									{r().note ? ` · “${r().note}”` : ''}
 								</dd>
 							</div>
 						)}
 					</Show>
 				</dl>
-				<Show when={state().published?.releaseNotes}>{(notes) => <p class="ocp-imprint-notes">{notes()}</p>}</Show>
+				<Show when={state().published?.releaseNotes}>
+					{(notes) => <p class="ocp-imprint-notes">{notes()}</p>}
+				</Show>
 				<Show when={hub().legacy}>
 					{(legacy) => (
 						<p class="ocp-imprint-notes">
-							Drafted from the <a href={legacyHref(legacy().slug)}>{`${legacy().edition?.toLowerCase() ?? 'previous edition'}, as printed`}</a>.
+							Drafted from the{' '}
+							<a
+								href={legacyHref(legacy().slug)}
+							>{`${legacy().edition?.toLowerCase() ?? 'previous edition'}, as printed`}</a>
+							.
 						</p>
 					)}
 				</Show>
@@ -199,7 +253,13 @@ function OverviewPage() {
 						<h2 id="ocp-review">The review</h2>
 						<p>
 							Asked for by {r().requestedByName} {ago(r().requestedAt, hub().now)}
-							{r().note ? <>: <q>{r().note}</q></> : '.'}
+							{r().note ? (
+								<>
+									: <q>{r().note}</q>
+								</>
+							) : (
+								'.'
+							)}
 						</p>
 						<ul class="ocp-review-tally" aria-label="Decisions">
 							<li data-tone="approved">
@@ -214,8 +274,9 @@ function OverviewPage() {
 						</ul>
 						<Show when={notCovered() > 0}>
 							<p class="ocp-muted">
-								{notCovered()} change{notCovered() === 1 ? '' : 's'} made after the request {notCovered() === 1 ? 'is' : 'are'} not in this review. Ask for review again to include{' '}
-								{notCovered() === 1 ? 'it' : 'them'}.
+								{notCovered()} change{notCovered() === 1 ? '' : 's'} made after the request{' '}
+								{notCovered() === 1 ? 'is' : 'are'} not in this review. Ask for review again to
+								include {notCovered() === 1 ? 'it' : 'them'}.
 							</p>
 						</Show>
 						<Show when={sentBack().length > 0}>
@@ -227,7 +288,9 @@ function OverviewPage() {
 											<a href={hrefOf(e)} onClick={() => workspace.setMode('review')}>
 												{sectionLabel(e.section)}
 											</a>
-											<Show when={e.change.decision?.note}>{(note) => <span class="ocp-muted"> {note()}</span>}</Show>
+											<Show when={e.change.decision?.note}>
+												{(note) => <span class="ocp-muted"> {note()}</span>}
+											</Show>
 										</li>
 									)}
 								</For>
@@ -254,7 +317,10 @@ function OverviewPage() {
 						<section class="ocp-overview-instructions" aria-labelledby="ocp-whole">
 							<h2 id="ocp-whole">For the whole document</h2>
 							<Loading fallback={<p class="ocp-muted">Reading the template’s instructions…</p>}>
-								<p class="ocp-muted">From the {found().source}: how to write this pathway. The same notes follow you in the margin.</p>
+								<p class="ocp-muted">
+									From the {found().source}: how to write this pathway. The same notes follow you in
+									the margin.
+								</p>
 								<For each={found().sections}>
 									{(s) => (
 										<details class="ocp-overview-instruction" open={s.depth === 0}>
@@ -280,7 +346,11 @@ function OverviewPage() {
 								<For each={state().structure.hidden}>
 									{(s) => (
 										<li>
-											<a href={`${partHref(workspace.documentId, partOf(s.address))}#${sectionAnchor(s.address)}`}>{s.title ?? s.address}</a>
+											<a
+												href={`${partHref(workspace.documentId, partOf(s.address))}#${sectionAnchor(s.address)}`}
+											>
+												{s.title ?? s.address}
+											</a>
 										</li>
 									)}
 								</For>
@@ -292,7 +362,11 @@ function OverviewPage() {
 								<For each={state().structure.added}>
 									{(s) => (
 										<li>
-											<a href={`${partHref(workspace.documentId, partOf(s.address))}#${sectionAnchor(s.address)}`}>{s.title ?? s.address}</a>
+											<a
+												href={`${partHref(workspace.documentId, partOf(s.address))}#${sectionAnchor(s.address)}`}
+											>
+												{s.title ?? s.address}
+											</a>
 										</li>
 									)}
 								</For>

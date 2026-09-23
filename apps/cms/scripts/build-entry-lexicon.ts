@@ -24,9 +24,11 @@ import type { Block, ExtractedDocument, Section } from '../src/template/extract/
 
 const appDir = join(import.meta.dirname, '..')
 const NAMES = /^(?:contributors|acknowledgements)/i
-const HONORIFIC = /^(?:Prof\.?|Professor|Dr|Ms|Mr|Mrs|Miss|Mx|Assoc\.?|Associate|A\/Prof(?:essor)?|Adj\.?|Emeritus)\b/
+const HONORIFIC =
+	/^(?:Prof\.?|Professor|Dr|Ms|Mr|Mrs|Miss|Mx|Assoc\.?|Associate|A\/Prof(?:essor)?|Adj\.?|Emeritus)\b/
 /** Every title word an entry opens with ("Adj. A/Prof Dr", "Clinical Associate Professor"). */
-const TITLES = /^(?:(?:Prof\.?|Professor|Dr|Ms|Mr|Mrs|Miss|Mx|Assoc\.?|Associate|A\/Prof(?:essor)?\.?|Adj\.?|Emeritus|Clinical|Conjoint|Honorary)\s+)+/
+const TITLES =
+	/^(?:(?:Prof\.?|Professor|Dr|Ms|Mr|Mrs|Miss|Mx|Assoc\.?|Associate|A\/Prof(?:essor)?\.?|Adj\.?|Emeritus|Clinical|Conjoint|Honorary)\s+)+/
 
 const entries = new Set<string>()
 const roles = new Set<string>()
@@ -46,11 +48,15 @@ const collect = (blocks: Block[]) => {
 				const role = second?.replace(/\s*\(.*$/, '').trim()
 				if (role && role.length >= 3 && role.length <= 60 && !/\d/.test(role)) roles.add(role)
 				// The name: the first clause less its titles and any bracketed office ("(chair)").
-				const name = first?.replace(TITLES, '').replace(/\s*\(.*$/, '').trim()
+				const name = first
+					?.replace(TITLES, '')
+					.replace(/\s*\(.*$/, '')
+					.trim()
 				if (name && /^\p{Lu}/u.test(name) && name.split(' ').length <= 4) names.add(name)
 			}
 		} else if (b.kind === 'list') for (const item of b.items) collect(item.blocks)
-		else if (b.kind === 'table') for (const row of b.rows) for (const cell of row.cells) collect(cell.blocks)
+		else if (b.kind === 'table')
+			for (const row of b.rows) for (const cell of row.cells) collect(cell.blocks)
 	}
 }
 const walk = (sections: Section[]) => {
@@ -62,9 +68,13 @@ const walk = (sections: Section[]) => {
 for (const pathway of LEGACY_PATHWAYS) {
 	// The 2020 design's own lists are the ones in question: they are evidence for nothing.
 	if (pathway.family === 'design-2020') continue
-	const model: ExtractedDocument = JSON.parse(readFileSync(join(appDir, 'legacy', 'extracted', `${pathway.slug}.model.json`), 'utf8'))
+	const model: ExtractedDocument = JSON.parse(
+		readFileSync(join(appDir, 'legacy', 'extracted', `${pathway.slug}.model.json`), 'utf8'),
+	)
 	for (const chapter of model.sections) if (NAMES.test(chapter.headingText.trim())) walk([chapter])
 }
 const out = { entries: [...entries].sort(), roles: [...roles].sort(), names: [...names].sort() }
 writeFileSync(join(appDir, 'legacy', 'entries.json'), `${JSON.stringify(out, null, '\t')}\n`)
-console.log(`${out.entries.length} entries, ${out.roles.length} roles, ${out.names.length} names → legacy/entries.json`)
+console.log(
+	`${out.entries.length} entries, ${out.roles.length} roles, ${out.names.length} names → legacy/entries.json`,
+)

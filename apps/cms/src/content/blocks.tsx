@@ -245,7 +245,12 @@ export function ResourceListBlock(props: BlockProps<Record<string, never>>) {
 	// In the editor the node views' own elements stand between the list and its rows, which
 	// a `ul` may not hold: there the list is a `div` with the list role.
 	return (
-		<RichList as={props.edit ? 'div' : 'ul'} colorBase="primary" class="ocp-resources" label="Resources">
+		<RichList
+			as={props.edit ? 'div' : 'ul'}
+			colorBase="primary"
+			class="ocp-resources"
+			label="Resources"
+		>
 			{props.children}
 		</RichList>
 	)
@@ -268,7 +273,9 @@ export function ResourceBlock(props: BlockProps<ResourceAttrs>) {
 		const text = url.trim()
 		if (text === '') return null
 		if (text.startsWith('#'))
-			return /^#[\w.-]+$/.test(text) ? null : 'A section is written as # and its number, such as #4.2.'
+			return /^#[\w.-]+$/.test(text)
+				? null
+				: 'A section is written as # and its number, such as #4.2.'
 		const parsed = URL.canParse(text) ? new URL(text) : null
 		return parsed && (parsed.protocol === 'https:' || parsed.protocol === 'http:')
 			? null

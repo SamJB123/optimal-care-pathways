@@ -15,8 +15,16 @@ const body: JsonNode = {
 			type: 'paragraph',
 			content: [
 				{ type: 'text', text: 'Use ' },
-				{ type: 'text', text: 'the scale', marks: [{ type: 'bold' }, { type: 'link', attrs: { href: 'https://example.org' } }] },
-				{ type: 'text', text: '[insert scale]', marks: [{ type: 'placeholder', attrs: { label: '[insert scale]' } }] },
+				{
+					type: 'text',
+					text: 'the scale',
+					marks: [{ type: 'bold' }, { type: 'link', attrs: { href: 'https://example.org' } }],
+				},
+				{
+					type: 'text',
+					text: '[insert scale]',
+					marks: [{ type: 'placeholder', attrs: { label: '[insert scale]' } }],
+				},
 				{ type: 'citation', attrs: { referenceId: 'ref-1' } },
 			],
 		},

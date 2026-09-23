@@ -42,38 +42,58 @@ export interface AdminSnapshot {
 	}[]
 }
 
-export const adminSnapshot = createServerFn({ method: 'GET' }).handler(async ({ context }): Promise<AdminSnapshot> => {
-	const userId = requireUser(context.userId)
-	const { env, d } = await envOf()
-	const central = await access.centralOrgId(env.AUTH, d)
-	const isCentral = central !== null && (await roles.roleOf(env.AUTH, userId, central)) !== null
-	const leadless =
-		central !== null && !(await env.AUTH.listOrgMembers(central, OCP_NAMESPACE)).some((member) => member.role === 'owner')
-	const pending = await d
-		.select({ slug: schema.documents.slug, subject: schema.documents.subject, kind: schema.documents.kind, audience: schema.documents.audience })
-		.from(schema.documents)
-		.where(like(schema.documents.orgId, 'pending:%'))
-	const documents = isCentral ? await d.select().from(schema.documents) : []
-	const published = new Set(
-		isCentral ? (await d.select({ documentId: schema.publishedVersions.documentId }).from(schema.publishedVersions)).map((p) => p.documentId) : [],
-	)
-	return {
-		setUp: central === null,
-		leadless,
-		central: isCentral,
-		pending: isCentral ? pending.filter((p) => p.kind === 'pathway').map((p) => ({ slug: p.slug, name: documentName(p) })) : [],
-		documents: documents.map((doc) => ({
-			id: doc.id,
-			kind: doc.kind,
-			audience: doc.audience,
-			slug: doc.slug,
-			name: documentName(doc),
-			accent: doc.accent,
-			printAccent: doc.printAccent,
-			published: published.has(doc.id),
-		})),
-	}
-})
+export const adminSnapshot = createServerFn({ method: 'GET' }).handler(
+	async ({ context }): Promise<AdminSnapshot> => {
+		const userId = requireUser(context.userId)
+		const { env, d } = await envOf()
+		const central = await access.centralOrgId(env.AUTH, d)
+		const isCentral = central !== null && (await roles.roleOf(env.AUTH, userId, central)) !== null
+		const leadless =
+			central !== null &&
+			!(await env.AUTH.listOrgMembers(central, OCP_NAMESPACE)).some(
+				(member) => member.role === 'owner',
+			)
+		const pending = await d
+			.select({
+				slug: schema.documents.slug,
+				subject: schema.documents.subject,
+				kind: schema.documents.kind,
+				audience: schema.documents.audience,
+			})
+			.from(schema.documents)
+			.where(like(schema.documents.orgId, 'pending:%'))
+		const documents = isCentral ? await d.select().from(schema.documents) : []
+		const published = new Set(
+			isCentral
+				? (
+						await d
+							.select({ documentId: schema.publishedVersions.documentId })
+							.from(schema.publishedVersions)
+					).map((p) => p.documentId)
+				: [],
+		)
+		return {
+			setUp: central === null,
+			leadless,
+			central: isCentral,
+			pending: isCentral
+				? pending
+						.filter((p) => p.kind === 'pathway')
+						.map((p) => ({ slug: p.slug, name: documentName(p) }))
+				: [],
+			documents: documents.map((doc) => ({
+				id: doc.id,
+				kind: doc.kind,
+				audience: doc.audience,
+				slug: doc.slug,
+				name: documentName(doc),
+				accent: doc.accent,
+				printAccent: doc.printAccent,
+				published: published.has(doc.id),
+			})),
+		}
+	},
+)
 
 /**
  * A document's family colour (decisions U21, U25), set by the central team from the
@@ -82,12 +102,18 @@ export const adminSnapshot = createServerFn({ method: 'GET' }).handler(async ({ 
  * dropped from the cache).
  */
 export const setDocumentAccent = createServerFn({ method: 'POST' })
-	.inputValidator(z.object({ documentId: z.string().min(1).max(64), accent: z.string().refine(isHexColour, 'Write the colour as # and six hex digits.') }))
+	.inputValidator(
+		z.object({
+			documentId: z.string().min(1).max(64),
+			accent: z.string().refine(isHexColour, 'Write the colour as # and six hex digits.'),
+		}),
+	)
 	.handler(async ({ data, context }) => {
 		const userId = requireUser(context.userId)
 		const { env, d } = await envOf()
 		const central = await access.centralOrgId(env.AUTH, d)
-		if (!central || (await roles.roleOf(env.AUTH, userId, central)) === null) throw new Error('Only the central team may change a document’s colour.')
+		if (!central || (await roles.roleOf(env.AUTH, userId, central)) === null)
+			throw new Error('Only the central team may change a document’s colour.')
 		const updated = await d
 			.update(schema.documents)
 			.set({ accent: data.accent.toLowerCase() })
@@ -98,9 +124,15 @@ export const setDocumentAccent = createServerFn({ method: 'POST' })
 		void publishDocumentRows([row])
 		const lc = await lifecycleOf()
 		try {
-			await lc.purge?.([cacheTagFor(row.slug), ...(row.partnerSlug ? [cacheTagFor(row.partnerSlug)] : [])])
+			await lc.purge?.([
+				cacheTagFor(row.slug),
+				...(row.partnerSlug ? [cacheTagFor(row.partnerSlug)] : []),
+			])
 		} catch (error) {
-			console.error('[admin] cache purge after a colour change failed:', error instanceof Error ? error.message : error)
+			console.error(
+				'[admin] cache purge after a colour change failed:',
+				error instanceof Error ? error.message : error,
+			)
 		}
 		return { accent: row.accent }
 	})

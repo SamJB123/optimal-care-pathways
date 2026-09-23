@@ -87,8 +87,15 @@ export interface TeamDoors {
 
 /** What the team functions read from the auth worker besides the doors. */
 export interface TeamAuth {
-	getOrgMembershipById(userId: string, organizationId: string, namespace: string): Promise<{ role: string } | null>
-	listOrgMembers(organizationId: string, namespace?: string): Promise<(ListedMember & { email: string })[]>
+	getOrgMembershipById(
+		userId: string,
+		organizationId: string,
+		namespace: string,
+	): Promise<{ role: string } | null>
+	listOrgMembers(
+		organizationId: string,
+		namespace?: string,
+	): Promise<(ListedMember & { email: string })[]>
 	listUserOrgs(userId: string, namespace?: string): Promise<{ organizationId: string }[]>
 	getUserById(userId: string): Promise<{ id: string; name: string; email: string } | null>
 	getUserByEmail(email: string): Promise<{ id: string; name: string; email: string } | null>
@@ -153,7 +160,9 @@ export async function teamOf(t: Team, orgId: string): Promise<TeamSummary> {
 
 /** The team of a document. */
 export async function teamOfDocument(t: Team, documentId: string): Promise<TeamSummary> {
-	const doc = (await t.d.select().from(schema.documents).where(eq(schema.documents.id, documentId)).limit(1))[0]
+	const doc = (
+		await t.d.select().from(schema.documents).where(eq(schema.documents.id, documentId)).limit(1)
+	)[0]
 	if (!doc) return refuse('Document not found.')
 	const team = await teamOf(t, doc.orgId)
 	return team.central ? team : { ...team, name: documentName(doc), documentId: doc.id }
@@ -165,7 +174,9 @@ export async function standingIn(t: Team, userId: string, orgId: string): Promis
 	const central = await t.centralOrgId()
 	const own = roleFrom((await t.auth.getOrgMembershipById(userId, orgId, OCP_NAMESPACE))?.role)
 	const steward =
-		central !== null && central !== orgId && (await t.auth.getOrgMembershipById(userId, central, OCP_NAMESPACE)) !== null
+		central !== null &&
+		central !== orgId &&
+		(await t.auth.getOrgMembershipById(userId, central, OCP_NAMESPACE)) !== null
 	return standingOf(own, steward)
 }
 
@@ -194,7 +205,13 @@ export async function teamView(t: Team, userId: string, orgId: string): Promise<
 
 function refusalText(
 	reason: TeamRefusal,
-	context: { team: TeamSummary; standing: TeamStanding; self: boolean; name: string; leaving: boolean },
+	context: {
+		team: TeamSummary
+		standing: TeamStanding
+		self: boolean
+		name: string
+		leaving: boolean
+	},
 ): string {
 	const lead = roleWord('owner', context.team.central)
 	switch (reason) {
@@ -229,8 +246,13 @@ async function retier(t: Team, orgId: string, userId: string): Promise<void> {
 	try {
 		const central = await t.centralOrgId()
 		const docs = await (orgId === central
-			? t.d.select({ id: schema.documents.id, orgId: schema.documents.orgId }).from(schema.documents)
-			: t.d.select({ id: schema.documents.id, orgId: schema.documents.orgId }).from(schema.documents).where(eq(schema.documents.orgId, orgId)))
+			? t.d
+					.select({ id: schema.documents.id, orgId: schema.documents.orgId })
+					.from(schema.documents)
+			: t.d
+					.select({ id: schema.documents.id, orgId: schema.documents.orgId })
+					.from(schema.documents)
+					.where(eq(schema.documents.orgId, orgId)))
 		await Promise.all(
 			docs.map(async (doc) => {
 				const tier = tierForRole(await documentRole(t.auth, userId, doc.orgId, central)) ?? 'viewer'
@@ -238,12 +260,19 @@ async function retier(t: Team, orgId: string, userId: string): Promise<void> {
 			}),
 		)
 	} catch (error) {
-		console.error('[team] re-tier failed (the change stands):', error instanceof Error ? error.message : error)
+		console.error(
+			'[team] re-tier failed (the change stands):',
+			error instanceof Error ? error.message : error,
+		)
 	}
 }
 
 /** Tell the roster about a member as the auth worker now lists them. */
-async function announceMember(t: Team, orgId: string, userId: string): Promise<TeamMemberWireRow | null> {
+async function announceMember(
+	t: Team,
+	orgId: string,
+	userId: string,
+): Promise<TeamMemberWireRow | null> {
 	const row = (await membersOf(t, orgId)).find((m) => m.userId === userId) ?? null
 	await t.announce(orgId, row ? { row } : { removed: userId })
 	return row
@@ -260,7 +289,8 @@ async function notify(t: Team, to: string, subject: string, text: string): Promi
 	}
 }
 
-const teamLink = (t: Team, team: TeamSummary): string => (team.documentId ? `${t.origin}/d/${team.documentId}` : `${t.origin}/`)
+const teamLink = (t: Team, team: TeamSummary): string =>
+	team.documentId ? `${t.origin}/d/${team.documentId}` : `${t.origin}/`
 
 // ---------------------------------------------------------------------------
 // Role changes and removals
@@ -289,9 +319,19 @@ export async function changeMember(
 	})
 	if (!verdict.ok) return refuse(refusalText(verdict.reason, words))
 	if (target.role === input.role) return { name, role: target.role }
-	const done = await t.doors.manageTeamMember(input.actorId, input.orgId, input.userId, input.role, OCP_NAMESPACE, STEWARD)
+	const done = await t.doors.manageTeamMember(
+		input.actorId,
+		input.orgId,
+		input.userId,
+		input.role,
+		OCP_NAMESPACE,
+		STEWARD,
+	)
 	if (!done.ok) return refuse(refusalText(done.reason, words))
-	await t.announce(input.orgId, done.role === null ? { removed: input.userId } : { row: { ...target, role: done.role } })
+	await t.announce(
+		input.orgId,
+		done.role === null ? { removed: input.userId } : { row: { ...target, role: done.role } },
+	)
 	await retier(t, input.orgId, input.userId)
 	return { name, role: done.role }
 }
@@ -308,11 +348,30 @@ export type AddResult =
 /** Bring an existing account in, then tell the roster, re-tier and email them. */
 async function bringIn(
 	t: Team,
-	input: { actorId: string; team: TeamSummary; standing: TeamStanding; person: { id: string; name: string; email: string }; role: Role },
+	input: {
+		actorId: string
+		team: TeamSummary
+		standing: TeamStanding
+		person: { id: string; name: string; email: string }
+		role: Role
+	},
 ): Promise<AddResult> {
 	const name = displayNameOf({ id: input.person.id, name: input.person.name })
-	const words = { team: input.team, standing: input.standing, self: input.actorId === input.person.id, name, leaving: false }
-	const done = await t.doors.grantTeamMember(input.actorId, input.team.orgId, input.person.id, input.role, OCP_NAMESPACE, STEWARD)
+	const words = {
+		team: input.team,
+		standing: input.standing,
+		self: input.actorId === input.person.id,
+		name,
+		leaving: false,
+	}
+	const done = await t.doors.grantTeamMember(
+		input.actorId,
+		input.team.orgId,
+		input.person.id,
+		input.role,
+		OCP_NAMESPACE,
+		STEWARD,
+	)
 	if (!done.ok) return refuse(refusalText(done.reason, words))
 	if (!done.added) return { kind: 'already', name, role: roleFrom(done.role) }
 	await announceMember(t, input.team.orgId, input.person.id)
@@ -333,7 +392,10 @@ async function mayBringIn(t: Team, actorId: string, orgId: string, role: Role) {
 	const team = await teamOf(t, orgId)
 	const standing = await standingIn(t, actorId, orgId)
 	const verdict = mayGrant(standing, role)
-	if (!verdict.ok) return refuse(refusalText(verdict.reason, { team, standing, self: false, name: '', leaving: false }))
+	if (!verdict.ok)
+		return refuse(
+			refusalText(verdict.reason, { team, standing, self: false, name: '', leaving: false }),
+		)
 	return { team, standing }
 }
 
@@ -343,15 +405,31 @@ async function mayBringIn(t: Team, actorId: string, orgId: string, role: Role) {
  * this site's invitation page. Account existence is never reported apart from a
  * membership resulting.
  */
-export async function addByEmail(t: Team, input: { actorId: string; orgId: string; email: string; role: Role }): Promise<AddResult> {
+export async function addByEmail(
+	t: Team,
+	input: { actorId: string; orgId: string; email: string; role: Role },
+): Promise<AddResult> {
 	const { team, standing } = await mayBringIn(t, input.actorId, input.orgId, input.role)
 	const email = input.email.trim().toLowerCase()
 	const person = await t.auth.getUserByEmail(email)
-	if (person) return bringIn(t, { actorId: input.actorId, team, standing, person, role: input.role })
+	if (person)
+		return bringIn(t, { actorId: input.actorId, team, standing, person, role: input.role })
 	if (input.role === 'owner')
-		refuse(`Someone new joins as a reviewer at most. Invite them, then make them ${roleWord('owner', team.central)} once they have joined.`)
-	const invited = await t.doors.inviteTeamMember(input.actorId, input.orgId, email, input.role, OCP_NAMESPACE, STEWARD)
-	if (!invited.ok) return refuse(refusalText(invited.reason, { team, standing, self: false, name: email, leaving: false }))
+		refuse(
+			`Someone new joins as a reviewer at most. Invite them, then make them ${roleWord('owner', team.central)} once they have joined.`,
+		)
+	const invited = await t.doors.inviteTeamMember(
+		input.actorId,
+		input.orgId,
+		email,
+		input.role,
+		OCP_NAMESPACE,
+		STEWARD,
+	)
+	if (!invited.ok)
+		return refuse(
+			refusalText(invited.reason, { team, standing, self: false, name: email, leaving: false }),
+		)
 	const actor = await t.auth.getUserById(input.actorId)
 	const by = actor ? displayNameOf(actor) : 'Someone'
 	await notify(
@@ -364,7 +442,10 @@ export async function addByEmail(t: Team, input: { actorId: string; orgId: strin
 }
 
 /** By member code: the one the person reads from their account menu. */
-export async function addByCode(t: Team, input: { actorId: string; orgId: string; code: string; role: Role }): Promise<AddResult> {
+export async function addByCode(
+	t: Team,
+	input: { actorId: string; orgId: string; code: string; role: Role },
+): Promise<AddResult> {
 	const { team, standing } = await mayBringIn(t, input.actorId, input.orgId, input.role)
 	const person = await t.auth.getUserByMemberCode(normalizeMemberCode(input.code))
 	if (!person) return refuse('No one has that member code. Check it and try again.')
@@ -379,7 +460,9 @@ async function ocpPeople(t: Team): Promise<Map<string, ListedMember & { email: s
 		.from(schema.documents)
 		.where(not(like(schema.documents.orgId, 'pending:%')))
 	const orgIds = [...new Set([...orgs.map((o) => o.orgId), ...(central ? [central] : [])])]
-	const lists = await Promise.all(orgIds.map((orgId) => t.auth.listOrgMembers(orgId, OCP_NAMESPACE)))
+	const lists = await Promise.all(
+		orgIds.map((orgId) => t.auth.listOrgMembers(orgId, OCP_NAMESPACE)),
+	)
 	const people = new Map<string, ListedMember & { email: string }>()
 	for (const member of lists.flat()) people.set(member.userId, member)
 	return people
@@ -395,7 +478,10 @@ export interface PersonHit {
 /** Search the people already on some OCP team (never the whole directory), by name or
  *  address; the address is matched here and never returned. Those already on this team
  *  are left out. */
-export async function searchPeople(t: Team, input: { actorId: string; orgId: string; query: string }): Promise<PersonHit[]> {
+export async function searchPeople(
+	t: Team,
+	input: { actorId: string; orgId: string; query: string },
+): Promise<PersonHit[]> {
 	const standing = await standingIn(t, input.actorId, input.orgId)
 	if (!managesTeam(standing)) return refuse('Only someone who can bring people in may search.')
 	const query = input.query.trim().toLowerCase()
@@ -403,18 +489,36 @@ export async function searchPeople(t: Team, input: { actorId: string; orgId: str
 	const [people, members] = await Promise.all([ocpPeople(t), membersOf(t, input.orgId)])
 	const onTeam = new Set(members.map((m) => m.userId))
 	return [...people.values()]
-		.filter((p) => !onTeam.has(p.userId) && (p.name.toLowerCase().includes(query) || p.email.toLowerCase().includes(query)))
-		.map((p) => ({ id: p.userId, name: displayNameOf({ id: p.userId, name: p.name }), image: p.image ?? null }))
+		.filter(
+			(p) =>
+				!onTeam.has(p.userId) &&
+				(p.name.toLowerCase().includes(query) || p.email.toLowerCase().includes(query)),
+		)
+		.map((p) => ({
+			id: p.userId,
+			name: displayNameOf({ id: p.userId, name: p.name }),
+			image: p.image ?? null,
+		}))
 		.sort((a, b) => a.name.localeCompare(b.name))
 		.slice(0, 10)
 }
 
 /** From the search: someone already on an OCP team. */
-export async function addPerson(t: Team, input: { actorId: string; orgId: string; userId: string; role: Role }): Promise<AddResult> {
+export async function addPerson(
+	t: Team,
+	input: { actorId: string; orgId: string; userId: string; role: Role },
+): Promise<AddResult> {
 	const { team, standing } = await mayBringIn(t, input.actorId, input.orgId, input.role)
 	const listed = (await ocpPeople(t)).get(input.userId)
-	if (!listed) return refuse('That person is not on any pathway team yet. Add them by email or member code.')
-	return bringIn(t, { actorId: input.actorId, team, standing, person: { id: listed.userId, name: listed.name, email: listed.email }, role: input.role })
+	if (!listed)
+		return refuse('That person is not on any pathway team yet. Add them by email or member code.')
+	return bringIn(t, {
+		actorId: input.actorId,
+		team,
+		standing,
+		person: { id: listed.userId, name: listed.name, email: listed.email },
+		role: input.role,
+	})
 }
 
 // ---------------------------------------------------------------------------
@@ -445,7 +549,10 @@ const linkWire = (t: Team, row: InviteLinkRow): InviteLinkWire => ({
 /** 24 random bytes, URL-safe. */
 function newToken(): string {
 	const bytes = crypto.getRandomValues(new Uint8Array(24))
-	return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+	return btoa(String.fromCharCode(...bytes))
+		.replace(/\+/g, '-')
+		.replace(/\//g, '_')
+		.replace(/=+$/, '')
 }
 
 /** A link at a role the maker may bring people in at, for 14 days. */
@@ -474,9 +581,13 @@ export async function createInviteLink(
 }
 
 /** The team's live links (not revoked, not expired), newest first. */
-export async function listInviteLinks(t: Team, input: { actorId: string; orgId: string; now?: number }): Promise<InviteLinkWire[]> {
+export async function listInviteLinks(
+	t: Team,
+	input: { actorId: string; orgId: string; now?: number },
+): Promise<InviteLinkWire[]> {
 	const standing = await standingIn(t, input.actorId, input.orgId)
-	if (!managesTeam(standing)) return refuse('Only someone who can bring people in may see the invite links.')
+	if (!managesTeam(standing))
+		return refuse('Only someone who can bring people in may see the invite links.')
 	const rows = await t.d
 		.select()
 		.from(schema.inviteLinks)
@@ -491,21 +602,31 @@ export async function listInviteLinks(t: Team, input: { actorId: string; orgId: 
 }
 
 /** Revoke a link: whoever may bring people in at its role. */
-export async function revokeInviteLink(t: Team, input: { actorId: string; orgId: string; token: string }): Promise<void> {
+export async function revokeInviteLink(
+	t: Team,
+	input: { actorId: string; orgId: string; token: string },
+): Promise<void> {
 	const row = (
 		await t.d
 			.select()
 			.from(schema.inviteLinks)
-			.where(and(eq(schema.inviteLinks.token, input.token), eq(schema.inviteLinks.orgId, input.orgId)))
+			.where(
+				and(eq(schema.inviteLinks.token, input.token), eq(schema.inviteLinks.orgId, input.orgId)),
+			)
 			.limit(1)
 	)[0]
 	if (!row) return refuse('That link was not found.')
 	await mayBringIn(t, input.actorId, input.orgId, row.role)
-	await t.d.update(schema.inviteLinks).set({ revokedAt: new Date() }).where(eq(schema.inviteLinks.token, row.token))
+	await t.d
+		.update(schema.inviteLinks)
+		.set({ revokedAt: new Date() })
+		.where(eq(schema.inviteLinks.token, row.token))
 }
 
 async function liveLink(t: Team, token: string, now: number): Promise<InviteLinkRow | null> {
-	const row = (await t.d.select().from(schema.inviteLinks).where(eq(schema.inviteLinks.token, token)).limit(1))[0]
+	const row = (
+		await t.d.select().from(schema.inviteLinks).where(eq(schema.inviteLinks.token, token)).limit(1)
+	)[0]
 	return row && !row.revokedAt && row.expiresAt.getTime() > now ? row : null
 }
 
@@ -530,13 +651,25 @@ export async function redeemInviteLink(
 ): Promise<{ documentId: string | null; teamName: string; role: Role | null; already: boolean }> {
 	const row = await liveLink(t, input.token, input.now ?? Date.now())
 	if (!row) return refuse('This invite link is no longer valid. Ask for a fresh one.')
-	const done = await t.doors.grantTeamMember(row.createdBy, row.orgId, input.userId, row.role, OCP_NAMESPACE, STEWARD)
+	const done = await t.doors.grantTeamMember(
+		row.createdBy,
+		row.orgId,
+		input.userId,
+		row.role,
+		OCP_NAMESPACE,
+		STEWARD,
+	)
 	if (!done.ok) return refuse('This invite link no longer works. Ask the team for a fresh one.')
 	if (done.added) {
 		await announceMember(t, row.orgId, input.userId)
 		await retier(t, row.orgId, input.userId)
 	}
-	return { documentId: row.documentId, teamName: row.teamName, role: roleFrom(done.role), already: !done.added }
+	return {
+		documentId: row.documentId,
+		teamName: row.teamName,
+		role: roleFrom(done.role),
+		already: !done.added,
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -546,7 +679,8 @@ export async function redeemInviteLink(
 const INVITATION_REFUSALS = {
 	'not-found': 'This invitation does not exist.',
 	expired: 'This invitation has expired. Ask the team for a fresh one.',
-	'wrong-email': 'This invitation was sent to a different email address. Sign in with that address to accept it.',
+	'wrong-email':
+		'This invitation was sent to a different email address. Sign in with that address to accept it.',
 	'already-handled': 'This invitation has already been used.',
 	invalid: 'This invitation could not be accepted.',
 } as const
@@ -571,7 +705,11 @@ export async function acceptInvitation(
 
 /** Bootstrap: the deployment's first administrator becomes the central team's lead, while
  *  it has none. Returns whether they did. */
-export async function claimCentralLead(t: Team, userId: string, centralId: string): Promise<boolean> {
+export async function claimCentralLead(
+	t: Team,
+	userId: string,
+	centralId: string,
+): Promise<boolean> {
 	const claimed = await t.doors.claimTeamLead(userId, centralId, OCP_NAMESPACE)
 	if (claimed) await announceMember(t, centralId, userId)
 	return claimed

@@ -47,31 +47,67 @@ export function FamilyColourField(props: {
 					}}
 				/>
 				<Show when={props.print && props.print.toLowerCase() !== props.value.toLowerCase()}>
-					<button type="button" class="ocp-family-reset" onClick={() => props.onChange(props.print ?? props.value)}>
+					<button
+						type="button"
+						class="ocp-family-reset"
+						onClick={() => props.onChange(props.print ?? props.value)}
+					>
 						Back to the print colour
 					</button>
 				</Show>
 			</div>
-			<Show when={report()} fallback={<p class="ocp-family-invalid">Write the colour as # and six hex digits, e.g. #b65673.</p>}>
+			<Show
+				when={report()}
+				fallback={
+					<p class="ocp-family-invalid">Write the colour as # and six hex digits, e.g. #b65673.</p>
+				}
+			>
 				{(r) => (
 					<div class="ocp-family-specimens">
-						<For each={[{ scheme: 'light', ground: 'Paper', side: r().paper }, { scheme: 'dark', ground: 'Night', side: r().night }] as const}>
+						<For
+							each={
+								[
+									{ scheme: 'light', ground: 'Paper', side: r().paper },
+									{ scheme: 'dark', ground: 'Night', side: r().night },
+								] as const
+							}
+						>
 							{(s) => (
-								<figure class={['ui-theme', `theme-${s.scheme}`, 'ocp-family-specimen']} style={{ ...paletteStyle(), ...familyStyle(props.value) }}>
+								<figure
+									class={['ui-theme', `theme-${s.scheme}`, 'ocp-family-specimen']}
+									style={{ ...paletteStyle(), ...familyStyle(props.value) }}
+								>
 									<figcaption>{s.ground}</figcaption>
 									<div class="ocp-family-row">
 										<span class="ocp-family-name">{props.name}</span>
-										<Ticks ticks={['published', 'changed', 'changed', 'published', 'review', 'changed', 'published', 'approved']} />
+										<Ticks
+											ticks={[
+												'published',
+												'changed',
+												'changed',
+												'published',
+												'review',
+												'changed',
+												'published',
+												'approved',
+											]}
+										/>
 									</div>
 									<div class="ocp-family-spine">
-										<span class="ocp-family-mark" aria-hidden="true">●</span> 4.4.2 Radiation therapy
+										<span class="ocp-family-mark" aria-hidden="true">
+											●
+										</span>{' '}
+										4.4.2 Radiation therapy
 									</div>
-									<p class="ocp-family-heading">Step 3: Diagnosis, staging and treatment planning</p>
+									<p class="ocp-family-heading">
+										Step 3: Diagnosis, staging and treatment planning
+									</p>
 									<p class="ocp-family-link">
 										See <span class="ocp-family-link-sample">3.5 Multidisciplinary meeting</span>
 									</p>
 									<p class="ocp-family-readout">
-										Text {ratio(s.side.contrast)}, {s.side.contrast >= TEXT_CONTRAST ? 'passes AA' : 'below AA'}
+										Text {ratio(s.side.contrast)},{' '}
+										{s.side.contrast >= TEXT_CONTRAST ? 'passes AA' : 'below AA'}
 										<Show when={s.side.adjusted}>
 											<span> · set at {s.side.ink} for legibility</span>
 										</Show>

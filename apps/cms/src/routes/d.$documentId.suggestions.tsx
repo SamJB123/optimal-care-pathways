@@ -37,14 +37,20 @@ function SuggestionsPage() {
 			return at?.address ?? null
 		}
 		const bySection = new Map<string, SuggestionWire[]>()
-		for (const s of suggestions()) if (s.coreSectionId) bySection.set(s.coreSectionId, [...(bySection.get(s.coreSectionId) ?? []), s])
+		for (const s of suggestions())
+			if (s.coreSectionId)
+				bySection.set(s.coreSectionId, [...(bySection.get(s.coreSectionId) ?? []), s])
 		// Reading order over the whole outline, then the sections that have suggestions.
 		return outlineOrder(sections)
 			.filter((s) => bySection.has(s.id))
 			.map((section) => ({
 				section,
 				part: rootOf(section.id),
-				items: (bySection.get(section.id) ?? []).toSorted((a, b) => Number(a.resolvedAt !== null) - Number(b.resolvedAt !== null) || b.createdAt - a.createdAt),
+				items: (bySection.get(section.id) ?? []).toSorted(
+					(a, b) =>
+						Number(a.resolvedAt !== null) - Number(b.resolvedAt !== null) ||
+						b.createdAt - a.createdAt,
+				),
 			}))
 	})
 	const open = () => suggestions().filter((s) => !s.resolvedAt).length
@@ -58,7 +64,10 @@ function SuggestionsPage() {
 						: `${open()} open of ${suggestions().length}, across ${groups().length} section${groups().length === 1 ? '' : 's'}.`}
 				</p>
 			</header>
-			<Show when={groups().length > 0} fallback={<EmptyState title="No pathway has suggested a change yet" pad="1.25rem" />}>
+			<Show
+				when={groups().length > 0}
+				fallback={<EmptyState title="No pathway has suggested a change yet" pad="1.25rem" />}
+			>
 				<For each={groups()}>
 					{(group) => (
 						<section class="ocp-suggestions-group" aria-label={sectionLabel(group.section)}>
@@ -66,13 +75,18 @@ function SuggestionsPage() {
 								<h2>{sectionLabel(group.section)}</h2>
 								<Show when={group.part}>
 									{(part) => (
-										<a class="ocp-link-button" href={`${partHref(workspace.documentId, part())}#${sectionAnchor(group.section.address)}`}>
+										<a
+											class="ocp-link-button"
+											href={`${partHref(workspace.documentId, part())}#${sectionAnchor(group.section.address)}`}
+										>
 											Open beside the text
 										</a>
 									)}
 								</Show>
 							</header>
-							<For each={group.items}>{(s) => <SuggestionCard suggestion={s} onChanged={() => router.invalidate()} />}</For>
+							<For each={group.items}>
+								{(s) => <SuggestionCard suggestion={s} onChanged={() => router.invalidate()} />}
+							</For>
 						</section>
 					)}
 				</For>

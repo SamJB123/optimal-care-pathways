@@ -40,39 +40,46 @@ function Home() {
 			}
 		>
 			{(snapshot) => (
-							<>
-								<Masthead crumbs={[{ label: 'Pathways' }]} central={snapshot().central} links={[{ label: 'Published library', href: '/library' }]} />
-								<main>
-									<Show when={snapshot().setUp || (snapshot().central && snapshot().pending > 0)}>
-										<p class="ocp-home-notice" role="status">
-											{snapshot().setUp
-												? 'This deployment has no central organisation yet, so the core templates have no owner.'
-												: `${snapshot().pending} imported ${snapshot().pending === 1 ? 'pathway is' : 'pathways are'} waiting for ${snapshot().pending === 1 ? 'its organisation' : 'their organisations'}.`}{' '}
-											<a href="/admin">Administration</a>
-										</p>
-									</Show>
-									<Show
-										when={snapshot().rows.length > 0}
-										fallback={
-											<section class="ocp-home-empty">
-												<h1>You are not on a pathway team yet</h1>
-												<p>
-													A pathway's lead or the central team adds people to its team. Your member code, which they can
-													use to add you, is in the account menu at the top right.
-												</p>
-												<p>
-													<a href="/library">Read the published pathways</a>
-												</p>
-											</section>
-										}
-									>
-										<Atlas snapshot={snapshot()} onNew={snapshot().central ? () => setCreating(true) : undefined} />
-									</Show>
-									<Show when={snapshot().central}>
-										<NewPathwaySheet open={creating()} onDismiss={() => setCreating(false)} />
-									</Show>
-								</main>
-							</>
+				<>
+					<Masthead
+						crumbs={[{ label: 'Pathways' }]}
+						central={snapshot().central}
+						links={[{ label: 'Published library', href: '/library' }]}
+					/>
+					<main>
+						<Show when={snapshot().setUp || (snapshot().central && snapshot().pending > 0)}>
+							<p class="ocp-home-notice" role="status">
+								{snapshot().setUp
+									? 'This deployment has no central organisation yet, so the core templates have no owner.'
+									: `${snapshot().pending} imported ${snapshot().pending === 1 ? 'pathway is' : 'pathways are'} waiting for ${snapshot().pending === 1 ? 'its organisation' : 'their organisations'}.`}{' '}
+								<a href="/admin">Administration</a>
+							</p>
+						</Show>
+						<Show
+							when={snapshot().rows.length > 0}
+							fallback={
+								<section class="ocp-home-empty">
+									<h1>You are not on a pathway team yet</h1>
+									<p>
+										A pathway's lead or the central team adds people to its team. Your member code,
+										which they can use to add you, is in the account menu at the top right.
+									</p>
+									<p>
+										<a href="/library">Read the published pathways</a>
+									</p>
+								</section>
+							}
+						>
+							<Atlas
+								snapshot={snapshot()}
+								onNew={snapshot().central ? () => setCreating(true) : undefined}
+							/>
+						</Show>
+						<Show when={snapshot().central}>
+							<NewPathwaySheet open={creating()} onDismiss={() => setCreating(false)} />
+						</Show>
+					</main>
+				</>
 			)}
 		</Show>
 	)

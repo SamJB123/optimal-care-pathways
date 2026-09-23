@@ -29,7 +29,10 @@ import { compareEditions, editionsOf } from '#/server/editions-fns.ts'
 import './editions.css'
 
 /** An edition by number, or the draft; anything else reads as not chosen. */
-const editionRef = z.union([z.literal('draft'), z.coerce.number().int().min(1)]).optional().catch(undefined)
+const editionRef = z
+	.union([z.literal('draft'), z.coerce.number().int().min(1)])
+	.optional()
+	.catch(undefined)
 
 export const Route = createFileRoute('/d/$documentId/versions')({
 	validateSearch: z.object({ from: editionRef, to: editionRef }),
@@ -40,11 +43,16 @@ export const Route = createFileRoute('/d/$documentId/versions')({
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
 
 /** An edition as its imprint names it. */
-const editionName = (e: Pick<EditionEntry, 'label' | 'versionNo'>): string => e.label ?? `Edition ${e.versionNo}`
+const editionName = (e: Pick<EditionEntry, 'label' | 'versionNo'>): string =>
+	e.label ?? `Edition ${e.versionNo}`
 
 /** An edition in a picker: its label, with its number when the label does not say it. */
 const optionName = (e: EditionEntry): string =>
-	e.status === 'draft' ? `Draft of edition ${e.versionNo}` : e.label ? `${e.label} (edition ${e.versionNo})` : `Edition ${e.versionNo}`
+	e.status === 'draft'
+		? `Draft of edition ${e.versionNo}`
+		: e.label
+			? `${e.label} (edition ${e.versionNo})`
+			: `Edition ${e.versionNo}`
 
 const KIND_WORDS: Record<CompareKind, string> = {
 	added: 'Added',
@@ -63,7 +71,8 @@ const KIND_COLOUR: Record<CompareKind, 'success' | 'error' | 'primary' | 'warnin
 }
 
 /** A refusal as the server worded it. */
-const messageOf = (error: unknown): string => (error instanceof Error ? error.message : 'The comparison could not be read.')
+const messageOf = (error: unknown): string =>
+	error instanceof Error ? error.message : 'The comparison could not be read.'
 
 /** Where the comparison sits, for the links that open one. */
 const COMPARE_ID = 'compare'
@@ -79,8 +88,13 @@ function EditionsPage() {
 
 	/** Open a comparison in place: the page stays, the search params move. */
 	const openCompare = (from: EditionRef, to: EditionRef, scroll: boolean) => {
-		void navigate({ href: compareHref(workspace.documentId, from, to), replace: !scroll, resetScroll: false }).then(() => {
-			if (scroll) document.getElementById(COMPARE_ID)?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+		void navigate({
+			href: compareHref(workspace.documentId, from, to),
+			replace: !scroll,
+			resetScroll: false,
+		}).then(() => {
+			if (scroll)
+				document.getElementById(COMPARE_ID)?.scrollIntoView({ block: 'start', behavior: 'smooth' })
 		})
 	}
 	/** A link to a comparison that also works opened in a new tab. */
@@ -107,8 +121,13 @@ function EditionsPage() {
 						<p class="ocp-editions-facts">
 							<span>Not published</span>
 							<span>
-								<Show when={published()} fallback={`${plural(d().changed, 'section')} written for the first edition`}>
-									{(p) => `${plural(d().changed, 'section')} changed since edition ${p().versionNo}`}
+								<Show
+									when={published()}
+									fallback={`${plural(d().changed, 'section')} written for the first edition`}
+								>
+									{(p) =>
+										`${plural(d().changed, 'section')} changed since edition ${p().versionNo}`
+									}
 								</Show>
 							</span>
 						</p>
@@ -123,7 +142,10 @@ function EditionsPage() {
 				)}
 			</Show>
 
-			<Show when={issued().length > 0} fallback={<p class="ocp-muted">Nothing has been published yet.</p>}>
+			<Show
+				when={issued().length > 0}
+				fallback={<p class="ocp-muted">Nothing has been published yet.</p>}
+			>
 				<ol class="ocp-editions-list">
 					<For each={issued()}>
 						{(edition) => (
@@ -134,10 +156,16 @@ function EditionsPage() {
 								</p>
 								<h2>
 									{editionName(edition)}
-									<Show when={edition.publishedAt}>{(at) => <span class="ocp-edition-date"> · {imprintDate(at())}</span>}</Show>
+									<Show when={edition.publishedAt}>
+										{(at) => <span class="ocp-edition-date"> · {imprintDate(at())}</span>}
+									</Show>
 								</h2>
-								<Show when={edition.publisherName}>{(name) => <p class="ocp-editions-facts">Published by {name()}</p>}</Show>
-								<Show when={edition.releaseNotes}>{(notes) => <p class="ocp-edition-notes">{notes()}</p>}</Show>
+								<Show when={edition.publisherName}>
+									{(name) => <p class="ocp-editions-facts">Published by {name()}</p>}
+								</Show>
+								<Show when={edition.releaseNotes}>
+									{(notes) => <p class="ocp-edition-notes">{notes()}</p>}
+								</Show>
 								<p class="ocp-editions-facts">
 									{edition.versionNo === firstNo()
 										? plural(edition.changed, 'section')
@@ -170,12 +198,16 @@ function CompareTwo(props: { editions: EditionEntry[] }) {
 	const navigate = useNavigate()
 	const [view, setView] = createSignal<DiffView>('marks')
 
-	const optionValue = (ref: EditionRef | undefined): string => (ref === undefined ? '' : String(ref))
-	const refOf = (value: string): EditionRef | null => (value === 'draft' ? 'draft' : /^\d+$/.test(value) ? Number(value) : null)
+	const optionValue = (ref: EditionRef | undefined): string =>
+		ref === undefined ? '' : String(ref)
+	const refOf = (value: string): EditionRef | null =>
+		value === 'draft' ? 'draft' : /^\d+$/.test(value) ? Number(value) : null
 	/** The side not chosen yet, when the other is: the draft, or against the draft the
 	 *  published edition. */
 	const otherThan = (ref: EditionRef): EditionRef | null =>
-		ref !== 'draft' ? 'draft' : (props.editions.find((e) => e.status === 'published')?.versionNo ?? null)
+		ref !== 'draft'
+			? 'draft'
+			: (props.editions.find((e) => e.status === 'published')?.versionNo ?? null)
 	const choose = (side: 'from' | 'to', value: string) => {
 		const ref = refOf(value)
 		if (ref === null) return
@@ -183,27 +215,44 @@ function CompareTwo(props: { editions: EditionEntry[] }) {
 		const pair = other ?? otherThan(ref)
 		if (pair === null) return
 		const [from, to] = side === 'from' ? [ref, pair] : [pair, ref]
-		void navigate({ href: compareHref(workspace.documentId, from, to), replace: true, resetScroll: false })
+		void navigate({
+			href: compareHref(workspace.documentId, from, to),
+			replace: true,
+			resetScroll: false,
+		})
 	}
 
 	const chosen = createMemo(() => {
 		const { from, to } = search()
 		return from !== undefined && to !== undefined ? { from, to } : null
 	})
-	const load = async (pair: { from: EditionRef; to: EditionRef } | null): Promise<Comparison | null> =>
+	const load = async (
+		pair: { from: EditionRef; to: EditionRef } | null,
+	): Promise<Comparison | null> =>
 		pair && pair.from !== pair.to
-			? compareEditions({ data: { documentId: workspace.documentId, from: pair.from, to: pair.to } })
+			? compareEditions({
+					data: { documentId: workspace.documentId, from: pair.from, to: pair.to },
+				})
 			: null
 	const comparison = createMemo(() => load(chosen()))
 	const key = () => `${chosen()?.from ?? ''}:${chosen()?.to ?? ''}`
 
 	const picker = (side: 'from' | 'to', label: string) => (
 		<Field label={label} class="ocp-compare-field">
-			<SelectControl value={optionValue(search()[side])} onChange={(e) => choose(side, e.currentTarget.value)}>
+			<SelectControl
+				value={optionValue(search()[side])}
+				onChange={(e) => choose(side, e.currentTarget.value)}
+			>
 				<option value="" disabled>
 					Choose an edition
 				</option>
-				<For each={props.editions}>{(e) => <option value={e.status === 'draft' ? 'draft' : String(e.versionNo)}>{optionName(e)}</option>}</For>
+				<For each={props.editions}>
+					{(e) => (
+						<option value={e.status === 'draft' ? 'draft' : String(e.versionNo)}>
+							{optionName(e)}
+						</option>
+					)}
+				</For>
 			</SelectControl>
 		</Field>
 	)
@@ -217,12 +266,23 @@ function CompareTwo(props: { editions: EditionEntry[] }) {
 			</div>
 			<Show
 				when={chosen()}
-				fallback={<p class="ocp-muted">Choose two editions, or an edition and the draft, to see every section that reads differently.</p>}
+				fallback={
+					<p class="ocp-muted">
+						Choose two editions, or an edition and the draft, to see every section that reads
+						differently.
+					</p>
+				}
 			>
 				{(pair) => (
 					<Show
 						when={pair().from !== pair().to}
-						fallback={<EmptyState title="The same edition on both sides" hint="Choose a different edition for From or To." pad="1.25rem" />}
+						fallback={
+							<EmptyState
+								title="The same edition on both sides"
+								hint="Choose a different edition for From or To."
+								pad="1.25rem"
+							/>
+						}
 					>
 						<Errored
 							fallback={(error) => (
@@ -232,7 +292,9 @@ function CompareTwo(props: { editions: EditionEntry[] }) {
 							)}
 						>
 							<Loading on={key()} fallback={<p class="ocp-muted">Comparing…</p>}>
-								<Show when={comparison()}>{(c) => <CompareResult comparison={c()} view={view()} onView={setView} />}</Show>
+								<Show when={comparison()}>
+									{(c) => <CompareResult comparison={c()} view={view()} onView={setView} />}
+								</Show>
 							</Loading>
 						</Errored>
 					</Show>
@@ -243,7 +305,11 @@ function CompareTwo(props: { editions: EditionEntry[] }) {
 }
 
 /** The totals, the switch, then every differing section by band. */
-function CompareResult(props: { comparison: Comparison; view: DiffView; onView: (view: DiffView) => void }) {
+function CompareResult(props: {
+	comparison: Comparison
+	view: DiffView
+	onView: (view: DiffView) => void
+}) {
 	const total = () => KIND_ORDER.reduce((n, kind) => n + props.comparison.totals[kind], 0)
 	const breakdown = () =>
 		KIND_ORDER.filter((kind) => props.comparison.totals[kind] > 0)
@@ -264,8 +330,9 @@ function CompareResult(props: { comparison: Comparison; view: DiffView; onView: 
 		>
 			<div class="ocp-compare-result">
 				<p class="ocp-compare-totals">
-					From <strong>{sideName(props.comparison.from)}</strong> to <strong>{sideName(props.comparison.to)}</strong>:{' '}
-					{plural(total(), 'section')} {total() === 1 ? 'reads' : 'read'} differently ({breakdown()}).
+					From <strong>{sideName(props.comparison.from)}</strong> to{' '}
+					<strong>{sideName(props.comparison.to)}</strong>: {plural(total(), 'section')}{' '}
+					{total() === 1 ? 'reads' : 'read'} differently ({breakdown()}).
 				</p>
 				<Segmented
 					label="Show changes"
@@ -283,7 +350,13 @@ function CompareResult(props: { comparison: Comparison; view: DiffView; onView: 
 							<section class="ocp-compare-group" data-band={String(group.key)}>
 								<h3>{group.label}</h3>
 								<For each={group.entries}>
-									{(entry) => <CompareItem entry={entry} to={props.comparison.to.label} clean={props.view === 'clean'} />}
+									{(entry) => (
+										<CompareItem
+											entry={entry}
+											to={props.comparison.to.label}
+											clean={props.view === 'clean'}
+										/>
+									)}
 								</For>
 							</section>
 						)}
@@ -302,9 +375,15 @@ function CompareItem(props: { entry: CompareEntry; to: string; clean: boolean })
 	return (
 		<article class="ocp-compare-entry" data-kind={props.entry.kind}>
 			<header class="ocp-compare-heading">
-				<Show when={props.entry.part} fallback={<span class="ocp-compare-title">{sectionLabel(props.entry)}</span>}>
+				<Show
+					when={props.entry.part}
+					fallback={<span class="ocp-compare-title">{sectionLabel(props.entry)}</span>}
+				>
 					{(part) => (
-						<a class="ocp-compare-title" href={sectionHref(workspace.documentId, part(), props.entry.address)}>
+						<a
+							class="ocp-compare-title"
+							href={sectionHref(workspace.documentId, part(), props.entry.address)}
+						>
 							{sectionLabel(props.entry)}
 						</a>
 					)}
@@ -320,9 +399,17 @@ function CompareItem(props: { entry: CompareEntry; to: string; clean: boolean })
 			</header>
 			<Show
 				when={!(props.clean && gone())}
-				fallback={<p class="ocp-muted">{props.entry.kind === 'hidden' ? `Hidden in ${props.to}.` : `Not in ${props.to}.`}</p>}
+				fallback={
+					<p class="ocp-muted">
+						{props.entry.kind === 'hidden' ? `Hidden in ${props.to}.` : `Not in ${props.to}.`}
+					</p>
+				}
 			>
-				<RenderedBody body={props.entry.annotated.body} derived={workspace.derived} guidance={workspace.guidance} />
+				<RenderedBody
+					body={props.entry.annotated.body}
+					derived={workspace.derived}
+					guidance={workspace.guidance}
+				/>
 			</Show>
 		</article>
 	)

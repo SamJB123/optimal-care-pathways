@@ -40,7 +40,9 @@ export function SpineGlyph(props: { class?: string }) {
 	const heights = [7, 9, 11, 13, 11, 9, 7]
 	return (
 		<svg class={['ocp-spine-glyph', props.class]} viewBox="0 0 26 14" aria-hidden="true">
-			<For each={heights}>{(h, i) => <rect x={i() * 3.7 + 0.6} y={14 - h} width="1.4" height={h} rx="0.5" />}</For>
+			<For each={heights}>
+				{(h, i) => <rect x={i() * 3.7 + 0.6} y={14 - h} width="1.4" height={h} rx="0.5" />}
+			</For>
 		</svg>
 	)
 }
@@ -74,7 +76,11 @@ export function Masthead(props: MastheadProps) {
 					<ol>
 						<For each={props.crumbs}>
 							{(crumb, i) => (
-								<li style={familyStyle(crumb.accent)} data-family={crumb.accent ? '' : undefined} data-last={i() === (props.crumbs?.length ?? 0) - 1 ? '' : undefined}>
+								<li
+									style={familyStyle(crumb.accent)}
+									data-family={crumb.accent ? '' : undefined}
+									data-last={i() === (props.crumbs?.length ?? 0) - 1 ? '' : undefined}
+								>
 									<Show when={crumb.href} fallback={<span aria-current="page">{crumb.label}</span>}>
 										{(href) => <a href={href()}>{crumb.label}</a>}
 									</Show>
@@ -96,7 +102,12 @@ export function Masthead(props: MastheadProps) {
 					<div class="ocp-mast-presence">{presence()}</div>
 				</Show>
 				<Jump sections={props.sections} actions={props.actions} search={props.search} />
-				<AccountMenu session={session} google={false} onSignedIn={() => void router.invalidate()} onSignedOut={() => void router.invalidate()}>
+				<AccountMenu
+					session={session}
+					google={false}
+					onSignedIn={() => void router.invalidate()}
+					onSignedOut={() => void router.invalidate()}
+				>
 					{/* biome-ignore lint/a11y/useSemanticElements: inside a menu the radio items' group is role="group", not a fieldset */}
 					<div class="ocp-mast-theme" role="group" aria-label="Ground">
 						<For each={THEMES}>

@@ -93,7 +93,9 @@ function subtreeOf(rows: readonly TreeRow[], rootId: string): { row: TreeRow; de
 /** Scaffolding the document never renders has no structure a team can change. */
 const refuseApparatus = (section: { apparatus: boolean }) => {
 	if (section.apparatus)
-		refuse('This part of the template is scaffolding the document never shows; it has no place to change.')
+		refuse(
+			'This part of the template is scaffolding the document never shows; it has no place to change.',
+		)
 }
 
 /** Only a subheading the team added may be renamed, moved or deleted. */
@@ -110,7 +112,8 @@ const requireAdded = (section: { added: boolean; canonical: boolean }, what: str
 function titleFrom(value: string): string {
 	const title = value.trim()
 	if (title.length === 0) refuse('A subheading needs a title.')
-	if (title.length > TITLE_MAX) refuse(`A subheading's title can be at most ${TITLE_MAX} characters.`)
+	if (title.length > TITLE_MAX)
+		refuse(`A subheading's title can be at most ${TITLE_MAX} characters.`)
 	return title
 }
 
@@ -157,7 +160,13 @@ export async function setSectionHidden(
 	input: { sectionId: string; hidden: boolean; userId: string },
 ): Promise<{ sections: number }> {
 	const { section, document } = await sectionOf(lc, input.sectionId)
-	await requireRole(lc, input.userId, document, 'member', input.hidden ? 'hide a section' : 'show a section')
+	await requireRole(
+		lc,
+		input.userId,
+		document,
+		'member',
+		input.hidden ? 'hide a section' : 'show a section',
+	)
 	refuseApparatus(section)
 	const rows = await treeOf(lc, document.id)
 	if (!input.hidden && section.parentId) {
@@ -311,7 +320,8 @@ export async function moveSection(
 	}
 	// Heading depth follows the new parent, the subtree keeping its shape under the moved one.
 	const level = parent.headingLevel === null ? null : parent.headingLevel + 1
-	const shift = level !== null && section.headingLevel !== null ? level - section.headingLevel : null
+	const shift =
+		level !== null && section.headingLevel !== null ? level - section.headingLevel : null
 	const statements = subtree.map(({ row, depth }) =>
 		lc.d
 			.update(schema.sections)
@@ -365,7 +375,9 @@ export async function deleteSection(
 	const statements = []
 	for (let i = 0; i < deepestFirst.length; i += GROUP)
 		statements.push(
-			lc.d.delete(schema.sections).where(inArray(schema.sections.id, deepestFirst.slice(i, i + GROUP))),
+			lc.d
+				.delete(schema.sections)
+				.where(inArray(schema.sections.id, deepestFirst.slice(i, i + GROUP))),
 		)
 	const [first, ...rest] = statements
 	if (first) await lc.d.batch([first, ...rest])
@@ -390,7 +402,13 @@ export async function setPointOfCare(
 	input: { sectionId: string; on: boolean; userId: string },
 ): Promise<{ id: string; pointOfCare: boolean }> {
 	const { section, document } = await sectionOf(lc, input.sectionId)
-	await requireRole(lc, input.userId, document, 'member', 'mark a section for the quick reference guide')
+	await requireRole(
+		lc,
+		input.userId,
+		document,
+		'member',
+		'mark a section for the quick reference guide',
+	)
 	refuseApparatus(section)
 	const updated = await updateAll(lc, [section.id], { pointOfCare: input.on })
 	await record(lc, document.id, 'section.point_of_care', input.userId, {

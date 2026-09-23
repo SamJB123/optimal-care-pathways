@@ -75,7 +75,11 @@ export function spineOf<T extends OutlineRow>(
 	}
 	const rootOf = (row: T): T => {
 		let at = row
-		for (let parent = at.parentId ? byId.get(at.parentId) : undefined; parent; parent = at.parentId ? byId.get(at.parentId) : undefined)
+		for (
+			let parent = at.parentId ? byId.get(at.parentId) : undefined;
+			parent;
+			parent = at.parentId ? byId.get(at.parentId) : undefined
+		)
 			at = parent
 		return at
 	}
@@ -86,7 +90,16 @@ export function spineOf<T extends OutlineRow>(
 	let step: Step | null = null
 	roots.forEach((root, i) => {
 		if (isStep(root.stepNumber)) step = root.stepNumber
-		bandOfRoot.set(root.id, isStep(root.stepNumber) ? root.stepNumber : step === null ? 'front' : i > lastStepAt ? 'back' : step)
+		bandOfRoot.set(
+			root.id,
+			isStep(root.stepNumber)
+				? root.stepNumber
+				: step === null
+					? 'front'
+					: i > lastStepAt
+						? 'back'
+						: step,
+		)
 	})
 	return SPINE_BANDS.map((band) => ({
 		band,

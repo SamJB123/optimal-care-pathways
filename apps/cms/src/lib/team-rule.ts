@@ -34,7 +34,8 @@ export type TeamRefusal = 'forbidden' | 'last-lead' | 'not-member' | 'not-found'
 export type TeamVerdict = { ok: true } | { ok: false; reason: TeamRefusal }
 
 /** A stored role as the ladder names it; anything else is no role. */
-export const roleFrom = (value: string | null | undefined): OrgRole | null => TEAM_ROLES.find((role) => role === value) ?? null
+export const roleFrom = (value: string | null | undefined): OrgRole | null =>
+	TEAM_ROLES.find((role) => role === value) ?? null
 
 /** The actor's standing, from their own role in the team and whether they belong to the
  *  central organisation (`stewardOfThis` is false when the team IS the central one). */
@@ -42,7 +43,8 @@ export const standingOf = (ownRole: OrgRole | null, stewardOfThis: boolean): Tea
 	stewardOfThis ? 'steward' : ownRole
 
 /** Leads and stewards manage everyone; reviewers manage drafters and viewers. */
-const managesEveryone = (standing: TeamStanding): boolean => standing === 'steward' || standing === 'owner'
+const managesEveryone = (standing: TeamStanding): boolean =>
+	standing === 'steward' || standing === 'owner'
 const baseRole = (role: OrgRole | null): boolean => role === 'member' || role === 'viewer'
 
 /** The roles an actor may bring someone in at, lowest first. */
@@ -70,9 +72,12 @@ export function mayChange(input: {
 	const allowed =
 		(input.self && input.to === null) ||
 		managesEveryone(input.standing) ||
-		(input.standing === 'admin' && baseRole(input.from) && (input.to === null || baseRole(input.to)))
+		(input.standing === 'admin' &&
+			baseRole(input.from) &&
+			(input.to === null || baseRole(input.to)))
 	if (!allowed) return { ok: false, reason: 'forbidden' }
-	if (input.from === 'owner' && input.to !== 'owner' && input.leads <= 1) return { ok: false, reason: 'last-lead' }
+	if (input.from === 'owner' && input.to !== 'owner' && input.leads <= 1)
+		return { ok: false, reason: 'last-lead' }
 	return { ok: true }
 }
 
@@ -83,11 +88,18 @@ export function mayGrant(standing: TeamStanding, role: OrgRole): TeamVerdict {
 
 /** The roles an actor may move a member to (their current one included), lowest first,
  *  for the role picker; empty when the member is not theirs to change. */
-export function rolesFor(input: { standing: TeamStanding; self: boolean; from: OrgRole; leads: number }): OrgRole[] {
+export function rolesFor(input: {
+	standing: TeamStanding
+	self: boolean
+	from: OrgRole
+	leads: number
+}): OrgRole[] {
 	const allowed = TEAM_ROLES.filter((to) => mayChange({ ...input, to }).ok)
 	return allowed.length > 1 ? allowed : []
 }
 
 /** Roster order: leads, reviewers, drafters, viewers, then by name. */
-export const compareMembers = (a: { role: OrgRole; name: string }, b: { role: OrgRole; name: string }): number =>
-	TEAM_ROLES.indexOf(b.role) - TEAM_ROLES.indexOf(a.role) || a.name.localeCompare(b.name)
+export const compareMembers = (
+	a: { role: OrgRole; name: string },
+	b: { role: OrgRole; name: string },
+): number => TEAM_ROLES.indexOf(b.role) - TEAM_ROLES.indexOf(a.role) || a.name.localeCompare(b.name)

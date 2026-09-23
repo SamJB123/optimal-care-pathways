@@ -15,12 +15,18 @@ import { apiContext } from './server.ts'
 
 /** The derived quick reference guide for /p/{slug}/quick-reference-guide. */
 export const publishedGuide = createServerFn({ method: 'GET' })
-	.inputValidator(z.object({ slug: z.string().min(1).max(120), version: z.number().int().positive().optional() }))
+	.inputValidator(
+		z.object({ slug: z.string().min(1).max(120), version: z.number().int().positive().optional() }),
+	)
 	.handler(async ({ data }) => {
 		const { env } = await envOf()
 		const ctx = apiContext(env)
 		const guide = await getQuickReferenceGuide.handler(data, ctx)
-		const row = await ctx.d.select({ accent: schema.documents.accent }).from(schema.documents).where(eq(schema.documents.slug, guide.document.slug)).limit(1)
+		const row = await ctx.d
+			.select({ accent: schema.documents.accent })
+			.from(schema.documents)
+			.where(eq(schema.documents.slug, guide.document.slug))
+			.limit(1)
 		return {
 			...guide,
 			sections: guide.sections.map((section) => ({ ...section, body: contentNode(section.body) })),
@@ -42,7 +48,11 @@ export const publishedDocumentFull = createServerFn({ method: 'GET' })
 		const full = await getDocumentFull.handler(data, ctx)
 		const [versions, row] = await Promise.all([
 			listVersions.handler({ slug: full.document.slug }, ctx),
-			ctx.d.select({ accent: schema.documents.accent }).from(schema.documents).where(eq(schema.documents.slug, full.document.slug)).limit(1),
+			ctx.d
+				.select({ accent: schema.documents.accent })
+				.from(schema.documents)
+				.where(eq(schema.documents.slug, full.document.slug))
+				.limit(1),
 		])
 		return {
 			...full,

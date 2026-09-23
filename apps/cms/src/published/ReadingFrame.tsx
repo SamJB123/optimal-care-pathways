@@ -45,7 +45,11 @@ export function ReadingFrame(props: {
 	const links = children(() => props.links)
 	const aside = children(() => props.aside)
 	return (
-		<div class={['ocp-reading', props.class]} style={familyStyle(props.accent)} data-draft={props.draft ? '' : undefined}>
+		<div
+			class={['ocp-reading', props.class]}
+			style={familyStyle(props.accent)}
+			data-draft={props.draft ? '' : undefined}
+		>
 			<Show when={props.draft}>
 				<div class="ocp-watermark" aria-hidden="true">
 					<span>Draft</span>
@@ -76,7 +80,9 @@ export function CopyLink() {
 	const [copied, setCopied] = createSignal(false)
 	const copy = async () => {
 		try {
-			await navigator.clipboard.writeText(window.location.href.split('#')[0] ?? window.location.href)
+			await navigator.clipboard.writeText(
+				window.location.href.split('#')[0] ?? window.location.href,
+			)
 			setCopied(true)
 			setTimeout(() => setCopied(false), 2000)
 		} catch {

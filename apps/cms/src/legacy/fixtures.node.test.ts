@@ -27,16 +27,37 @@ import { LEGACY_PATHWAYS } from './catalogue.ts'
 import { mapLegacy } from './map-legacy.ts'
 
 const appDir = join(import.meta.dirname, '..', '..')
-const read = (path: string): ExtractedDocument => JSON.parse(readFileSync(join(appDir, path), 'utf8'))
+const read = (path: string): ExtractedDocument =>
+	JSON.parse(readFileSync(join(appDir, path), 'utf8'))
 const modelPathOf = (slug: string) => `legacy/extracted/${slug}.model.json`
 
 const cores = new Map(
-	TEMPLATES.filter((t) => t.kind !== 'principles').map((t) => [t.kind, () => mapTemplate({ model: read(`template/2026/extracted/${t.key}.model.json`), template: t, orgId: 'central', id: deterministicId })]),
+	TEMPLATES.filter((t) => t.kind !== 'principles').map((t) => [
+		t.kind,
+		() =>
+			mapTemplate({
+				model: read(`template/2026/extracted/${t.key}.model.json`),
+				template: t,
+				orgId: 'central',
+				id: deterministicId,
+			}),
+	]),
 )
 
 /** Counts of each printed construct the model carries. */
 function constructsOf(model: ExtractedDocument) {
-	const counts = { sections: 0, paragraphs: 0, lists: 0, listItems: 0, checkItems: 0, tables: 0, tableRows: 0, figures: 0, footnotes: model.footnotes.length, endnotes: model.endnotes.length }
+	const counts = {
+		sections: 0,
+		paragraphs: 0,
+		lists: 0,
+		listItems: 0,
+		checkItems: 0,
+		tables: 0,
+		tableRows: 0,
+		figures: 0,
+		footnotes: model.footnotes.length,
+		endnotes: model.endnotes.length,
+	}
 	const blocks = (list: Block[]) => {
 		for (const b of list) {
 			if (b.kind === 'paragraph') counts.paragraphs++
@@ -82,7 +103,8 @@ const distinct = (values: string[]) => [...new Set(values)].sort()
 describe('legacy catalogue', () => {
 	it('names every pathway with a slug its organisation can take', () => {
 		// The auth service's organisation slug rule (createOrganizationForUser).
-		for (const p of LEGACY_PATHWAYS) expect(p.pathwaySlug).toMatch(/^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/)
+		for (const p of LEGACY_PATHWAYS)
+			expect(p.pathwaySlug).toMatch(/^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/)
 		expect(new Set(LEGACY_PATHWAYS.map((p) => p.pathwaySlug)).size).toBe(LEGACY_PATHWAYS.length)
 	})
 })
@@ -94,16 +116,31 @@ for (const pathway of LEGACY_PATHWAYS) {
 			const model = read(modelPath)
 			const core = cores.get(pathway.audience)?.()
 			if (!core) throw new Error(`no template core for ${pathway.audience}`)
-			const result = mapLegacy({ model, pathway, core, id: deterministicId, orgId: `pending:${pathway.pathwaySlug}`, actorId: 'test' })
-			const report = await auditCoverage(await openPdf(join(appDir, 'legacy', 'source', pathway.file)), model)
+			const result = mapLegacy({
+				model,
+				pathway,
+				core,
+				id: deterministicId,
+				orgId: `pending:${pathway.pathwaySlug}`,
+				actorId: 'test',
+			})
+			const report = await auditCoverage(
+				await openPdf(join(appDir, 'legacy', 'source', pathway.file)),
+				model,
+			)
 
 			// Every printed word placed once.
-			expect(report.missingLines.map((l) => `p.${l.page} ${l.missing.join(' ')} ← ${l.text}`)).toEqual([])
+			expect(
+				report.missingLines.map((l) => `p.${l.page} ${l.missing.join(' ')} ← ${l.text}`),
+			).toEqual([])
 			expect(report.extras.map((e) => `${e.word}×${e.count}`)).toEqual([])
 			// Every Figure 3 row is a timeframe box: the body's own, or one made from the row.
-			expect(result.ledger.timeframes.rows.filter((r) => r.source === 'row' && r.destination === null)).toEqual([])
+			expect(
+				result.ledger.timeframes.rows.filter((r) => r.source === 'row' && r.destination === null),
+			).toEqual([])
 			// Every citation resolves or is an exception whose reason the ledger gives.
-			for (const u of result.ledger.citations.unmatched) expect(u).toMatch(/ — "[^"]+": (?:no entry in the printed reference list|the list has )/)
+			for (const u of result.ledger.citations.unmatched)
+				expect(u).toMatch(/ — "[^"]+": (?:no entry in the printed reference list|the list has )/)
 
 			const fixture = {
 				slug: pathway.slug,
@@ -115,7 +152,10 @@ for (const pathway of LEGACY_PATHWAYS) {
 				timeframes: {
 					figureRows: result.ledger.timeframes.figureRows,
 					boxes: result.ledger.timeframes.boxes,
-					rows: result.ledger.timeframes.rows.map((r) => `Step ${r.step ?? '?'} · ${r.carePoint} · ${r.source === 'body' ? 'body box' : `box from the row → ${r.destination}`}`),
+					rows: result.ledger.timeframes.rows.map(
+						(r) =>
+							`Step ${r.step ?? '?'} · ${r.carePoint} · ${r.source === 'body' ? 'body box' : `box from the row → ${r.destination}`}`,
+					),
 				},
 				citations: {
 					matched: result.ledger.citations.matched,
@@ -124,7 +164,9 @@ for (const pathway of LEGACY_PATHWAYS) {
 				},
 				spine: spineOf(model.sections),
 			}
-			await expect(`${JSON.stringify(fixture, null, '\t')}\n`).toMatchFileSnapshot(join(appDir, 'legacy', 'fixtures', `${pathway.slug}.json`))
+			await expect(`${JSON.stringify(fixture, null, '\t')}\n`).toMatchFileSnapshot(
+				join(appDir, 'legacy', 'fixtures', `${pathway.slug}.json`),
+			)
 		})
 	})
 }

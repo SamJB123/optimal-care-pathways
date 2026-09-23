@@ -29,9 +29,12 @@ const textOf = (node: JsonNode): string =>
 
 /** A guidance block's text as paragraphs (its first-level blocks, lists as their items). */
 function paragraphsOf(node: JsonNode): string[] {
-	return (node.content ?? []).flatMap((block) =>
-		block.type === 'list' ? (block.content ?? []).map(textOf) : [textOf(block)],
-	).map((t) => t.replace(/\s+/g, ' ').trim()).filter((t) => t.length > 0)
+	return (node.content ?? [])
+		.flatMap((block) =>
+			block.type === 'list' ? (block.content ?? []).map(textOf) : [textOf(block)],
+		)
+		.map((t) => t.replace(/\s+/g, ' ').trim())
+		.filter((t) => t.length > 0)
 }
 
 export function marginNotesOf(body: JsonNode | null | undefined): MarginNote[] {

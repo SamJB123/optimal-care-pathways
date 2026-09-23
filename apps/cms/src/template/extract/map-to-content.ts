@@ -1683,7 +1683,8 @@ function headingColourOf(model: ExtractedDocument): string | null {
 			if (s.level <= 2)
 				for (const run of s.heading) {
 					const colour = run.colour.toLowerCase()
-					if (run.text.trim() && colour !== '#ffffff') counts.set(colour, (counts.get(colour) ?? 0) + 1)
+					if (run.text.trim() && colour !== '#ffffff')
+						counts.set(colour, (counts.get(colour) ?? 0) + 1)
 				}
 			walk(s.children)
 		}

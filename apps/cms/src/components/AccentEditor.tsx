@@ -21,14 +21,18 @@ export function AccentEditor(props: {
 	onSaved: (accent: string) => void | Promise<void>
 }) {
 	const [editing, setEditing] = createSignal(false)
-	const [value, setValue] = createSignal(untrack(() => props.accent ?? props.printAccent ?? '#6b6f7a'))
+	const [value, setValue] = createSignal(
+		untrack(() => props.accent ?? props.printAccent ?? '#6b6f7a'),
+	)
 	const [busy, setBusy] = createSignal(false)
 	const [error, setError] = createSignal<string | null>(null)
 	const save = async () => {
 		setBusy(true)
 		setError(null)
 		try {
-			const result = await setDocumentAccent({ data: { documentId: props.documentId, accent: value() } })
+			const result = await setDocumentAccent({
+				data: { documentId: props.documentId, accent: value() },
+			})
 			await props.onSaved(result.accent ?? value())
 			setEditing(false)
 		} catch (e) {
@@ -57,7 +61,12 @@ export function AccentEditor(props: {
 			</div>
 			<Show when={editing()}>
 				<div class="ocp-accent-edit">
-					<FamilyColourField value={value()} onChange={setValue} print={props.printAccent} name={props.name} />
+					<FamilyColourField
+						value={value()}
+						onChange={setValue}
+						print={props.printAccent}
+						name={props.name}
+					/>
 					<Show when={error()}>
 						{(text) => (
 							<p class="ocp-accent-error" role="alert">
@@ -66,7 +75,11 @@ export function AccentEditor(props: {
 						)}
 					</Show>
 					<div class="ocp-accent-actions">
-						<Button variant="solid" disabled={busy() || !isHexColour(value())} onClick={() => void save()}>
+						<Button
+							variant="solid"
+							disabled={busy() || !isHexColour(value())}
+							onClick={() => void save()}
+						>
 							Save the colour
 						</Button>
 						<Button variant="text" disabled={busy()} onClick={() => setEditing(false)}>

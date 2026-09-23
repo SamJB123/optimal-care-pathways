@@ -21,7 +21,14 @@ import { documentName, numberLabel } from '#/lib/labels.ts'
 import { fidelityHref, partHref, previewHref, publishedHref, sectionAnchor } from '#/lib/links.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { moveSection } from '#/server/structure-fns.ts'
-import { atLeast, type ChangeEntry, DocumentContext, MARK_GLYPH, markOf, partsOf } from './workspace.ts'
+import {
+	atLeast,
+	type ChangeEntry,
+	DocumentContext,
+	MARK_GLYPH,
+	markOf,
+	partsOf,
+} from './workspace.ts'
 import './spine.css'
 
 const initials = (name: string) =>
@@ -44,15 +51,35 @@ const shortAgo = (ms: number | null, now: number): string => {
 
 /** A part's leading mark in the spine: its step number, or a quiet rule; while a review is
  *  open, ringed by how much of the part's share has been decided. */
-function PartMark(props: { root: SectionWireRow; progress: { decided: number; total: number } | null }) {
+function PartMark(props: {
+	root: SectionWireRow
+	progress: { decided: number; total: number } | null
+}) {
 	return (
-		<span class="ocp-part-mark" title={props.progress ? `${props.progress.decided} of ${props.progress.total} decided` : undefined}>
+		<span
+			class="ocp-part-mark"
+			title={
+				props.progress ? `${props.progress.decided} of ${props.progress.total} decided` : undefined
+			}
+		>
 			{props.root.stepNumber && !props.root.parentId ? String(props.root.stepNumber) : '·'}
 			<Show when={props.progress}>
 				{(p) => (
-					<svg class="ocp-part-ring" viewBox="0 0 20 20" aria-hidden="true" data-done={p().decided === p().total ? '' : undefined}>
+					<svg
+						class="ocp-part-ring"
+						viewBox="0 0 20 20"
+						aria-hidden="true"
+						data-done={p().decided === p().total ? '' : undefined}
+					>
 						<circle class="ocp-part-ring-track" cx="10" cy="10" r="8.5" />
-						<circle class="ocp-part-ring-fill" cx="10" cy="10" r="8.5" pathLength="1" stroke-dasharray={`${p().decided / p().total} 1`} />
+						<circle
+							class="ocp-part-ring-fill"
+							cx="10"
+							cy="10"
+							r="8.5"
+							pathLength="1"
+							stroke-dasharray={`${p().decided / p().total} 1`}
+						/>
 					</svg>
 				)}
 			</Show>
@@ -80,7 +107,9 @@ export function Spine(props: { onRequestReview: () => void }) {
 		const p = params()
 		if ('part' in p && typeof p.part === 'string') return p.part
 		const page = location().pathname.split('/').at(-1)
-		return page === 'versions' || page === 'references' || page === 'suggestions' || page === 'team' ? page : null
+		return page === 'versions' || page === 'references' || page === 'suggestions' || page === 'team'
+			? page
+			: null
 	}
 	const hiddenCount = () => workspace.sections().filter((s) => s.hidden && !s.apparatus).length
 
@@ -104,7 +133,8 @@ export function Spine(props: { onRequestReview: () => void }) {
 		const r = review()
 		const n = `${changes()} section${changes() === 1 ? '' : 's'}`
 		if (!r && !state().published) return `${n} written for the first edition, not yet in review`
-		if (!r) return changes() > 0 ? `${n} changed, not yet in review` : 'Nothing changed since publishing'
+		if (!r)
+			return changes() > 0 ? `${n} changed, not yet in review` : 'Nothing changed since publishing'
 		if (r.decision === 'approved') return 'Review approved'
 		if (r.decision === 'changes_requested') return 'Changes asked for in review'
 		return `In review: ${r.decided} of ${r.total} decided`
@@ -121,7 +151,10 @@ export function Spine(props: { onRequestReview: () => void }) {
 			label="Document spine"
 			class="ocp-spine"
 			brand={
-				<div class="ocp-spine-brand" style={{ 'view-transition-name': `ocp-name-${workspace.document.slug}` }}>
+				<div
+					class="ocp-spine-brand"
+					style={{ 'view-transition-name': `ocp-name-${workspace.document.slug}` }}
+				>
 					<span class="ocp-spine-name">{documentName(workspace.document)}</span>
 					<span class="ocp-spine-edition">{editionLine()}</span>
 				</div>
@@ -129,7 +162,11 @@ export function Spine(props: { onRequestReview: () => void }) {
 			footer={
 				<Show when={hiddenCount() > 0}>
 					<label class="ocp-spine-hidden">
-						<input type="checkbox" checked={workspace.showHidden()} onChange={(e) => workspace.setShowHidden(e.currentTarget.checked)} />
+						<input
+							type="checkbox"
+							checked={workspace.showHidden()}
+							onChange={(e) => workspace.setShowHidden(e.currentTarget.checked)}
+						/>
 						Show hidden sections ({hiddenCount()})
 					</label>
 				</Show>
@@ -140,7 +177,9 @@ export function Spine(props: { onRequestReview: () => void }) {
 					label="Overview"
 					mark="◇"
 					current={current() === null}
-					onSelect={() => void navigate({ to: '/d/$documentId', params: { documentId: workspace.documentId } })}
+					onSelect={() =>
+						void navigate({ to: '/d/$documentId', params: { documentId: workspace.documentId } })
+					}
 				/>
 				<For each={parts()}>
 					{(part) => (
@@ -166,7 +205,12 @@ export function Spine(props: { onRequestReview: () => void }) {
 					label="Reference list"
 					mark="¶"
 					current={current() === 'references'}
-					onSelect={() => void navigate({ to: '/d/$documentId/references', params: { documentId: workspace.documentId } })}
+					onSelect={() =>
+						void navigate({
+							to: '/d/$documentId/references',
+							params: { documentId: workspace.documentId },
+						})
+					}
 				/>
 			</WorkspaceNavigationGroup>
 
@@ -178,43 +222,78 @@ export function Spine(props: { onRequestReview: () => void }) {
 						label={workspace.mode() === 'review' ? 'Back to writing' : 'Read the changes'}
 						mark={workspace.mode() === 'review' ? '✎' : '⇄'}
 						current={workspace.mode() === 'review'}
-						onSelect={() => (workspace.mode() === 'review' ? workspace.setMode('edit') : workspace.startReview())}
+						onSelect={() =>
+							workspace.mode() === 'review' ? workspace.setMode('edit') : workspace.startReview()
+						}
 					/>
 				</Show>
 				<Show when={atLeast(workspace.role, 'member') && changes() > 0}>
 					<WorkspaceNavigationItem
-						label={review() && review()?.decision === null ? 'Ask for review again' : 'Ask for review'}
+						label={
+							review() && review()?.decision === null ? 'Ask for review again' : 'Ask for review'
+						}
 						mark="→"
 						onSelect={props.onRequestReview}
 					/>
 				</Show>
 				<Show when={state().central}>
-					<WorkspaceNavigationItem label="Publish…" mark="↑" onSelect={() => workspace.openPublish()} />
+					<WorkspaceNavigationItem
+						label="Publish…"
+						mark="↑"
+						onSelect={() => workspace.openPublish()}
+					/>
 				</Show>
 				<WorkspaceNavigationItem
 					label="Editions"
 					mark="≡"
 					current={current() === 'versions'}
-					onSelect={() => void navigate({ to: '/d/$documentId/versions', params: { documentId: workspace.documentId } })}
+					onSelect={() =>
+						void navigate({
+							to: '/d/$documentId/versions',
+							params: { documentId: workspace.documentId },
+						})
+					}
 				/>
 				<WorkspaceNavigationItem
 					label="Team"
 					mark="☷"
 					current={current() === 'team'}
-					onSelect={() => void navigate({ to: '/d/$documentId/team', params: { documentId: workspace.documentId } })}
+					onSelect={() =>
+						void navigate({
+							to: '/d/$documentId/team',
+							params: { documentId: workspace.documentId },
+						})
+					}
 				/>
-				<WorkspaceNavigationItem label="Preview the draft" mark="◫" onSelect={() => void navigate({ href: previewHref(workspace.documentId) })} />
+				<WorkspaceNavigationItem
+					label="Preview the draft"
+					mark="◫"
+					onSelect={() => void navigate({ href: previewHref(workspace.documentId) })}
+				/>
 				<Show when={state().published}>
-					<WorkspaceNavigationItem label="The published page" mark="↗" onSelect={() => window.location.assign(publishedHref(workspace.document.slug))} />
+					<WorkspaceNavigationItem
+						label="The published page"
+						mark="↗"
+						onSelect={() => window.location.assign(publishedHref(workspace.document.slug))}
+					/>
 				</Show>
 				<Show when={workspace.document.kind === 'core' && state().central}>
 					<WorkspaceNavigationItem
 						label="Suggestions from pathways"
 						mark="✉"
 						current={current() === 'suggestions'}
-						onSelect={() => void navigate({ to: '/d/$documentId/suggestions', params: { documentId: workspace.documentId } })}
+						onSelect={() =>
+							void navigate({
+								to: '/d/$documentId/suggestions',
+								params: { documentId: workspace.documentId },
+							})
+						}
 					/>
-					<WorkspaceNavigationItem label="Against the template PDF" mark="⧉" onSelect={() => void navigate({ href: fidelityHref(workspace.documentId) })} />
+					<WorkspaceNavigationItem
+						label="Against the template PDF"
+						mark="⧉"
+						onSelect={() => void navigate({ href: fidelityHref(workspace.documentId) })}
+					/>
 				</Show>
 			</WorkspaceNavigationGroup>
 		</WorkspaceNavigation>
@@ -234,12 +313,14 @@ function PartSections(props: { root: SectionWireRow }) {
 		for (const s of all) byParent.set(s.parentId, [...(byParent.get(s.parentId) ?? []), s])
 		const out: { section: SectionWireRow; depth: number }[] = []
 		// Review mode lists a removal (struck) whatever the hidden switch says.
-		const removal = (s: SectionWireRow) => workspace.mode() === 'review' && changeOf().get(s.id)?.change.change === 'removal'
+		const removal = (s: SectionWireRow) =>
+			workspace.mode() === 'review' && changeOf().get(s.id)?.change.change === 'removal'
 		const walk = (node: SectionWireRow, depth: number) => {
 			if (node.apparatus || (node.hidden && !workspace.showHidden() && !removal(node))) return
 			out.push({ section: node, depth })
 			if (node.hidden) return
-			for (const child of (byParent.get(node.id) ?? []).sort((a, b) => a.orderIndex - b.orderIndex)) walk(child, depth + 1)
+			for (const child of (byParent.get(node.id) ?? []).sort((a, b) => a.orderIndex - b.orderIndex))
+				walk(child, depth + 1)
 		}
 		walk(props.root, 0)
 		return out
@@ -251,7 +332,10 @@ function PartSections(props: { root: SectionWireRow }) {
 		workspace.focus(s.id)
 		const target = document.getElementById(sectionAnchor(s.address))
 		if (!target) return
-		target.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+		target.scrollIntoView({
+			behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+			block: 'start',
+		})
 		target.dataset.arrived = ''
 		setTimeout(() => delete target.dataset.arrived, 1600)
 	}
@@ -281,7 +365,13 @@ function PartSections(props: { root: SectionWireRow }) {
 
 	return (
 		<section class="ocp-spine-part" aria-label="Sections of this part">
-			<Show when={error()}>{(text) => <p class="ocp-spine-error" role="alert">{text()}</p>}</Show>
+			<Show when={error()}>
+				{(text) => (
+					<p class="ocp-spine-error" role="alert">
+						{text()}
+					</p>
+				)}
+			</Show>
 			<ol class="ocp-spine-sections">
 				<For each={rows()}>
 					{(row) => (
@@ -291,7 +381,10 @@ function PartSections(props: { root: SectionWireRow }) {
 							data-mark={markOf(row.section)}
 							data-hidden={row.section.hidden ? '' : undefined}
 							data-current={workspace.focused() === row.section.id ? '' : undefined}
-							data-decision={decisionOf(changeOf().get(row.section.id), workspace.state().review?.decision === null)}
+							data-decision={decisionOf(
+								changeOf().get(row.section.id),
+								workspace.state().review?.decision === null,
+							)}
 							data-drop={dragging() && dragging() !== row.section.id ? '' : undefined}
 							draggable={canMove(row.section) ? 'true' : 'false'}
 							onDragStart={(e) => {
@@ -300,13 +393,15 @@ function PartSections(props: { root: SectionWireRow }) {
 							}}
 							onDragEnd={() => setDragging(null)}
 							onDragOver={(e) => {
-								if (dragging() && dragging() !== row.section.id && row.section.parentId) e.preventDefault()
+								if (dragging() && dragging() !== row.section.id && row.section.parentId)
+									e.preventDefault()
 							}}
 							onDrop={(e) => {
 								e.preventDefault()
 								const moving = workspace.sections().find((s) => s.id === dragging())
 								setDragging(null)
-								if (moving && row.section.parentId) void move(moving, row.section.parentId, row.section.id)
+								if (moving && row.section.parentId)
+									void move(moving, row.section.parentId, row.section.id)
 							}}
 						>
 							<button
@@ -323,20 +418,33 @@ function PartSections(props: { root: SectionWireRow }) {
 										nudge(row.section, 1)
 									}
 								}}
-								title={canMove(row.section) ? 'Added by this document’s team: drag it, or Alt+↑/↓ to move it' : undefined}
+								title={
+									canMove(row.section)
+										? 'Added by this document’s team: drag it, or Alt+↑/↓ to move it'
+										: undefined
+								}
 							>
 								<span class="ocp-spine-mark" aria-hidden="true">
 									{MARK_GLYPH[markOf(row.section)]}
 								</span>
 								<span class="ocp-spine-section-label">
-									<Show when={row.section.printedNumber}>{(n) => <span class="ocp-spine-number">{numberLabel(n())} </span>}</Show>
+									<Show when={row.section.printedNumber}>
+										{(n) => <span class="ocp-spine-number">{numberLabel(n())} </span>}
+									</Show>
 									{row.section.title ?? row.section.address}
 								</span>
 								<span class="ocp-spine-when">{shortAgo(row.section.updatedAt, now())}</span>
 							</button>
 							<Show when={here(row.section.id).length > 0}>
-								<span class="ocp-spine-here" title={here(row.section.id).map((p) => p.name).join(', ')}>
-									<For each={here(row.section.id).slice(0, 3)}>{(p) => <span>{initials(p.name)}</span>}</For>
+								<span
+									class="ocp-spine-here"
+									title={here(row.section.id)
+										.map((p) => p.name)
+										.join(', ')}
+								>
+									<For each={here(row.section.id).slice(0, 3)}>
+										{(p) => <span>{initials(p.name)}</span>}
+									</For>
 								</span>
 							</Show>
 						</li>

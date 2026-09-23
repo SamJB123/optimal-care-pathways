@@ -18,10 +18,15 @@ export interface ListedReference {
 export const printedAddress = (citation: string) => {
 	const m = /<\s*((?:https?:\/\/|www\.)[^>\s]+)\s*>/.exec(citation)
 	if (!m || m.index === undefined) return null
-	return { before: citation.slice(0, m.index), address: m[1] ?? '', after: citation.slice(m.index + m[0].length) }
+	return {
+		before: citation.slice(0, m.index),
+		address: m[1] ?? '',
+		after: citation.slice(m.index + m[0].length),
+	}
 }
 
-export const hrefOf = (address: string) => (/^https?:\/\//.test(address) ? address : `https://${address}`)
+export const hrefOf = (address: string) =>
+	/^https?:\/\//.test(address) ? address : `https://${address}`
 
 export function ReferenceList(props: { references: ListedReference[] }) {
 	return (

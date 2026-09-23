@@ -125,14 +125,12 @@ beforeAll(async () => {
 			audience: 'population',
 		},
 	])
-	await d
-		.insert(schema.references)
-		.values({
-			id: REF,
-			documentId: CORE_ID,
-			citation: 'Smith J. A reference. 2026.',
-			url: 'https://example.org/ref',
-		})
+	await d.insert(schema.references).values({
+		id: REF,
+		documentId: CORE_ID,
+		citation: 'Smith J. A reference. 2026.',
+		url: 'https://example.org/ref',
+	})
 	const sharedBody = doc(
 		paragraph(text('Multidisciplinary care improves outcomes.'), {
 			type: 'citation',

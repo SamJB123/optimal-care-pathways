@@ -52,7 +52,8 @@
 
 @media (width <= 900px) {
 	.ocp-workspace .ui-raised-sheet {
-		inset: calc(var(--ocp-mast) + 0.5rem) 0.5rem calc(var(--ui-bottom-navigation-height, 4rem) + 0.5rem);
+		inset: calc(var(--ocp-mast) + 0.5rem) 0.5rem
+			calc(var(--ui-bottom-navigation-height, 4rem) + 0.5rem);
 	}
 }
 

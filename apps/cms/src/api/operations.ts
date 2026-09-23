@@ -228,7 +228,9 @@ export const getSection = define({
 		if (!found) throw new NotFound(`"${v.title}" has no section "${addressValue}".`)
 		// Numbered as the whole document numbers them, filtered to what this section cites.
 		const all = await referencesFor(ctx.d, sections)
-		const cited = new Set(Object.keys(citationNumbers([citedBody(found.titleCitations, found.bodyJson ?? null)])))
+		const cited = new Set(
+			Object.keys(citationNumbers([citedBody(found.titleCitations, found.bodyJson ?? null)])),
+		)
 		return {
 			document: summaryOf(ctx, v),
 			section: sectionOf(ctx, v.slug, found),
@@ -295,7 +297,12 @@ export const getQuickReferenceGuide = define({
 		const guide = await guideOf(ctx.d, v.versionId)
 		const all = await referencesFor(ctx.d, guide.all)
 		const cited = new Set(
-			Object.keys(citationNumbers([...guide.sections.map((s) => citedBody(s.titleCitations, s.bodyJson ?? null)), ...guide.items.map((i) => i.list)])),
+			Object.keys(
+				citationNumbers([
+					...guide.sections.map((s) => citedBody(s.titleCitations, s.bodyJson ?? null)),
+					...guide.items.map((i) => i.list),
+				]),
+			),
 		)
 		// A step section's address is its number ("2"); its parts' addresses open with it
 		// ("2.3.1", "2/quick-reference-guide").
@@ -306,7 +313,10 @@ export const getQuickReferenceGuide = define({
 		}
 		return {
 			document: summaryOf(ctx, v),
-			sections: guide.sections.map((s) => ({ ...sectionOf(ctx, v.slug, s), step: stepOf(s.address) })),
+			sections: guide.sections.map((s) => ({
+				...sectionOf(ctx, v.slug, s),
+				step: stepOf(s.address),
+			})),
 			items: guide.items.map((i) => ({
 				address: i.section.address,
 				title: i.section.title,

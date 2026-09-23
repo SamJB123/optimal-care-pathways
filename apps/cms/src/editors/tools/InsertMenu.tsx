@@ -8,7 +8,16 @@
  */
 
 import { Button, Field, Notice, TextInput } from '@aicolab/ui-solid'
-import { createMemo, createSignal, createUniqueId, For, Match, Show, Switch, untrack } from 'solid-js'
+import {
+	createMemo,
+	createSignal,
+	createUniqueId,
+	For,
+	Match,
+	Show,
+	Switch,
+	untrack,
+} from 'solid-js'
 import type { JsonNode } from '#/content/schema.ts'
 import type { EditorControl } from '#/lifecycle/workspace.ts'
 import { IMAGE_ACCEPT, imageProblem, imageUploadForm, uploadImage } from '#/server/files.ts'
@@ -202,7 +211,9 @@ export function InsertMenu(props: {
 					/>
 					<Show
 						when={matches().length > 0}
-						fallback={<p class="ocp-tool-empty">Nothing by that name. Try "box", "table" or "image".</p>}
+						fallback={
+							<p class="ocp-tool-empty">Nothing by that name. Try "box", "table" or "image".</p>
+						}
 					>
 						<div class="ocp-insert-list" id={listId} role="listbox" aria-label="Blocks to insert">
 							<For each={matches()}>
@@ -231,7 +242,10 @@ export function InsertMenu(props: {
 					</Show>
 				</Match>
 				<Match when={view() === 'footnote'}>
-					<FootnoteForm onInsert={(text) => put(build.footnote(text))} onBack={() => setView('list')} />
+					<FootnoteForm
+						onInsert={(text) => put(build.footnote(text))}
+						onBack={() => setView('list')}
+					/>
 				</Match>
 				<Match when={view() === 'image'}>
 					<ImageForm
@@ -254,8 +268,16 @@ function FootnoteForm(props: { onInsert: (text: string) => void; onBack: () => v
 	return (
 		<form class="ocp-tool-form" onSubmit={submit}>
 			<p class="ocp-tool-heading">Footnote</p>
-			<Field label="The note" hint="Printed at the foot of the page; a small mark goes where the caret is.">
-				<TextInput value={text()} ref={focusSoon} maxlength={1000} onInput={(event) => setText(event.currentTarget.value)} />
+			<Field
+				label="The note"
+				hint="Printed at the foot of the page; a small mark goes where the caret is."
+			>
+				<TextInput
+					value={text()}
+					ref={focusSoon}
+					maxlength={1000}
+					onInput={(event) => setText(event.currentTarget.value)}
+				/>
 			</Field>
 			<div class="ocp-tool-actions">
 				<Button type="button" variant="ghost" colorBase="neutral" onClick={() => props.onBack()}>
@@ -275,7 +297,11 @@ type Upload =
 	| { state: 'done'; name: string; src: string }
 	| { state: 'failed'; message: string }
 
-function ImageForm(props: { documentId: string; onInsert: (src: string, alt: string) => void; onBack: () => void }) {
+function ImageForm(props: {
+	documentId: string
+	onInsert: (src: string, alt: string) => void
+	onBack: () => void
+}) {
 	const [upload, setUpload] = createSignal<Upload>({ state: 'none' })
 	const [alt, setAlt] = createSignal('')
 	const [tried, setTried] = createSignal(false)
@@ -291,10 +317,16 @@ function ImageForm(props: { documentId: string; onInsert: (src: string, alt: str
 		setUpload({ state: 'uploading', name: file.name })
 		// Over plain HTTP, not the app's socket: a file of megabytes is a request body, not a
 		// tunnelled message. The kit checks CSRF and reads the session cookie on this path.
-		uploadImage({ data: imageUploadForm(documentId, file), fetch: (input, init) => fetch(input, init) })
+		uploadImage({
+			data: imageUploadForm(documentId, file),
+			fetch: (input, init) => fetch(input, init),
+		})
 			.then(({ src }) => setUpload({ state: 'done', name: file.name, src }))
 			.catch((error: unknown) =>
-				setUpload({ state: 'failed', message: error instanceof Error ? error.message : 'The upload did not finish. Try again.' }),
+				setUpload({
+					state: 'failed',
+					message: error instanceof Error ? error.message : 'The upload did not finish. Try again.',
+				}),
 			)
 	}
 
@@ -346,7 +378,10 @@ function ImageForm(props: { documentId: string; onInsert: (src: string, alt: str
 					</Notice>
 				)}
 			</Show>
-			<Field label="Describe it" hint="One short sentence saying what the image shows, read aloud to people who cannot see it.">
+			<Field
+				label="Describe it"
+				hint="One short sentence saying what the image shows, read aloud to people who cannot see it."
+			>
 				<TextInput
 					value={alt()}
 					maxlength={300}

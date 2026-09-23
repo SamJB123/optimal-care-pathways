@@ -105,7 +105,10 @@
 @scope (.ocp-tool-popover) {
 	:scope {
 		position-area: block-end span-inline-end;
-		position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+		position-try-fallbacks:
+			flip-block,
+			flip-inline,
+			flip-block flip-inline;
 		/* Where neither side has room for the whole panel, the roomier side, and the panel
 		   scrolls within what it has (a percentage here is of the area it was placed in). */
 		position-try-order: most-block-size;

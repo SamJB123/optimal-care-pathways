@@ -58,7 +58,11 @@ function spineEntry(s: ReadingSection): DocsNavItem {
 	const step = stepNumberOfAddress(s.address)
 	const title = s.title ?? s.address
 	// A step part's title repeats its number ("Step 4: Treatment"); the mark carries it.
-	return { href: `#${s.address}`, mark: step !== null ? String(step) : '·', label: step !== null ? title.replace(/^Step\s+\d+\s*:\s*/i, '') : title }
+	return {
+		href: `#${s.address}`,
+		mark: step !== null ? String(step) : '·',
+		label: step !== null ? title.replace(/^Step\s+\d+\s*:\s*/i, '') : title,
+	}
 }
 
 export function ReadingDocument(props: {
@@ -68,7 +72,9 @@ export function ReadingDocument(props: {
 	links?: JSX.Element
 	aside?: JSX.Element
 }) {
-	const parentOf = createMemo(() => new Map(props.document.sections.map((s) => [s.address, s.parentAddress])))
+	const parentOf = createMemo(
+		() => new Map(props.document.sections.map((s) => [s.address, s.parentAddress])),
+	)
 	const derived = createMemo(
 		(): DerivedView => ({
 			referenceNumbers: Object.fromEntries(props.document.references.map((r) => [r.id, r.number])),
@@ -86,7 +92,9 @@ export function ReadingDocument(props: {
 	)
 	const spine = createMemo((): DocsNavItem[] => [
 		...props.document.sections.filter((s) => s.parentAddress === null).map(spineEntry),
-		...(props.document.references.length > 0 ? [{ href: '#references', mark: '¶', label: 'References' }] : []),
+		...(props.document.references.length > 0
+			? [{ href: '#references', mark: '¶', label: 'References' }]
+			: []),
 	])
 	return (
 		<ReadingFrame
@@ -102,7 +110,11 @@ export function ReadingDocument(props: {
 			draft={props.draft}
 		>
 			<DerivedContext value={derived}>
-				<For each={props.document.sections}>{(section) => <ReadingSectionView section={section} depth={depthOf(section.address, parentOf())} />}</For>
+				<For each={props.document.sections}>
+					{(section) => (
+						<ReadingSectionView section={section} depth={depthOf(section.address, parentOf())} />
+					)}
+				</For>
 				<Show when={props.document.references.length > 0}>
 					<section class="ocp-published-section ocp-published-references" data-depth="0">
 						<h2 class="ocp-published-title" id="references">
@@ -121,17 +133,25 @@ function ReadingSectionView(props: { section: ReadingSection; depth: number }) {
 	const derived = useContext(DerivedContext)
 	const content = () => (
 		<>
-			<Show when={props.section.printedNumber}>{(n) => <span class="ocp-published-number">{numberLabel(n())} </span>}</Show>
+			<Show when={props.section.printedNumber}>
+				{(n) => <span class="ocp-published-number">{numberLabel(n())} </span>}
+			</Show>
 			{props.section.title ?? props.section.address}
 			<Show when={props.section.titleCitations.length > 0}>
 				<span class="ocp-published-citations">
-					<For each={props.section.titleCitations}>{(id) => <CitationInline referenceId={id} />}</For>
+					<For each={props.section.titleCitations}>
+						{(id) => <CitationInline referenceId={id} />}
+					</For>
 				</span>
 			</Show>
 		</>
 	)
 	return (
-		<section class="ocp-published-section" data-depth={props.depth} data-ownership={props.section.ownership}>
+		<section
+			class="ocp-published-section"
+			data-depth={props.depth}
+			data-ownership={props.section.ownership}
+		>
 			<Show
 				when={props.depth === 0}
 				fallback={
@@ -153,7 +173,9 @@ function ReadingSectionView(props: { section: ReadingSection; depth: number }) {
 					{content()}
 				</h2>
 			</Show>
-			<Show when={props.section.body}>{(body) => <RenderedBody body={body()} derived={derived()} />}</Show>
+			<Show when={props.section.body}>
+				{(body) => <RenderedBody body={body()} derived={derived()} />}
+			</Show>
 		</section>
 	)
 }

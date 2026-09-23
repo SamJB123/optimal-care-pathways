@@ -31,7 +31,9 @@ export function RequestReviewSheet(props: { open: boolean; onDismiss: () => void
 		setBusy(true)
 		setError(null)
 		try {
-			const r = await requestReview({ data: { documentId: workspace.documentId, note: note().trim() || null } })
+			const r = await requestReview({
+				data: { documentId: workspace.documentId, note: note().trim() || null },
+			})
 			setResult(
 				`Review asked for: ${[
 					r.sections > 0 ? `${r.sections} changed section${r.sections === 1 ? '' : 's'}` : null,
@@ -77,9 +79,15 @@ export function RequestReviewSheet(props: { open: boolean; onDismiss: () => void
 					<p>The reviewers decide each changed section in turn. The review covers:</p>
 					<section>
 						<h3>
-							{workspace.state().published ? 'Changed since the published edition' : 'Written for the first edition'} ({changed().length})
+							{workspace.state().published
+								? 'Changed since the published edition'
+								: 'Written for the first edition'}{' '}
+							({changed().length})
 						</h3>
-						<Show when={changed().length > 0} fallback={<p class="ocp-muted">No section's text has changed.</p>}>
+						<Show
+							when={changed().length > 0}
+							fallback={<p class="ocp-muted">No section's text has changed.</p>}
+						>
 							<ul>
 								<For each={changed()}>{(s) => <li>{sectionLabel(s)}</li>}</For>
 							</ul>

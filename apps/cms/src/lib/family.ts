@@ -146,8 +146,16 @@ export function familyReport(hex: string): FamilyReport {
 	const on = onFamily(hex)
 	return {
 		print: hex.toLowerCase(),
-		paper: { ink: paper, contrast: contrast(paper, PAPER.ground), adjusted: paper !== hex.toLowerCase() },
-		night: { ink: night, contrast: contrast(night, NIGHT.ground), adjusted: night !== hex.toLowerCase() },
+		paper: {
+			ink: paper,
+			contrast: contrast(paper, PAPER.ground),
+			adjusted: paper !== hex.toLowerCase(),
+		},
+		night: {
+			ink: night,
+			contrast: contrast(night, NIGHT.ground),
+			adjusted: night !== hex.toLowerCase(),
+		},
 		on: { ink: on, contrast: contrast(hex, on) },
 	}
 }

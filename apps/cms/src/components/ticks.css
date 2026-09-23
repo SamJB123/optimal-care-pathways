@@ -16,7 +16,9 @@
 		block-size: 100%;
 		border-radius: 0.5px;
 		background: var(--family, var(--color-base-content));
-		transition: background var(--dur-quick) var(--ease-out), block-size var(--dur-move) var(--ease-spring);
+		transition:
+			background var(--dur-quick) var(--ease-out),
+			block-size var(--dur-move) var(--ease-spring);
 	}
 	/* As published: a hairline, low. */
 	i[data-s="published"] {

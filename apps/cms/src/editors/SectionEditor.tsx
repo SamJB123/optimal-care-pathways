@@ -37,14 +37,18 @@ import { createSectionExtension } from './extension.ts'
 
 /** The extent of the link (of any of `types`) around a caret: the run of adjacent text in
  *  its paragraph carrying the same mark. */
-function linkRangeAt($pos: ResolvedPos, types: readonly (MarkType | undefined)[]): { from: number; to: number } | null {
+function linkRangeAt(
+	$pos: ResolvedPos,
+	types: readonly (MarkType | undefined)[],
+): { from: number; to: number } | null {
 	const parent = $pos.parent
 	const start = $pos.start()
 	const offset = $pos.parentOffset
 	const runs: { from: number; to: number; mark: Mark }[] = []
 	parent.forEach((child, childOffset) => {
 		const mark = child.marks.find((m) => types.some((t) => t === m.type))
-		if (mark) runs.push({ from: start + childOffset, to: start + childOffset + child.nodeSize, mark })
+		if (mark)
+			runs.push({ from: start + childOffset, to: start + childOffset + child.nodeSize, mark })
 	})
 	const hit = runs.find((r) => r.from - start <= offset && offset <= r.to - start)
 	if (!hit) return null
@@ -130,7 +134,8 @@ export default function SectionEditor(props: {
 				// '/' on an empty line is the Insert menu, not a slash.
 				'/': (state) => {
 					const { $from, empty } = state.selection
-					if (!empty || $from.parent.type.name !== 'paragraph' || $from.parent.content.size > 0) return false
+					if (!empty || $from.parent.type.name !== 'paragraph' || $from.parent.content.size > 0)
+						return false
 					props.onSlash(caretRect)
 					return true
 				},
@@ -169,16 +174,80 @@ export default function SectionEditor(props: {
 	const listKindActive = (kind: string): boolean => enclosingList()?.node.attrs.kind === kind
 
 	const toolbar: readonly ToolbarContribution[] = [
-		mark('bold', 'B', 'Bold (⌘B)', () => editor.commands.toggleBold(), () => editor.marks.bold.isActive(), { 'font-weight': 700 }),
-		mark('italic', 'I', 'Italic (⌘I)', () => editor.commands.toggleItalic(), () => editor.marks.italic.isActive(), { 'font-style': 'italic' }),
-		mark('underline', 'U', 'Underline (⌘U)', () => editor.commands.toggleUnderline(), () => editor.marks.underline.isActive(), { 'text-decoration': 'underline' }),
-		mark('strike', 'S', 'Strikethrough', () => editor.commands.toggleStrike(), () => editor.marks.strike.isActive(), { 'text-decoration': 'line-through' }),
-		mark('superscript', 'x²', 'Superscript', () => editor.commands.toggleSuperscript(), () => editor.marks.superscript.isActive()),
-		mark('subscript', 'x₂', 'Subscript', () => editor.commands.toggleSubscript(), () => editor.marks.subscript.isActive()),
-		mark('heading-3', 'H', 'A heading inside the section', () => editor.commands.toggleHeading({ level: 3 }), () => editor.nodes.heading.isActive({ level: 3, textAlign: null })),
-		mark('bullet-list', '•', 'Bullet list', () => editor.commands.toggleBulletList(), () => listKindActive('bullet')),
-		mark('ordered-list', '1.', 'Numbered list', () => editor.commands.toggleOrderedList(), () => listKindActive('ordered')),
-		mark('check-list', '✓', 'Check list (actions for this step)', () => editor.commands.toggleCheckList(), () => listKindActive('check')),
+		mark(
+			'bold',
+			'B',
+			'Bold (⌘B)',
+			() => editor.commands.toggleBold(),
+			() => editor.marks.bold.isActive(),
+			{ 'font-weight': 700 },
+		),
+		mark(
+			'italic',
+			'I',
+			'Italic (⌘I)',
+			() => editor.commands.toggleItalic(),
+			() => editor.marks.italic.isActive(),
+			{ 'font-style': 'italic' },
+		),
+		mark(
+			'underline',
+			'U',
+			'Underline (⌘U)',
+			() => editor.commands.toggleUnderline(),
+			() => editor.marks.underline.isActive(),
+			{ 'text-decoration': 'underline' },
+		),
+		mark(
+			'strike',
+			'S',
+			'Strikethrough',
+			() => editor.commands.toggleStrike(),
+			() => editor.marks.strike.isActive(),
+			{ 'text-decoration': 'line-through' },
+		),
+		mark(
+			'superscript',
+			'x²',
+			'Superscript',
+			() => editor.commands.toggleSuperscript(),
+			() => editor.marks.superscript.isActive(),
+		),
+		mark(
+			'subscript',
+			'x₂',
+			'Subscript',
+			() => editor.commands.toggleSubscript(),
+			() => editor.marks.subscript.isActive(),
+		),
+		mark(
+			'heading-3',
+			'H',
+			'A heading inside the section',
+			() => editor.commands.toggleHeading({ level: 3 }),
+			() => editor.nodes.heading.isActive({ level: 3, textAlign: null }),
+		),
+		mark(
+			'bullet-list',
+			'•',
+			'Bullet list',
+			() => editor.commands.toggleBulletList(),
+			() => listKindActive('bullet'),
+		),
+		mark(
+			'ordered-list',
+			'1.',
+			'Numbered list',
+			() => editor.commands.toggleOrderedList(),
+			() => listKindActive('ordered'),
+		),
+		mark(
+			'check-list',
+			'✓',
+			'Check list (actions for this step)',
+			() => editor.commands.toggleCheckList(),
+			() => listKindActive('check'),
+		),
 	]
 
 	const ui = createEditorUi({
@@ -223,17 +292,27 @@ export default function SectionEditor(props: {
 			const { $from } = state.selection
 			const inline = content.every((n) => n.isInline)
 			if (inline) {
-				editor.view.dispatch(state.tr.replaceSelectionWith(content[0] ?? state.schema.text(' '), false).scrollIntoView())
-				for (const node of content.slice(1)) editor.view.dispatch(editor.view.state.tr.replaceSelectionWith(node, false))
+				editor.view.dispatch(
+					state.tr
+						.replaceSelectionWith(content[0] ?? state.schema.text(' '), false)
+						.scrollIntoView(),
+				)
+				for (const node of content.slice(1))
+					editor.view.dispatch(editor.view.state.tr.replaceSelectionWith(node, false))
 			} else {
 				// A block goes in place of the empty line it was asked for from, else after the
 				// block the caret is in.
-				const emptyLine = $from.parent.type.name === 'paragraph' && $from.parent.content.size === 0 && $from.depth > 0
+				const emptyLine =
+					$from.parent.type.name === 'paragraph' &&
+					$from.parent.content.size === 0 &&
+					$from.depth > 0
 				const from = emptyLine ? $from.before($from.depth) : $from.after(1)
 				const to = emptyLine ? $from.after($from.depth) : from
 				const tr = state.tr.replaceWith(from, to, content)
 				const after = Math.min(tr.doc.content.size, from + 1)
-				editor.view.dispatch(tr.setSelection(TextSelection.near(tr.doc.resolve(after))).scrollIntoView())
+				editor.view.dispatch(
+					tr.setSelection(TextSelection.near(tr.doc.resolve(after))).scrollIntoView(),
+				)
 			}
 			editor.focus()
 		},
@@ -242,14 +321,18 @@ export default function SectionEditor(props: {
 			const linkMark = state.schema.marks.link
 			const sectionLink = state.schema.marks.sectionLink
 			// With only a caret, the link it sits in is the range: remove or retarget all of it.
-			const around = state.selection.empty ? linkRangeAt(state.selection.$from, [linkMark, sectionLink]) : null
+			const around = state.selection.empty
+				? linkRangeAt(state.selection.$from, [linkMark, sectionLink])
+				: null
 			const from = around?.from ?? state.selection.from
 			const to = around?.to ?? state.selection.to
 			let tr = state.tr
 			if (linkMark) tr = tr.removeMark(from, to, linkMark)
 			if (sectionLink) tr = tr.removeMark(from, to, sectionLink)
-			if (target && 'href' in target && linkMark) tr = tr.addMark(from, to, linkMark.create({ href: target.href }))
-			if (target && 'address' in target && sectionLink) tr = tr.addMark(from, to, sectionLink.create({ address: target.address }))
+			if (target && 'href' in target && linkMark)
+				tr = tr.addMark(from, to, linkMark.create({ href: target.href }))
+			if (target && 'address' in target && sectionLink)
+				tr = tr.addMark(from, to, sectionLink.create({ address: target.address }))
 			editor.view.dispatch(tr)
 			editor.focus()
 		},

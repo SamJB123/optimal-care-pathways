@@ -26,7 +26,11 @@ export function searchText(body: JsonNode | null | undefined): string {
 		if (node.content) out.push('\n')
 	}
 	walk(body)
-	return out.join('').replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n').trim()
+	return out
+		.join('')
+		.replace(/[ \t]+/g, ' ')
+		.replace(/\n\s*\n+/g, '\n')
+		.trim()
 }
 
 export interface IndexedSection {

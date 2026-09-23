@@ -167,7 +167,9 @@
 	font-size: var(--t-lg);
 }
 
-.ocp-reading .ocp-published-section:not([data-depth="0"], [data-depth="1"], [data-depth="2"]) > .ocp-published-title {
+.ocp-reading
+	.ocp-published-section:not([data-depth="0"], [data-depth="1"], [data-depth="2"])
+	> .ocp-published-title {
 	margin: 0 0 0.4rem;
 	font-size: var(--t-md);
 }

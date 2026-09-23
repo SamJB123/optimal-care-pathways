@@ -23,12 +23,17 @@ export function ReviewBar() {
 				? `${n} change${n === 1 ? '' : 's'} since the published edition`
 				: `${n} section${n === 1 ? '' : 's'} in the first edition`
 		if (r.decision === 'approved') return 'The review is approved in full'
-		if (r.decision === 'changes_requested') return `Changes asked for on ${r.changesRequested} of ${r.total}`
+		if (r.decision === 'changes_requested')
+			return `Changes asked for on ${r.changesRequested} of ${r.total}`
 		return `${r.decided} of ${r.total} decided`
 	}
 	const stepLabel = () => {
 		const r = review()
-		return r && r.decision === null ? 'undecided' : r?.decision === 'changes_requested' ? 'sent back' : 'change'
+		return r && r.decision === null
+			? 'undecided'
+			: r?.decision === 'changes_requested'
+				? 'sent back'
+				: 'change'
 	}
 
 	return (
@@ -67,10 +72,19 @@ export function ReviewBar() {
 				>
 					<span aria-hidden="true">↑</span>
 				</IconButton>
-				<Button variant="outline" disabled={waiting() === 0} title={`Next ${stepLabel()} (J)`} onClick={() => workspace.goToChange(1)}>
+				<Button
+					variant="outline"
+					disabled={waiting() === 0}
+					title={`Next ${stepLabel()} (J)`}
+					onClick={() => workspace.goToChange(1)}
+				>
 					Next {stepLabel()} <span class="ocp-review-key">J</span>
 				</Button>
-				<IconButton label="Back to the text" title="Back to the text" onClick={() => workspace.setMode('edit')}>
+				<IconButton
+					label="Back to the text"
+					title="Back to the text"
+					onClick={() => workspace.setMode('edit')}
+				>
 					<span aria-hidden="true">✕</span>
 				</IconButton>
 			</span>

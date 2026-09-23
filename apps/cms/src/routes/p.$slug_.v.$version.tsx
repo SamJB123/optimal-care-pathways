@@ -15,9 +15,13 @@ import { PublishedEdition } from '#/published/PublishedEdition.tsx'
 export const Route = createFileRoute('/p/$slug_/v/$version')({
 	loader: async ({ params }) => {
 		const version = Number(params.version)
-		if (!Number.isInteger(version) || version < 1) return { document: null, error: `There is no edition "${params.version}".` }
+		if (!Number.isInteger(version) || version < 1)
+			return { document: null, error: `There is no edition "${params.version}".` }
 		try {
-			return { document: await publishedDocumentFull({ data: { slug: params.slug, version } }), error: null }
+			return {
+				document: await publishedDocumentFull({ data: { slug: params.slug, version } }),
+				error: null,
+			}
 		} catch (error) {
 			return { document: null, error: error instanceof Error ? error.message : String(error) }
 		}
@@ -33,7 +37,11 @@ function EditionPage() {
 			<Masthead
 				crumbs={[
 					{ label: 'Published library', href: '/library' },
-					{ label: data().document?.document.title ?? 'Not found', href: publishedHref(params().slug), accent: data().document?.accent ?? null },
+					{
+						label: data().document?.document.title ?? 'Not found',
+						href: publishedHref(params().slug),
+						accent: data().document?.accent ?? null,
+					},
 					{ label: `Edition ${params().version}` },
 				]}
 			/>

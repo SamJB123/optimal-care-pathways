@@ -53,8 +53,12 @@ export * as schema from './schema.ts'
 const IN_GROUP = 90
 
 /** Run a query over a list of values in groups D1 accepts, rows concatenated. */
-export async function inGroups<V, R>(values: readonly V[], query: (group: V[]) => Promise<R[]>): Promise<R[]> {
+export async function inGroups<V, R>(
+	values: readonly V[],
+	query: (group: V[]) => Promise<R[]>,
+): Promise<R[]> {
 	const out: R[] = []
-	for (let i = 0; i < values.length; i += IN_GROUP) out.push(...(await query(values.slice(i, i + IN_GROUP))))
+	for (let i = 0; i < values.length; i += IN_GROUP)
+		out.push(...(await query(values.slice(i, i + IN_GROUP))))
 	return out
 }

@@ -245,12 +245,18 @@ export function inlineText(node: JsonNode): string {
 /** A section as its citations count: the heading's own markers first, then the body —
  *  the order the page numbers them in, and so the order every numbering reads them in
  *  (the workspace, the reference list, publish, the published page, the exports). */
-export function citedBody(titleCitations: readonly string[] | null, body: JsonNode | null): JsonNode | null {
+export function citedBody(
+	titleCitations: readonly string[] | null,
+	body: JsonNode | null,
+): JsonNode | null {
 	if (!titleCitations || titleCitations.length === 0) return body
 	return {
 		type: 'doc',
 		content: [
-			{ type: 'paragraph', content: titleCitations.map((id) => ({ type: 'citation', attrs: { referenceId: id } })) },
+			{
+				type: 'paragraph',
+				content: titleCitations.map((id) => ({ type: 'citation', attrs: { referenceId: id } })),
+			},
 			...(body?.content ?? []),
 		],
 	}
@@ -295,7 +301,9 @@ export function timeframeRows(
 			const [carePoint, ...rest] = n.content ?? []
 			const statements: string[][] = []
 			for (const block of rest) {
-				const alternatives = (block.type === 'variants' ? (block.content ?? []) : [block]).map(inlineText).filter((t) => t !== '')
+				const alternatives = (block.type === 'variants' ? (block.content ?? []) : [block])
+					.map(inlineText)
+					.filter((t) => t !== '')
 				if (alternatives.length > 0) statements.push(alternatives)
 			}
 			rows.push({

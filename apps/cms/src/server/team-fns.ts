@@ -28,7 +28,9 @@ export const documentTeam = createServerFn({ method: 'GET' })
 /** An organisation's team. */
 export const organisationTeam = createServerFn({ method: 'GET' })
 	.inputValidator(z.object({ orgId: id }))
-	.handler(async ({ data, context }) => team.teamView(await teamOfEnv(), requireUser(context.userId), data.orgId))
+	.handler(async ({ data, context }) =>
+		team.teamView(await teamOfEnv(), requireUser(context.userId), data.orgId),
+	)
 
 /** The central team (for /admin); null before the central organisation is set up. */
 export const centralTeam = createServerFn({ method: 'GET' }).handler(async ({ context }) => {
@@ -45,19 +47,27 @@ export const changeTeamMember = createServerFn({ method: 'POST' })
 
 export const addTeamMemberByEmail = createServerFn({ method: 'POST' })
 	.inputValidator(z.object({ orgId: id, email: z.string().trim().email().max(200), role }))
-	.handler(async ({ data, context }) => team.addByEmail(await teamOfEnv(), { actorId: requireUser(context.userId), ...data }))
+	.handler(async ({ data, context }) =>
+		team.addByEmail(await teamOfEnv(), { actorId: requireUser(context.userId), ...data }),
+	)
 
 export const addTeamMemberByCode = createServerFn({ method: 'POST' })
 	.inputValidator(z.object({ orgId: id, code: z.string().trim().min(4).max(16), role }))
-	.handler(async ({ data, context }) => team.addByCode(await teamOfEnv(), { actorId: requireUser(context.userId), ...data }))
+	.handler(async ({ data, context }) =>
+		team.addByCode(await teamOfEnv(), { actorId: requireUser(context.userId), ...data }),
+	)
 
 export const addTeamPerson = createServerFn({ method: 'POST' })
 	.inputValidator(z.object({ orgId: id, userId: id, role }))
-	.handler(async ({ data, context }) => team.addPerson(await teamOfEnv(), { actorId: requireUser(context.userId), ...data }))
+	.handler(async ({ data, context }) =>
+		team.addPerson(await teamOfEnv(), { actorId: requireUser(context.userId), ...data }),
+	)
 
 export const searchTeamPeople = createServerFn({ method: 'GET' })
 	.inputValidator(z.object({ orgId: id, query: z.string().max(100) }))
-	.handler(async ({ data, context }) => team.searchPeople(await teamOfEnv(), { actorId: requireUser(context.userId), ...data }))
+	.handler(async ({ data, context }) =>
+		team.searchPeople(await teamOfEnv(), { actorId: requireUser(context.userId), ...data }),
+	)
 
 export const createTeamInviteLink = createServerFn({ method: 'POST' })
 	.inputValidator(z.object({ orgId: id, role: linkRole }))
@@ -68,13 +78,19 @@ export const createTeamInviteLink = createServerFn({ method: 'POST' })
 export const teamInviteLinks = createServerFn({ method: 'GET' })
 	.inputValidator(z.object({ orgId: id }))
 	.handler(async ({ data, context }) =>
-		team.listInviteLinks(await teamOfEnv(), { actorId: requireUser(context.userId), orgId: data.orgId }),
+		team.listInviteLinks(await teamOfEnv(), {
+			actorId: requireUser(context.userId),
+			orgId: data.orgId,
+		}),
 	)
 
 export const revokeTeamInviteLink = createServerFn({ method: 'POST' })
 	.inputValidator(z.object({ orgId: id, token: z.string().min(1).max(64) }))
 	.handler(async ({ data, context }) => {
-		await team.revokeInviteLink(await teamOfEnv(), { actorId: requireUser(context.userId), ...data })
+		await team.revokeInviteLink(await teamOfEnv(), {
+			actorId: requireUser(context.userId),
+			...data,
+		})
 		return { revoked: true }
 	})
 
@@ -86,11 +102,17 @@ export const inviteLinkInfo = createServerFn({ method: 'GET' })
 export const redeemInviteLink = createServerFn({ method: 'POST' })
 	.inputValidator(z.object({ token: z.string().min(1).max(64) }))
 	.handler(async ({ data, context }) =>
-		team.redeemInviteLink(await teamOfEnv(), { userId: requireUser(context.userId), token: data.token }),
+		team.redeemInviteLink(await teamOfEnv(), {
+			userId: requireUser(context.userId),
+			token: data.token,
+		}),
 	)
 
 export const acceptTeamInvitation = createServerFn({ method: 'POST' })
 	.inputValidator(z.object({ invitationId: z.string().min(1).max(64) }))
 	.handler(async ({ data, context }) =>
-		team.acceptInvitation(await teamOfEnv(), { userId: requireUser(context.userId), invitationId: data.invitationId }),
+		team.acceptInvitation(await teamOfEnv(), {
+			userId: requireUser(context.userId),
+			invitationId: data.invitationId,
+		}),
 	)

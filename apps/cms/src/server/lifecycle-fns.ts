@@ -146,7 +146,10 @@ export const replyToSuggestion = createServerFn({ method: 'POST' })
 		}),
 	)
 	.handler(async ({ data, context }) => {
-		const reply = await lifecycle.replyToSuggestion(await lifecycleOf(), { ...data, userId: requireUser(context.userId) })
+		const reply = await lifecycle.replyToSuggestion(await lifecycleOf(), {
+			...data,
+			userId: requireUser(context.userId),
+		})
 		return reply ? commentWire(reply) : null
 	})
 

@@ -47,7 +47,13 @@ export interface ListedMember {
 export function teamMemberWireRow(member: ListedMember): TeamMemberWireRow | null {
 	const role = roleFrom(member.role)
 	return role
-		? { userId: member.userId, role, name: member.name, image: member.image ?? null, joinedAt: new Date(member.createdAt).getTime() }
+		? {
+				userId: member.userId,
+				role,
+				name: member.name,
+				image: member.image ?? null,
+				joinedAt: new Date(member.createdAt).getTime(),
+			}
 		: null
 }
 
@@ -89,12 +95,17 @@ export class TeamLiveTopic extends D1TopicCapability {
  * Best-effort, as every publish is (live-publish.ts): the change has committed in the
  * auth worker, and the snapshot is correctness.
  */
-export async function publishTeamChange(orgId: string, change: { row: TeamMemberWireRow } | { removed: string }): Promise<void> {
+export async function publishTeamChange(
+	orgId: string,
+	change: { row: TeamMemberWireRow } | { removed: string },
+): Promise<void> {
 	try {
 		// biome-ignore lint/correctness/noUnresolvedImports: provided by the Workers runtime
 		const { env } = await import('cloudflare:workers')
 		await publishToTopic(env.OCP_BELL, teamTopic(orgId), [
-			'row' in change ? { type: 'insert', value: change.row } : { type: 'delete', key: change.removed },
+			'row' in change
+				? { type: 'insert', value: change.row }
+				: { type: 'delete', key: change.removed },
 		])
 	} catch (error) {
 		console.error(

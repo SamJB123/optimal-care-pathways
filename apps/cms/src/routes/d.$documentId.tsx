@@ -32,7 +32,15 @@ import { Masthead } from '#/components/Masthead.tsx'
 import { useAuthSession } from '#/lib/auth-client.ts'
 import { familyStyle } from '#/lib/family.ts'
 import { documentName, numberLabel } from '#/lib/labels.ts'
-import { draftDocxHref, draftPdfHref, partHref, previewHref, publishedHref, sectionAnchor, teamHref } from '#/lib/links.ts'
+import {
+	draftDocxHref,
+	draftPdfHref,
+	partHref,
+	previewHref,
+	publishedHref,
+	sectionAnchor,
+	teamHref,
+} from '#/lib/links.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { type PathwayClient, pathwayClientFor } from '#/lib/ocp-client.ts'
 import { Margin } from '#/lifecycle/Margin.tsx'
@@ -60,12 +68,22 @@ import { namesIn } from '#/server/workspace-fns.ts'
 import { RaisedSheet } from '@aicolab/ui-solid'
 import './document.css'
 
-export { atLeast, DocumentContext, type DocumentWorkspace, type Part, partsOf } from '#/lifecycle/workspace.ts'
+export {
+	atLeast,
+	DocumentContext,
+	type DocumentWorkspace,
+	type Part,
+	partsOf,
+} from '#/lifecycle/workspace.ts'
 
 export const Route = createFileRoute('/d/$documentId')({
 	loader: async ({ params }) => {
 		const data = { documentId: params.documentId }
-		const [snapshot, state, comments] = await Promise.all([sectionsSnapshot({ data }), documentState({ data }), listComments({ data })])
+		const [snapshot, state, comments] = await Promise.all([
+			sectionsSnapshot({ data }),
+			documentState({ data }),
+			listComments({ data }),
+		])
 		return { ...snapshot, state, comments }
 	},
 	component: DocumentShell,
@@ -89,7 +107,9 @@ function DocumentShell() {
 	const [asking, setAsking] = createSignal(false)
 	const [showHidden, setShowHidden] = createSignal(false)
 	const [active, setActive] = createSignal<string | null>(null)
-	const [registry, setRegistry] = createSignal<ReadonlyMap<string, EditorControl>>(new Map(), { ownedWrite: true })
+	const [registry, setRegistry] = createSignal<ReadonlyMap<string, EditorControl>>(new Map(), {
+		ownedWrite: true,
+	})
 	const [online, setOnline] = createSignal<{ userId: string; sectionId: string | null }[]>([])
 	const [names, setNames] = createSignal<Record<string, string>>({})
 	const [contents, setContents] = createSignal(false)
@@ -122,7 +142,12 @@ function DocumentShell() {
 					next.room.online.get().map((row) => {
 						const place = row.place
 						const sectionId =
-							place && typeof place === 'object' && !Array.isArray(place) && typeof place.sectionId === 'string' ? place.sectionId : null
+							place &&
+							typeof place === 'object' &&
+							!Array.isArray(place) &&
+							typeof place.sectionId === 'string'
+								? place.sectionId
+								: null
 						return { userId: row.userId, sectionId }
 					}),
 				)
@@ -138,10 +163,17 @@ function DocumentShell() {
 
 	// Names for the people in the room, fetched as new ones arrive.
 	createEffect(
-		() => ({ unknown: online().map((o) => o.userId).filter((id) => !(id in names())), documentId: params().documentId }),
+		() => ({
+			unknown: online()
+				.map((o) => o.userId)
+				.filter((id) => !(id in names())),
+			documentId: params().documentId,
+		}),
 		({ unknown, documentId }) => {
 			if (unknown.length === 0) return
-			void namesIn({ data: { documentId, userIds: unknown } }).then((found) => setNames((n) => ({ ...n, ...found })))
+			void namesIn({ data: { documentId, userIds: unknown } }).then((found) =>
+				setNames((n) => ({ ...n, ...found })),
+			)
 		},
 	)
 
@@ -153,7 +185,11 @@ function DocumentShell() {
 	const presence = createMemo((): PresenceEntry[] =>
 		online()
 			.filter((o) => o.userId !== selfId())
-			.map((o) => ({ userId: o.userId, name: names()[o.userId] ?? 'Someone', sectionId: o.sectionId })),
+			.map((o) => ({
+				userId: o.userId,
+				name: names()[o.userId] ?? 'Someone',
+				sectionId: o.sectionId,
+			})),
 	)
 
 	// Tell the room where this reader is, so others see it in their spine.
@@ -173,7 +209,9 @@ function DocumentShell() {
 	// Writing is saved by the room, not by an action here: when a section's body lands in
 	// its row (the live rows carry the time), the changes and the review are read again, so
 	// a first change offers "Ask for review" and an edit under review shows as one.
-	const lastWritten = createMemo(() => sections().reduce((at, s) => Math.max(at, s.updatedAt ?? 0), 0))
+	const lastWritten = createMemo(() =>
+		sections().reduce((at, s) => Math.max(at, s.updatedAt ?? 0), 0),
+	)
 	createEffect(lastWritten, (at, before) => {
 		if (before !== undefined && at !== before) void refreshState()
 	})
@@ -183,7 +221,12 @@ function DocumentShell() {
 		const byId = new Map(sections().map((s) => [s.id, s]))
 		const partOf = (s: SectionWireRow): string => {
 			let at = s
-			for (let parent = at.parentId ? byId.get(at.parentId) : undefined; parent; parent = at.parentId ? byId.get(at.parentId) : undefined) at = parent
+			for (
+				let parent = at.parentId ? byId.get(at.parentId) : undefined;
+				parent;
+				parent = at.parentId ? byId.get(at.parentId) : undefined
+			)
+				at = parent
 			return at.address
 		}
 		return state().changes.flatMap((change) => {
@@ -207,13 +250,17 @@ function DocumentShell() {
 		}
 		window.addEventListener('scrollend', settle, { once: true })
 		setTimeout(settle, 1200)
-		target.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+		target.scrollIntoView({
+			behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+			block: 'start',
+		})
 		target.dataset.arrived = ''
 		setTimeout(() => delete target.dataset.arrived, 1600)
 	}
 	const goTo = (entry: ChangeEntry) => {
 		setPinned(entry.section.id)
-		if (partOnStage() !== entry.part) void navigate({ href: partHref(params().documentId, entry.part) })
+		if (partOnStage() !== entry.part)
+			void navigate({ href: partHref(params().documentId, entry.part) })
 		arrive(sectionAnchor(entry.section.address))
 	}
 	const goToChange = (direction: 1 | -1): boolean => {
@@ -305,10 +352,17 @@ function DocumentShell() {
 		const bands = spineOf(sections(), (s) => !s.apparatus && !s.hidden)
 		return bands.flatMap((band) =>
 			band.sections.map((s) => {
-				const root = band.roots.find((r) => s.address === r.address || s.address.startsWith(`${r.address}/`) || s.address.startsWith(`${r.address}.`))
+				const root = band.roots.find(
+					(r) =>
+						s.address === r.address ||
+						s.address.startsWith(`${r.address}/`) ||
+						s.address.startsWith(`${r.address}.`),
+				)
 				return {
 					id: `sec:${s.id}`,
-					label: [s.printedNumber ? numberLabel(s.printedNumber) : null, s.title ?? s.address].filter(Boolean).join(' '),
+					label: [s.printedNumber ? numberLabel(s.printedNumber) : null, s.title ?? s.address]
+						.filter(Boolean)
+						.join(' '),
 					kind: 'Section',
 					keywords: [s.address],
 					go: `${partHref(params().documentId, root?.address ?? s.address)}#${sectionAnchor(s.address)}`,
@@ -329,16 +383,76 @@ function DocumentShell() {
 				]
 			: []),
 		...(atLeast(state().role, 'member') && state().changes.length > 0
-			? [{ id: 'act:review', label: 'Ask for review', kind: 'Action', keywords: ['request'], go: () => setAsking(true) }]
+			? [
+					{
+						id: 'act:review',
+						label: 'Ask for review',
+						kind: 'Action',
+						keywords: ['request'],
+						go: () => setAsking(true),
+					},
+				]
 			: []),
-		...(state().central ? [{ id: 'act:publish', label: 'Publish…', kind: 'Action', keywords: ['edition'], go: openPublish }] : []),
-		{ id: 'act:editions', label: 'Editions', kind: 'Action', keywords: ['versions', 'compare'], go: `/d/${params().documentId}/versions` },
-		{ id: 'act:team', label: 'Team', kind: 'Action', keywords: ['people', 'members', 'invite', 'roles'], go: teamHref(params().documentId) },
-		{ id: 'act:preview', label: 'Preview the draft', kind: 'Action', keywords: ['preview'], go: previewHref(params().documentId) },
-		{ id: 'act:draft-pdf', label: 'Download the draft as a PDF', kind: 'Action', keywords: ['export', 'print'], go: draftPdfHref(params().documentId) },
-		{ id: 'act:draft-docx', label: 'Download the draft as a Word file', kind: 'Action', keywords: ['export', 'docx'], go: draftDocxHref(params().documentId) },
-		{ id: 'act:references', label: 'References', kind: 'Action', keywords: ['citations'], go: `/d/${params().documentId}/references` },
-		{ id: 'act:hidden', label: showHidden() ? 'Leave hidden sections out' : 'Show hidden sections', kind: 'Action', keywords: ['hidden'], go: () => setShowHidden(!showHidden()) },
+		...(state().central
+			? [
+					{
+						id: 'act:publish',
+						label: 'Publish…',
+						kind: 'Action',
+						keywords: ['edition'],
+						go: openPublish,
+					},
+				]
+			: []),
+		{
+			id: 'act:editions',
+			label: 'Editions',
+			kind: 'Action',
+			keywords: ['versions', 'compare'],
+			go: `/d/${params().documentId}/versions`,
+		},
+		{
+			id: 'act:team',
+			label: 'Team',
+			kind: 'Action',
+			keywords: ['people', 'members', 'invite', 'roles'],
+			go: teamHref(params().documentId),
+		},
+		{
+			id: 'act:preview',
+			label: 'Preview the draft',
+			kind: 'Action',
+			keywords: ['preview'],
+			go: previewHref(params().documentId),
+		},
+		{
+			id: 'act:draft-pdf',
+			label: 'Download the draft as a PDF',
+			kind: 'Action',
+			keywords: ['export', 'print'],
+			go: draftPdfHref(params().documentId),
+		},
+		{
+			id: 'act:draft-docx',
+			label: 'Download the draft as a Word file',
+			kind: 'Action',
+			keywords: ['export', 'docx'],
+			go: draftDocxHref(params().documentId),
+		},
+		{
+			id: 'act:references',
+			label: 'References',
+			kind: 'Action',
+			keywords: ['citations'],
+			go: `/d/${params().documentId}/references`,
+		},
+		{
+			id: 'act:hidden',
+			label: showHidden() ? 'Leave hidden sections out' : 'Show hidden sections',
+			kind: 'Action',
+			keywords: ['hidden'],
+			go: () => setShowHidden(!showHidden()),
+		},
 	])
 	const search = async (query: string): Promise<JumpTarget[]> =>
 		(await searchSections({ data: { query, documentId: params().documentId } })).map((hit) => ({
@@ -365,7 +479,11 @@ function DocumentShell() {
 		const onKey = (event: KeyboardEvent) => {
 			if (mode() !== 'review' || event.metaKey || event.ctrlKey || event.altKey) return
 			const target = event.target
-			if (target instanceof HTMLElement && (target.isContentEditable || target.closest('input, textarea, select'))) return
+			if (
+				target instanceof HTMLElement &&
+				(target.isContentEditable || target.closest('input, textarea, select'))
+			)
+				return
 			const key = event.key.toLowerCase()
 			if (key !== 'j' && key !== 'k') return
 			event.preventDefault()
@@ -380,16 +498,29 @@ function DocumentShell() {
 
 	return (
 		<DocumentContext value={workspace}>
-			<div class="ocp-document" style={familyStyle(data().document.accent)} data-kind={data().document.kind}>
+			<div
+				class="ocp-document"
+				style={familyStyle(data().document.accent)}
+				data-kind={data().document.kind}
+			>
 				<Masthead
 					crumbs={[
 						{ label: 'Pathways', href: '/' },
-						{ label: documentName(data().document), href: `/d/${params().documentId}`, accent: data().document.accent },
+						{
+							label: documentName(data().document),
+							href: `/d/${params().documentId}`,
+							accent: data().document.accent,
+						},
 					]}
 					central={state().central}
 					links={
 						state().published
-							? [{ label: `Published edition ${state().published?.versionNo}`, href: publishedHref(data().document.slug) }]
+							? [
+									{
+										label: `Published edition ${state().published?.versionNo}`,
+										href: publishedHref(data().document.slug),
+									},
+								]
 							: []
 					}
 					presence={
@@ -410,8 +541,15 @@ function DocumentShell() {
 								)}
 							</Show>
 							<Show when={presence().length > 0}>
-								<span class="ocp-presence" title={presence().map((p) => p.name).join(', ')}>
-									{presence().length === 1 ? `${presence()[0]?.name} is here` : `${presence().length} others here`}
+								<span
+									class="ocp-presence"
+									title={presence()
+										.map((p) => p.name)
+										.join(', ')}
+								>
+									{presence().length === 1
+										? `${presence()[0]?.name} is here`
+										: `${presence().length} others here`}
 								</span>
 							</Show>
 						</>
@@ -440,21 +578,48 @@ function DocumentShell() {
 						<BottomNavigation
 							label="Document"
 							items={[
-								{ id: 'overview', label: 'Overview', icon: () => <span aria-hidden="true">◇</span> },
-								{ id: 'contents', label: 'Contents', icon: () => <span aria-hidden="true">≡</span> },
+								{
+									id: 'overview',
+									label: 'Overview',
+									icon: () => <span aria-hidden="true">◇</span>,
+								},
+								{
+									id: 'contents',
+									label: 'Contents',
+									icon: () => <span aria-hidden="true">≡</span>,
+								},
 								{ id: 'margin', label: 'Margin', icon: () => <span aria-hidden="true">▤</span> },
-								{ id: 'editions', label: 'Editions', icon: () => <span aria-hidden="true">⎘</span> },
+								{
+									id: 'editions',
+									label: 'Editions',
+									icon: () => <span aria-hidden="true">⎘</span>,
+								},
 							]}
 							activeId={null}
 							onSelect={(id) => {
-								if (id === 'overview') void navigate({ to: '/d/$documentId', params: { documentId: params().documentId } })
+								if (id === 'overview')
+									void navigate({
+										to: '/d/$documentId',
+										params: { documentId: params().documentId },
+									})
 								else if (id === 'contents') setContents(true)
 								else if (id === 'margin') setRaise((n) => n + 1)
-								else void navigate({ to: '/d/$documentId/versions', params: { documentId: params().documentId } })
+								else
+									void navigate({
+										to: '/d/$documentId/versions',
+										params: { documentId: params().documentId },
+									})
 							}}
 							centre={
-								<button type="button" class="ocp-bnav-jump" onClick={() => openCommandPalette(JUMP_ID)}>
-									<BottomNavigationCentreContent icon={<span aria-hidden="true">⌕</span>} label="Jump" />
+								<button
+									type="button"
+									class="ocp-bnav-jump"
+									onClick={() => openCommandPalette(JUMP_ID)}
+								>
+									<BottomNavigationCentreContent
+										icon={<span aria-hidden="true">⌕</span>}
+										label="Jump"
+									/>
 								</button>
 							}
 						/>
@@ -462,7 +627,10 @@ function DocumentShell() {
 				>
 					<Show when={publishing()}>
 						{(edition) => (
-							<RaisedSheet title={`Publish edition ${edition()}`} onClose={() => setPublishing(null)}>
+							<RaisedSheet
+								title={`Publish edition ${edition()}`}
+								onClose={() => setPublishing(null)}
+							>
 								<ProofSheet onClose={() => setPublishing(null)} />
 							</RaisedSheet>
 						)}
@@ -470,9 +638,19 @@ function DocumentShell() {
 				</WorkspaceShell>
 				<RequestReviewSheet open={asking()} onDismiss={() => setAsking(false)} />
 				{/* On a phone the spine is a sheet the bottom bar opens. */}
-				<AdaptiveModalSheet open={contents()} label="Contents" title="Contents" onDismiss={() => setContents(false)}>
+				<AdaptiveModalSheet
+					open={contents()}
+					label="Contents"
+					title="Contents"
+					onDismiss={() => setContents(false)}
+				>
 					{/* biome-ignore lint/a11y/useKeyWithClickEvents lint/a11y/noStaticElementInteractions: a delegated listener: the clicks come from the spine's own buttons and links, which the keyboard activates too */}
-					<div class="ocp-contents-sheet" onClick={(e) => e.target instanceof HTMLElement && e.target.closest('button, a') && setContents(false)}>
+					<div
+						class="ocp-contents-sheet"
+						onClick={(e) =>
+							e.target instanceof HTMLElement && e.target.closest('button, a') && setContents(false)
+						}
+					>
 						<Spine onRequestReview={() => setAsking(true)} />
 					</div>
 				</AdaptiveModalSheet>

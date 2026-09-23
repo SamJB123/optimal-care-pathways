@@ -50,8 +50,15 @@ describe('publishable bodies and first-publication diffs over the seeded templat
 		})
 
 		it(`${template.key}: the developer instructions are the template's own part, never a pathway's section`, () => {
-			const mapped = mapTemplate({ model: readModel(template.key), template, orgId: 'org-test', id: deterministicId })
-			const instructions = mapped.sections.filter((s) => /(^|\/)instructions-for-developers(\/|$)/.test(s.address))
+			const mapped = mapTemplate({
+				model: readModel(template.key),
+				template,
+				orgId: 'org-test',
+				id: deterministicId,
+			})
+			const instructions = mapped.sections.filter((s) =>
+				/(^|\/)instructions-for-developers(\/|$)/.test(s.address),
+			)
 			if (template.kind === 'principles') return
 			expect(instructions.length).toBeGreaterThan(0)
 			for (const s of instructions) {
@@ -65,7 +72,15 @@ describe('publishable bodies and first-publication diffs over the seeded templat
 describe('subject placeholders', () => {
 	const text = (label: string, written = label): JsonNode => ({
 		type: 'doc',
-		content: [{ type: 'paragraph', content: [{ type: 'text', text: 'For people with ' }, { type: 'text', text: written, marks: [{ type: 'placeholder', attrs: { label } }] }] }],
+		content: [
+			{
+				type: 'paragraph',
+				content: [
+					{ type: 'text', text: 'For people with ' },
+					{ type: 'text', text: written, marks: [{ type: 'placeholder', attrs: { label } }] },
+				],
+			},
+		],
 	})
 	const filled = (label: string, written?: string) => {
 		const body = text(label, written)
@@ -93,7 +108,11 @@ describe('instructions inside core sentences', () => {
 				type: 'paragraph',
 				content: [
 					{ type: 'text', text: 'Cancer Care Nursing Services (Cancer Care Nurse Service) ' },
-					{ type: 'text', text: '<for prostate cancer OCP only add: Prostate Cancer Specialist Nurses>', marks: [{ type: 'instruction' }] },
+					{
+						type: 'text',
+						text: '<for prostate cancer OCP only add: Prostate Cancer Specialist Nurses>',
+						marks: [{ type: 'instruction' }],
+					},
 					{ type: 'text', text: '.' },
 				],
 			},

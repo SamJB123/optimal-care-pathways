@@ -41,12 +41,21 @@ export async function centralOrgId(auth: OrganisationAuth, d: Db): Promise<strin
 			.limit(1)
 	)[0]
 	if (!core) return null
-	const org = await auth.ensureOrganization({ slug: CENTRAL_ORG_SLUG, name: CENTRAL_ORG_NAME, namespace: OCP_NAMESPACE })
+	const org = await auth.ensureOrganization({
+		slug: CENTRAL_ORG_SLUG,
+		name: CENTRAL_ORG_NAME,
+		namespace: OCP_NAMESPACE,
+	})
 	return org.id === core.orgId ? org.id : null
 }
 
 /** A user's role on a document owned by `orgId`, given the central organisation's id. */
-export async function documentRole(auth: MembershipAuth, userId: string, orgId: string, central: string | null): Promise<Role | null> {
+export async function documentRole(
+	auth: MembershipAuth,
+	userId: string,
+	orgId: string,
+	central: string | null,
+): Promise<Role | null> {
 	const own = await roles.roleOf(auth, userId, orgId)
 	if (own) return own
 	if (central && central !== orgId && (await roles.roleOf(auth, userId, central))) return 'admin'
@@ -54,12 +63,21 @@ export async function documentRole(auth: MembershipAuth, userId: string, orgId: 
 }
 
 /** `documentRole` with the central organisation looked up. */
-export async function documentRoleOf(auth: OrganisationAuth, d: Db, userId: string, orgId: string): Promise<Role | null> {
+export async function documentRoleOf(
+	auth: OrganisationAuth,
+	d: Db,
+	userId: string,
+	orgId: string,
+): Promise<Role | null> {
 	return documentRole(auth, userId, orgId, await centralOrgId(auth, d))
 }
 
 /** Whether the user belongs to the central organisation. */
-export async function isCentralMember(auth: OrganisationAuth, d: Db, userId: string): Promise<boolean> {
+export async function isCentralMember(
+	auth: OrganisationAuth,
+	d: Db,
+	userId: string,
+): Promise<boolean> {
 	const central = await centralOrgId(auth, d)
 	return central !== null && (await roles.roleOf(auth, userId, central)) !== null
 }

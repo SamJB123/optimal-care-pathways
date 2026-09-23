@@ -87,7 +87,8 @@ function withoutInstructions(content: JsonNode[]): JsonNode[] {
 		}
 		const before = out.at(-1)
 		const after = content.slice(i + 1).find((n) => !isInstruction(n))
-		const closes = after === undefined || (after.type === 'text' && /^[\s.,;:)]/.test(after.text ?? ''))
+		const closes =
+			after === undefined || (after.type === 'text' && /^[\s.,;:)]/.test(after.text ?? ''))
 		if (before?.type === 'text' && closes) {
 			const text = (before.text ?? '').replace(/\s+$/, '')
 			out.pop()
@@ -118,7 +119,9 @@ export function publishBody(
 				const { marks: _dropped, ...rest } = node
 				// The subject in place of the bracketed form, the stop after it kept.
 				const written = node.text ?? ''
-				const text = SUBJECT_WHOLE.test(written.trim()) ? written.replace(SUBJECT, subject) : subject
+				const text = SUBJECT_WHOLE.test(written.trim())
+					? written.replace(SUBJECT, subject)
+					: subject
 				return [marks.length > 0 ? { ...rest, text, marks } : { ...rest, text }]
 			}
 			return [node]

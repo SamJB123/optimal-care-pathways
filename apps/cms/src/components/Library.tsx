@@ -59,15 +59,19 @@ export function Library(props: { entries: readonly LibraryEntry[] }) {
 				<SpineGlyph class="ocp-library-glyph" />
 				<h1>Optimal Care Pathways</h1>
 				<p class="ocp-library-lede">
-					The national standards for cancer care in Australia: for each cancer type and population group, what
-					good care looks like at each of seven steps, from prevention to the end of life. Published by Cancer
-					Australia.
+					The national standards for cancer care in Australia: for each cancer type and population
+					group, what good care looks like at each of seven steps, from prevention to the end of
+					life. Published by Cancer Australia.
 				</p>
 			</header>
 
 			<Show when={principles()}>
 				{(p) => (
-					<section class="ocp-library-foundation" style={familyStyle(p().accent)} aria-labelledby="ocp-library-foundation">
+					<section
+						class="ocp-library-foundation"
+						style={familyStyle(p().accent)}
+						aria-labelledby="ocp-library-foundation"
+					>
 						<p class="ocp-library-kicker" id="ocp-library-foundation">
 							The foundation for every pathway
 						</p>
@@ -83,7 +87,12 @@ export function Library(props: { entries: readonly LibraryEntry[] }) {
 				<div class="ocp-library-main">
 					<label class="ocp-library-search">
 						<span class="ocp-visually-hidden">Find a pathway</span>
-						<input type="search" placeholder="Find a pathway" value={query()} onInput={(e) => setQuery(e.currentTarget.value)} />
+						<input
+							type="search"
+							placeholder="Find a pathway"
+							value={query()}
+							onInput={(e) => setQuery(e.currentTarget.value)}
+						/>
 					</label>
 					<Show
 						when={props.entries.some((e) => e.kind === 'pathway')}
@@ -126,9 +135,12 @@ export function Library(props: { entries: readonly LibraryEntry[] }) {
 										<li style={familyStyle(entry.accent)}>
 											<a href={publishedHref(entry.slug)}>{entry.name}</a>
 											<span class="ocp-muted ocp-figure">
-												{entry.label ?? `Edition ${entry.versionNo}`} · {shortDate(entry.publishedAt ?? 0)}
+												{entry.label ?? `Edition ${entry.versionNo}`} ·{' '}
+												{shortDate(entry.publishedAt ?? 0)}
 											</span>
-											<Show when={entry.note}>{(note) => <span class="ocp-library-note">{note()}</span>}</Show>
+											<Show when={entry.note}>
+												{(note) => <span class="ocp-library-note">{note()}</span>}
+											</Show>
 										</li>
 									)}
 								</For>
@@ -138,8 +150,8 @@ export function Library(props: { entries: readonly LibraryEntry[] }) {
 					<section class="ocp-library-dev" aria-labelledby="ocp-library-dev">
 						<h2 id="ocp-library-dev">For developers</h2>
 						<p>
-							Every published pathway is also available as data: <a href="/api/v1/docs">the API</a>, and an MCP endpoint at{' '}
-							<code>/mcp</code> for AI tools.
+							Every published pathway is also available as data: <a href="/api/v1/docs">the API</a>,
+							and an MCP endpoint at <code>/mcp</code> for AI tools.
 						</p>
 					</section>
 				</aside>

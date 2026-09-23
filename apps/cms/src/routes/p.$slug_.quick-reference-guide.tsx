@@ -42,7 +42,11 @@ function GuidePage() {
 			<Masthead
 				crumbs={[
 					{ label: 'Published library', href: '/library' },
-					{ label: data().guide?.document.title ?? 'Not found', href: data().guide ? publishedHref(data().guide?.document.slug ?? '') : undefined, accent: data().guide?.accent ?? null },
+					{
+						label: data().guide?.document.title ?? 'Not found',
+						href: data().guide ? publishedHref(data().guide?.document.slug ?? '') : undefined,
+						accent: data().guide?.accent ?? null,
+					},
 					{ label: 'Quick reference guide' },
 				]}
 			/>
@@ -72,7 +76,10 @@ function GuideReading(props: { guide: Guide }) {
 	)
 	/** The guide's sections in runs, one per step. */
 	const runs = createMemo(() => {
-		const out: { step: { address: string; title: string | null } | null; sections: Guide['sections'] }[] = []
+		const out: {
+			step: { address: string; title: string | null } | null
+			sections: Guide['sections']
+		}[] = []
 		for (const section of props.guide.sections) {
 			const last = out.at(-1)
 			if (last && last.step?.address === section.step?.address) last.sections.push(section)
@@ -82,10 +89,23 @@ function GuideReading(props: { guide: Guide }) {
 	})
 	const spine = createMemo((): DocsNavItem[] => [
 		...runs().flatMap((run) =>
-			run.step ? [{ href: `#${stepAnchor(run.step.address)}`, mark: run.step.address, label: run.step.title?.replace(/^Step\s+\d+\s*:\s*/i, '') ?? `Step ${run.step.address}` }] : [],
+			run.step
+				? [
+						{
+							href: `#${stepAnchor(run.step.address)}`,
+							mark: run.step.address,
+							label:
+								run.step.title?.replace(/^Step\s+\d+\s*:\s*/i, '') ?? `Step ${run.step.address}`,
+						},
+					]
+				: [],
 		),
-		...(props.guide.items.length > 0 ? [{ href: '#point-of-care-checklists', mark: '✓', label: 'Checklists from the pathway' }] : []),
-		...(props.guide.references.length > 0 ? [{ href: '#references', mark: '¶', label: 'References' }] : []),
+		...(props.guide.items.length > 0
+			? [{ href: '#point-of-care-checklists', mark: '✓', label: 'Checklists from the pathway' }]
+			: []),
+		...(props.guide.references.length > 0
+			? [{ href: '#references', mark: '¶', label: 'References' }]
+			: []),
 	])
 	const doc = () => props.guide.document
 	return (
@@ -96,7 +116,12 @@ function GuideReading(props: { guide: Guide }) {
 			navLabel="The guide"
 			kicker="Quick reference guide"
 			title={doc().title}
-			editionLine={[doc().label ?? `Edition ${doc().version}`, doc().publishedAt ? imprintDate(Date.parse(doc().publishedAt ?? '')) : null].filter((part) => part).join(' · ')}
+			editionLine={[
+				doc().label ?? `Edition ${doc().version}`,
+				doc().publishedAt ? imprintDate(Date.parse(doc().publishedAt ?? '')) : null,
+			]
+				.filter((part) => part)
+				.join(' · ')}
 			note="The pathway at the point of care: the sections for use with a patient, step by step, and the check lists from the rest of the pathway."
 			links={
 				<>
@@ -120,10 +145,14 @@ function GuideReading(props: { guide: Guide }) {
 							{(section) => (
 								<section class="ocp-published-section" data-depth="1">
 									<h3 class="ocp-published-title" id={section.address}>
-										<Show when={section.printedNumber}>{(n) => <span class="ocp-published-number">{numberLabel(n())} </span>}</Show>
+										<Show when={section.printedNumber}>
+											{(n) => <span class="ocp-published-number">{numberLabel(n())} </span>}
+										</Show>
 										{section.title ?? section.address}
 									</h3>
-									<Show when={section.body}>{(body) => <RenderedBody body={body()} derived={derived()} />}</Show>
+									<Show when={section.body}>
+										{(body) => <RenderedBody body={body()} derived={derived()} />}
+									</Show>
 								</section>
 							)}
 						</For>
@@ -140,11 +169,17 @@ function GuideReading(props: { guide: Guide }) {
 							<section class="ocp-published-section" data-depth="1">
 								<h3 class="ocp-published-title" id={`check-${item.address}`}>
 									<a href={item.url}>
-										<Show when={item.printedNumber}>{(n) => <span class="ocp-published-number">{numberLabel(n())} </span>}</Show>
+										<Show when={item.printedNumber}>
+											{(n) => <span class="ocp-published-number">{numberLabel(n())} </span>}
+										</Show>
 										{item.title ?? item.address}
 									</a>
 								</h3>
-								<Show when={item.list}>{(list) => <RenderedBody body={{ type: 'doc', content: [list()] }} derived={derived()} />}</Show>
+								<Show when={item.list}>
+									{(list) => (
+										<RenderedBody body={{ type: 'doc', content: [list()] }} derived={derived()} />
+									)}
+								</Show>
 							</section>
 						)}
 					</For>

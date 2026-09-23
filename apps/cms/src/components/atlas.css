@@ -280,7 +280,10 @@
 	.ocp-atlas-card {
 		position-anchor: --ocp-atlas-band;
 		position-area: block-end span-inline-end;
-		position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+		position-try-fallbacks:
+			flip-block,
+			flip-inline,
+			flip-block flip-inline;
 		margin: 0.4rem 0 0;
 		inline-size: min(26rem, calc(100vw - 2rem));
 		max-block-size: 22rem;

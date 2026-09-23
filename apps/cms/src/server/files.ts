@@ -32,7 +32,8 @@ const imageExtension = (type: string): string | null =>
 export function imageProblem(file: { type: string; size: number }): string | null {
 	if (!imageExtension(file.type)) return 'Choose a PNG, JPEG, WebP, GIF or SVG image.'
 	if (file.size === 0) return 'That file is empty.'
-	if (file.size > IMAGE_MAX_BYTES) return 'That image is larger than 8 MB. Make it smaller and try again.'
+	if (file.size > IMAGE_MAX_BYTES)
+		return 'That image is larger than 8 MB. Make it smaller and try again.'
 	return null
 }
 
@@ -52,7 +53,8 @@ export const uploadImage = createServerFn({ method: 'POST' })
 		if (!(form instanceof FormData)) throw new Error('Send the image as a form.')
 		const documentId = form.get('documentId')
 		const file = form.get('file')
-		if (typeof documentId !== 'string' || !/^[\w-]{1,64}$/.test(documentId)) throw new Error('Which document is this image for?')
+		if (typeof documentId !== 'string' || !/^[\w-]{1,64}$/.test(documentId))
+			throw new Error('Which document is this image for?')
 		if (!(file instanceof File)) throw new Error('Choose an image to upload.')
 		return { documentId, file }
 	})
@@ -60,7 +62,11 @@ export const uploadImage = createServerFn({ method: 'POST' })
 		const userId = requireUser(context.userId)
 		const { env, d } = await envOf()
 		const document = (
-			await d.select({ orgId: schema.documents.orgId }).from(schema.documents).where(eq(schema.documents.id, data.documentId)).limit(1)
+			await d
+				.select({ orgId: schema.documents.orgId })
+				.from(schema.documents)
+				.where(eq(schema.documents.id, data.documentId))
+				.limit(1)
 		)[0]
 		if (!document) throw new Error('Document not found.')
 		const role = await documentRoleOf(env.AUTH, d, userId, document.orgId)
@@ -71,7 +77,10 @@ export const uploadImage = createServerFn({ method: 'POST' })
 		const extension = imageExtension(data.file.type) ?? 'bin'
 		const key = `images/${data.documentId}/${crypto.randomUUID()}.${extension}`
 		await env.FILES.put(key, await data.file.arrayBuffer(), {
-			httpMetadata: { contentType: data.file.type, cacheControl: 'public, max-age=31536000, immutable' },
+			httpMetadata: {
+				contentType: data.file.type,
+				cacheControl: 'public, max-age=31536000, immutable',
+			},
 			customMetadata: { uploadedBy: userId, name: data.file.name.slice(0, 200) },
 		})
 		return { src: fileHref(key) }

@@ -29,7 +29,8 @@ export const Route = createFileRoute('/legacy/$slug')({
 
 type Legacy = NonNullable<Awaited<ReturnType<typeof legacyDocumentBySlug>>>
 
-const printedOn = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('en-AU', { month: 'long', year: 'numeric' }) : null)
+const printedOn = (iso: string | null) =>
+	iso ? new Date(iso).toLocaleDateString('en-AU', { month: 'long', year: 'numeric' }) : null
 
 function LegacyPage() {
 	const data = Route.useLoaderData()
@@ -38,7 +39,10 @@ function LegacyPage() {
 			<Masthead
 				crumbs={[
 					{ label: 'Published library', href: '/library' },
-					{ label: data().legacy?.document.title ?? 'Not found', accent: data().legacy?.pathway?.accent ?? null },
+					{
+						label: data().legacy?.document.title ?? 'Not found',
+						accent: data().legacy?.pathway?.accent ?? null,
+					},
 					{ label: 'As printed' },
 				]}
 			/>
@@ -73,7 +77,11 @@ function LegacyReading(props: { legacy: Legacy }) {
 			.filter((s) => s.level <= 1)
 			.map((s) => {
 				const step = /^step\s+(\d+)/i.exec(s.heading ?? '')?.[1]
-				return { href: `#${anchorOf(s)}`, mark: step ?? '·', label: (s.heading ?? s.key ?? '').replace(/^Step\s+\d+\s*:\s*/i, '') }
+				return {
+					href: `#${anchorOf(s)}`,
+					mark: step ?? '·',
+					label: (s.heading ?? s.key ?? '').replace(/^Step\s+\d+\s*:\s*/i, ''),
+				}
 			}),
 	)
 	const doc = () => props.legacy.document
@@ -85,12 +93,19 @@ function LegacyReading(props: { legacy: Legacy }) {
 			navLabel="As printed"
 			kicker="Previous edition, as printed"
 			title={doc().title}
-			editionLine={[doc().edition ?? 'Edition not stated', printedOn(doc().publicationDate) ? `published ${printedOn(doc().publicationDate)}` : null].filter((part) => part).join(' · ')}
+			editionLine={[
+				doc().edition ?? 'Edition not stated',
+				printedOn(doc().publicationDate) ? `published ${printedOn(doc().publicationDate)}` : null,
+			]
+				.filter((part) => part)
+				.join(' · ')}
 			note="An archival copy: the pathway as its PDF printed it, read section by section. It is not kept up to date."
 			links={
 				<>
 					<Show when={doc().pdfUrl}>{(url) => <a href={url()}>The PDF as printed</a>}</Show>
-					<Show when={props.legacy.pathway?.published ? props.legacy.pathway : null}>{(pathway) => <a href={publishedHref(pathway().slug)}>The current pathway</a>}</Show>
+					<Show when={props.legacy.pathway?.published ? props.legacy.pathway : null}>
+						{(pathway) => <a href={publishedHref(pathway().slug)}>The current pathway</a>}
+					</Show>
 					<CopyLink />
 				</>
 			}
@@ -121,7 +136,9 @@ function LegacyReading(props: { legacy: Legacy }) {
 									{section.heading ?? section.key}
 								</h2>
 							</Show>
-							<Show when={section.body}>{(body) => <RenderedBody body={body()} derived={derived()} />}</Show>
+							<Show when={section.body}>
+								{(body) => <RenderedBody body={body()} derived={derived()} />}
+							</Show>
 						</section>
 					)
 				}}

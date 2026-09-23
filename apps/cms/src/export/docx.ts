@@ -141,10 +141,20 @@ const HEADINGS = [
 	HeadingLevel.HEADING_6,
 ] as const
 
-const headingAt = (level: number) => HEADINGS[Math.min(6, Math.max(1, level)) - 1] ?? HeadingLevel.HEADING_6
+const headingAt = (level: number) =>
+	HEADINGS[Math.min(6, Math.max(1, level)) - 1] ?? HeadingLevel.HEADING_6
 
-const line = (color: string, size = 8): IBorderOptions => ({ style: BorderStyle.SINGLE, size, color })
-const around = (border: IBorderOptions) => ({ top: border, bottom: border, left: border, right: border })
+const line = (color: string, size = 8): IBorderOptions => ({
+	style: BorderStyle.SINGLE,
+	size,
+	color,
+})
+const around = (border: IBorderOptions) => ({
+	top: border,
+	bottom: border,
+	left: border,
+	right: border,
+})
 const fill = (color: string) => ({ type: ShadingType.CLEAR, color: 'auto', fill: color })
 
 const ALIGN = {
@@ -154,10 +164,13 @@ const ALIGN = {
 	justify: AlignmentType.JUSTIFIED,
 } as const
 const alignOf = (value: unknown) =>
-	value === 'left' || value === 'center' || value === 'right' || value === 'justify' ? ALIGN[value] : undefined
+	value === 'left' || value === 'center' || value === 'right' || value === 'justify'
+		? ALIGN[value]
+		: undefined
 
 const str = (value: unknown): string => (typeof value === 'string' ? value : '')
-const num = (value: unknown): number | null => (typeof value === 'number' && value > 0 ? value : null)
+const num = (value: unknown): number | null =>
+	typeof value === 'number' && value > 0 ? value : null
 
 // ---------------------------------------------------------------------------
 // Images
@@ -196,7 +209,8 @@ export function pictureOf(data: Uint8Array): Picture | null {
 				i++
 				continue
 			}
-			if (SOF.has(marker)) return { type: 'jpg', data, width: u16be(data, i + 7), height: u16be(data, i + 5) }
+			if (SOF.has(marker))
+				return { type: 'jpg', data, width: u16be(data, i + 7), height: u16be(data, i + 5) }
 			i += 2 + u16be(data, i + 2)
 		}
 	}
@@ -244,7 +258,11 @@ const BASE_NUMBERING = [
 	{ reference: 'task-open', levels: glyphLevels(['☐']) },
 ]
 
-const ORDERED_FORMATS = [LevelFormat.DECIMAL, LevelFormat.LOWER_LETTER, LevelFormat.LOWER_ROMAN] as const
+const ORDERED_FORMATS = [
+	LevelFormat.DECIMAL,
+	LevelFormat.LOWER_LETTER,
+	LevelFormat.LOWER_ROMAN,
+] as const
 
 const orderedLevels = (startLevel: number, start: number): ILevelsOptions[] =>
 	LEVELS.map((level) => ({
@@ -302,7 +320,11 @@ class Writer {
 
 	private link(href: string, text: string, style: RunStyle = {}): ParagraphChild {
 		const target = this.target(href)
-		const run = new TextRun({ text, ...style, ...(target ? { color: INK.primary, underline: {} } : {}) })
+		const run = new TextRun({
+			text,
+			...style,
+			...(target ? { color: INK.primary, underline: {} } : {}),
+		})
 		return target ? new ExternalHyperlink({ link: target, children: [run] }) : run
 	}
 
@@ -365,12 +387,16 @@ class Writer {
 		const setWidth = num(node.attrs?.width)
 		const setHeight = num(node.attrs?.height)
 		const w = setWidth ?? picture.width
-		const h = setWidth !== null && setHeight !== null ? setHeight : (picture.height * w) / picture.width
+		const h =
+			setWidth !== null && setHeight !== null ? setHeight : (picture.height * w) / picture.width
 		const scale = Math.min(1, Math.max(1, width) / TWIPS_PER_PX / w, MAX_IMAGE_HEIGHT_PX / h)
 		return new ImageRun({
 			type: picture.type,
 			data: picture.data,
-			transformation: { width: Math.max(1, Math.round(w * scale)), height: Math.max(1, Math.round(h * scale)) },
+			transformation: {
+				width: Math.max(1, Math.round(w * scale)),
+				height: Math.max(1, Math.round(h * scale)),
+			},
 			altText: { name: alt || 'Figure', description: alt, title: alt },
 		})
 	}
@@ -404,12 +430,16 @@ class Writer {
 				case 'citation': {
 					const n = this.derived.referenceNumbers[str(node.attrs?.referenceId)]
 					const joined = nodes[i - 1]?.type === 'citation'
-					out.push(new TextRun({ ...style, text: `${joined ? ',' : ''}${n ?? '?'}`, superScript: true }))
+					out.push(
+						new TextRun({ ...style, text: `${joined ? ',' : ''}${n ?? '?'}`, superScript: true }),
+					)
 					break
 				}
 				case 'footnote': {
 					const id = this.nextFootnote++
-					this.footnotes[String(id)] = { children: [new Paragraph({ children: [new TextRun(str(node.attrs?.text))] })] }
+					this.footnotes[String(id)] = {
+						children: [new Paragraph({ children: [new TextRun(str(node.attrs?.text))] })],
+					}
 					out.push(new FootnoteReferenceRun(id))
 					break
 				}
@@ -446,9 +476,15 @@ class Writer {
 			if (node.type === 'list') {
 				const previous = nodes[i - 1]
 				const kind = str(node.attrs?.kind) || 'bullet'
-				if (kind === 'ordered' && (ordered === null || previous?.type !== 'list' || str(previous.attrs?.kind) !== 'ordered')) {
+				if (
+					kind === 'ordered' &&
+					(ordered === null || previous?.type !== 'list' || str(previous.attrs?.kind) !== 'ordered')
+				) {
 					ordered = `ordered-${this.numbering.length}`
-					this.numbering.push({ reference: ordered, levels: orderedLevels(Math.min(8, ctx.listLevel), num(node.attrs?.order) ?? 1) })
+					this.numbering.push({
+						reference: ordered,
+						levels: orderedLevels(Math.min(8, ctx.listLevel), num(node.attrs?.order) ?? 1),
+					})
 				}
 				const reference =
 					kind === 'ordered'
@@ -465,7 +501,8 @@ class Writer {
 				made = this.listItem(node, ctx, reference)
 			} else made = this.block(node, ctx)
 			const [first] = made
-			if (first instanceof Table && out.at(-1) instanceof Table) out.push(new Paragraph({ children: [] }))
+			if (first instanceof Table && out.at(-1) instanceof Table)
+				out.push(new Paragraph({ children: [] }))
 			out.push(...made)
 		})
 		return out
@@ -490,12 +527,21 @@ class Writer {
 					indent: { left: ctx.indent + INDENT, hanging: INDENT },
 					alignment: lead ? alignOf(first.attrs?.textAlign) : undefined,
 				})
-		const inner: Ctx = { ...ctx, indent: ctx.indent + (icon ? 2 * INDENT : INDENT), rule: null, listLevel: ctx.listLevel + 1 }
+		const inner: Ctx = {
+			...ctx,
+			indent: ctx.indent + (icon ? 2 * INDENT : INDENT),
+			rule: null,
+			listLevel: ctx.listLevel + 1,
+		}
 		return [head, ...this.blocks(lead ? rest : (node.content ?? []), inner)]
 	}
 
 	/** Blocks inside a one-cell frame: a box, a timeframe, guidance. */
-	private framed(content: Block[], ctx: Ctx, paint: { border: string; fill: string | null }): Table {
+	private framed(
+		content: Block[],
+		ctx: Ctx,
+		paint: { border: string; fill: string | null },
+	): Table {
 		const width = ctx.width - ctx.indent
 		return new Table({
 			width: { size: width, type: WidthType.DXA },
@@ -533,17 +579,27 @@ class Writer {
 
 	private banner(node: JsonNode, ctx: Ctx): Paragraph {
 		const band = node.attrs?.tone !== 'sub'
-		return this.para(this.runs(node.content ?? [], { ...ctx.run, bold: true, ...(band ? { color: 'FFFFFF' } : {}) }, ctx), ctx, {
-			shading: fill(band ? INK.secondary : SOFT.secondary),
-			keepNext: true,
-		})
+		return this.para(
+			this.runs(
+				node.content ?? [],
+				{ ...ctx.run, bold: true, ...(band ? { color: 'FFFFFF' } : {}) },
+				ctx,
+			),
+			ctx,
+			{
+				shading: fill(band ? INK.secondary : SOFT.secondary),
+				keepNext: true,
+			},
+		)
 	}
 
 	private table(node: JsonNode, ctx: Ctx): Table {
 		const rows = node.content ?? []
 		const columns = Math.max(
 			1,
-			...rows.map((row) => (row.content ?? []).reduce((n, cell) => n + (num(cell.attrs?.colspan) ?? 1), 0)),
+			...rows.map((row) =>
+				(row.content ?? []).reduce((n, cell) => n + (num(cell.attrs?.colspan) ?? 1), 0),
+			),
 		)
 		const width = ctx.width - ctx.indent
 		const each = Math.floor(width / columns)
@@ -551,11 +607,16 @@ class Writer {
 			width: { size: each * columns, type: WidthType.DXA },
 			columnWidths: Array.from({ length: columns }, () => each),
 			...(ctx.indent > 0 ? { indent: { size: ctx.indent, type: WidthType.DXA } } : {}),
-			borders: { ...around(line(RULE, 4)), insideHorizontal: line(RULE, 4), insideVertical: line(RULE, 4) },
+			borders: {
+				...around(line(RULE, 4)),
+				insideHorizontal: line(RULE, 4),
+				insideVertical: line(RULE, 4),
+			},
 			rows: rows.map((row, r) => {
 				const cells = row.content ?? []
 				return new TableRow({
-					tableHeader: r === 0 && cells.length > 0 && cells.every((c) => c.type === 'tableHeaderCell'),
+					tableHeader:
+						r === 0 && cells.length > 0 && cells.every((c) => c.type === 'tableHeaderCell'),
 					children: cells.map((cell) => {
 						const span = num(cell.attrs?.colspan) ?? 1
 						const header = cell.type === 'tableHeaderCell'
@@ -574,7 +635,9 @@ class Writer {
 							width: { size: each * span, type: WidthType.DXA },
 							margins: CELL_MARGINS,
 							...(span > 1 ? { columnSpan: span } : {}),
-							...((num(cell.attrs?.rowspan) ?? 1) > 1 ? { rowSpan: num(cell.attrs?.rowspan) ?? 1 } : {}),
+							...((num(cell.attrs?.rowspan) ?? 1) > 1
+								? { rowSpan: num(cell.attrs?.rowspan) ?? 1 }
+								: {}),
 							...(shade ? { shading: fill(shade) } : {}),
 						})
 					}),
@@ -626,7 +689,12 @@ class Writer {
 				indent: { left: ctx.indent + INDENT, hanging: INDENT },
 				keepNext: description.length > 0,
 			}),
-			...this.blocks(description, { ...ctx, indent: ctx.indent + INDENT, rule: null, run: { ...ctx.run, color: MUTED } }),
+			...this.blocks(description, {
+				...ctx,
+				indent: ctx.indent + INDENT,
+				rule: null,
+				run: { ...ctx.run, color: MUTED },
+			}),
 		]
 	}
 
@@ -648,10 +716,16 @@ class Writer {
 			{ keepNext: true },
 		)
 		if (rows.length === 0) return [caption]
-		const stepLabel = (row: (typeof rows)[number]) => (row.stepNumber !== null ? `Step ${row.stepNumber}` : row.section)
+		const stepLabel = (row: (typeof rows)[number]) =>
+			row.stepNumber !== null ? `Step ${row.stepNumber}` : row.section
 		const cell = (children: Paragraph[], header = false) =>
-			new TableCell({ children: closed(children), margins: CELL_MARGINS, ...(header ? { shading: fill(HEADER_FILL) } : {}) })
-		const plain = (text: string, header = false) => new Paragraph({ children: [new TextRun({ text, bold: header })] })
+			new TableCell({
+				children: closed(children),
+				margins: CELL_MARGINS,
+				...(header ? { shading: fill(HEADER_FILL) } : {}),
+			})
+		const plain = (text: string, header = false) =>
+			new Paragraph({ children: [new TextRun({ text, bold: header })] })
 		const width = ctx.width - ctx.indent
 		const widths = [0.2, 0.4, 0.4].map((share) => Math.floor(width * share))
 		return [
@@ -660,24 +734,45 @@ class Writer {
 				width: { size: widths.reduce((a, b) => a + b, 0), type: WidthType.DXA },
 				columnWidths: widths,
 				...(ctx.indent > 0 ? { indent: { size: ctx.indent, type: WidthType.DXA } } : {}),
-				borders: { ...around(line(INK.error, 8)), insideHorizontal: line(RULE, 4), insideVertical: line(RULE, 4) },
+				borders: {
+					...around(line(INK.error, 8)),
+					insideHorizontal: line(RULE, 4),
+					insideVertical: line(RULE, 4),
+				},
 				rows: [
 					new TableRow({
 						tableHeader: true,
-						children: ['Pathway step', 'Care point', 'Timeframe'].map((label) => cell([plain(label, true)], true)),
+						children: ['Pathway step', 'Care point', 'Timeframe'].map((label) =>
+							cell([plain(label, true)], true),
+						),
 					}),
 					...rows.map(
 						(row, i) =>
 							new TableRow({
 								children: [
-									cell([plain(i > 0 && stepLabel(rows[i - 1] ?? row) === stepLabel(row) ? '' : stepLabel(row))]),
+									cell([
+										plain(
+											i > 0 && stepLabel(rows[i - 1] ?? row) === stepLabel(row)
+												? ''
+												: stepLabel(row),
+										),
+									]),
 									cell([plain(row.carePoint)]),
 									cell(
 										row.statements.map(
 											(alternatives) =>
 												new Paragraph({
 													children: alternatives.flatMap((alternative, j) => [
-														...(j > 0 ? [new TextRun({ text: ' or ', italics: true, bold: true, color: INK.success })] : []),
+														...(j > 0
+															? [
+																	new TextRun({
+																		text: ' or ',
+																		italics: true,
+																		bold: true,
+																		color: INK.success,
+																	}),
+																]
+															: []),
 														new TextRun(alternative),
 													]),
 												}),
@@ -695,7 +790,18 @@ class Writer {
 	private pathwayMap(ctx: Ctx): Block[] {
 		const steps = this.derived.map?.nodes.filter((n) => n.kind === 'step') ?? []
 		if (steps.length === 0)
-			return [this.para([new TextRun({ text: 'The steps map is shown on the online page.', italics: true, color: MUTED })], ctx)]
+			return [
+				this.para(
+					[
+						new TextRun({
+							text: 'The steps map is shown on the online page.',
+							italics: true,
+							color: MUTED,
+						}),
+					],
+					ctx,
+				),
+			]
 		return steps.map(
 			(step) =>
 				new Paragraph({
@@ -710,7 +816,11 @@ class Writer {
 		const children = node.content ?? []
 		switch (node.type) {
 			case 'paragraph':
-				return [this.para(this.runs(children, ctx.run, ctx), ctx, { alignment: alignOf(node.attrs?.textAlign) })]
+				return [
+					this.para(this.runs(children, ctx.run, ctx), ctx, {
+						alignment: alignOf(node.attrs?.textAlign),
+					}),
+				]
 			case 'heading':
 				return [
 					this.para(this.runs(children, ctx.run, ctx), ctx, {
@@ -722,7 +832,10 @@ class Writer {
 			case 'carePoint':
 				return [
 					this.para(
-						[new TextRun({ text: '⏱ ', color: INK.error }), ...this.runs(children, { ...ctx.run, bold: true }, ctx)],
+						[
+							new TextRun({ text: '⏱ ', color: INK.error }),
+							...this.runs(children, { ...ctx.run, bold: true }, ctx),
+						],
 						ctx,
 						{ alignment: alignOf(node.attrs?.textAlign), keepNext: true },
 					),
@@ -741,7 +854,10 @@ class Writer {
 				const share = (ctx.width - ctx.indent) / Math.max(1, children.length)
 				return [
 					this.para(
-						children.flatMap((image, i) => [...(i > 0 ? [new TextRun('  ')] : []), this.image(image, share - 60)]),
+						children.flatMap((image, i) => [
+							...(i > 0 ? [new TextRun('  ')] : []),
+							this.image(image, share - 60),
+						]),
 						ctx,
 						{ alignment: AlignmentType.CENTER },
 					),
@@ -764,20 +880,46 @@ class Writer {
 				]
 			}
 			case 'timeframe':
-				return [this.framed(this.blocks(children, this.inside(ctx)), ctx, { border: INK.error, fill: null })]
+				return [
+					this.framed(this.blocks(children, this.inside(ctx)), ctx, {
+						border: INK.error,
+						fill: null,
+					}),
+				]
 			case 'guidance': {
 				const done = guidanceAttrsOf(node.attrs ?? {}).done
 				const inner = this.inside(ctx)
 				const label = new Paragraph({
-					children: [new TextRun({ text: done ? 'Drafting guidance (done)' : 'Drafting guidance', bold: true, allCaps: true, size: 16, color: INK.success })],
+					children: [
+						new TextRun({
+							text: done ? 'Drafting guidance (done)' : 'Drafting guidance',
+							bold: true,
+							allCaps: true,
+							size: 16,
+							color: INK.success,
+						}),
+					],
 					keepNext: true,
 				})
-				return [this.framed([label, ...this.blocks(children, inner)], ctx, { border: INK.success, fill: SOFT.success })]
+				return [
+					this.framed([label, ...this.blocks(children, inner)], ctx, {
+						border: INK.success,
+						fill: SOFT.success,
+					}),
+				]
 			}
 			case 'variants': {
 				const inner: Ctx = { ...ctx, indent: ctx.indent + INDENT, rule: VARIANTS_RULE }
 				return children.flatMap((variant, i) => [
-					...(i > 0 ? [this.para([new TextRun({ text: 'Or', italics: true, bold: true, color: INK.success })], inner, { keepNext: true })] : []),
+					...(i > 0
+						? [
+								this.para(
+									[new TextRun({ text: 'Or', italics: true, bold: true, color: INK.success })],
+									inner,
+									{ keepNext: true },
+								),
+							]
+						: []),
 					...this.blocks(variant.content ?? [], inner),
 				])
 			}
@@ -801,11 +943,16 @@ class Writer {
 /** A table cell's content as Word requires it: at least one paragraph, and a paragraph
  *  last. */
 function closed(content: Block[]): Block[] {
-	return content.at(-1) instanceof Paragraph ? content : [...content, new Paragraph({ children: [] })]
+	return content.at(-1) instanceof Paragraph
+		? content
+		: [...content, new Paragraph({ children: [] })]
 }
 
 /** One reference as the published list prints it: a printed address is its link. */
-function referenceRuns(reference: ListedReference, link: (href: string, text: string) => ParagraphChild): ParagraphChild[] {
+function referenceRuns(
+	reference: ListedReference,
+	link: (href: string, text: string) => ParagraphChild,
+): ParagraphChild[] {
 	const split = printedAddress(reference.citation)
 	if (split)
 		return [
@@ -813,7 +960,10 @@ function referenceRuns(reference: ListedReference, link: (href: string, text: st
 			link(reference.url ?? hrefOf(split.address), split.address),
 			new TextRun(`>${split.after}`),
 		]
-	return [new TextRun(reference.citation), ...(reference.url ? [new TextRun(' '), link(reference.url, reference.url)] : [])]
+	return [
+		new TextRun(reference.citation),
+		...(reference.url ? [new TextRun(' '), link(reference.url, reference.url)] : []),
+	]
 }
 
 // ---------------------------------------------------------------------------
@@ -836,20 +986,39 @@ export async function draftDocx(input: DraftDocxInput): Promise<Uint8Array<Array
 	const date = imprintDate(input.exportedAt)
 	const children: Block[] = [
 		new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun(input.title)] }),
-		new Paragraph({ children: [new TextRun({ text: `Draft edition ${input.editionNo}`, bold: true, size: 28, color: INK.error })] }),
 		new Paragraph({
-			children: [new TextRun({ text: `Not for publication. Exported ${date} by ${input.exportedBy}.`, italics: true })],
+			children: [
+				new TextRun({
+					text: `Draft edition ${input.editionNo}`,
+					bold: true,
+					size: 28,
+					color: INK.error,
+				}),
+			],
+		}),
+		new Paragraph({
+			children: [
+				new TextRun({
+					text: `Not for publication. Exported ${date} by ${input.exportedBy}.`,
+					italics: true,
+				}),
+			],
 			spacing: { after: 360 },
 		}),
 	]
 	for (const section of input.sections) {
 		const level = Math.min(6, section.depth + 1)
 		const number = section.printedNumber ? `${numberLabel(section.printedNumber)} ` : ''
-		const cites = section.titleCitations.map((id) => input.derived.referenceNumbers[id] ?? '?').join(',')
+		const cites = section.titleCitations
+			.map((id) => input.derived.referenceNumbers[id] ?? '?')
+			.join(',')
 		children.push(
 			new Paragraph({
 				heading: headingAt(level),
-				children: [new TextRun(`${number}${section.title}`), ...(cites ? [new TextRun({ text: cites, superScript: true })] : [])],
+				children: [
+					new TextRun(`${number}${section.title}`),
+					...(cites ? [new TextRun({ text: cites, superScript: true })] : []),
+				],
 			}),
 		)
 		if (!section.body) continue
@@ -861,18 +1030,27 @@ export async function draftDocx(input: DraftDocxInput): Promise<Uint8Array<Array
 			run: {},
 			listLevel: 0,
 		})
-		if (made[0] instanceof Table && children.at(-1) instanceof Table) children.push(new Paragraph({ children: [] }))
+		if (made[0] instanceof Table && children.at(-1) instanceof Table)
+			children.push(new Paragraph({ children: [] }))
 		children.push(...made)
 	}
 	if (input.references.length > 0) {
-		children.push(new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun('References')] }))
+		children.push(
+			new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun('References')] }),
+		)
 		const link = (href: string, text: string): ParagraphChild =>
-			new ExternalHyperlink({ link: href, children: [new TextRun({ text, color: INK.primary, underline: {} })] })
+			new ExternalHyperlink({
+				link: href,
+				children: [new TextRun({ text, color: INK.primary, underline: {} })],
+			})
 		for (const reference of input.references)
 			children.push(
 				new Paragraph({
 					indent: { left: 560, hanging: 560 },
-					children: [new TextRun({ children: [`${reference.number}.`, new Tab()] }), ...referenceRuns(reference, link)],
+					children: [
+						new TextRun({ children: [`${reference.number}.`, new Tab()] }),
+						...referenceRuns(reference, link),
+					],
 				}),
 			)
 	}
@@ -888,7 +1066,10 @@ export async function draftDocx(input: DraftDocxInput): Promise<Uint8Array<Array
 		styles: {
 			default: {
 				document: { run: { font: 'Arial', size: 20 }, paragraph: { spacing: { after: 120 } } },
-				title: { run: { font: 'Arial', size: 40, bold: true, color: INK.secondary }, paragraph: { spacing: { after: 120 } } },
+				title: {
+					run: { font: 'Arial', size: 40, bold: true, color: INK.secondary },
+					paragraph: { spacing: { after: 120 } },
+				},
 				heading1: heading(32),
 				heading2: heading(28),
 				heading3: heading(24),
@@ -904,7 +1085,12 @@ export async function draftDocx(input: DraftDocxInput): Promise<Uint8Array<Array
 				properties: {
 					page: {
 						size: { width: PAGE.width, height: PAGE.height },
-						margin: { top: PAGE.margin, right: PAGE.margin, bottom: PAGE.margin, left: PAGE.margin },
+						margin: {
+							top: PAGE.margin,
+							right: PAGE.margin,
+							bottom: PAGE.margin,
+							left: PAGE.margin,
+						},
 					},
 				},
 				headers: {

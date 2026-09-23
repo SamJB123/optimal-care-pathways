@@ -30,7 +30,13 @@
 import type { JsonNode } from '#/content/schema.ts'
 import type * as schema from '#/db/schema.ts'
 import type { SeedResult, SectionRow as CoreSectionRow } from '#/template/rows.ts'
-import type { Block, ExtractedDocument, Paragraph, Section, Table } from '../template/extract/model.ts'
+import type {
+	Block,
+	ExtractedDocument,
+	Paragraph,
+	Section,
+	Table,
+} from '../template/extract/model.ts'
 import { plainText } from '../template/extract/model.ts'
 import { createBlockMapper } from '../template/extract/map-to-content.ts'
 import { type LegacyPathway, legacyFigureUrl } from './catalogue.ts'
@@ -93,7 +99,16 @@ export interface Ledger {
 	citations: { matched: number; unmatched: string[]; byName: string[] }
 	/** Rows the summary timeframes table printed, and how each was met: by a timeframe box
 	 *  the body's own subsection made, or by a box created from the row (decision 148). */
-	timeframes: { figureRows: number; boxes: number; rows: { step: number | null; carePoint: string; source: 'body' | 'row'; destination: string | null }[] }
+	timeframes: {
+		figureRows: number
+		boxes: number
+		rows: {
+			step: number | null
+			carePoint: string
+			source: 'body' | 'row'
+			destination: string | null
+		}[]
+	}
 	checkItems: number
 }
 
@@ -171,7 +186,11 @@ function childKeyOf(parent: LegacyNode, section: Section): string {
 	const step = STEP.exec(section.headingText)
 	if (parent.l1 === 'pathway-note' && step) return `step-${step[1]}`
 	if (parent.l1 === 'summary' && step) return `summary/step-${step[1]}`
-	if (parent.l1 === 'intent' && /^optimal care pathway resources$/i.test(section.headingText.trim())) return 'resources'
+	if (
+		parent.l1 === 'intent' &&
+		/^optimal care pathway resources$/i.test(section.headingText.trim())
+	)
+		return 'resources'
 	return `${parent.key}/${slugify(titleOf(section.headingText, section.number))}`
 }
 
@@ -193,7 +212,8 @@ function pagesOf(section: { page: number; blocks: Block[] }): string {
 		for (const b of blocks) {
 			if ('page' in b) last = Math.max(last, b.page)
 			if (b.kind === 'list') for (const item of b.items) visit(item.blocks)
-			else if (b.kind === 'table') for (const row of b.rows) for (const cell of row.cells) visit(cell.blocks)
+			else if (b.kind === 'table')
+				for (const row of b.rows) for (const cell of row.cells) visit(cell.blocks)
 		}
 	}
 	visit(section.blocks)
@@ -206,7 +226,8 @@ const textOfBlocks = (blocks: Block[]): string => {
 		for (const b of list) {
 			if (b.kind === 'paragraph') out.push(plainText(b.runs))
 			else if (b.kind === 'list') for (const item of b.items) visit(item.blocks)
-			else if (b.kind === 'table') for (const row of b.rows) for (const cell of row.cells) visit(cell.blocks)
+			else if (b.kind === 'table')
+				for (const row of b.rows) for (const cell of row.cells) visit(cell.blocks)
 			else out.push(b.alt)
 		}
 	}
@@ -218,23 +239,43 @@ const textOfBlocks = (blocks: Block[]): string => {
  * The legacy tree as identity nodes. The front matter (title page, acknowledgement,
  * imprint) is one chapter each of the sandbox record's three identities.
  */
-function legacyTree(model: ExtractedDocument, id: (kind: string, key: string) => string, slug: string): LegacyNode[] {
+function legacyTree(
+	model: ExtractedDocument,
+	id: (kind: string, key: string) => string,
+	slug: string,
+): LegacyNode[] {
 	const nodes: LegacyNode[] = []
 	const nodeId = (key: string) => id('legacy-section', `${slug}:${key}`)
 	const frontBlocks = model.front
-	const isAcknowledgement = (b: Block) => b.kind === 'paragraph' && /^statement of acknowledgement/i.test(plainText(b.runs).trim())
-	const isImprint = (b: Block) => b.kind === 'paragraph' && /^(first published|this edition published|isbn|published by|©)/i.test(plainText(b.runs).trim())
+	const isAcknowledgement = (b: Block) =>
+		b.kind === 'paragraph' && /^statement of acknowledgement/i.test(plainText(b.runs).trim())
+	const isImprint = (b: Block) =>
+		b.kind === 'paragraph' &&
+		/^(first published|this edition published|isbn|published by|©)/i.test(plainText(b.runs).trim())
 	const ackAt = frontBlocks.findIndex(isAcknowledgement)
 	const imprintAt = frontBlocks.findIndex((b, i) => i > (ackAt < 0 ? -1 : ackAt) && isImprint(b))
 	const front: [string, string, Block[]][] = [
-		['front-matter', 'Front matter', frontMatterAsPrinted(frontBlocks.slice(0, ackAt < 0 ? (imprintAt < 0 ? frontBlocks.length : imprintAt) : ackAt), model.title)],
-		['acknowledgement', 'Statement of acknowledgement', ackAt < 0 ? [] : frontBlocks.slice(ackAt, imprintAt < 0 ? frontBlocks.length : imprintAt)],
+		[
+			'front-matter',
+			'Front matter',
+			frontMatterAsPrinted(
+				frontBlocks.slice(0, ackAt < 0 ? (imprintAt < 0 ? frontBlocks.length : imprintAt) : ackAt),
+				model.title,
+			),
+		],
+		[
+			'acknowledgement',
+			'Statement of acknowledgement',
+			ackAt < 0 ? [] : frontBlocks.slice(ackAt, imprintAt < 0 ? frontBlocks.length : imprintAt),
+		],
 		['isbn', 'Publication details', imprintAt < 0 ? [] : frontBlocks.slice(imprintAt)],
 	]
 	let order = 0
 	for (const [key, heading, blocks] of front) {
 		if (blocks.length === 0) continue
-		const page = blocks.map((b) => ('page' in b ? b.page : 1)).reduce((a, b) => Math.min(a, b), Number.POSITIVE_INFINITY)
+		const page = blocks
+			.map((b) => ('page' in b ? b.page : 1))
+			.reduce((a, b) => Math.min(a, b), Number.POSITIVE_INFINITY)
 		nodes.push({
 			id: nodeId(key),
 			key,
@@ -273,10 +314,16 @@ function legacyTree(model: ExtractedDocument, id: (kind: string, key: string) =>
 	return nodes
 }
 
-const flatten = (nodes: LegacyNode[]): LegacyNode[] => nodes.flatMap((n) => [n, ...flatten(n.children)])
+const flatten = (nodes: LegacyNode[]): LegacyNode[] =>
+	nodes.flatMap((n) => [n, ...flatten(n.children)])
 
 /** The cover's letter-spaced edition ("S E C O N D E D I T I O N") as words. */
-const EDITION_WORDS: Record<string, string> = { first: 'First edition', second: 'Second edition', third: 'Third edition', fourth: 'Fourth edition' }
+const EDITION_WORDS: Record<string, string> = {
+	first: 'First edition',
+	second: 'Second edition',
+	third: 'Third edition',
+	fourth: 'Fourth edition',
+}
 function editionWords(text: string): string | null {
 	const compact = text.replace(/\s+/g, '').toLowerCase()
 	const m = /^(first|second|third|fourth)edition$/.exec(compact)
@@ -301,7 +348,32 @@ function frontMatterAsPrinted(blocks: Block[], title: string): Block[] {
 		const key = (edition ?? text).toLowerCase()
 		if (seen.has(key)) continue
 		seen.add(key)
-		out.push(edition ? { ...b, runs: [{ ...(b.runs[0] ?? { text: '', bold: false, italic: false, underline: false, superscript: false, subscript: false, size: 0, colour: '#000000', background: null, link: null, footnote: null, endnote: null }), text: edition }] } : b)
+		out.push(
+			edition
+				? {
+						...b,
+						runs: [
+							{
+								...(b.runs[0] ?? {
+									text: '',
+									bold: false,
+									italic: false,
+									underline: false,
+									superscript: false,
+									subscript: false,
+									size: 0,
+									colour: '#000000',
+									background: null,
+									link: null,
+									footnote: null,
+									endnote: null,
+								}),
+								text: edition,
+							},
+						],
+					}
+				: b,
+		)
 	}
 	return out
 }
@@ -335,7 +407,10 @@ const YEAR = /\b((?:19|20)\d\d[a-z]?)\b/
 
 /** A surname as a reference list prints it, with its particles: "van Weert", "Høilund-Carlsen". */
 const PARTICLES = String.raw`(?:(?:de|del|den|der|da|di|la|le|van|von)\s)*`
-const SURNAME = new RegExp(String.raw`^${PARTICLES}\p{Lu}[\p{L}’'-]+(?:\s${PARTICLES}\p{Lu}[\p{L}’'-]+)?$`, 'u')
+const SURNAME = new RegExp(
+	String.raw`^${PARTICLES}\p{Lu}[\p{L}’'-]+(?:\s${PARTICLES}\p{Lu}[\p{L}’'-]+)?$`,
+	'u',
+)
 
 /** Author–year keys for one printed reference entry. */
 function referenceKeys(citation: string): Set<string> {
@@ -349,14 +424,18 @@ function referenceKeys(citation: string): Set<string> {
 	const nameKey = (name: string) => normaliseKey(name.replace(/\s+&\s+|\s+and\s+/g, ' '))
 	// Organisations with their abbreviations: "…Health Care (ACSQHC)", "…(ASCO) & …(ESMO)",
 	// "US Department of Health and Human Services (US DHHS)".
-	const abbreviations = [...head.matchAll(/\(([A-Za-z]{2,}(?:\s[A-Za-z]{2,})*)\)/g)].map((m) => m[1] ?? '')
-	const named = abbreviations.length > 0 ? nameKey(head.replace(/\s*\([^)]*\)/g, '')) : nameKey(head)
+	const abbreviations = [...head.matchAll(/\(([A-Za-z]{2,}(?:\s[A-Za-z]{2,})*)\)/g)].map(
+		(m) => m[1] ?? '',
+	)
+	const named =
+		abbreviations.length > 0 ? nameKey(head.replace(/\s*\([^)]*\)/g, '')) : nameKey(head)
 	if (abbreviations.length > 0) keys.add(`${abbreviations.map(normaliseKey).join(' ')} ${y}`)
 	keys.add(`${named} ${y}`)
 	// The in-text form drops one-letter words ("John A Hartford Foundation", "I-Med"), as it
 	// drops stray initials (partKeys); so does this key.
 	const words = named.split(' ')
-	if (words.length > 1 && words.some((w) => w.length === 1)) keys.add(`${words.filter((w) => w.length > 1).join(' ')} ${y}`)
+	if (words.length > 1 && words.some((w) => w.length === 1))
+		keys.add(`${words.filter((w) => w.length > 1).join(' ')} ${y}`)
 	// Personal authors: "Wildiers H, Heeren P, Puts M, …, et al." — surnames are the words
 	// before each initials group; the in-text form names one, two, or the first with "et al.".
 	// Nothing after "et al." names an author (a trial group's name follows it).
@@ -367,7 +446,9 @@ function referenceKeys(citation: string): Set<string> {
 		.split(/,\s*|\s+&\s+|\s+and\s+/)
 		.map((a) => a.trim())
 		.filter((a) => a && !INITIALS.test(a))
-	const surnames = authors.map((a) => a.replace(/\s+\p{Lu}(?:-?\p{Lu}){0,2}$/u, '').trim()).filter((s) => SURNAME.test(s))
+	const surnames = authors
+		.map((a) => a.replace(/\s+\p{Lu}(?:-?\p{Lu}){0,2}$/u, '').trim())
+		.filter((s) => SURNAME.test(s))
 	if (surnames.length > 0 && surnames.length === authors.length) {
 		const first = normaliseKey(surnames[0] ?? '')
 		keys.add(`${first} ${y}`)
@@ -380,9 +461,11 @@ function referenceKeys(citation: string): Set<string> {
  *  inside a parenthesis: "(… may also be malnourished [WHO 2018])"), or a year alone
  *  after the author's name: "Fitch’s (2000) model". Brackets are matched first so a
  *  bracketed citation inside a parenthetical aside is found on its own. */
-const IN_TEXT = /\[([^[\]]*?(?:19|20)\d\d[a-z]?(?![0-9])[^[\]]*)\]|\(([^()[\]]*?(?:19|20)\d\d[a-z]?(?![0-9])[^()[\]]*)\)/g
+const IN_TEXT =
+	/\[([^[\]]*?(?:19|20)\d\d[a-z]?(?![0-9])[^[\]]*)\]|\(([^()[\]]*?(?:19|20)\d\d[a-z]?(?![0-9])[^()[\]]*)\)/g
 /** The name a year-only citation belongs to, at the end of the text before it. */
-const NAME_BEFORE = /([A-Z][A-Za-z’'-]+(?:\s(?:&|and)\s[A-Z][A-Za-z’'-]+)?(?:\set al\.?)?)[’']?s?\s*$/
+const NAME_BEFORE =
+	/([A-Z][A-Za-z’'-]+(?:\s(?:&|and)\s[A-Z][A-Za-z’'-]+)?(?:\set al\.?)?)[’']?s?\s*$/
 /** A name as the text cites it: capitalised words, particles, "&" or "and", "et al.". */
 const CITED_NAME = String.raw`(?:\p{Lu}[\p{L}’'-]*|de|del|den|der|da|di|la|le|van|von|&|and|et al\.?)(?:\s(?:\p{Lu}[\p{L}’'-]*|de|del|den|der|da|di|la|le|van|von|&|and|et al\.?))*`
 /** The comma between two citations in one parenthesis ("AIHW 2018, Brewster et al. 2014"):
@@ -390,17 +473,24 @@ const CITED_NAME = String.raw`(?:\p{Lu}[\p{L}’'-]*|de|del|den|der|da|di|la|le|
 const CITATION_COMMA = new RegExp(String.raw`,\s*(?=${CITED_NAME}\s(?:19|20)\d\d)`, 'u')
 /** Two citations the print ran together with no separator ("Jaenke et al. 2021 Whop et al.
  *  2022"): a year, then a capitalised name and its year. */
-const CITATION_RUN_ON = new RegExp(String.raw`(?<=(?:19|20)\d\d[a-z]?)\s+(?=\p{Lu}[\p{L}’'-]+(?:\s(?:\p{Lu}[\p{L}’'-]*|&|and|et al\.?))*\s(?:19|20)\d\d)`, 'u')
+const CITATION_RUN_ON = new RegExp(
+	String.raw`(?<=(?:19|20)\d\d[a-z]?)\s+(?=\p{Lu}[\p{L}’'-]+(?:\s(?:\p{Lu}[\p{L}’'-]*|&|and|et al\.?))*\s(?:19|20)\d\d)`,
+	'u',
+)
 /** Words a citation may open with that name no author: "adapted from Fizazi et al. 2015". */
-const CITATION_PREFIX = /^(?:adapted\s+from|summarised\s+in|reviewed\s+in|see\s+table\s+\d+\s+in|from|see|e\.g\.|cf\.|source|in)\s*:?\s+/i
+const CITATION_PREFIX =
+	/^(?:adapted\s+from|summarised\s+in|reviewed\s+in|see\s+table\s+\d+\s+in|from|see|e\.g\.|cf\.|source|in)\s*:?\s+/i
 /** A month and year in parentheses: a date, not a citation. */
-const MONTH_YEAR = /^(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+(?:19|20)\d\d$/i
+const MONTH_YEAR =
+	/^(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+(?:19|20)\d\d$/i
 
 /** One part's key(s): "Wildiers et al. 2014" → "wildiers 2014"; "Laidsaar-Powell et al.
  *  2018a, 2018b" → two keys; "Vijayvergia & Denlinger 2015" → "vijayvergia denlinger 2015". */
 function partKeys(part: string): string[] {
 	const cleaned = part.replace(CITATION_PREFIX, '').replace(/\*+$/, '')
-	const years = [...cleaned.matchAll(/((?:19|20)\d\d[a-z]?)(?![0-9])/g)].map((m) => m[1]?.toLowerCase() ?? '')
+	const years = [...cleaned.matchAll(/((?:19|20)\d\d[a-z]?)(?![0-9])/g)].map(
+		(m) => m[1]?.toLowerCase() ?? '',
+	)
 	if (years.length === 0) return []
 	const at = cleaned.search(/(?:19|20)\d\d/)
 	// "et al." (or its misprints "el al", "at al") and stray initials ("Simms K T") name no author.
@@ -437,7 +527,11 @@ function lookup(index: CitationIndex, key: string): ReferenceEntry | null {
 	if (found.size === 1) return [...found][0] ?? null
 	// An organisation cited by its initials ("WHO 2018") when the list spells its name out.
 	if (/^[a-z]{2,7}$/.test(name)) {
-		const byInitials = new Set(sameYear.filter(([k]) => initialsOf(k.slice(0, -(year.length + 1))) === name).map(([, e]) => e))
+		const byInitials = new Set(
+			sameYear
+				.filter(([k]) => initialsOf(k.slice(0, -(year.length + 1))) === name)
+				.map(([, e]) => e),
+		)
 		if (byInitials.size === 1) return [...byInitials][0] ?? null
 	}
 	// An organisation cited by its full name whose entry carries its abbreviation under
@@ -452,12 +546,18 @@ function lookup(index: CitationIndex, key: string): ReferenceEntry | null {
 	// the same last three words or more, and one such entry. A name of one distinctive word
 	// is that word ("HealthInfoNet 2024" for "Australian Indigenous HealthInfoNet 2024").
 	const cited = name.split(' ')
-	const needed = cited.length >= 3 ? 3 : cited.length === 1 && (cited[0]?.length ?? 0) >= 8 ? 1 : null
+	const needed =
+		cited.length >= 3 ? 3 : cited.length === 1 && (cited[0]?.length ?? 0) >= 8 ? 1 : null
 	if (needed !== null) {
 		const sharedTail = (key: string): number => {
 			const listed = key.slice(0, -(year.length + 1)).split(' ')
 			let n = 0
-			while (n < listed.length && n < cited.length && listed[listed.length - 1 - n] === cited[cited.length - 1 - n]) n++
+			while (
+				n < listed.length &&
+				n < cited.length &&
+				listed[listed.length - 1 - n] === cited[cited.length - 1 - n]
+			)
+				n++
 			return n
 		}
 		const byTail = new Set(sameYear.filter(([k]) => sharedTail(k) >= needed).map(([, e]) => e))
@@ -481,7 +581,13 @@ function lookupByName(index: CitationIndex, key: string): ReferenceEntry | null 
 	if (!name) return null
 	// The entry's whole name, not a longer one it opens ("Cancer Council Australia 2012" is
 	// not the Cancer Council Australia Sarcoma Guidelines Working Party 2014).
-	const found = new Set([...index.byKey.entries()].filter(([k]) => k.startsWith(`${name} `) && /^(?:19|20)\d\d[a-z]?$/.test(k.slice(name.length + 1))).map(([, e]) => e))
+	const found = new Set(
+		[...index.byKey.entries()]
+			.filter(
+				([k]) => k.startsWith(`${name} `) && /^(?:19|20)\d\d[a-z]?$/.test(k.slice(name.length + 1)),
+			)
+			.map(([, e]) => e),
+	)
 	return found.size === 1 ? ([...found][0] ?? null) : null
 }
 
@@ -509,7 +615,8 @@ function nameBefore(before: string, inner: string, index: CitationIndex): string
 	const run: string[] = []
 	for (const w of [...words].reverse()) {
 		const bare = w.replace(/[’']s$/, '')
-		if (/^\p{Lu}/u.test(bare) || (run.length > 0 && /^(?:of|for|and|the|into|on|in)$/.test(bare))) run.unshift(bare)
+		if (/^\p{Lu}/u.test(bare) || (run.length > 0 && /^(?:of|for|and|the|into|on|in)$/.test(bare)))
+			run.unshift(bare)
 		else break
 	}
 	while (run.length > 0 && /^(?:of|for|and|the|into|on|in)$/.test(run[0] ?? '')) run.shift()
@@ -520,7 +627,11 @@ function nameBefore(before: string, inner: string, index: CitationIndex): string
 function citeInline(nodes: JsonNode[], index: CitationIndex): JsonNode[] {
 	const out: JsonNode[] = []
 	for (const node of nodes) {
-		if (node.type !== 'text' || !node.text || (node.marks?.length ?? 0) > 0 && node.marks?.some((m) => m.type === 'link')) {
+		if (
+			node.type !== 'text' ||
+			!node.text ||
+			((node.marks?.length ?? 0) > 0 && node.marks?.some((m) => m.type === 'link'))
+		) {
 			out.push(node)
 			continue
 		}
@@ -628,15 +739,22 @@ function explainMiss(parts: string[], index: CitationIndex): string {
 			const name = key.replace(/\s(?:19|20)\d\d[a-z]?$/, '')
 			const year = key.slice(name.length + 1)
 			const sameName = [...index.byKey.keys()].filter((k) => k.startsWith(`${name} `))
-			const sameYear = sameName.filter((k) => k.slice(name.length + 1).startsWith(year.replace(/[a-z]$/, '')))
+			const sameYear = sameName.filter((k) =>
+				k.slice(name.length + 1).startsWith(year.replace(/[a-z]$/, '')),
+			)
 			if (sameYear.length > 1 && !/[a-z]$/.test(year))
-				reasons.push(`"${part}": the list has ${sameYear.length} entries for that author in ${year} (${sameYear.map((k) => k.slice(name.length + 1)).join(', ')}) and the text names none of them`)
+				reasons.push(
+					`"${part}": the list has ${sameYear.length} entries for that author in ${year} (${sameYear.map((k) => k.slice(name.length + 1)).join(', ')}) and the text names none of them`,
+				)
 			else if (sameName.length > 0) {
 				// The years the list has for that name, once each (an entry has several keys).
-				const years = [...new Set(sameName.map((k) => /((?:19|20)\d\d[a-z]?)$/.exec(k)?.[1] ?? k.slice(name.length + 1)))].sort()
+				const years = [
+					...new Set(
+						sameName.map((k) => /((?:19|20)\d\d[a-z]?)$/.exec(k)?.[1] ?? k.slice(name.length + 1)),
+					),
+				].sort()
 				reasons.push(`"${part}": the list has that author only for ${years.join(', ')}`)
-			}
-			else reasons.push(`"${part}": no entry in the printed reference list`)
+			} else reasons.push(`"${part}": no entry in the printed reference list`)
 		}
 	}
 	return reasons.join('; ')
@@ -645,7 +763,12 @@ function explainMiss(parts: string[], index: CitationIndex): string {
 function citeNodes(nodes: JsonNode[], index: CitationIndex): JsonNode[] {
 	return nodes.map((n) => {
 		if (!n.content) return n
-		if (n.type === 'paragraph' || n.type === 'heading' || n.type === 'carePoint' || n.type === 'banner')
+		if (
+			n.type === 'paragraph' ||
+			n.type === 'heading' ||
+			n.type === 'carePoint' ||
+			n.type === 'banner'
+		)
 			return { ...n, content: citeInline(n.content, index) }
 		return { ...n, content: citeNodes(n.content, index) }
 	})
@@ -656,16 +779,51 @@ function citeNodes(nodes: JsonNode[], index: CitationIndex): JsonNode[] {
 // ---------------------------------------------------------------------------
 
 const STOPWORDS = new Set([
-	'the', 'of', 'and', 'or', 'for', 'to', 'a', 'an', 'in', 'with', 'by', 'on', 'at', 'from', 'into', 'as',
-	'people', 'patients', 'patient', 'person', 'women', 'men', 'cancer', 'cancers', 'other', 'their', 'who',
+	'the',
+	'of',
+	'and',
+	'or',
+	'for',
+	'to',
+	'a',
+	'an',
+	'in',
+	'with',
+	'by',
+	'on',
+	'at',
+	'from',
+	'into',
+	'as',
+	'people',
+	'patients',
+	'patient',
+	'person',
+	'women',
+	'men',
+	'cancer',
+	'cancers',
+	'other',
+	'their',
+	'who',
 ])
 
-const stem = (w: string): string => w.replace(/(ies)$/, 'y').replace(/(sses|ches|shes|xes)$/, (m) => m.slice(0, -2)).replace(/s$/, '')
+const stem = (w: string): string =>
+	w
+		.replace(/(ies)$/, 'y')
+		.replace(/(sses|ches|shes|xes)$/, (m) => m.slice(0, -2))
+		.replace(/s$/, '')
 
 /** The words that carry a title: lower case, stemmed, without stopwords, numbers and the
  *  pathway's own subject. */
 function titleTokens(title: string, subject: string): Set<string> {
-	const subjectWords = new Set(subject.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).map(stem))
+	const subjectWords = new Set(
+		subject
+			.toLowerCase()
+			.split(/[^a-z0-9]+/)
+			.filter(Boolean)
+			.map(stem),
+	)
 	const tokens = title
 		.toLowerCase()
 		.replace(/\bgp'?s?\b/g, 'general practitioner')
@@ -685,7 +843,10 @@ function titleScore(a: Set<string>, b: Set<string>): { containment: number; jacc
 	if (a.size === 0 || b.size === 0) return { containment: 0, jaccard: 0 }
 	let shared = 0
 	for (const w of a) if (b.has(w)) shared++
-	return { containment: shared / Math.min(a.size, b.size), jaccard: shared / (a.size + b.size - shared) }
+	return {
+		containment: shared / Math.min(a.size, b.size),
+		jaccard: shared / (a.size + b.size - shared),
+	}
 }
 
 interface Candidate {
@@ -694,7 +855,11 @@ interface Candidate {
 }
 
 /** The template section of the same step a legacy title matches, or null. */
-function matchTitle(title: string, candidates: Candidate[], subject: string): CoreSectionRow | null {
+function matchTitle(
+	title: string,
+	candidates: Candidate[],
+	subject: string,
+): CoreSectionRow | null {
 	const tokens = titleTokens(title, subject)
 	if (tokens.size === 0) return null
 	let best: { candidate: Candidate; score: { containment: number; jaccard: number } } | null = null
@@ -702,13 +867,19 @@ function matchTitle(title: string, candidates: Candidate[], subject: string): Co
 	// exactly one section of the step carries the word at all ("Screening" and 1.2.1
 	// Population-based screening recommendations).
 	const [only] = tokens
-	const carrying = tokens.size === 1 && only !== undefined ? candidates.filter((c) => c.tokens.has(only)) : []
+	const carrying =
+		tokens.size === 1 && only !== undefined ? candidates.filter((c) => c.tokens.has(only)) : []
 	for (const c of candidates) {
 		const score = titleScore(tokens, c.tokens)
 		if (score.containment < 0.6 || score.jaccard < 0.25) continue
-		if (tokens.size === 1 && c.tokens.size > 2 && !(carrying.length === 1 && carrying[0] === c)) continue
+		if (tokens.size === 1 && c.tokens.size > 2 && !(carrying.length === 1 && carrying[0] === c))
+			continue
 		// The closer title wins; between equals, the shorter (the more specific) one.
-		if (!best || score.jaccard > best.score.jaccard || (score.jaccard === best.score.jaccard && c.tokens.size < best.candidate.tokens.size))
+		if (
+			!best ||
+			score.jaccard > best.score.jaccard ||
+			(score.jaccard === best.score.jaccard && c.tokens.size < best.candidate.tokens.size)
+		)
 			best = { candidate: c, score }
 	}
 	return best?.candidate.row ?? null
@@ -732,10 +903,16 @@ interface DraftSection {
  *  what the template asks for here. */
 function guidanceOf(body: JsonNode | null | undefined): JsonNode[] {
 	if (!body?.content) return []
-	return body.content.filter((n) => n.type === 'guidance' || (n.type === 'box' && n.attrs?.kind === 'developer'))
+	return body.content.filter(
+		(n) => n.type === 'guidance' || (n.type === 'box' && n.attrs?.kind === 'developer'),
+	)
 }
 
-const headingNode = (text: string, level: number): JsonNode => ({ type: 'heading', attrs: { level }, content: [{ type: 'text', text }] })
+const headingNode = (text: string, level: number): JsonNode => ({
+	type: 'heading',
+	attrs: { level },
+	content: [{ type: 'text', text }],
+})
 
 /** The text of content nodes, blocks joined by newlines. */
 function textOfNodes(nodes: JsonNode[]): string {
@@ -747,7 +924,8 @@ function textOfNodes(nodes: JsonNode[]): string {
 				const inner: string[] = []
 				visit(n.content, inner)
 				const joined = inner.join('')
-				if (joined) into.push(n.type === 'paragraph' || n.type === 'heading' ? `${joined}\n` : joined)
+				if (joined)
+					into.push(n.type === 'paragraph' || n.type === 'heading' ? `${joined}\n` : joined)
 			}
 		}
 	}
@@ -760,14 +938,21 @@ function textOfNodes(nodes: JsonNode[]): string {
 function leadInOf(nodes: JsonNode[]): { carePoint: string; rest: JsonNode[] } | null {
 	const first = nodes[0]
 	const lead = first?.type === 'paragraph' ? first.content?.[0] : undefined
-	if (!first || !lead || lead.type !== 'text' || !lead.marks?.some((m) => m.type === 'bold')) return null
+	if (!first || !lead || lead.type !== 'text' || !lead.marks?.some((m) => m.type === 'bold'))
+		return null
 	const carePoint = (lead.text ?? '').replace(/\s*[–—:-]\s*$/, '').trim()
 	if (!carePoint) return null
 	const after = first.content?.slice(1) ?? []
 	const opener = after[0]
-	const trimmed = opener?.type === 'text' ? [{ ...opener, text: (opener.text ?? '').replace(/^\s*[–—:-]?\s*/, '') }, ...after.slice(1)] : after
+	const trimmed =
+		opener?.type === 'text'
+			? [{ ...opener, text: (opener.text ?? '').replace(/^\s*[–—:-]?\s*/, '') }, ...after.slice(1)]
+			: after
 	const content = trimmed.filter((n) => n.type !== 'text' || (n.text ?? '') !== '')
-	return { carePoint, rest: [...(content.length > 0 ? [{ ...first, content }] : []), ...nodes.slice(1)] }
+	return {
+		carePoint,
+		rest: [...(content.length > 0 ? [{ ...first, content }] : []), ...nodes.slice(1)],
+	}
 }
 
 function bodyOf(nodes: JsonNode[]): JsonNode {
@@ -776,7 +961,9 @@ function bodyOf(nodes: JsonNode[]): JsonNode {
 
 /** Where a non-step legacy chapter goes: a template section (`address`), or a new section
  *  of its own beneath one (`under`) when the template's own slot is shared core text. */
-type NonStepRule = { address: string; how: 'rule' | 'proposed' | 'provenance' | 'derived' } | { under: string; title: string; how: 'proposed' }
+type NonStepRule =
+	| { address: string; how: 'rule' | 'proposed' | 'provenance' | 'derived' }
+	| { under: string; title: string; how: 'proposed' }
 
 /** A template kind's destinations for the sandbox record's non-step identities. */
 interface NonStepTable {
@@ -795,16 +982,31 @@ const CANCER_NON_STEP: NonStepTable = {
 	rules: {
 		contents: { address: 'contents', how: 'derived' },
 		'front-matter': { address: 'optimal-care-pathway-for-people-with/x-edition', how: 'rule' },
-		'welcome-and-introduction': { address: 'optimal-care-pathway-for-people-with/preface', how: 'proposed' },
-		acknowledgement: { address: 'optimal-care-pathway-for-people-with/preface/statement-of-acknowledgement', how: 'provenance' },
-		isbn: { address: 'optimal-care-pathway-for-people-with/preface/publication-details', how: 'rule' },
-		intent: { address: 'about-optimal-care-pathways/intent-of-the-optimal-care-pathways', how: 'provenance' },
+		'welcome-and-introduction': {
+			address: 'optimal-care-pathway-for-people-with/preface',
+			how: 'proposed',
+		},
+		acknowledgement: {
+			address: 'optimal-care-pathway-for-people-with/preface/statement-of-acknowledgement',
+			how: 'provenance',
+		},
+		isbn: {
+			address: 'optimal-care-pathway-for-people-with/preface/publication-details',
+			how: 'rule',
+		},
+		intent: {
+			address: 'about-optimal-care-pathways/intent-of-the-optimal-care-pathways',
+			how: 'provenance',
+		},
 		resources: { address: 'about-optimal-care-pathways/pathway-resources', how: 'provenance' },
 		'principles-intro': { address: 'principles-for-optimal-cancer-care', how: 'provenance' },
 		scope: { address: 'about-this-optimal-care-pathway/scope', how: 'rule' },
 		'summary-timeframes': { address: 'snapshot-of-optimal-timeframes', how: 'rule' },
 		summary: { address: 'snapshot-of-optimal-timeframes', how: 'provenance' },
-		'pathway-note': { address: 'about-this-cancer/epidemiology-and-burden-of-disease', how: 'proposed' },
+		'pathway-note': {
+			address: 'about-this-cancer/epidemiology-and-burden-of-disease',
+			how: 'proposed',
+		},
 		contributors: { address: 'contributors-and-reviewers', how: 'rule' },
 		references: { address: 'references', how: 'provenance' },
 	},
@@ -813,7 +1015,8 @@ const CANCER_NON_STEP: NonStepTable = {
 	principles: null,
 }
 
-const POPULATION_CONSIDERATIONS = 'principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c'
+const POPULATION_CONSIDERATIONS =
+	'principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c'
 
 const POPULATION_NON_STEP: NonStepTable = {
 	rules: {
@@ -821,17 +1024,33 @@ const POPULATION_NON_STEP: NonStepTable = {
 		'front-matter': { address: 'optimal-care-pathway-for-with-cancer/x-edition', how: 'rule' },
 		// The population template's preface is apparatus under its contents: the legacy
 		// welcome letter sits under the title section, where the cancer template's preface is.
-		'welcome-and-introduction': { under: 'optimal-care-pathway-for-with-cancer', title: 'Welcome and introduction', how: 'proposed' },
-		acknowledgement: { address: 'contents/preface/statement-of-acknowledgement', how: 'provenance' },
+		'welcome-and-introduction': {
+			under: 'optimal-care-pathway-for-with-cancer',
+			title: 'Welcome and introduction',
+			how: 'proposed',
+		},
+		acknowledgement: {
+			address: 'contents/preface/statement-of-acknowledgement',
+			how: 'provenance',
+		},
 		isbn: { address: 'contents/preface/publication-details', how: 'rule' },
-		intent: { address: 'about-optimal-care-pathways/intent-of-the-optimal-care-pathways', how: 'provenance' },
+		intent: {
+			address: 'about-optimal-care-pathways/intent-of-the-optimal-care-pathways',
+			how: 'provenance',
+		},
 		resources: { address: 'about-optimal-care-pathways/pathway-resources', how: 'provenance' },
 		'principles-intro': { address: 'principles-for-optimal-cancer-care', how: 'provenance' },
 		scope: { address: 'about-this-optimal-care-pathway/scope', how: 'rule' },
 		context: { address: 'about-this-population-group/overview-of-the-population', how: 'proposed' },
-		'further-considerations': { address: 'about-this-population-group/key-considerations-for-delivery-of-optimal-cancer-care', how: 'proposed' },
+		'further-considerations': {
+			address: 'about-this-population-group/key-considerations-for-delivery-of-optimal-cancer-care',
+			how: 'proposed',
+		},
 		summary: { address: 'about-this-population-group', how: 'provenance' },
-		'pathway-note': { address: 'about-this-population-group/overview-of-the-population', how: 'proposed' },
+		'pathway-note': {
+			address: 'about-this-population-group/overview-of-the-population',
+			how: 'proposed',
+		},
 		contributors: { address: 'contributors-and-reviewers', how: 'rule' },
 		references: { address: 'references', how: 'provenance' },
 	},
@@ -848,7 +1067,10 @@ const POPULATION_NON_STEP: NonStepTable = {
 	},
 }
 
-const NON_STEP_TABLES: Record<string, NonStepTable | undefined> = { cancer: CANCER_NON_STEP, population: POPULATION_NON_STEP }
+const NON_STEP_TABLES: Record<string, NonStepTable | undefined> = {
+	cancer: CANCER_NON_STEP,
+	population: POPULATION_NON_STEP,
+}
 
 /** Back matter with no slot of its own: a new section each under Find out more. */
 const FIND_OUT_MORE = /^(appendix-[a-z]|resource-list|glossary|abbreviations)$/
@@ -861,7 +1083,9 @@ function accentOf(model: ExtractedDocument): string | null {
 	const walk = (sections: Section[]) => {
 		for (const s of sections) {
 			if (s.level === 2 && /^Step [1-7]\b/.test(s.headingText))
-				for (const r of s.heading) if (r.text.trim() && r.colour.toLowerCase() !== '#ffffff') counts.set(r.colour.toLowerCase(), (counts.get(r.colour.toLowerCase()) ?? 0) + 1)
+				for (const r of s.heading)
+					if (r.text.trim() && r.colour.toLowerCase() !== '#ffffff')
+						counts.set(r.colour.toLowerCase(), (counts.get(r.colour.toLowerCase()) ?? 0) + 1)
 			walk(s.children)
 		}
 	}
@@ -878,7 +1102,10 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	const slug = pathway.slug
 	const documentId = id('document', `legacy:${pathway.pathwaySlug}`)
 	const referenceIdOf = (number: number) => id('reference', `legacy:${slug}:n${number}`)
-	const mapper = createBlockMapper(model, { figureUrl: (page, index) => legacyFigureUrl(slug, page, index), referenceId: referenceIdOf })
+	const mapper = createBlockMapper(model, {
+		figureUrl: (page, index) => legacyFigureUrl(slug, page, index),
+		referenceId: referenceIdOf,
+	})
 	const tree = legacyTree(model, id, slug)
 	const all = flatten(tree)
 	const table = NON_STEP_TABLES[core.template.kind]
@@ -907,10 +1134,18 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		const citation = plainText(e.runs).replace(/\s+/g, ' ').trim()
 		const url = e.runs.find((r) => r.link && 'url' in r.link)?.link
 		const printed = citation.match(/<\s*(https?:\/\/[^>\s]+|www\.[^>\s]+)\s*>/)?.[1] ?? null
-		entries.push({ id: referenceIdOf(e.number), citation, url: url && 'url' in url ? url.url : printed, keys: new Set(), number: e.number })
+		entries.push({
+			id: referenceIdOf(e.number),
+			citation,
+			url: url && 'url' in url ? url.url : printed,
+			keys: new Set(),
+			number: e.number,
+		})
 	}
 	if (referencesNode) {
-		const paragraphs = flatten([referencesNode]).flatMap((n) => n.blocks.filter((b): b is Paragraph => b.kind === 'paragraph'))
+		const paragraphs = flatten([referencesNode]).flatMap((n) =>
+			n.blocks.filter((b): b is Paragraph => b.kind === 'paragraph'),
+		)
 		for (const [i, p] of paragraphs.entries()) {
 			const citation = plainText(p.runs).replace(/\s+/g, ' ').trim()
 			if (!YEAR.test(citation)) continue
@@ -925,7 +1160,8 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		}
 	}
 	const citations: CitationIndex = { byKey: new Map(), matched: 0, unmatched: [], byName: [] }
-	for (const e of entries) for (const k of e.keys) if (!citations.byKey.has(k)) citations.byKey.set(k, e)
+	for (const e of entries)
+		for (const k of e.keys) if (!citations.byKey.has(k)) citations.byKey.set(k, e)
 	/** The text cites by author and year only when there is an author–year list to resolve against. */
 	const authorYear = citations.byKey.size > 0
 
@@ -938,7 +1174,22 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			if (b.kind !== 'figure' || !/^Figure\s+[A-Z]?\d+\s*:/i.test(b.alt)) return [b]
 			const caption: Paragraph = {
 				kind: 'paragraph',
-				runs: [{ text: b.alt, bold: false, italic: false, underline: false, superscript: false, subscript: false, size: 0, colour: '#000000', background: null, link: null, footnote: null, endnote: null }],
+				runs: [
+					{
+						text: b.alt,
+						bold: false,
+						italic: false,
+						underline: false,
+						superscript: false,
+						subscript: false,
+						size: 0,
+						colour: '#000000',
+						background: null,
+						link: null,
+						footnote: null,
+						endnote: null,
+					},
+				],
 				page: b.page,
 				background: null,
 				align: 'left',
@@ -946,7 +1197,9 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			return [caption, b]
 		})
 	const nodesOf = (blocks: Block[], options: { cite?: boolean } = {}): JsonNode[] =>
-		options.cite === false || !authorYear ? mapper.blocks(captioned(blocks)) : citeNodes(mapper.blocks(captioned(blocks)), citations)
+		options.cite === false || !authorYear
+			? mapper.blocks(captioned(blocks))
+			: citeNodes(mapper.blocks(captioned(blocks)), citations)
 
 	// ---- legacy rows -----------------------------------------------------------------
 	const legacyDocument: LegacyDocumentInsert = {
@@ -997,7 +1250,9 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			row: {
 				id: sectionId(s.address),
 				documentId,
-				parentId: s.parentId ? sectionId(coreRows.find((c) => c.id === s.parentId)?.address ?? '') : null,
+				parentId: s.parentId
+					? sectionId(coreRows.find((c) => c.id === s.parentId)?.address ?? '')
+					: null,
 				address: s.address,
 				canonical: s.canonical,
 				printedNumber: s.printedNumber,
@@ -1018,15 +1273,22 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		if (!found) throw new Error(`the ${core.template.kind} template has no section at '${address}'`)
 		return found
 	}
-	const childrenOf = (address: string): DraftSection[] => [...drafts.values()].filter((d) => d.row.parentId === sectionId(address))
-	const nextOrder = (address: string): number => Math.max(-1, ...childrenOf(address).map((d) => d.row.orderIndex)) + 1
+	const childrenOf = (address: string): DraftSection[] =>
+		[...drafts.values()].filter((d) => d.row.parentId === sectionId(address))
+	const nextOrder = (address: string): number =>
+		Math.max(-1, ...childrenOf(address).map((d) => d.row.orderIndex)) + 1
 
 	/** A new owned section under a draft section (or at the root after a named section),
 	 *  addressed by slug beneath its parent. */
 	const addSection = (
 		parentAddress: string | null,
 		title: string,
-		options: { note: string | null; printedNumber?: string | null; pointOfCare?: boolean; after?: string },
+		options: {
+			note: string | null
+			printedNumber?: string | null
+			pointOfCare?: boolean
+			after?: string
+		},
 	): DraftSection => {
 		const parent = parentAddress ? byAddress(parentAddress) : null
 		const base = parentAddress ? `${parentAddress}/${slugify(title)}` : slugify(title)
@@ -1035,7 +1297,14 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		while (drafts.has(address)) address = `${base}-${n++}`
 		const rootOrder = () => {
 			const after = options.after ? byAddress(options.after) : null
-			return after ? after.row.orderIndex + 0.5 : Math.max(-1, ...[...drafts.values()].filter((d) => d.row.parentId === null).map((d) => d.row.orderIndex)) + 1
+			return after
+				? after.row.orderIndex + 0.5
+				: Math.max(
+						-1,
+						...[...drafts.values()]
+							.filter((d) => d.row.parentId === null)
+							.map((d) => d.row.orderIndex),
+					) + 1
 		}
 		const draft: DraftSection = {
 			core: null,
@@ -1070,44 +1339,101 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		const key = `${draft.row.id}|${node.id}`
 		if (originsSeen.has(key)) return
 		originsSeen.add(key)
-		origins.push({ sectionId: draft.row.id, legacySectionId: node.id, chars: textOfBlocks(node.blocks).length })
+		origins.push({
+			sectionId: draft.row.id,
+			legacySectionId: node.id,
+			chars: textOfBlocks(node.blocks).length,
+		})
 	}
 	/** The body without a first paragraph that only repeats the section's title (the
 	 *  front matter's bold "Statement of acknowledgement" under the template's section of
 	 *  that name): the heading says it once (decision 145). */
 	const titleEcho = (draft: DraftSection, nodes: JsonNode[]): JsonNode[] => {
 		const [first, ...rest] = nodes
-		const said = (t: string) => t.replace(/[:\s]+$/, '').trim().toLowerCase()
-		if (first?.type === 'paragraph' && draft.row.title && said(textOfNodes([first])) === said(draft.row.title)) return rest
+		const said = (t: string) =>
+			t
+				.replace(/[:\s]+$/, '')
+				.trim()
+				.toLowerCase()
+		if (
+			first?.type === 'paragraph' &&
+			draft.row.title &&
+			said(textOfNodes([first])) === said(draft.row.title)
+		)
+			return rest
 		return nodes
 	}
-	const place = (draft: DraftSection, node: LegacyNode, placed: JsonNode[], how: PlacementHow, options: { heading?: string | null; note?: string } = {}) => {
-		if (draft.row.ownership !== 'owned') throw new Error(`cannot place text into the shared section '${draft.row.address}'`)
+	const place = (
+		draft: DraftSection,
+		node: LegacyNode,
+		placed: JsonNode[],
+		how: PlacementHow,
+		options: { heading?: string | null; note?: string } = {},
+	) => {
+		if (draft.row.ownership !== 'owned')
+			throw new Error(`cannot place text into the shared section '${draft.row.address}'`)
 		const nodes = options.heading ? placed : titleEcho(draft, placed)
 		draft.contributions.push({ heading: options.heading ?? null, nodes })
 		draft.pages.push(node.pages)
 		recordOrigin(draft, node)
-		ledger.placements.push({ legacyKey: node.key, legacyTitle: node.heading, destination: draft.row.address, how, ...(options.note ? { note: options.note } : {}) })
+		ledger.placements.push({
+			legacyKey: node.key,
+			legacyTitle: node.heading,
+			destination: draft.row.address,
+			how,
+			...(options.note ? { note: options.note } : {}),
+		})
 	}
-	const provenance = (draft: DraftSection, node: LegacyNode, how: PlacementHow = 'provenance', note?: string) => {
+	const provenance = (
+		draft: DraftSection,
+		node: LegacyNode,
+		how: PlacementHow = 'provenance',
+		note?: string,
+	) => {
 		recordOrigin(draft, node)
-		ledger.placements.push({ legacyKey: node.key, legacyTitle: node.heading, destination: draft.row.address, how, ...(note ? { note } : {}) })
+		ledger.placements.push({
+			legacyKey: node.key,
+			legacyTitle: node.heading,
+			destination: draft.row.address,
+			how,
+			...(note ? { note } : {}),
+		})
 	}
 	/** Legacy text that belongs to a SHARED template section (decision 153): version 1
 	 *  publishes it as that section's divergence; the draft starts merged back into the
 	 *  core text, the legacy text one diff away. */
 	const divergences = new Map<string, { nodes: JsonNode[]; pages: string[] }>()
-	const diverge = (draft: DraftSection, node: LegacyNode, nodes: JsonNode[], options: { heading?: string | null; note?: string } = {}) => {
-		if (draft.row.ownership !== 'shared') throw new Error(`cannot diverge the owned section '${draft.row.address}'`)
+	const diverge = (
+		draft: DraftSection,
+		node: LegacyNode,
+		nodes: JsonNode[],
+		options: { heading?: string | null; note?: string } = {},
+	) => {
+		if (draft.row.ownership !== 'shared')
+			throw new Error(`cannot diverge the owned section '${draft.row.address}'`)
 		const entry = divergences.get(draft.row.address) ?? { nodes: [], pages: [] }
-		entry.nodes.push(...(options.heading ? [headingNode(options.heading, 3), ...nodes] : titleEcho(draft, nodes)))
+		entry.nodes.push(
+			...(options.heading ? [headingNode(options.heading, 3), ...nodes] : titleEcho(draft, nodes)),
+		)
 		entry.pages.push(node.pages)
 		divergences.set(draft.row.address, entry)
 		recordOrigin(draft, node)
-		ledger.placements.push({ legacyKey: node.key, legacyTitle: node.heading, destination: draft.row.address, how: 'diverged', ...(options.note ? { note: options.note } : {}) })
+		ledger.placements.push({
+			legacyKey: node.key,
+			legacyTitle: node.heading,
+			destination: draft.row.address,
+			how: 'diverged',
+			...(options.note ? { note: options.note } : {}),
+		})
 	}
 	/** Into an owned section as placed text; into a shared one as version 1's divergence. */
-	const placeOrDiverge = (draft: DraftSection, node: LegacyNode, nodes: JsonNode[], how: PlacementHow, options: { heading?: string | null; note?: string } = {}) => {
+	const placeOrDiverge = (
+		draft: DraftSection,
+		node: LegacyNode,
+		nodes: JsonNode[],
+		how: PlacementHow,
+		options: { heading?: string | null; note?: string } = {},
+	) => {
 		if (nodes.length === 0) {
 			provenance(draft, node, draft.row.ownership === 'owned' ? how : 'diverged', options.note)
 			return
@@ -1122,21 +1448,60 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	// 4.3.1's Clinical trials panel; communication with patients, carers and families in
 	// the step's Supportive care; the general practitioner's in the step's GP section.
 	const GP_SECTION: Record<number, string> = { 3: '3.6', 4: '4.6', 5: '5.4', 6: '6.8', 7: '7.2.4' }
-	const STANDING_HOMES: { test: RegExp; home: (step: number) => string | null; heading: (title: string, step: number) => string | null }[] = [
-		{ test: /^research and clinical trials$/i, home: () => '4.3.1', heading: (title, step) => `${title} (Step ${step})` },
-		{ test: /^communication with the (?:general practitioner|gp|person.s general practitioner)/i, home: (step) => GP_SECTION[step] ?? `${step}/supportive-care`, heading: (title) => title },
-		{ test: /^communication\b(?![^]*\b(?:general practitioner|gp)\b)/i, home: (step) => `${step}/supportive-care`, heading: (title) => title },
+	const STANDING_HOMES: {
+		test: RegExp
+		home: (step: number) => string | null
+		heading: (title: string, step: number) => string | null
+	}[] = [
+		{
+			test: /^research and clinical trials$/i,
+			home: () => '4.3.1',
+			heading: (title, step) => `${title} (Step ${step})`,
+		},
+		{
+			test: /^communication with the (?:general practitioner|gp|person.s general practitioner)/i,
+			home: (step) => GP_SECTION[step] ?? `${step}/supportive-care`,
+			heading: (title) => title,
+		},
+		{
+			test: /^communication\b(?![^]*\b(?:general practitioner|gp)\b)/i,
+			home: (step) => `${step}/supportive-care`,
+			heading: (title) => title,
+		},
 		{ test: /^prehabilitation$/i, home: () => '4.2', heading: (title) => title },
-		{ test: /^rehabilitation(?: and recovery)?$/i, home: (step) => `${step}/supportive-care`, heading: (title) => title },
-		{ test: /^fertility preservation/i, home: () => '3/supportive-care', heading: (title) => title },
+		{
+			test: /^rehabilitation(?: and recovery)?$/i,
+			home: (step) => `${step}/supportive-care`,
+			heading: (title) => title,
+		},
+		{
+			test: /^fertility preservation/i,
+			home: () => '3/supportive-care',
+			heading: (title) => title,
+		},
 		{ test: /^treatment intent$/i, home: () => '4.1', heading: (title) => title },
-		{ test: /^(?:responsibilities of individual team members|key considerations beyond treatment recommendations)$/i, home: () => '3.5.1', heading: (title) => title },
+		{
+			test: /^(?:responsibilities of individual team members|key considerations beyond treatment recommendations)$/i,
+			home: () => '3.5.1',
+			heading: (title) => title,
+		},
 		{ test: /^supportive therapies$/i, home: () => '4/supportive-care', heading: (title) => title },
-		{ test: /^signs and symptoms (?:of|or) (?:relapsed|recurrent|metastatic|residual|refractory|progressive)/i, home: () => '6.1', heading: (title) => title },
-		{ test: /^managing (?:relapsed|recurrent|refractory|residual|progressive|metastatic)/i, home: () => '6.4', heading: (title) => title },
+		{
+			test: /^signs and symptoms (?:of|or) (?:relapsed|recurrent|metastatic|residual|refractory|progressive)/i,
+			home: () => '6.1',
+			heading: (title) => title,
+		},
+		{
+			test: /^managing (?:relapsed|recurrent|refractory|residual|progressive|metastatic)/i,
+			home: () => '6.4',
+			heading: (title) => title,
+		},
 		{ test: /^treatment$/i, home: (step) => (step === 6 ? '6.4' : null), heading: () => null },
 	]
-	const standingHome = (title: string, step: number): { draft: DraftSection; heading: string | null } | null => {
+	const standingHome = (
+		title: string,
+		step: number,
+	): { draft: DraftSection; heading: string | null } | null => {
 		for (const rule of STANDING_HOMES) {
 			if (!rule.test.test(title)) continue
 			const address = rule.home(step)
@@ -1154,16 +1519,26 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 
 	/** Where a legacy node's OWN blocks go, given the draft section its title matched (or
 	 *  its parent's destination), returning the section that received them. */
-	const placeNode = (node: LegacyNode, step: number, parentDestination: DraftSection | null, matched: CoreSectionRow | null): DraftSection | null => {
+	const placeNode = (
+		node: LegacyNode,
+		step: number,
+		parentDestination: DraftSection | null,
+		matched: CoreSectionRow | null,
+	): DraftSection | null => {
 		const title = titleOf(node.heading, node.number)
 		const own = nodesOf(node.blocks)
 		// The section above this one that can take draft text: its destination when owned.
 		// A shared destination takes the legacy text as version 1's divergence instead.
-		const host = parentDestination && parentDestination.row.ownership === 'owned' ? parentDestination : null
+		const host =
+			parentDestination && parentDestination.row.ownership === 'owned' ? parentDestination : null
 		/** The step's Timeframes section, for boxes whose section above is shared core text
 		 *  (the draft needs every box for Figure 3, decision 148). */
 		const timeframesSection = (): DraftSection =>
-			drafts.get(`${step}/timeframes`) ?? addSection(String(step), 'Timeframes', { note: `proposed: timeframes of Step ${step} whose section is shared core text; move each into its section`, pointOfCare: false })
+			drafts.get(`${step}/timeframes`) ??
+			addSection(String(step), 'Timeframes', {
+				note: `proposed: timeframes of Step ${step} whose section is shared core text; move each into its section`,
+				pointOfCare: false,
+			})
 		// A timeframe subsection: a timeframe box in the section above it, whose care
 		// point is that section (the printed summary table names the section too).
 		// A numbered timeframe section at the step's own level ("2.3 Optimal timeframes for
@@ -1173,7 +1548,17 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			const target = host ?? timeframesSection()
 			ledger.timeframes.boxes++
 			bodyTimeframes.push({ step, text: textOfBlocks(node.blocks) })
-			place(target, node, [{ type: 'timeframe', content: [{ type: 'carePoint', content: [{ type: 'text', text: carePoint }] }, ...own] }], 'timeframe')
+			place(
+				target,
+				node,
+				[
+					{
+						type: 'timeframe',
+						content: [{ type: 'carePoint', content: [{ type: 'text', text: carePoint }] }, ...own],
+					},
+				],
+				'timeframe',
+			)
 			return target
 		}
 		// "More information" (the population designs say "Further information"): a resources
@@ -1182,14 +1567,35 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		if (/^(?:more|further) information$/i.test(title) && own.length > 0) {
 			const above = parentDestination ?? drafts.get(String(step))
 			if (above) {
-				placeOrDiverge(above, node, [{ type: 'box', attrs: { kind: 'resources', icon: 'info', family: '', variant: 'soft' }, content: [{ type: 'banner', attrs: { tone: 'band' }, content: [{ type: 'text', text: title.replace(/\s+/g, ' ') }] }, ...own] }], 'resources')
+				placeOrDiverge(
+					above,
+					node,
+					[
+						{
+							type: 'box',
+							attrs: { kind: 'resources', icon: 'info', family: '', variant: 'soft' },
+							content: [
+								{
+									type: 'banner',
+									attrs: { tone: 'band' },
+									content: [{ type: 'text', text: title.replace(/\s+/g, ' ') }],
+								},
+								...own,
+							],
+						},
+					],
+					'resources',
+				)
 				return above
 			}
 		}
 		if (matched) {
 			const draft = byAddress(matched.address)
 			if (draft.row.ownership === 'owned') {
-				if (own.length > 0) place(draft, node, own, 'title', { heading: draft.contributions.length > 0 ? title : null })
+				if (own.length > 0)
+					place(draft, node, own, 'title', {
+						heading: draft.contributions.length > 0 ? title : null,
+					})
 				else provenance(draft, node, 'title')
 				return draft
 			}
@@ -1199,30 +1605,57 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 				provenance(draft, node)
 				return draft
 			}
-			const children = childrenOf(matched.address).filter((d) => d.core && d.row.ownership === 'owned')
-			const child = matchTitle(title, children.flatMap((d) => (d.core ? [{ row: d.core, tokens: titleTokens(d.core.title ?? '', pathway.subject) }] : [])), pathway.subject)
+			const children = childrenOf(matched.address).filter(
+				(d) => d.core && d.row.ownership === 'owned',
+			)
+			const child = matchTitle(
+				title,
+				children.flatMap((d) =>
+					d.core ? [{ row: d.core, tokens: titleTokens(d.core.title ?? '', pathway.subject) }] : [],
+				),
+				pathway.subject,
+			)
 			if (child) {
 				provenance(draft, node)
 				const target = byAddress(child.address)
-				place(target, node, own, 'title-child', { heading: title, note: `matched the shared section ${matched.printedNumber ?? matched.address}` })
+				place(target, node, own, 'title-child', {
+					heading: title,
+					note: `matched the shared section ${matched.printedNumber ?? matched.address}`,
+				})
 				return target
 			}
-			diverge(draft, node, own, { note: `legacy text of the shared ${matched.printedNumber ?? matched.title}: version 1 publishes it as a divergence; the draft carries the core text` })
+			diverge(draft, node, own, {
+				note: `legacy text of the shared ${matched.printedNumber ?? matched.title}: version 1 publishes it as a divergence; the draft carries the core text`,
+			})
 			return draft
 		}
 		// No match: into the parent's destination (a subsection keeps its heading inside
 		// the body) — placed when owned, diverged when shared.
 		if (parentDestination) {
-			placeOrDiverge(parentDestination, node, own.length > 0 ? [headingNode(title, 3), ...own] : [], 'merged')
+			placeOrDiverge(
+				parentDestination,
+				node,
+				own.length > 0 ? [headingNode(title, 3), ...own] : [],
+				'merged',
+			)
 			return parentDestination
 		}
 		// A heading with nothing of its own under it ("Support and communication" over its
 		// subsections) makes no section: its children find their own places.
 		if (own.length === 0) {
-			ledger.placements.push({ legacyKey: node.key, legacyTitle: node.heading, destination: null, how: 'unplaced', note: 'a container heading with no text of its own; its subsections were placed separately' })
+			ledger.placements.push({
+				legacyKey: node.key,
+				legacyTitle: node.heading,
+				destination: null,
+				how: 'unplaced',
+				note: 'a container heading with no text of its own; its subsections were placed separately',
+			})
 			return null
 		}
-		const fresh = addSection(String(step), title, { note: `unplaced: the ${core.template.kind} template has no section for this under Step ${step}; keep, move or remove it`, printedNumber: node.number })
+		const fresh = addSection(String(step), title, {
+			note: `unplaced: the ${core.template.kind} template has no section for this under Step ${step}; keep, move or remove it`,
+			printedNumber: node.number,
+		})
 		place(fresh, node, own, 'unplaced')
 		return fresh
 	}
@@ -1233,11 +1666,21 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		const standing = standingHome(title, step)
 		if (standing) {
 			const own = nodesOf(node.blocks)
-			placeOrDiverge(standing.draft, node, own.length > 0 ? [...(standing.heading ? [headingNode(standing.heading, 3)] : []), ...own] : [], 'rule', { note: `standing home for "${title}"` })
+			placeOrDiverge(
+				standing.draft,
+				node,
+				own.length > 0
+					? [...(standing.heading ? [headingNode(standing.heading, 3)] : []), ...own]
+					: [],
+				'rule',
+				{ note: `standing home for "${title}"` },
+			)
 			for (const child of node.children) visitStep(child, step, standing.draft)
 			return
 		}
-		const matched = /^((?:optimal )?timeframes?\b|(?:more|further) information$)/i.test(title) ? null : matchTitle(title, stepCandidates(step), pathway.subject)
+		const matched = /^((?:optimal )?timeframes?\b|(?:more|further) information$)/i.test(title)
+			? null
+			: matchTitle(title, stepCandidates(step), pathway.subject)
 		const destination = placeNode(node, step, parentDestination, matched)
 		for (const child of node.children) visitStep(child, step, destination)
 	}
@@ -1247,11 +1690,18 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		// The chapter's own intro (the seven steps box, the disease's epidemiology).
 		const rule = table.rules['pathway-note']
 		if (rule && 'address' in rule) {
-			const intro = chapter.blocks.filter((b) => !(b.kind === 'table' && /^seven steps/i.test(textOfBlocks([b]).trim())))
+			const intro = chapter.blocks.filter(
+				(b) => !(b.kind === 'table' && /^seven steps/i.test(textOfBlocks([b]).trim())),
+			)
 			const own = nodesOf(intro)
 			const draft = byAddress(rule.address)
-			if (own.length > 0) place(draft, chapter, own, 'proposed', { note: `proposed: the legacy pathway’s opening text, read as ${draft.row.title}` })
-			draft.row.migrationNote = draft.row.migrationNote ?? `proposed: holds the legacy pathway’s opening text; check it is about ${(draft.row.title ?? '').toLowerCase()}`
+			if (own.length > 0)
+				place(draft, chapter, own, 'proposed', {
+					note: `proposed: the legacy pathway’s opening text, read as ${draft.row.title}`,
+				})
+			draft.row.migrationNote =
+				draft.row.migrationNote ??
+				`proposed: holds the legacy pathway’s opening text; check it is about ${(draft.row.title ?? '').toLowerCase()}`
 		}
 		for (const stepNode of chapter.children) {
 			const step = Number(STEP.exec(stepNode.heading)?.[1] ?? 0)
@@ -1259,13 +1709,22 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 				// The chapter's own subsections before the steps ("Special considerations", the
 				// disease's subsets): a proposed section each beside the chapter's home.
 				const title = titleOf(stepNode.heading, stepNode.number)
-				const home = addSection(table.pathwayHome, title, { note: `proposed: the legacy pathway’s opening section "${title}"; check where it belongs`, printedNumber: stepNode.number })
+				const home = addSection(table.pathwayHome, title, {
+					note: `proposed: the legacy pathway’s opening section "${title}"; check where it belongs`,
+					printedNumber: stepNode.number,
+				})
 				const own = nodesOf(stepNode.blocks)
 				if (own.length > 0) place(home, stepNode, own, 'proposed')
 				else provenance(home, stepNode, 'proposed')
 				for (const child of flatten(stepNode.children)) {
 					const nodes = nodesOf(child.blocks)
-					if (nodes.length > 0) place(home, child, [headingNode(titleOf(child.heading, child.number), 3), ...nodes], 'merged')
+					if (nodes.length > 0)
+						place(
+							home,
+							child,
+							[headingNode(titleOf(child.heading, child.number), 3), ...nodes],
+							'merged',
+						)
 					else provenance(home, child, 'merged')
 				}
 				continue
@@ -1273,7 +1732,9 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			// The step's own introduction: version 1's divergence of the step section; the
 			// draft starts on the core introduction (decision 157).
 			const root = byAddress(String(step))
-			placeOrDiverge(root, stepNode, nodesOf(stepNode.blocks), 'proposed', { note: `the legacy edition's own introduction to Step ${step}` })
+			placeOrDiverge(root, stepNode, nodesOf(stepNode.blocks), 'proposed', {
+				note: `the legacy edition's own introduction to Step ${step}`,
+			})
 			for (const child of stepNode.children) visitStep(child, step, null)
 		}
 	}
@@ -1285,20 +1746,42 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	// holding the step's guide text, with one child per panel in the guide's order. The
 	// derived guide is every point-of-care section in reading order.
 	const pointOfCareLists = (nodes: JsonNode[]): JsonNode[] =>
-		nodes.map((n) => (n.type === 'list' && n.attrs?.kind === 'check' ? { ...n, attrs: { ...n.attrs, pointOfCare: true } } : n))
+		nodes.map((n) =>
+			n.type === 'list' && n.attrs?.kind === 'check'
+				? { ...n, attrs: { ...n.attrs, pointOfCare: true } }
+				: n,
+		)
 	for (const chapter of tree) {
 		if (chapter.l1 !== 'summary') continue
 		// The guide's own introduction, and — once — the statement its pages repeat as a
 		// running side band ("Support: Assess supportive care needs at every step …"),
 		// which the reader set aside as furniture.
 		const pages = new Set(flatten([chapter]).map((n) => n.page))
-		const band = [...new Set(model.warnings.filter((w) => w.message.startsWith('furniture: ') && pages.has(w.page)).map((w) => w.message.slice('furniture: '.length)))]
-		const intro = [...nodesOf(chapter.blocks), ...band.map((text): JsonNode => ({ type: 'paragraph', content: [{ type: 'text', text, marks: [{ type: 'bold' }] }] }))]
+		const band = [
+			...new Set(
+				model.warnings
+					.filter((w) => w.message.startsWith('furniture: ') && pages.has(w.page))
+					.map((w) => w.message.slice('furniture: '.length)),
+			),
+		]
+		const intro = [
+			...nodesOf(chapter.blocks),
+			...band.map(
+				(text): JsonNode => ({
+					type: 'paragraph',
+					content: [{ type: 'text', text, marks: [{ type: 'bold' }] }],
+				}),
+			),
+		]
 		/** The guide's own section, beside the pathway's steps: its introduction, and the
 		 *  panels the guide sets apart from any step. */
 		let topGuide: DraftSection | null = null
 		const guideSection = (): DraftSection => {
-			topGuide ??= addSection(null, 'Quick reference guide', { note: null, pointOfCare: true, after: table.guideAfter })
+			topGuide ??= addSection(null, 'Quick reference guide', {
+				note: null,
+				pointOfCare: true,
+				after: table.guideAfter,
+			})
 			return topGuide
 		}
 		if (intro.length > 0) place(guideSection(), chapter, intro, 'guide')
@@ -1309,7 +1792,11 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 				// A panel of no step ("Understanding your patient", "Practical considerations
 				// for consultations"): a point-of-care section of the guide's own, its parts
 				// under their headings.
-				const panel = addSection(guideSection().row.address, titleOf(stepNode.heading, stepNode.number), { note: null, pointOfCare: true })
+				const panel = addSection(
+					guideSection().row.address,
+					titleOf(stepNode.heading, stepNode.number),
+					{ note: null, pointOfCare: true },
+				)
 				const nodes = [
 					...pointOfCareLists(nodesOf(stepNode.blocks)),
 					...flatten(stepNode.children).flatMap((child) => {
@@ -1322,7 +1809,10 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 				for (const child of flatten(stepNode.children)) provenance(panel, child, 'guide')
 				continue
 			}
-			const guide = addSection(String(step), 'Quick reference guide', { note: null, pointOfCare: true })
+			const guide = addSection(String(step), 'Quick reference guide', {
+				note: null,
+				pointOfCare: true,
+			})
 			const own = pointOfCareLists(nodesOf(stepNode.blocks))
 			if (own.length > 0) place(guide, stepNode, own, 'guide')
 			else provenance(guide, stepNode, 'guide')
@@ -1332,7 +1822,9 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			for (const panel of flatten(stepNode.children)) {
 				const title = titleOf(panel.heading, panel.number)
 				const nodes = pointOfCareLists(nodesOf(panel.blocks))
-				ledger.checkItems += nodes.filter((n) => n.type === 'list' && n.attrs?.kind === 'check').length
+				ledger.checkItems += nodes.filter(
+					(n) => n.type === 'list' && n.attrs?.kind === 'check',
+				).length
 				const key = title.toLowerCase()
 				let section = panels.get(key)
 				if (!section) {
@@ -1350,9 +1842,17 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	// headings, which can be misprinted (WM and MPN head Step 1 "Presentation, initial
 	// investigations and referral", Step 2's title).
 	const stepTitles = coreRows.flatMap((s) =>
-		s.stepNumber !== null && s.address === String(s.stepNumber) ? [{ step: s.stepNumber, tokens: titleTokens(s.title ?? '', pathway.subject) }] : [],
+		s.stepNumber !== null && s.address === String(s.stepNumber)
+			? [{ step: s.stepNumber, tokens: titleTokens(s.title ?? '', pathway.subject) }]
+			: [],
 	)
-	const wordsOf = (text: string) => new Set(text.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 3))
+	const wordsOf = (text: string) =>
+		new Set(
+			text
+				.toLowerCase()
+				.split(/[^a-z0-9]+/)
+				.filter((w) => w.length > 3),
+		)
 	const covered = (step: number | null, statement: string, share = 0.6): boolean => {
 		const words = wordsOf(statement)
 		if (words.size === 0) return true
@@ -1369,7 +1869,8 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	 *  every word of the statement, so no second box is made. Timeframe wording is shared
 	 *  across boxes ("patients should … within 2 weeks of GP referral"), so nothing less
 	 *  than all of it names another step's box. */
-	const coveredElsewhere = (step: number | null, statement: string): boolean => step !== null && covered(null, statement, 1)
+	const coveredElsewhere = (step: number | null, statement: string): boolean =>
+		step !== null && covered(null, statement, 1)
 	const placeTimeframeRows = (table: Table, chapter: LegacyNode) => {
 		let step: number | null = null
 		/** A statement cell spanning the rows beneath it: each of their care points has it. */
@@ -1400,14 +1901,17 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 				statement = textOfNodes(lead.rest)
 			} else {
 				if (cells.length >= 3) {
-					const label = textOfBlocks(cells[0]?.blocks ?? []).replace(/\s+/g, ' ').trim()
+					const label = textOfBlocks(cells[0]?.blocks ?? [])
+						.replace(/\s+/g, ' ')
+						.trim()
 					const tokens = titleTokens(label, pathway.subject)
 					// The step the label names: the closest title ("Treatment" is Step 4, not the
 					// step whose title merely contains the word).
 					let best: { step: number; score: number } | null = null
 					for (const s of stepTitles) {
 						const { containment, jaccard } = titleScore(tokens, s.tokens)
-						if (containment >= 0.6 && (!best || jaccard > best.score)) best = { step: s.step, score: jaccard }
+						if (containment >= 0.6 && (!best || jaccard > best.score))
+							best = { step: s.step, score: jaccard }
 					}
 					step = best?.step ?? null
 				}
@@ -1417,7 +1921,10 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 				carePoint = textOfBlocks(carePointCell.blocks).replace(/\s+/g, ' ').trim()
 				statement = textOfBlocks(statementCell.blocks)
 				statementNodes = nodesOf(statementCell.blocks)
-				shared = statementCell.rowSpan > 1 ? { statement, nodes: statementNodes, remaining: statementCell.rowSpan - 1 } : null
+				shared =
+					statementCell.rowSpan > 1
+						? { statement, nodes: statementNodes, remaining: statementCell.rowSpan - 1 }
+						: null
 			}
 			ledger.timeframes.figureRows++
 			if (covered(step, statement) || coveredElsewhere(step, statement)) {
@@ -1426,16 +1933,45 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			}
 			// No body subsection printed this row: a box from the row, in the step section
 			// the care point names, else in a Timeframes section of the step.
-			const candidates = step ? stepCandidates(step).filter((c) => byAddress(c.row.address).row.ownership === 'owned') : []
+			const candidates = step
+				? stepCandidates(step).filter((c) => byAddress(c.row.address).row.ownership === 'owned')
+				: []
 			const matched = step ? matchTitle(carePoint, candidates, pathway.subject) : null
-			const target = matched ? byAddress(matched.address) : step ? (drafts.get(`${step}/timeframes`) ?? addSection(String(step), 'Timeframes', { note: `proposed: rows of the printed summary table whose care point names no section of Step ${step}; move each into its section`, pointOfCare: false })) : null
+			const target = matched
+				? byAddress(matched.address)
+				: step
+					? (drafts.get(`${step}/timeframes`) ??
+						addSection(String(step), 'Timeframes', {
+							note: `proposed: rows of the printed summary table whose care point names no section of Step ${step}; move each into its section`,
+							pointOfCare: false,
+						}))
+					: null
 			if (!target) {
 				ledger.timeframes.rows.push({ step, carePoint, source: 'row', destination: null })
 				continue
 			}
 			ledger.timeframes.boxes++
-			place(target, chapter, [{ type: 'timeframe', content: [{ type: 'carePoint', content: [{ type: 'text', text: carePoint }] }, ...statementNodes] }], 'timeframe-row', { note: `row "${carePoint}" of the summary timeframes table` })
-			ledger.timeframes.rows.push({ step, carePoint, source: 'row', destination: target.row.address })
+			place(
+				target,
+				chapter,
+				[
+					{
+						type: 'timeframe',
+						content: [
+							{ type: 'carePoint', content: [{ type: 'text', text: carePoint }] },
+							...statementNodes,
+						],
+					},
+				],
+				'timeframe-row',
+				{ note: `row "${carePoint}" of the summary timeframes table` },
+			)
+			ledger.timeframes.rows.push({
+				step,
+				carePoint,
+				source: 'row',
+				destination: target.row.address,
+			})
 		}
 	}
 
@@ -1443,7 +1979,9 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	for (const chapter of tree) {
 		if (chapter.l1 === 'pathway-note' || chapter.l1 === 'summary') continue
 		if (FIND_OUT_MORE.test(chapter.l1)) {
-			const section = addSection('find-out-more', titleOf(chapter.heading, chapter.number), { note: `proposed: the sandbox record moves the legacy ${chapter.heading} into Find out more; keep, move or remove it` })
+			const section = addSection('find-out-more', titleOf(chapter.heading, chapter.number), {
+				note: `proposed: the sandbox record moves the legacy ${chapter.heading} into Find out more; keep, move or remove it`,
+			})
 			const own = nodesOf(chapter.blocks)
 			if (own.length > 0) place(section, chapter, own, 'proposed')
 			else provenance(section, chapter, 'proposed')
@@ -1452,21 +1990,42 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			for (const child of flatten(chapter.children)) {
 				const nodes = nodesOf(child.blocks)
 				const level = Math.min(4, 3 + (child.key.split('/').length - 2))
-				place(section, child, [headingNode(titleOf(child.heading, child.number), level), ...nodes], 'merged')
+				place(
+					section,
+					child,
+					[headingNode(titleOf(child.heading, child.number), level), ...nodes],
+					'merged',
+				)
 			}
 			continue
 		}
 		const rule = table.rules[chapter.l1]
 		if (!rule) {
-			const section = addSection('find-out-more', titleOf(chapter.heading, chapter.number), { note: `unplaced: the template has no slot for the legacy chapter "${chapter.heading}"; keep, move or remove it` })
+			const section = addSection('find-out-more', titleOf(chapter.heading, chapter.number), {
+				note: `unplaced: the template has no slot for the legacy chapter "${chapter.heading}"; keep, move or remove it`,
+			})
 			for (const node of flatten([chapter])) {
 				const nodes = nodesOf(node.blocks)
-				if (nodes.length > 0) place(section, node, node === chapter ? nodes : [headingNode(titleOf(node.heading, node.number), 3), ...nodes], 'unplaced')
+				if (nodes.length > 0)
+					place(
+						section,
+						node,
+						node === chapter
+							? nodes
+							: [headingNode(titleOf(node.heading, node.number), 3), ...nodes],
+						'unplaced',
+					)
 			}
 			continue
 		}
 		if (rule.how === 'derived') {
-			for (const node of flatten([chapter])) ledger.placements.push({ legacyKey: node.key, legacyTitle: node.heading, destination: null, how: 'derived' })
+			for (const node of flatten([chapter]))
+				ledger.placements.push({
+					legacyKey: node.key,
+					legacyTitle: node.heading,
+					destination: null,
+					how: 'derived',
+				})
 			continue
 		}
 		// The population template's principles carry owned "considerations" sections, one
@@ -1485,20 +2044,36 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 				const title = titleOf(principle.heading, principle.number)
 				const target = address
 					? byAddress(address)
-					: addSection(POPULATION_CONSIDERATIONS, title, { note: `unplaced: the template has no considerations section for the legacy "${title}"; keep, move or remove it` })
+					: addSection(POPULATION_CONSIDERATIONS, title, {
+							note: `unplaced: the template has no considerations section for the legacy "${title}"; keep, move or remove it`,
+						})
 				const own = nodesOf(principle.blocks)
 				if (own.length > 0) place(target, principle, own, address ? 'proposed' : 'unplaced')
 				else provenance(target, principle, address ? 'proposed' : 'unplaced')
-				if (address) target.row.migrationNote = target.row.migrationNote ?? `proposed: holds the legacy "${title}" as this population’s considerations for the principle; check it belongs here`
+				if (address)
+					target.row.migrationNote =
+						target.row.migrationNote ??
+						`proposed: holds the legacy "${title}" as this population’s considerations for the principle; check it belongs here`
 				for (const child of flatten(principle.children)) {
 					const nodes = nodesOf(child.blocks)
-					if (nodes.length > 0) place(target, child, [headingNode(titleOf(child.heading, child.number), 3), ...nodes], 'merged')
+					if (nodes.length > 0)
+						place(
+							target,
+							child,
+							[headingNode(titleOf(child.heading, child.number), 3), ...nodes],
+							'merged',
+						)
 					else provenance(target, child, 'merged')
 				}
 			}
 			continue
 		}
-		const destination = 'under' in rule ? addSection(rule.under, rule.title, { note: `proposed: holds the legacy "${chapter.heading}"; check it belongs here` }) : byAddress(rule.address)
+		const destination =
+			'under' in rule
+				? addSection(rule.under, rule.title, {
+						note: `proposed: holds the legacy "${chapter.heading}"; check it belongs here`,
+					})
+				: byAddress(rule.address)
 		if (rule.how === 'provenance' || destination.row.ownership === 'shared') {
 			// The reference list is derived from the citations; every other chapter whose
 			// template slot is shared core text is version 1's divergence of that slot.
@@ -1509,14 +2084,21 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			placeOrDiverge(destination, chapter, nodesOf(chapter.blocks), 'diverged')
 			for (const child of flatten(chapter.children)) {
 				const nodes = nodesOf(child.blocks)
-				placeOrDiverge(destination, child, nodes.length > 0 ? [headingNode(titleOf(child.heading, child.number), 3), ...nodes] : [], 'diverged')
+				placeOrDiverge(
+					destination,
+					child,
+					nodes.length > 0 ? [headingNode(titleOf(child.heading, child.number), 3), ...nodes] : [],
+					'diverged',
+				)
 			}
 			continue
 		}
 		if (chapter.l1 === 'contributors') {
 			// The chapter's own text, then its groups by title under the template's own groups.
 			const own = nodesOf(chapter.blocks)
-			const groups = childrenOf(destination.row.address).flatMap((d) => (d.core ? [{ row: d.core, tokens: titleTokens(d.core.title ?? '', pathway.subject) }] : []))
+			const groups = childrenOf(destination.row.address).flatMap((d) =>
+				d.core ? [{ row: d.core, tokens: titleTokens(d.core.title ?? '', pathway.subject) }] : [],
+			)
 			if (own.length > 0) {
 				const first = groups[0] ? byAddress(groups[0].row.address) : null
 				if (first) place(first, chapter, own, 'rule')
@@ -1525,12 +2107,22 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 				const title = titleOf(group.heading, group.number)
 				const matched = matchTitle(title, groups, pathway.subject)
 				const nodes = nodesOf(group.blocks)
-				const target = matched ? byAddress(matched.address) : addSection(destination.row.address, title, { note: `unplaced: the template's Contributors and reviewers has no group "${title}"; keep, move or remove it` })
+				const target = matched
+					? byAddress(matched.address)
+					: addSection(destination.row.address, title, {
+							note: `unplaced: the template's Contributors and reviewers has no group "${title}"; keep, move or remove it`,
+						})
 				if (nodes.length > 0) place(target, group, nodes, matched ? 'title' : 'unplaced')
 				else provenance(target, group, matched ? 'title' : 'unplaced')
 				for (const child of flatten(group.children)) {
 					const more = nodesOf(child.blocks)
-					if (more.length > 0) place(target, child, [headingNode(titleOf(child.heading, child.number), 3), ...more], 'merged')
+					if (more.length > 0)
+						place(
+							target,
+							child,
+							[headingNode(titleOf(child.heading, child.number), 3), ...more],
+							'merged',
+						)
 				}
 			}
 			continue
@@ -1550,18 +2142,43 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			const main = [...multiColumn].sort((a, b) => b.rows.length - a.rows.length)[0]
 			const headerOf = (t: Table): string | null => {
 				const first = t.rows[0]
-				return first && first.cells.length > 0 && first.cells.every((c) => c.header) ? first.cells.map((c) => textOfBlocks(c.blocks).trim()).join('|') : null
+				return first && first.cells.length > 0 && first.cells.every((c) => c.header)
+					? first.cells.map((c) => textOfBlocks(c.blocks).trim()).join('|')
+					: null
 			}
 			const mainHeader = main ? headerOf(main) : null
-			const figureTables = multiColumn.filter((t) => t === main || (mainHeader !== null && headerOf(t) === mainHeader))
-			const isCaption = (b: Block) => figureTables.length > 0 && b.kind === 'paragraph' && /^Figure\s+\d+\s*:/.test(plainText(b.runs).trim())
+			const figureTables = multiColumn.filter(
+				(t) => t === main || (mainHeader !== null && headerOf(t) === mainHeader),
+			)
+			const isCaption = (b: Block) =>
+				figureTables.length > 0 &&
+				b.kind === 'paragraph' &&
+				/^Figure\s+\d+\s*:/.test(plainText(b.runs).trim())
 			for (const node of flatten([chapter])) {
-				const printed = nodesOf(node.blocks.filter((b) => !(b.kind === 'table' && figureTables.includes(b)) && b.kind !== 'figure' && !isCaption(b)))
+				const printed = nodesOf(
+					node.blocks.filter(
+						(b) =>
+							!(b.kind === 'table' && figureTables.includes(b)) &&
+							b.kind !== 'figure' &&
+							!isCaption(b),
+					),
+				)
 				// Where the print had its Figure 3, the chapter's text is followed by the
 				// template's snapshot, which the page draws from the steps' timeframe boxes.
 				const snapshot: JsonNode = { type: 'timeframeSnapshot' }
 				const own = node === chapter && figureTables.length > 0 ? [...printed, snapshot] : printed
-				if (own.length > 0) place(destination, node, node === chapter ? own : [headingNode(titleOf(node.heading, node.number), 3), ...own], node === chapter ? 'rule' : 'merged', node === chapter ? { note: 'the printed timeframes table and its caption are derived from the steps’ timeframe boxes' } : {})
+				if (own.length > 0)
+					place(
+						destination,
+						node,
+						node === chapter ? own : [headingNode(titleOf(node.heading, node.number), 3), ...own],
+						node === chapter ? 'rule' : 'merged',
+						node === chapter
+							? {
+									note: 'the printed timeframes table and its caption are derived from the steps’ timeframe boxes',
+								}
+							: {},
+					)
 				else provenance(destination, node)
 			}
 			for (const table of figureTables) placeTimeframeRows(table, chapter)
@@ -1573,13 +2190,33 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		const own =
 			chapter.l1 === 'front-matter'
 				? [
-						...(publishedAt ? [{ type: 'paragraph' as const, content: [{ type: 'text' as const, text: `Published ${publishedAt.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })}` }] }] : []),
-						...nodesOf(chapter.blocks.filter((b) => b.kind !== 'paragraph' || /^endorsed by/i.test(plainText(b.runs).trim()))),
+						...(publishedAt
+							? [
+									{
+										type: 'paragraph' as const,
+										content: [
+											{
+												type: 'text' as const,
+												text: `Published ${publishedAt.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })}`,
+											},
+										],
+									},
+								]
+							: []),
+						...nodesOf(
+							chapter.blocks.filter(
+								(b) => b.kind !== 'paragraph' || /^endorsed by/i.test(plainText(b.runs).trim()),
+							),
+						),
 					]
 				: nodesOf(chapter.blocks)
-		if (own.length > 0) place(destination, chapter, own, rule.how === 'proposed' ? 'proposed' : 'rule')
+		if (own.length > 0)
+			place(destination, chapter, own, rule.how === 'proposed' ? 'proposed' : 'rule')
 		else provenance(destination, chapter, rule.how === 'proposed' ? 'proposed' : 'rule')
-		if (rule.how === 'proposed') destination.row.migrationNote = destination.row.migrationNote ?? `proposed: holds the legacy "${chapter.heading}"; check it belongs here`
+		if (rule.how === 'proposed')
+			destination.row.migrationNote =
+				destination.row.migrationNote ??
+				`proposed: holds the legacy "${chapter.heading}"; check it belongs here`
 		// Beneath a proposed home a chapter of many parts keeps its parts as sections (a
 		// population pathway's "Further considerations"); beneath a slot of the template's
 		// (the imprint, the timeframes) the parts are headings inside the body.
@@ -1587,7 +2224,10 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			const title = titleOf(child.heading, child.number)
 			const target =
 				rule.how === 'proposed'
-					? addSection(destination.row.address, title, { note: `proposed: a part of the legacy "${chapter.heading}"; check it belongs here`, printedNumber: child.number })
+					? addSection(destination.row.address, title, {
+							note: `proposed: a part of the legacy "${chapter.heading}"; check it belongs here`,
+							printedNumber: child.number,
+						})
 					: destination
 			const nodes = nodesOf(child.blocks)
 			if (target === destination) {
@@ -1597,7 +2237,13 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			else provenance(target, child, 'proposed')
 			for (const grandchild of flatten(child.children)) {
 				const more = nodesOf(grandchild.blocks)
-				if (more.length > 0) place(target, grandchild, [headingNode(titleOf(grandchild.heading, grandchild.number), 3), ...more], 'merged')
+				if (more.length > 0)
+					place(
+						target,
+						grandchild,
+						[headingNode(titleOf(grandchild.heading, grandchild.number), 3), ...more],
+						'merged',
+					)
 				else provenance(target, grandchild, 'merged')
 			}
 		}
@@ -1607,7 +2253,9 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	const sections: SectionInsert[] = [...drafts.values()].map((d) => {
 		if (d.row.ownership === 'shared') return d.row
 		if (d.contributions.length === 0) return d.row
-		const placed = d.contributions.flatMap((c) => (c.heading ? [headingNode(c.heading, 3), ...c.nodes] : c.nodes))
+		const placed = d.contributions.flatMap((c) =>
+			c.heading ? [headingNode(c.heading, 3), ...c.nodes] : c.nodes,
+		)
 		return {
 			...d.row,
 			bodyJson: bodyOf([...placed, ...d.guidance]),
@@ -1642,9 +2290,15 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	// of the printed edition). Sections the edition never touched are hidden.
 	const addressOfId = new Map([...drafts.values()].map((d) => [d.row.id, d.row.address]))
 	const childrenById = new Map<string | null, DraftSection[]>()
-	for (const d of drafts.values()) childrenById.set(d.row.parentId ?? null, [...(childrenById.get(d.row.parentId ?? null) ?? []), d])
-	const placedNodes = (d: DraftSection): JsonNode[] => d.contributions.flatMap((c) => (c.heading ? [headingNode(c.heading, 3), ...c.nodes] : c.nodes))
-	const hasLegacyText = (d: DraftSection): boolean => divergences.has(d.row.address) || (d.row.ownership === 'owned' && d.contributions.length > 0)
+	for (const d of drafts.values())
+		childrenById.set(d.row.parentId ?? null, [
+			...(childrenById.get(d.row.parentId ?? null) ?? []),
+			d,
+		])
+	const placedNodes = (d: DraftSection): JsonNode[] =>
+		d.contributions.flatMap((c) => (c.heading ? [headingNode(c.heading, 3), ...c.nodes] : c.nodes))
+	const hasLegacyText = (d: DraftSection): boolean =>
+		divergences.has(d.row.address) || (d.row.ownership === 'owned' && d.contributions.length > 0)
 	const visibleIn1 = new Set<string>()
 	const visit = (d: DraftSection): boolean => {
 		let visible = hasLegacyText(d)
@@ -1666,7 +2320,11 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			ownership: 'owned',
 			hidden: !visibleIn1.has(d.row.address),
 			pointOfCare: d.row.pointOfCare ?? false,
-			bodyJson: divergence ? bodyOf(divergence.nodes) : d.row.ownership === 'owned' && d.contributions.length > 0 ? bodyOf(placedNodes(d)) : bodyOf([]),
+			bodyJson: divergence
+				? bodyOf(divergence.nodes)
+				: d.row.ownership === 'owned' && d.contributions.length > 0
+					? bodyOf(placedNodes(d))
+					: bodyOf([]),
 			html: null,
 			markdown: null,
 			lastChangedVersionNo: 1,
@@ -1687,14 +2345,29 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	}
 	// Raised-number markers were resolved by the block mapper; a number the list lacks was
 	// left as printed and recorded by the reader.
-	const missingNumbers = model.warnings.filter((w) => w.message.startsWith('citation-number-missing: ')).map((w) => `p.${w.page}: raised number ${w.message.slice('citation-number-missing: '.length)} — the numbered list has no such entry`)
-	ledger.citations = { matched: citations.matched + mapper.stats.citations, unmatched: [...citations.unmatched, ...missingNumbers], byName: citations.byName }
+	const missingNumbers = model.warnings
+		.filter((w) => w.message.startsWith('citation-number-missing: '))
+		.map(
+			(w) =>
+				`p.${w.page}: raised number ${w.message.slice('citation-number-missing: '.length)} — the numbered list has no such entry`,
+		)
+	ledger.citations = {
+		matched: citations.matched + mapper.stats.citations,
+		unmatched: [...citations.unmatched, ...missingNumbers],
+		byName: citations.byName,
+	}
 	return {
 		document,
 		sections,
 		versions: [v1, v2],
 		versionSections,
-		references: entries.map((e) => ({ id: e.id, documentId, citation: e.citation, url: e.url, printedNumber: e.number ?? null })),
+		references: entries.map((e) => ({
+			id: e.id,
+			documentId,
+			citation: e.citation,
+			url: e.url,
+			printedNumber: e.number ?? null,
+		})),
 		legacyDocument,
 		legacySections,
 		origins,
@@ -1706,7 +2379,15 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 // Edition and date, read off the front matter
 // ---------------------------------------------------------------------------
 
-const ORDINALS: Record<string, string> = { first: 'First', second: 'Second', third: 'Third', fourth: 'Fourth', '1st': 'First', '2nd': 'Second', '3rd': 'Third' }
+const ORDINALS: Record<string, string> = {
+	first: 'First',
+	second: 'Second',
+	third: 'Third',
+	fourth: 'Fourth',
+	'1st': 'First',
+	'2nd': 'Second',
+	'3rd': 'Third',
+}
 
 function editionOf(model: ExtractedDocument, pathway: LegacyPathway): string | null {
 	for (const b of model.front) {
@@ -1721,18 +2402,34 @@ function editionOf(model: ExtractedDocument, pathway: LegacyPathway): string | n
 	return null
 }
 
-const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
+const MONTHS = [
+	'january',
+	'february',
+	'march',
+	'april',
+	'may',
+	'june',
+	'july',
+	'august',
+	'september',
+	'october',
+	'november',
+	'december',
+]
 
 /** "This edition published in June 2021." → 2021-06-01. A print with no imprint (the
  *  January-2020 design) is dated by its file name ("…-january-2020"). */
 function publicationDateOf(model: ExtractedDocument, pathway: LegacyPathway): string | null {
 	const fromFile = new RegExp(`-(${MONTHS.join('|')})-(\\d{4})$`).exec(pathway.slug)
-	if (fromFile?.[1] && fromFile[2]) return `${fromFile[2]}-${String(MONTHS.indexOf(fromFile[1]) + 1).padStart(2, '0')}-01`
+	if (fromFile?.[1] && fromFile[2])
+		return `${fromFile[2]}-${String(MONTHS.indexOf(fromFile[1]) + 1).padStart(2, '0')}-01`
 	for (const b of model.front) {
 		if (b.kind !== 'paragraph') continue
 		const text = plainText(b.runs)
 		// "First edition: June 2022." names the date without the word "published".
-		const dated = /^(?:first|second|third|fourth)\s+edition:?\s+([A-Z][a-z]+)\s+(\d{4})/i.exec(text.trim())
+		const dated = /^(?:first|second|third|fourth)\s+edition:?\s+([A-Z][a-z]+)\s+(\d{4})/i.exec(
+			text.trim(),
+		)
 		if (dated?.[1] && dated[2]) {
 			const month = MONTHS.indexOf(dated[1].toLowerCase())
 			if (month >= 0) return `${dated[2]}-${String(month + 1).padStart(2, '0')}-01`

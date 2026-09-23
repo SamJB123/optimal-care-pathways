@@ -12,7 +12,12 @@ import { createMemo, createSignal, createUniqueId, For, onSettled, Show, untrack
 import { shortDate } from '#/lib/labels.ts'
 import { workspaceHref } from '#/lib/links.ts'
 import type { SuggestionWire } from '#/server/lifecycle.ts'
-import { addComment, type CommentWire, replyToSuggestion, resolveComment } from '#/server/lifecycle-fns.ts'
+import {
+	addComment,
+	type CommentWire,
+	replyToSuggestion,
+	resolveComment,
+} from '#/server/lifecycle-fns.ts'
 import { mentionable } from '#/server/workspace-fns.ts'
 import './thread.css'
 
@@ -85,7 +90,9 @@ export function Composer(props: {
 	const send = (submit: (body: string, mentions: string[]) => void) => {
 		const text = area?.value.trim() ?? ''
 		if (!text) return
-		const mentions = [...named()].filter(([name]) => text.includes(`@${name}`)).map(([, userId]) => userId)
+		const mentions = [...named()]
+			.filter(([name]) => text.includes(`@${name}`))
+			.map(([, userId]) => userId)
 		submit(text, mentions)
 		if (area) area.value = ''
 		setNamed(new Map())
@@ -100,7 +107,12 @@ export function Composer(props: {
 				send(props.onSubmit)
 			}}
 		>
-			<Field label={props.label} hint={props.documentId ? 'Type @ to name someone on the team; they are emailed.' : undefined}>
+			<Field
+				label={props.label}
+				hint={
+					props.documentId ? 'Type @ to name someone on the team; they are emailed.' : undefined
+				}
+			>
 				<TextArea
 					ref={(el) => {
 						area = el
@@ -118,7 +130,9 @@ export function Composer(props: {
 						if (list.length === 0) return
 						if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
 							event.preventDefault()
-							setActive((i) => (i + (event.key === 'ArrowDown' ? 1 : list.length - 1)) % list.length)
+							setActive(
+								(i) => (i + (event.key === 'ArrowDown' ? 1 : list.length - 1)) % list.length,
+							)
 						} else if (event.key === 'Enter' || event.key === 'Tab') {
 							const person = list[active()]
 							if (!person) return
@@ -162,7 +176,12 @@ export function Composer(props: {
 				</Button>
 				<Show when={props.also}>
 					{(also) => (
-						<Button type="button" variant="outline" disabled={props.busy} onClick={() => send(also().onSubmit)}>
+						<Button
+							type="button"
+							variant="outline"
+							disabled={props.busy}
+							onClick={() => send(also().onSubmit)}
+						>
 							{also().action}
 						</Button>
 					)}
@@ -196,7 +215,9 @@ export function CommentThread(props: {
 			setBusy(false)
 		}
 	}
-	const firsts = createMemo(() => props.comments.filter((c) => !c.replyTo || !props.comments.some((p) => p.id === c.replyTo)))
+	const firsts = createMemo(() =>
+		props.comments.filter((c) => !c.replyTo || !props.comments.some((p) => p.id === c.replyTo)),
+	)
 	const repliesTo = (id: string) => props.comments.filter((c) => c.replyTo === id)
 	return (
 		<div class="ocp-thread">
@@ -207,7 +228,10 @@ export function CommentThread(props: {
 					</p>
 				)}
 			</Show>
-			<Show when={firsts().length > 0} fallback={<p class="ocp-muted">No comments on this section.</p>}>
+			<Show
+				when={firsts().length > 0}
+				fallback={<p class="ocp-muted">No comments on this section.</p>}
+			>
 				<For each={firsts()}>
 					{(comment) => (
 						<article class="ocp-comment" data-resolved={comment.resolvedAt ? 'true' : undefined}>
@@ -239,14 +263,25 @@ export function CommentThread(props: {
 							</Show>
 							<Show when={props.canWrite}>
 								<p class="ocp-comment-actions">
-									<button type="button" class="ocp-link-button" disabled={busy()} onClick={() => setReplying(replying() === comment.id ? null : comment.id)}>
+									<button
+										type="button"
+										class="ocp-link-button"
+										disabled={busy()}
+										onClick={() => setReplying(replying() === comment.id ? null : comment.id)}
+									>
 										Reply
 									</button>
 									<button
 										type="button"
 										class="ocp-link-button"
 										disabled={busy()}
-										onClick={() => run(() => resolveComment({ data: { commentId: comment.id, resolved: !comment.resolvedAt } }))}
+										onClick={() =>
+											run(() =>
+												resolveComment({
+													data: { commentId: comment.id, resolved: !comment.resolvedAt },
+												}),
+											)
+										}
 									>
 										{comment.resolvedAt ? 'Reopen' : 'Resolve'}
 									</button>
@@ -260,7 +295,14 @@ export function CommentThread(props: {
 										onSubmit={(body, mentions) =>
 											run(async () => {
 												await addComment({
-													data: { documentId: props.documentId, sectionId: props.sectionId, kind: 'comment', body, replyTo: comment.id, mentions },
+													data: {
+														documentId: props.documentId,
+														sectionId: props.sectionId,
+														kind: 'comment',
+														body,
+														replyTo: comment.id,
+														mentions,
+													},
 												})
 												setReplying(null)
 											})
@@ -278,7 +320,19 @@ export function CommentThread(props: {
 					action="Add the comment"
 					busy={busy()}
 					documentId={props.documentId}
-					onSubmit={(body, mentions) => run(() => addComment({ data: { documentId: props.documentId, sectionId: props.sectionId, kind: 'comment', body, mentions } }))}
+					onSubmit={(body, mentions) =>
+						run(() =>
+							addComment({
+								data: {
+									documentId: props.documentId,
+									sectionId: props.sectionId,
+									kind: 'comment',
+									body,
+									mentions,
+								},
+							}),
+						)
+					}
 				/>
 			</Show>
 		</div>
@@ -286,7 +340,10 @@ export function CommentThread(props: {
 }
 
 /** One suggestion as the central team reads it, with the way to answer it. */
-export function SuggestionCard(props: { suggestion: SuggestionWire; onChanged: () => Promise<void> }) {
+export function SuggestionCard(props: {
+	suggestion: SuggestionWire
+	onChanged: () => Promise<void>
+}) {
 	const [busy, setBusy] = createSignal(false)
 	const [error, setError] = createSignal<string | null>(null)
 	const answer = async (body: string | null, resolve: boolean) => {
@@ -308,7 +365,8 @@ export function SuggestionCard(props: { suggestion: SuggestionWire; onChanged: (
 				<strong>{s().authorName}</strong>
 				<span class="ocp-muted">
 					{' '}
-					· <a href={workspaceHref(s().pathway.documentId)}>{s().pathway.title}</a> · {shortDate(s().createdAt)}
+					· <a href={workspaceHref(s().pathway.documentId)}>{s().pathway.title}</a> ·{' '}
+					{shortDate(s().createdAt)}
 				</span>
 				<Show when={s().resolvedAt}>
 					<span class="ocp-comment-kind">Resolved</span>
@@ -371,7 +429,12 @@ export function SuggestionCard(props: { suggestion: SuggestionWire; onChanged: (
 					also={{ action: 'Reply and resolve', onSubmit: (body) => void answer(body, true) }}
 				/>
 				<p class="ocp-comment-actions">
-					<button type="button" class="ocp-link-button" disabled={busy()} onClick={() => void answer(null, true)}>
+					<button
+						type="button"
+						class="ocp-link-button"
+						disabled={busy()}
+						onClick={() => void answer(null, true)}
+					>
 						Resolve without a reply
 					</button>
 				</p>

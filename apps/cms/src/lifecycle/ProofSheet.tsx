@@ -12,7 +12,16 @@ import { Button, Checkbox, Field, TextArea, TextInput } from '@aicolab/ui-solid'
 import { createMemo, createSignal, For, Loading, Show, useContext } from 'solid-js'
 import { RenderedBody } from '#/content/render.tsx'
 import { changeSize, imprintDate } from '#/lib/labels.ts'
-import { draftDocxHref, draftPdfHref, guideHref, partHref, pdfHref, previewHref, publishedHref, sectionAnchor } from '#/lib/links.ts'
+import {
+	draftDocxHref,
+	draftPdfHref,
+	guideHref,
+	partHref,
+	pdfHref,
+	previewHref,
+	publishedHref,
+	sectionAnchor,
+} from '#/lib/links.ts'
 import { bandLabel, type SpineBand, spineOf } from '#/lib/outline.ts'
 import { publishDocument, publishReadiness } from '#/server/lifecycle-fns.ts'
 import type { GateItem } from '#/server/lifecycle.ts'
@@ -30,12 +39,18 @@ function changeTag(e: ChangeEntry, published: boolean): string {
 				? 'New'
 				: `Changed ${changeSize(e.change.annotated)}`
 	const decided = e.change.decision?.decision
-	return decided === 'approved' ? `${kind} · approved` : decided === 'changes_requested' ? `${kind} · sent back` : kind
+	return decided === 'approved'
+		? `${kind} · approved`
+		: decided === 'changes_requested'
+			? `${kind} · sent back`
+			: kind
 }
 
 export function ProofSheet(props: { onClose: () => void }) {
 	const workspace = useContext(DocumentContext)
-	const readiness = createMemo(() => publishReadiness({ data: { documentId: workspace.documentId } }))
+	const readiness = createMemo(() =>
+		publishReadiness({ data: { documentId: workspace.documentId } }),
+	)
 	const [label, setLabel] = createSignal('')
 	const [notes, setNotes] = createSignal('')
 	const [signed, setSigned] = createSignal(false)
@@ -66,7 +81,11 @@ export function ProofSheet(props: { onClose: () => void }) {
 		setError(null)
 		try {
 			const result = await publishDocument({
-				data: { documentId: workspace.documentId, label: label().trim() || null, releaseNotes: notes().trim() || null },
+				data: {
+					documentId: workspace.documentId,
+					label: label().trim() || null,
+					releaseNotes: notes().trim() || null,
+				},
 			})
 			setDone({ versionNo: result.versionNo, at: Date.now() })
 			await workspace.refreshState()
@@ -84,7 +103,8 @@ export function ProofSheet(props: { onClose: () => void }) {
 				fallback={
 					<>
 						<p class="ocp-proof-lead">
-							The proof of edition {editionNo()}: what readers will get when you publish. Read it through, then sign it off.
+							The proof of edition {editionNo()}: what readers will get when you publish. Read it
+							through, then sign it off.
 						</p>
 						<p class="ocp-proof-links">
 							<a href={previewHref(workspace.documentId)}>Open the preview</a>
@@ -99,16 +119,30 @@ export function ProofSheet(props: { onClose: () => void }) {
 									<p class="ocp-proof-specimen-kicker">Optimal Care Pathways · published</p>
 									<p class="ocp-proof-specimen-title">{workspace.document.title}</p>
 									<p class="ocp-proof-specimen-meta">
-										{[`Version ${editionNo()}`, label().trim() || null, imprintDate(now)].filter((part) => part).join(' · ')}
+										{[`Version ${editionNo()}`, label().trim() || null, imprintDate(now)]
+											.filter((part) => part)
+											.join(' · ')}
 									</p>
-									<Show when={notes().trim()}>{(text) => <p class="ocp-proof-specimen-notes">{text()}</p>}</Show>
+									<Show when={notes().trim()}>
+										{(text) => <p class="ocp-proof-specimen-notes">{text()}</p>}
+									</Show>
 								</div>
 								<div class="ocp-proof-fields">
-									<Field label="Edition label (optional)" hint="How the edition is named, as the print names it: “Third edition”.">
+									<Field
+										label="Edition label (optional)"
+										hint="How the edition is named, as the print names it: “Third edition”."
+									>
 										<TextInput value={label()} onInput={(e) => setLabel(e.currentTarget.value)} />
 									</Field>
-									<Field label="Release notes" hint="What changed, for the people who read the pathway.">
-										<TextArea rows={4} value={notes()} onInput={(e) => setNotes(e.currentTarget.value)} />
+									<Field
+										label="Release notes"
+										hint="What changed, for the people who read the pathway."
+									>
+										<TextArea
+											rows={4}
+											value={notes()}
+											onInput={(e) => setNotes(e.currentTarget.value)}
+										/>
 									</Field>
 								</div>
 							</div>
@@ -129,10 +163,14 @@ export function ProofSheet(props: { onClose: () => void }) {
 													<Show when={item.level !== 'ok' && (item.sections?.length ?? 0) > 0}>
 														<span class="ocp-proof-where">
 															<For each={(item.sections ?? []).slice(0, 12)}>
-																{(address) => <SectionLink address={address} onFollow={props.onClose} />}
+																{(address) => (
+																	<SectionLink address={address} onFollow={props.onClose} />
+																)}
 															</For>
 															<Show when={(item.sections?.length ?? 0) > 12}>
-																<span class="ocp-muted">and {(item.sections?.length ?? 0) - 12} more</span>
+																<span class="ocp-muted">
+																	and {(item.sections?.length ?? 0) - 12} more
+																</span>
 															</Show>
 														</span>
 													</Show>
@@ -146,7 +184,8 @@ export function ProofSheet(props: { onClose: () => void }) {
 
 						<section aria-labelledby="ocp-proof-changes">
 							<h3 id="ocp-proof-changes">
-								What changes: {workspace.changeOrder().length} {workspace.changeOrder().length === 1 ? 'section' : 'sections'}
+								What changes: {workspace.changeOrder().length}{' '}
+								{workspace.changeOrder().length === 1 ? 'section' : 'sections'}
 							</h3>
 							<For each={groups()}>
 								{(group) => (
@@ -154,7 +193,11 @@ export function ProofSheet(props: { onClose: () => void }) {
 										<h4>
 											{bandLabel(group.band)} <span class="ocp-muted">{group.entries.length}</span>
 										</h4>
-										<For each={group.entries}>{(entry) => <ProofChange entry={entry} published={state().published !== null} />}</For>
+										<For each={group.entries}>
+											{(entry) => (
+												<ProofChange entry={entry} published={state().published !== null} />
+											)}
+										</For>
 									</div>
 								)}
 							</For>
@@ -174,11 +217,17 @@ export function ProofSheet(props: { onClose: () => void }) {
 							</Show>
 							<Loading fallback={null}>
 								<div class="ocp-proof-actions">
-									<Button variant="solid" disabled={!signed() || readiness().blocked || busy()} onClick={() => void publish()}>
+									<Button
+										variant="solid"
+										disabled={!signed() || readiness().blocked || busy()}
+										onClick={() => void publish()}
+									>
 										{busy() ? 'Publishing…' : `Publish edition ${editionNo()}`}
 									</Button>
 									<Show when={readiness().blocked}>
-										<span class="ocp-muted">The gate above says what is left before this can publish.</span>
+										<span class="ocp-muted">
+											The gate above says what is left before this can publish.
+										</span>
 									</Show>
 								</div>
 							</Loading>
@@ -190,9 +239,13 @@ export function ProofSheet(props: { onClose: () => void }) {
 					<section class="ocp-proof-done" role="status">
 						<p class="ocp-proof-done-title">
 							Edition {result().versionNo}
-							{label().trim() ? `, ${label().trim()},` : ''} is published, {imprintDate(result().at)}.
+							{label().trim() ? `, ${label().trim()},` : ''} is published,{' '}
+							{imprintDate(result().at)}.
 						</p>
-						<p>Readers now get it at its address. The draft of edition {result().versionNo + 1} is open for the next changes.</p>
+						<p>
+							Readers now get it at its address. The draft of edition {result().versionNo + 1} is
+							open for the next changes.
+						</p>
 						<p class="ocp-proof-links">
 							<a href={publishedHref(workspace.document.slug)}>The published page</a>
 							<Show when={workspace.document.kind === 'pathway'}>
@@ -218,8 +271,18 @@ function SectionLink(props: { address: string; onFollow: () => void }) {
 		const s = workspace.sections().find((row) => row.address === props.address)
 		if (!s) return null
 		let root = s
-		for (let parent = root.parentId ? workspace.sections().find((r) => r.id === root.parentId) : undefined; parent; parent = root.parentId ? workspace.sections().find((r) => r.id === root.parentId) : undefined) root = parent
-		return { label: sectionLabel(s), href: `${partHref(workspace.documentId, root.address)}#${sectionAnchor(s.address)}` }
+		for (
+			let parent = root.parentId
+				? workspace.sections().find((r) => r.id === root.parentId)
+				: undefined;
+			parent;
+			parent = root.parentId ? workspace.sections().find((r) => r.id === root.parentId) : undefined
+		)
+			root = parent
+		return {
+			label: sectionLabel(s),
+			href: `${partHref(workspace.documentId, root.address)}#${sectionAnchor(s.address)}`,
+		}
 	})
 	return (
 		<Show when={found()} fallback={<span>{props.address}</span>}>
@@ -237,13 +300,21 @@ function ProofChange(props: { entry: ChangeEntry; published: boolean }) {
 	const workspace = useContext(DocumentContext)
 	const [open, setOpen] = createSignal(false)
 	return (
-		<details class="ocp-proof-change" data-change={props.entry.change.change} onToggle={(e) => setOpen(e.currentTarget.open)}>
+		<details
+			class="ocp-proof-change"
+			data-change={props.entry.change.change}
+			onToggle={(e) => setOpen(e.currentTarget.open)}
+		>
 			<summary>
 				<span class="ocp-proof-change-label">{sectionLabel(props.entry.section)}</span>
 				<span class="ocp-proof-change-tag">{changeTag(props.entry, props.published)}</span>
 			</summary>
 			<Show when={open()}>
-				<RenderedBody body={props.entry.change.annotated.body} derived={workspace.derived} guidance={workspace.guidance} />
+				<RenderedBody
+					body={props.entry.change.annotated.body}
+					derived={workspace.derived}
+					guidance={workspace.guidance}
+				/>
 			</Show>
 		</details>
 	)

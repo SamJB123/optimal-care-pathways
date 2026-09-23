@@ -30,7 +30,12 @@ const saveBlob = (blob: Blob, filename: string): void => {
 	setTimeout(() => URL.revokeObjectURL(a.href), 10_000)
 }
 
-export function InviteQrSheet(props: { link: InviteLinkForQr; teamName: string; central: boolean; onDismiss: () => void }) {
+export function InviteQrSheet(props: {
+	link: InviteLinkForQr
+	teamName: string
+	central: boolean
+	onDismiss: () => void
+}) {
 	const [presenting, setPresenting] = createSignal(false)
 	let sheet: HTMLDivElement | undefined
 	let present: HTMLDivElement | undefined
@@ -39,13 +44,23 @@ export function InviteQrSheet(props: { link: InviteLinkForQr; teamName: string; 
 	 *  read from the page rather than drawn twice. */
 	const markHref = (): string | undefined => {
 		const glyph = sheet?.querySelector('.ocp-qr-mark')
-		return glyph ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(glyph))}` : undefined
+		return glyph
+			? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(glyph))}`
+			: undefined
 	}
 	const exportSvg = (): string =>
-		qrSvgString(props.link.url, { knockout: KNOCKOUT, markHref: markHref(), ink: '#000000', surface: '#ffffff', pixelSize: EXPORT_PX })
-	const filename = (ext: string): string => `team-invite-${roleWord(props.link.role, props.central).replace(/\s+/g, '-')}.${ext}`
+		qrSvgString(props.link.url, {
+			knockout: KNOCKOUT,
+			markHref: markHref(),
+			ink: '#000000',
+			surface: '#ffffff',
+			pixelSize: EXPORT_PX,
+		})
+	const filename = (ext: string): string =>
+		`team-invite-${roleWord(props.link.role, props.central).replace(/\s+/g, '-')}.${ext}`
 
-	const downloadSvg = (): void => saveBlob(new Blob([exportSvg()], { type: 'image/svg+xml' }), filename('svg'))
+	const downloadSvg = (): void =>
+		saveBlob(new Blob([exportSvg()], { type: 'image/svg+xml' }), filename('svg'))
 	const downloadPng = (): void => {
 		const src = URL.createObjectURL(new Blob([exportSvg()], { type: 'image/svg+xml' }))
 		const img = new Image()
@@ -55,7 +70,13 @@ export function InviteQrSheet(props: { link: InviteLinkForQr; teamName: string; 
 			canvas.height = EXPORT_PX
 			canvas.getContext('2d')?.drawImage(img, 0, 0, EXPORT_PX, EXPORT_PX)
 			URL.revokeObjectURL(src)
-			canvas.toBlob((blob) => (blob ? saveBlob(blob, filename('png')) : toast.error('This browser could not make the PNG.')), 'image/png')
+			canvas.toBlob(
+				(blob) =>
+					blob
+						? saveBlob(blob, filename('png'))
+						: toast.error('This browser could not make the PNG.'),
+				'image/png',
+			)
 		}
 		img.onerror = () => {
 			URL.revokeObjectURL(src)
@@ -105,7 +126,13 @@ export function InviteQrSheet(props: { link: InviteLinkForQr; teamName: string; 
 						sheet = el
 					}}
 				>
-					<QrCode class="ocp-qr-code" value={props.link.url} label={`QR code for ${props.link.url}`} knockout={KNOCKOUT} mark={mark} />
+					<QrCode
+						class="ocp-qr-code"
+						value={props.link.url}
+						label={`QR code for ${props.link.url}`}
+						knockout={KNOCKOUT}
+						mark={mark}
+					/>
 					<button
 						type="button"
 						class="ocp-qr-url"
@@ -119,7 +146,9 @@ export function InviteQrSheet(props: { link: InviteLinkForQr; teamName: string; 
 					>
 						<code>{props.link.url}</code>
 					</button>
-					<p class="ocp-qr-expiry">Works until {imprintDate(props.link.expiresAt)}. Make a new link after that.</p>
+					<p class="ocp-qr-expiry">
+						Works until {imprintDate(props.link.expiresAt)}. Make a new link after that.
+					</p>
 					<div class="ocp-qr-actions">
 						<Button variant="outline" onClick={downloadPng}>
 							Download PNG
@@ -146,7 +175,12 @@ export function InviteQrSheet(props: { link: InviteLinkForQr; teamName: string; 
 					onClick={stopPresenting}
 				>
 					<p class="ocp-qr-present-title">Scan to join {props.teamName}</p>
-					<QrCode class="ocp-qr-present-code" value={props.link.url} knockout={KNOCKOUT} mark={mark} />
+					<QrCode
+						class="ocp-qr-present-code"
+						value={props.link.url}
+						knockout={KNOCKOUT}
+						mark={mark}
+					/>
 					<p class="ocp-qr-present-url">{props.link.url.replace(/^https?:\/\//, '')}</p>
 				</div>
 			</Show>

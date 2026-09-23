@@ -213,7 +213,10 @@ export class DocumentRoom extends DocRoom {
 		await this.#rememberRowClock(sectionId, updated[0]?.updatedAt ?? at)
 		if (updated.length > 0) {
 			void publishSectionRows(this.documentId(), updated)
-			await reindex(db(this.env.DB), updated.map((row) => ({ ...row, body: row.bodyJson ?? null })))
+			await reindex(
+				db(this.env.DB),
+				updated.map((row) => ({ ...row, body: row.bodyJson ?? null })),
+			)
 		}
 		return body
 	}
@@ -230,7 +233,10 @@ export class DocumentRoom extends DocRoom {
 		this.#presenceTimer = setTimeout(() => {
 			this.#presenceTimer = null
 			void this.#announcePresence().catch((error) =>
-				console.error('[document-room] presence announcement failed:', error instanceof Error ? error.message : error),
+				console.error(
+					'[document-room] presence announcement failed:',
+					error instanceof Error ? error.message : error,
+				),
 			)
 		}, 1500)
 	}

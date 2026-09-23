@@ -191,7 +191,9 @@ function mcidOf(props: unknown, pageObjId: string): string | null {
 /** One field of an object pdf.js hands back untyped (a font, an annotation), read as
  *  unknown for the caller to check. */
 function field(value: unknown, key: string): unknown {
-	return typeof value === 'object' && value !== null && key in value ? Reflect.get(value, key) : undefined
+	return typeof value === 'object' && value !== null && key in value
+		? Reflect.get(value, key)
+		: undefined
 }
 
 /** An array or typed array of numbers (pdf.js uses Float32Array for path data). */

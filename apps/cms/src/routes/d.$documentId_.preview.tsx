@@ -21,9 +21,17 @@ export const Route = createFileRoute('/d/$documentId_/preview')({
 	validateSearch: z.object({ print: z.coerce.boolean().optional() }),
 	loader: async ({ params }) => {
 		try {
-			return { draft: await draftReading({ data: { documentId: params.documentId } }), error: null, now: Date.now() }
+			return {
+				draft: await draftReading({ data: { documentId: params.documentId } }),
+				error: null,
+				now: Date.now(),
+			}
 		} catch (error) {
-			return { draft: null, error: error instanceof Error ? error.message : String(error), now: Date.now() }
+			return {
+				draft: null,
+				error: error instanceof Error ? error.message : String(error),
+				now: Date.now(),
+			}
 		}
 	},
 	component: PreviewPage,
@@ -40,7 +48,11 @@ function PreviewPage() {
 				<Masthead
 					crumbs={[
 						{ label: 'Pathways', href: '/' },
-						{ label: data().draft?.document.name ?? 'Draft', href: workspaceHref(params().documentId), accent: data().draft?.document.accent ?? null },
+						{
+							label: data().draft?.document.name ?? 'Draft',
+							href: workspaceHref(params().documentId),
+							accent: data().draft?.document.accent ?? null,
+						},
 						{ label: 'Preview' },
 					]}
 				/>

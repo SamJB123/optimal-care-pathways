@@ -382,7 +382,9 @@ describe('the pathway', () => {
 						type: 'guidance',
 						content: [
 							paragraph(
-								text('Add sub-categories if required', [{ type: 'placeholder', attrs: { label: 'Add sub-categories if required' } }]),
+								text('Add sub-categories if required', [
+									{ type: 'placeholder', attrs: { label: 'Add sub-categories if required' } },
+								]),
 							),
 						],
 					},
@@ -514,7 +516,11 @@ describe('the pathway', () => {
 describe('a draft that removes sections', () => {
 	const P_CHILD = `p-child-${run}`
 	const hide = (ids: string[], hidden: boolean) =>
-		Promise.all(ids.map((id) => db(env.DB).update(schema.sections).set({ hidden }).where(eq(schema.sections.id, id))))
+		Promise.all(
+			ids.map((id) =>
+				db(env.DB).update(schema.sections).set({ hidden }).where(eq(schema.sections.id, id)),
+			),
+		)
 
 	it('a hidden subtree is one removal, named by its top section, reviewed and published alone', async () => {
 		const d = db(env.DB)
@@ -532,16 +538,33 @@ describe('a draft that removes sections', () => {
 		})
 		// The added subsection is new text since the published edition: publish it first,
 		// so what follows is a removal alone.
-		const first = await lc.requestReview(lifecycle(), { documentId: PATHWAY_ID, userId: `member@${PATHWAY_ORG}`, note: null })
-		await lc.decideSection(lifecycle(), { reviewId: first.reviewId, sectionId: P_CHILD, decision: 'approved', note: null, userId: `admin@${PATHWAY_ORG}` })
-		await lc.publish(lifecycle(), { documentId: PATHWAY_ID, userId: `owner@${CENTRAL}`, label: null, releaseNotes: null })
+		const first = await lc.requestReview(lifecycle(), {
+			documentId: PATHWAY_ID,
+			userId: `member@${PATHWAY_ORG}`,
+			note: null,
+		})
+		await lc.decideSection(lifecycle(), {
+			reviewId: first.reviewId,
+			sectionId: P_CHILD,
+			decision: 'approved',
+			note: null,
+			userId: `admin@${PATHWAY_ORG}`,
+		})
+		await lc.publish(lifecycle(), {
+			documentId: PATHWAY_ID,
+			userId: `owner@${CENTRAL}`,
+			label: null,
+			releaseNotes: null,
+		})
 
 		// Hiding a section hides everything under it; the review sees one removal.
 		await hide([P_OWNED, P_CHILD], true)
 		const changes = await lc.reviewableChanges(lifecycle(), PATHWAY_ID)
 		expect(changes.text).toEqual([])
 		expect(changes.removals.map((s) => s.row.id)).toEqual([P_OWNED])
-		expect((await lc.structureChanges(lifecycle(), PATHWAY_ID)).hidden.map((h) => h.sectionId)).toEqual([P_OWNED])
+		expect(
+			(await lc.structureChanges(lifecycle(), PATHWAY_ID)).hidden.map((h) => h.sectionId),
+		).toEqual([P_OWNED])
 		const state = await lc.documentState(lifecycle(), PATHWAY_ID, `member@${PATHWAY_ORG}`)
 		expect(state.changes.map((c) => [c.sectionId, c.change])).toEqual([[P_OWNED, 'removal']])
 		// A removal shows the text readers lose, struck through.
@@ -549,19 +572,34 @@ describe('a draft that removes sections', () => {
 		expect(state.changes[0]?.annotated.inserted).toBe(0)
 
 		const before = sentMail.length
-		const review = await lc.requestReview(lifecycle(), { documentId: PATHWAY_ID, userId: `member@${PATHWAY_ORG}`, note: null })
+		const review = await lc.requestReview(lifecycle(), {
+			documentId: PATHWAY_ID,
+			userId: `member@${PATHWAY_ORG}`,
+			note: null,
+		})
 		expect(review.sections).toBe(0)
 		expect(review.hidden).toBe(1)
-		const pins = await d.select().from(schema.reviewSections).where(eq(schema.reviewSections.reviewId, review.reviewId))
+		const pins = await d
+			.select()
+			.from(schema.reviewSections)
+			.where(eq(schema.reviewSections.reviewId, review.reviewId))
 		expect(pins.map((p) => [p.sectionId, p.change])).toEqual([[P_OWNED, 'removal']])
 		const mail = sentMail.slice(before).find((m) => m.subject.startsWith('Review requested'))
 		expect(mail?.text).toContain('sections removed only')
 		expect(mail?.text).toContain('Sections removed: Owned (2).')
 		expect(mail?.text).not.toContain('Team notes')
 
-		await lc.decideSection(lifecycle(), { reviewId: review.reviewId, sectionId: P_OWNED, decision: 'approved', note: null, userId: `admin@${PATHWAY_ORG}` })
+		await lc.decideSection(lifecycle(), {
+			reviewId: review.reviewId,
+			sectionId: P_OWNED,
+			decision: 'approved',
+			note: null,
+			userId: `admin@${PATHWAY_ORG}`,
+		})
 		const ready = await lc.publishReadiness(lifecycle(), PATHWAY_ID, `owner@${CENTRAL}`)
-		expect(ready.items.find((i) => i.key === 'changes')?.message).toBe('1 section removed since the published version.')
+		expect(ready.items.find((i) => i.key === 'changes')?.message).toBe(
+			'1 section removed since the published version.',
+		)
 		expect(ready.blocked).toBe(false)
 
 		// Shown again, the approved removal no longer holds; hidden again, it does.
@@ -570,22 +608,47 @@ describe('a draft that removes sections', () => {
 		expect(shown.items.find((i) => i.key === 'review')?.message).toMatch(/changed since the review/)
 		await hide([P_OWNED, P_CHILD], true)
 
-		const published = await lc.publish(lifecycle(), { documentId: PATHWAY_ID, userId: `owner@${CENTRAL}`, label: null, releaseNotes: null })
+		const published = await lc.publish(lifecycle(), {
+			documentId: PATHWAY_ID,
+			userId: `owner@${CENTRAL}`,
+			label: null,
+			releaseNotes: null,
+		})
 		const frozen = await d
-			.select({ sectionId: schema.versionSections.sectionId, hidden: schema.versionSections.hidden })
+			.select({
+				sectionId: schema.versionSections.sectionId,
+				hidden: schema.versionSections.hidden,
+			})
 			.from(schema.versionSections)
 			.where(eq(schema.versionSections.versionId, published.versionId))
-		expect(frozen.filter((f) => f.hidden).map((f) => f.sectionId).sort()).toEqual([P_CHILD, P_OWNED].sort())
+		expect(
+			frozen
+				.filter((f) => f.hidden)
+				.map((f) => f.sectionId)
+				.sort(),
+		).toEqual([P_CHILD, P_OWNED].sort())
 		const after = await lc.reviewableChanges(lifecycle(), PATHWAY_ID)
 		expect(after.all).toEqual([])
 	})
 
 	it('a change the review never saw blocks the publish until it is reviewed', async () => {
 		await hide([P_OWNED, P_CHILD], false)
-		const review = await lc.requestReview(lifecycle(), { documentId: PATHWAY_ID, userId: `member@${PATHWAY_ORG}`, note: null })
+		const review = await lc.requestReview(lifecycle(), {
+			documentId: PATHWAY_ID,
+			userId: `member@${PATHWAY_ORG}`,
+			note: null,
+		})
 		for (const sectionId of [P_OWNED, P_CHILD])
-			await lc.decideSection(lifecycle(), { reviewId: review.reviewId, sectionId, decision: 'approved', note: null, userId: `admin@${PATHWAY_ORG}` })
-		expect((await lc.publishReadiness(lifecycle(), PATHWAY_ID, `owner@${CENTRAL}`)).blocked).toBe(false)
+			await lc.decideSection(lifecycle(), {
+				reviewId: review.reviewId,
+				sectionId,
+				decision: 'approved',
+				note: null,
+				userId: `admin@${PATHWAY_ORG}`,
+			})
+		expect((await lc.publishReadiness(lifecycle(), PATHWAY_ID, `owner@${CENTRAL}`)).blocked).toBe(
+			false,
+		)
 		// Hiding the shared section after the request: a removal the review never saw.
 		await hide([P_SHARED], true)
 		const readiness = await lc.publishReadiness(lifecycle(), PATHWAY_ID, `owner@${CENTRAL}`)
@@ -599,19 +662,44 @@ describe('a draft that removes sections', () => {
 	it('freezes a heading’s own citations and numbers them before its body’s', async () => {
 		const d = db(env.DB)
 		const cited = `ref-cited-${run}`
-		await d.insert(schema.references).values({ id: cited, documentId: PATHWAY_ID, citation: 'Cited in the body.', url: null })
+		await d
+			.insert(schema.references)
+			.values({ id: cited, documentId: PATHWAY_ID, citation: 'Cited in the body.', url: null })
 		await d
 			.update(schema.sections)
 			.set({
 				titleCitations: [REF],
-				bodyJson: doc(paragraph(text('Use the ECOG scale here.'), { type: 'citation', attrs: { referenceId: cited } })),
+				bodyJson: doc(
+					paragraph(text('Use the ECOG scale here.'), {
+						type: 'citation',
+						attrs: { referenceId: cited },
+					}),
+				),
 			})
 			.where(eq(schema.sections.id, P_OWNED))
-		const review = await lc.requestReview(lifecycle(), { documentId: PATHWAY_ID, userId: `member@${PATHWAY_ORG}`, note: null })
-		const pins = await d.select().from(schema.reviewSections).where(eq(schema.reviewSections.reviewId, review.reviewId))
+		const review = await lc.requestReview(lifecycle(), {
+			documentId: PATHWAY_ID,
+			userId: `member@${PATHWAY_ORG}`,
+			note: null,
+		})
+		const pins = await d
+			.select()
+			.from(schema.reviewSections)
+			.where(eq(schema.reviewSections.reviewId, review.reviewId))
 		for (const pin of pins)
-			await lc.decideSection(lifecycle(), { reviewId: review.reviewId, sectionId: pin.sectionId, decision: 'approved', note: null, userId: `admin@${PATHWAY_ORG}` })
-		const published = await lc.publish(lifecycle(), { documentId: PATHWAY_ID, userId: `owner@${CENTRAL}`, label: null, releaseNotes: null })
+			await lc.decideSection(lifecycle(), {
+				reviewId: review.reviewId,
+				sectionId: pin.sectionId,
+				decision: 'approved',
+				note: null,
+				userId: `admin@${PATHWAY_ORG}`,
+			})
+		const published = await lc.publish(lifecycle(), {
+			documentId: PATHWAY_ID,
+			userId: `owner@${CENTRAL}`,
+			label: null,
+			releaseNotes: null,
+		})
 		const frozen = await sectionsOf(d, published.versionId)
 		expect(frozen.find((s) => s.sectionId === P_OWNED)?.titleCitations).toEqual([REF])
 		const numbered = await referencesFor(d, frozen)
@@ -637,7 +725,12 @@ describe('answering suggestions, replies and mentions', () => {
 		})
 		// Only the central team answers suggestions.
 		await expect(
-			lc.replyToSuggestion(lifecycle(), { suggestionId: suggestion.id, body: 'No.', resolve: false, userId: `admin@${PATHWAY_ORG}` }),
+			lc.replyToSuggestion(lifecycle(), {
+				suggestionId: suggestion.id,
+				body: 'No.',
+				resolve: false,
+				userId: `admin@${PATHWAY_ORG}`,
+			}),
 		).rejects.toThrow(/central organisation/)
 		const before = sentMail.length
 		const reply = await lc.replyToSuggestion(lifecycle(), {
@@ -657,7 +750,9 @@ describe('answering suggestions, replies and mentions', () => {
 		expect(mail?.text).toContain('Added to the next edition of the core.')
 		// The central team reads it with its reply.
 		const forCore = await lc.suggestionsForCore(lifecycle(), CORE_ID, `admin@${CENTRAL}`)
-		expect(forCore.find((s) => s.id === suggestion.id)?.replies.map((r) => r.body)).toEqual(['Added to the next edition of the core.'])
+		expect(forCore.find((s) => s.id === suggestion.id)?.replies.map((r) => r.body)).toEqual([
+			'Added to the next edition of the core.',
+		])
 	})
 
 	it('a reply joins its comment’s thread; a mention emails the people who may read the document', async () => {
@@ -670,7 +765,14 @@ describe('answering suggestions, replies and mentions', () => {
 		})
 		// A reply must answer a comment in the same section.
 		await expect(
-			lc.addComment(lifecycle(), { documentId: PATHWAY_ID, sectionId: P_SHARED, kind: 'comment', body: 'x', replyTo: first.id, userId: `admin@${PATHWAY_ORG}` }),
+			lc.addComment(lifecycle(), {
+				documentId: PATHWAY_ID,
+				sectionId: P_SHARED,
+				kind: 'comment',
+				body: 'x',
+				replyTo: first.id,
+				userId: `admin@${PATHWAY_ORG}`,
+			}),
 		).rejects.toThrow(/thread/)
 		const before = sentMail.length
 		const reply = await lc.addComment(lifecycle(), {

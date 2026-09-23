@@ -109,7 +109,8 @@ export class CoreRpcRoot extends WorkerRoot<Cloudflare.Env> implements LiveTopic
 	 *  document). Outside the ocp namespace the auth worker lists no one. */
 	async connectTeamTopic(input: { organizationId: string }): Promise<TeamLiveTopic> {
 		const orgId = input.organizationId
-		if (!/^[a-zA-Z0-9-]{1,64}$/.test(orgId)) throw new Error(`[ocp] invalid organizationId: ${JSON.stringify(orgId)}`)
+		if (!/^[a-zA-Z0-9-]{1,64}$/.test(orgId))
+			throw new Error(`[ocp] invalid organizationId: ${JSON.stringify(orgId)}`)
 		const own = await this.env.AUTH.getOrgMembershipById(this.userId, orgId, OCP_NAMESPACE)
 		if (!own && !(await isCentralMember(this.env.AUTH, db(this.env.DB), this.userId))) {
 			throw new Error('[ocp] not on this team')

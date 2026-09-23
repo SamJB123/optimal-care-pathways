@@ -35,11 +35,17 @@ import { setSectionHidden } from '#/server/structure-fns.ts'
 import SectionEditor from './SectionEditor.tsx'
 
 /** Resting bodies fetched this page, by section: the margin reads the same ones. */
-const bodies = new Map<string, Promise<{ body: JsonNode | null; coreSource: 'published' | 'draft' | null }>>()
+const bodies = new Map<
+	string,
+	Promise<{ body: JsonNode | null; coreSource: 'published' | 'draft' | null }>
+>()
 export function restingBody(sectionId: string) {
 	let found = bodies.get(sectionId)
 	if (!found) {
-		found = sectionBody({ data: { sectionId } }).then((r) => ({ body: r.body, coreSource: r.coreSource }))
+		found = sectionBody({ data: { sectionId } }).then((r) => ({
+			body: r.body,
+			coreSource: r.coreSource,
+		}))
 		bodies.set(sectionId, found)
 		found.catch(() => bodies.delete(sectionId))
 	}
@@ -50,9 +56,12 @@ export const forgetBody = (sectionId: string) => bodies.delete(sectionId)
 
 export function SectionView(props: { section: SectionWireRow; depth: number }) {
 	const workspace = useContext(DocumentContext)
-	const change = createMemo(() => workspace.state().changes.find((c) => c.sectionId === props.section.id) ?? null)
+	const change = createMemo(
+		() => workspace.state().changes.find((c) => c.sectionId === props.section.id) ?? null,
+	)
 	const openComments = createMemo(
-		() => workspace.comments().filter((c) => c.sectionId === props.section.id && !c.resolvedAt).length,
+		() =>
+			workspace.comments().filter((c) => c.sectionId === props.section.id && !c.resolvedAt).length,
 	)
 	const focused = () => workspace.focused() === props.section.id
 	const reviewing = () => workspace.mode() === 'review'
@@ -83,19 +92,34 @@ export function SectionView(props: { section: SectionWireRow; depth: number }) {
 			onPointerDown={() => workspace.focus(props.section.id)}
 		>
 			<header class="ocp-section-heading">
-				<span class="ocp-section-mark" role="img" title={MARK_WORDS[mark()]} aria-label={MARK_WORDS[mark()]}>
+				<span
+					class="ocp-section-mark"
+					role="img"
+					title={MARK_WORDS[mark()]}
+					aria-label={MARK_WORDS[mark()]}
+				>
 					{MARK_GLYPH[mark()]}
 				</span>
-				<Show when={props.section.printedNumber}>{(n) => <span class="ocp-section-number">{numberLabel(n())}</span>}</Show>
+				<Show when={props.section.printedNumber}>
+					{(n) => <span class="ocp-section-number">{numberLabel(n())}</span>}
+				</Show>
 				<span class="ocp-section-title">{props.section.title ?? props.section.address}</span>
 				<TitleCitations ids={props.section.titleCitations} />
 				<span class="ocp-section-meta">
 					<Show when={props.section.hidden && change()?.change !== 'removal'}>
-						<span>Hidden from this {workspace.document.kind === 'core' ? 'template' : 'pathway'}</span>
+						<span>
+							Hidden from this {workspace.document.kind === 'core' ? 'template' : 'pathway'}
+						</span>
 					</Show>
 					{/* Before the first edition every section is new: only a review decision (or a
 					    removal) marks one. */}
-					<Show when={workspace.state().published || change()?.decision || change()?.change === 'removal' ? change() : null}>
+					<Show
+						when={
+							workspace.state().published || change()?.decision || change()?.change === 'removal'
+								? change()
+								: null
+						}
+					>
 						{(c) => (
 							<span class="ocp-section-change" data-decision={c().decision?.decision ?? undefined}>
 								{c().decision?.decision === 'approved'
@@ -111,7 +135,11 @@ export function SectionView(props: { section: SectionWireRow; depth: number }) {
 						)}
 					</Show>
 					<Show when={openComments() > 0}>
-						<button type="button" class="ocp-section-comments" onClick={() => workspace.focus(props.section.id)}>
+						<button
+							type="button"
+							class="ocp-section-comments"
+							onClick={() => workspace.focus(props.section.id)}
+						>
 							{openComments()} {openComments() === 1 ? 'comment' : 'comments'}
 						</button>
 					</Show>
@@ -124,13 +152,21 @@ export function SectionView(props: { section: SectionWireRow; depth: number }) {
 						when={!props.section.hidden}
 						fallback={
 							<Show when={atLeast(workspace.role, 'member')}>
-								<button type="button" class="ocp-section-show" disabled={busy()} onClick={() => void showAgain()}>
+								<button
+									type="button"
+									class="ocp-section-show"
+									disabled={busy()}
+									onClick={() => void showAgain()}
+								>
 									Show again
 								</button>
 							</Show>
 						}
 					>
-						<Show when={props.section.ownership === 'owned'} fallback={<SharedBody sectionId={props.section.id} />}>
+						<Show
+							when={props.section.ownership === 'owned'}
+							fallback={<SharedBody sectionId={props.section.id} />}
+						>
 							<OwnedBody sectionId={props.section.id} />
 						</Show>
 					</Show>
@@ -138,7 +174,14 @@ export function SectionView(props: { section: SectionWireRow; depth: number }) {
 			>
 				{/* Review reads; it never edits. A hidden section that is not a removal under
 				    review stands as its struck heading. */}
-				<Show when={change()} fallback={<Show when={!props.section.hidden}><StaticBody sectionId={props.section.id} /></Show>}>
+				<Show
+					when={change()}
+					fallback={
+						<Show when={!props.section.hidden}>
+							<StaticBody sectionId={props.section.id} />
+						</Show>
+					}
+				>
 					{(c) => <ReviewBody change={c()} />}
 				</Show>
 			</Show>
@@ -170,12 +213,17 @@ function ReviewBody(props: { change: SectionChange }) {
 		<div class="ocp-review-body" data-view={workspace.diffView()}>
 			<Show when={props.change.change === 'removal'}>
 				<p class="ocp-review-removed">
-					Hidden in this draft: the {workspace.document.kind === 'core' ? 'template' : 'pathway'} will publish without it and everything under it.
+					Hidden in this draft: the {workspace.document.kind === 'core' ? 'template' : 'pathway'}{' '}
+					will publish without it and everything under it.
 				</p>
 			</Show>
 			<Show when={!(clean() && props.change.change === 'removal')}>
 				<div class={clean() ? 'ocp-body-clean' : undefined}>
-					<RenderedBody body={props.change.annotated.body} derived={workspace.derived} guidance={workspace.guidance} />
+					<RenderedBody
+						body={props.change.annotated.body}
+						derived={workspace.derived}
+						guidance={workspace.guidance}
+					/>
 				</div>
 			</Show>
 		</div>
@@ -228,7 +276,10 @@ function OwnedBody(props: { sectionId: string }) {
 
 /** The resting body, rendered once; what a shared section shows, and what an owned
  *  section shows before its room is connected. */
-function StaticBody(props: { sectionId: string; onSource?: (source: 'published' | 'draft' | null) => void }) {
+function StaticBody(props: {
+	sectionId: string
+	onSource?: (source: 'published' | 'draft' | null) => void
+}) {
 	const workspace = useContext(DocumentContext)
 	const [body, setBody] = createSignal<JsonNode | null | undefined>(undefined)
 	// Fetched once per mount: a resting body is static by definition, and the view is
@@ -250,9 +301,15 @@ function StaticBody(props: { sectionId: string; onSource?: (source: 'published' 
 	return (
 		<Show
 			when={body()}
-			fallback={<p class="ocp-section-empty">{body() === undefined ? 'Reading…' : 'Nothing written here yet.'}</p>}
+			fallback={
+				<p class="ocp-section-empty">
+					{body() === undefined ? 'Reading…' : 'Nothing written here yet.'}
+				</p>
+			}
 		>
-			{(json) => <RenderedBody body={json()} derived={workspace.derived} guidance={workspace.guidance} />}
+			{(json) => (
+				<RenderedBody body={json()} derived={workspace.derived} guidance={workspace.guidance} />
+			)}
 		</Show>
 	)
 }

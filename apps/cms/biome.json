@@ -3,7 +3,7 @@
 	"root": false,
 	"extends": ["@aicolab/biome-config"],
 	"files": {
-		"includes": ["**", "!drizzle", "!template"]
+		"includes": ["**", "!drizzle", "!template", "!legacy/fixtures"]
 	},
 	"overrides": [
 		{
@@ -12,7 +12,9 @@
 		},
 		{
 			"includes": ["src/components/Atlas.tsx"],
-			"linter": { "rules": { "a11y": { "useSemanticElements": "off", "useFocusableInteractive": "off" } } }
+			"linter": {
+				"rules": { "a11y": { "useSemanticElements": "off", "useFocusableInteractive": "off" } }
+			}
 		},
 		{
 			"includes": ["src/components/atlas.css"],

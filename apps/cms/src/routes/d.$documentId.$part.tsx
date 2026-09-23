@@ -25,7 +25,11 @@ export const Route = createFileRoute('/d/$documentId/$part')({ component: PartPa
 
 /** The subtree under `root`, depth-first in reading order. A hidden section is left out
  *  unless `shown` says otherwise (hidden sections on request; a removal under review). */
-function subtree(sections: SectionWireRow[], root: SectionWireRow, shown: (hidden: SectionWireRow) => boolean): { section: SectionWireRow; depth: number }[] {
+function subtree(
+	sections: SectionWireRow[],
+	root: SectionWireRow,
+	shown: (hidden: SectionWireRow) => boolean,
+): { section: SectionWireRow; depth: number }[] {
 	const byParent = new Map<string | null, SectionWireRow[]>()
 	for (const s of sections) {
 		const list = byParent.get(s.parentId) ?? []
@@ -38,7 +42,8 @@ function subtree(sections: SectionWireRow[], root: SectionWireRow, shown: (hidde
 		out.push({ section: node, depth })
 		// A hidden section's subsections are hidden with it: its struck heading stands for all.
 		if (node.hidden) return
-		for (const child of (byParent.get(node.id) ?? []).sort((a, b) => a.orderIndex - b.orderIndex)) walk(child, depth + 1)
+		for (const child of (byParent.get(node.id) ?? []).sort((a, b) => a.orderIndex - b.orderIndex))
+			walk(child, depth + 1)
 	}
 	walk(root, 0)
 	return out
@@ -47,22 +52,35 @@ function subtree(sections: SectionWireRow[], root: SectionWireRow, shown: (hidde
 function PartPage() {
 	const params = Route.useParams()
 	const workspace = useContext(DocumentContext)
-	const root = createMemo(() => workspace.sections().find((s) => s.parentId === null && s.address === params().part) ?? null)
+	const root = createMemo(
+		() =>
+			workspace.sections().find((s) => s.parentId === null && s.address === params().part) ?? null,
+	)
 	const reviewing = () => workspace.mode() === 'review'
 	const changed = createMemo(() => new Set(workspace.state().changes.map((c) => c.sectionId)))
 	const rows = createMemo(() => {
 		const r = root()
 		if (!r) return []
 		// Review mode shows a removal (struck) whatever the hidden switch says.
-		const all = subtree(workspace.sections(), r, (hidden) => workspace.showHidden() || (reviewing() && changed().has(hidden.id)))
-		return reviewing() && workspace.reviewScope() === 'changed' ? all.filter((row) => changed().has(row.section.id)) : all
+		const all = subtree(
+			workspace.sections(),
+			r,
+			(hidden) => workspace.showHidden() || (reviewing() && changed().has(hidden.id)),
+		)
+		return reviewing() && workspace.reviewScope() === 'changed'
+			? all.filter((row) => changed().has(row.section.id))
+			: all
 	})
 	/** The next part along with a change in it, for a part read changed-only with none. */
 	const nextChangedPart = createMemo(() => {
 		const keys = partsOf(workspace.sections(), true).map((p) => p.key)
 		const here = keys.indexOf(params().part)
 		const withChanges = [...new Set(workspace.changeOrder().map((e) => e.part))]
-		return withChanges.find((p) => keys.indexOf(p) > here) ?? withChanges.find((p) => p !== params().part) ?? null
+		return (
+			withChanges.find((p) => keys.indexOf(p) > here) ??
+			withChanges.find((p) => p !== params().part) ??
+			null
+		)
 	})
 	// The step this part is (for the map's ring), read where it is used.
 	const at = () => ({ currentStep: rows()[0]?.section.stepNumber ?? null })
@@ -82,17 +100,22 @@ function PartPage() {
 			}
 			workspace.setReading(current)
 		}
-		const observer = new IntersectionObserver(pick, { rootMargin: '0px 0px -66% 0px', threshold: [0, 1] })
+		const observer = new IntersectionObserver(pick, {
+			rootMargin: '0px 0px -66% 0px',
+			threshold: [0, 1],
+		})
 		const watch = () => {
 			observer.disconnect()
-			for (const el of page?.querySelectorAll('.ocp-section[data-section-id]') ?? []) observer.observe(el)
+			for (const el of page?.querySelectorAll('.ocp-section[data-section-id]') ?? [])
+				observer.observe(el)
 			pick()
 		}
 		watch()
 		const mutations = new MutationObserver(watch)
 		if (page) mutations.observe(page, { childList: true })
 		// Arriving at #section from the jump or a link: take the reader there.
-		if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' })
+		if (location.hash)
+			document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' })
 		return () => {
 			observer.disconnect()
 			mutations.disconnect()
@@ -102,14 +125,28 @@ function PartPage() {
 
 	return (
 		<MapContext value={at}>
-			<Show when={reviewing()} fallback={<Show when={atLeast(workspace.role, 'member')}><StageToolbar /></Show>}>
+			<Show
+				when={reviewing()}
+				fallback={
+					<Show when={atLeast(workspace.role, 'member')}>
+						<StageToolbar />
+					</Show>
+				}
+			>
 				<ReviewBar />
 			</Show>
 			<div class="ocp-part" ref={page}>
 				<Show
 					when={rows().length > 0}
 					fallback={
-						<Show when={root() && reviewing()} fallback={<Notice colorBase="info" variant="soft">This document has no such part.</Notice>}>
+						<Show
+							when={root() && reviewing()}
+							fallback={
+								<Notice colorBase="info" variant="soft">
+									This document has no such part.
+								</Notice>
+							}
+						>
 							<div class="ocp-review-empty">
 								<p>Nothing in this part has changed since the published edition.</p>
 								<Show when={nextChangedPart()}>

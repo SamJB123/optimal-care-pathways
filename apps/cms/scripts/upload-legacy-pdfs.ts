@@ -38,7 +38,9 @@ for (const file of files) {
 			'application/pdf',
 			'--cache-control',
 			'public, max-age=31536000, immutable',
-			...(where === '--local' ? ['--local', '--persist-to', join(appDir, '.wrangler', 'state')] : ['--remote']),
+			...(where === '--local'
+				? ['--local', '--persist-to', join(appDir, '.wrangler', 'state')]
+				: ['--remote']),
 		],
 		{ stdio: ['ignore', 'ignore', 'inherit'], cwd: appDir },
 	)

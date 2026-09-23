@@ -12,7 +12,15 @@ import { z } from 'zod'
 import { referencesFor } from '#/api/published.ts'
 import { documentName } from '#/lib/labels.ts'
 import { requireUser } from './env.ts'
-import { documentOf, ensureDraft, foldRoom, live, refuse, resolveSections, roleOn } from './lifecycle.ts'
+import {
+	documentOf,
+	ensureDraft,
+	foldRoom,
+	live,
+	refuse,
+	resolveSections,
+	roleOn,
+} from './lifecycle.ts'
 import { lifecycleOf } from './lifecycle-env.ts'
 
 export const draftReading = createServerFn({ method: 'GET' })
@@ -23,7 +31,10 @@ export const draftReading = createServerFn({ method: 'GET' })
 		const document = await documentOf(lc, data.documentId)
 		if (!(await roleOn(lc, userId, document))) refuse('You are not a member of this document.')
 		await foldRoom(lc, document.id)
-		const [resolved, draft] = await Promise.all([resolveSections(lc, document.id), ensureDraft(lc, document.id, userId)])
+		const [resolved, draft] = await Promise.all([
+			resolveSections(lc, document.id),
+			ensureDraft(lc, document.id, userId),
+		])
 		const addressOf = new Map(resolved.map((s) => [s.row.id, s.row.address]))
 		const sections = resolved.filter(live)
 		return {

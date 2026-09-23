@@ -264,7 +264,10 @@ const sameBody = (a: JsonNode | null, b: JsonNode | null): boolean =>
 	JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
 
 /** How a section differs from `before` to `after`, or null when it reads the same. */
-function kindOf(before: SideSection | undefined, after: SideSection | undefined): CompareKind | null {
+function kindOf(
+	before: SideSection | undefined,
+	after: SideSection | undefined,
+): CompareKind | null {
 	const was = before !== undefined && !before.hidden
 	const is = after !== undefined && !after.hidden
 	if (was && is) return sameBody(before.body, after.body) ? null : 'changed'
@@ -321,7 +324,13 @@ export async function compareEditions(
 		return at?.address ?? null
 	}
 
-	const totals: Record<CompareKind, number> = { added: 0, removed: 0, changed: 0, hidden: 0, shown: 0 }
+	const totals: Record<CompareKind, number> = {
+		added: 0,
+		removed: 0,
+		changed: 0,
+		hidden: 0,
+		shown: 0,
+	}
 	const grouped = new Map<SpineBand | 'gone', { entry: CompareEntry; order: number }[]>()
 	for (const id of new Set([...from.sections.keys(), ...to.sections.keys()])) {
 		const before = from.sections.get(id)

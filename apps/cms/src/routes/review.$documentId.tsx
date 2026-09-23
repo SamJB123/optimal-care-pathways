@@ -55,13 +55,16 @@ const anchorOf = (address: string) => `s-${address.replace(/[^a-z0-9]+/gi, '-')}
 
 /** A section as the spine and the source column name it: "1.1.2 Risk reduction strategies". */
 const sectionLabel = (row: ReviewSectionRow): string =>
-	[row.printedNumber ? numberLabel(row.printedNumber) : null, row.title ?? row.address].filter(Boolean).join(' ')
+	[row.printedNumber ? numberLabel(row.printedNumber) : null, row.title ?? row.address]
+		.filter(Boolean)
+		.join(' ')
 
 /** "p.13", or "pp.13–14". */
 const pagesLabel = (pages: readonly number[]): string =>
 	pages.length === 0 ? '' : pages.length === 1 ? `p.${pages[0]}` : `pp.${pages[0]}–${pages.at(-1)}`
 
-const samePages = (a: readonly number[], b: readonly number[]) => a.length === b.length && a.every((p, i) => p === b[i])
+const samePages = (a: readonly number[], b: readonly number[]) =>
+	a.length === b.length && a.every((p, i) => p === b[i])
 
 function ReviewPage() {
 	const data = Route.useLoaderData()
@@ -71,14 +74,21 @@ function ReviewPage() {
 	// The contents list is the PDF's own furniture, not a section to check (at the top of
 	// a template, or inside its first part).
 	const bands = createMemo(() =>
-		spineOf(data().sections, (s) => s.address.split('/').at(-1) !== 'contents').filter((band) => band.sections.length > 0),
+		spineOf(data().sections, (s) => s.address.split('/').at(-1) !== 'contents').filter(
+			(band) => band.sections.length > 0,
+		),
 	)
 	const rows = createMemo(() => bands().flatMap((band) => band.sections))
 	const depthOf = createMemo(() => {
 		const byId = new Map(data().sections.map((s) => [s.id, s]))
 		const depth = (s: ReviewSectionRow): number => {
 			let n = 0
-			for (let at = s.parentId ? byId.get(s.parentId) : undefined; at; at = at.parentId ? byId.get(at.parentId) : undefined) n++
+			for (
+				let at = s.parentId ? byId.get(s.parentId) : undefined;
+				at;
+				at = at.parentId ? byId.get(at.parentId) : undefined
+			)
+				n++
 			return n
 		}
 		return new Map(data().sections.map((s) => [s.id, depth(s)]))
@@ -139,7 +149,8 @@ function ReviewPage() {
 		}
 		// Tab moves focus after its keydown has released the page: what it lands on is kept.
 		const keepFocus = (event: FocusEvent) => {
-			if (event.target instanceof HTMLElement && event.target.matches(':focus-visible')) keep(event.target)
+			if (event.target instanceof HTMLElement && event.target.matches(':focus-visible'))
+				keep(event.target)
 		}
 		const text = shell?.querySelector('.ocp-review-text')
 		const settling = new ResizeObserver(() => {
@@ -159,7 +170,8 @@ function ReviewPage() {
 		window.addEventListener('resize', schedule)
 		shell?.addEventListener('focusin', keepFocus)
 		const moves = ['wheel', 'touchstart', 'keydown', 'mousedown']
-		for (const type of moves) window.addEventListener(type, release, { passive: true, capture: true })
+		for (const type of moves)
+			window.addEventListener(type, release, { passive: true, capture: true })
 		return () => {
 			cancelAnimationFrame(frame)
 			settling.disconnect()
@@ -179,7 +191,8 @@ function ReviewPage() {
 			const item = nav?.querySelector<HTMLElement>('.ui-rich-list-item[data-selected]')
 			if (!nav || !item) return
 			const top = item.getBoundingClientRect().top - nav.getBoundingClientRect().top
-			if (top < 0 || top + item.offsetHeight > nav.clientHeight) nav.scrollTop += top - nav.clientHeight / 3
+			if (top < 0 || top + item.offsetHeight > nav.clientHeight)
+				nav.scrollTop += top - nav.clientHeight / 3
 		},
 	)
 	createEffect(pages, () => {
@@ -188,7 +201,14 @@ function ReviewPage() {
 
 	return (
 		<>
-			<Masthead crumbs={[{ label: 'Pathways', href: '/' }, { label: data().document.title, href: `/d/${data().document.id}` }, { label: 'Against the template' }]} central />
+			<Masthead
+				crumbs={[
+					{ label: 'Pathways', href: '/' },
+					{ label: data().document.title, href: `/d/${data().document.id}` },
+					{ label: 'Against the template' },
+				]}
+				central
+			/>
 			<div class="ocp-review-page" style={familyStyle(data().document.accent)} ref={shell}>
 				<WorkspaceShell
 					class="ocp-review"
@@ -196,7 +216,10 @@ function ReviewPage() {
 						<WorkspaceNavigation label="Sections" class="ocp-review-spine">
 							<For each={bands()}>
 								{(band) => (
-									<WorkspaceNavigationGroup id={`ocp-review-band-${band.band}`} label={bandLabel(band.band)}>
+									<WorkspaceNavigationGroup
+										id={`ocp-review-band-${band.band}`}
+										label={bandLabel(band.band)}
+									>
 										<For each={band.sections}>
 											{(row) => (
 												<WorkspaceNavigationItem
@@ -242,7 +265,10 @@ function ReviewPage() {
 										)}
 									</For>
 								</SelectControl>
-								<Show when={rows().length > 0} fallback={<Notice colorBase="info">No sections.</Notice>}>
+								<Show
+									when={rows().length > 0}
+									fallback={<Notice colorBase="info">No sections.</Notice>}
+								>
 									<For each={rows()}>
 										{(row) => (
 											<ReviewSection
@@ -261,10 +287,15 @@ function ReviewPage() {
 					inspector={
 						<aside class="ocp-review-source" aria-label="Template pages" ref={source}>
 							<p class="ocp-review-source-caption">
-								<Show when={current()}>{(row) => <span class="ocp-review-source-of">{sectionLabel(row())}</span>}</Show>
+								<Show when={current()}>
+									{(row) => <span class="ocp-review-source-of">{sectionLabel(row())}</span>}
+								</Show>
 								<span class="ocp-review-source-pages">{pagesLabel(pages())}</span>
 							</p>
-							<Show when={pages().length > 0} fallback={<p class="ocp-muted">No template page is recorded for this section.</p>}>
+							<Show
+								when={pages().length > 0}
+								fallback={<p class="ocp-muted">No template page is recorded for this section.</p>}
+							>
 								<PdfPages url={pdfUrl()} pages={pages()} width={PAGE_WIDTH} eager={eager()} />
 							</Show>
 						</aside>
@@ -277,11 +308,19 @@ function ReviewPage() {
 
 /** One section as the CMS holds it: its heading (carrying the anchor), its rendered body,
  *  and — on a phone — its template page(s) behind a disclosure. */
-function ReviewSection(props: { row: ReviewSectionRow; depth: number; reading: boolean; pdfUrl: string; eager: boolean }) {
+function ReviewSection(props: {
+	row: ReviewSectionRow
+	depth: number
+	reading: boolean
+	pdfUrl: string
+	eager: boolean
+}) {
 	const data = Route.useLoaderData()
 	const pages = () => pageRange(props.row.sourcePages)
 	const meta = () =>
-		[props.row.pathwayOwnership, props.row.apparatus ? 'apparatus' : null, pagesLabel(pages())].filter(Boolean).join(' · ')
+		[props.row.pathwayOwnership, props.row.apparatus ? 'apparatus' : null, pagesLabel(pages())]
+			.filter(Boolean)
+			.join(' · ')
 	return (
 		<article
 			class="ocp-review-section"
@@ -293,11 +332,15 @@ function ReviewSection(props: { row: ReviewSectionRow; depth: number; reading: b
 		>
 			<header class="ocp-review-section-heading">
 				<h2 id={anchorOf(props.row.address)}>
-					<Show when={props.row.printedNumber}>{(n) => <span class="ocp-review-number">{numberLabel(n())} </span>}</Show>
+					<Show when={props.row.printedNumber}>
+						{(n) => <span class="ocp-review-number">{numberLabel(n())} </span>}
+					</Show>
 					{props.row.title ?? ''}
 					<Show when={props.row.titleCitations.length > 0}>
 						<DerivedContext value={() => data().derived}>
-							<For each={props.row.titleCitations}>{(id) => <CitationInline referenceId={id} />}</For>
+							<For each={props.row.titleCitations}>
+								{(id) => <CitationInline referenceId={id} />}
+							</For>
 						</DerivedContext>
 					</Show>
 				</h2>

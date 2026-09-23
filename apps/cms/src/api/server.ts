@@ -51,7 +51,10 @@ export function createApiApp(): Hono<Bindings> {
 		if (c.req.method !== 'GET' || !c.res.ok || c.res.headers.has('cache-control')) return
 		c.res.headers.set('cache-control', PUBLIC_CACHE_CONTROL)
 		const slug = new RegExp(`^${API_BASE}/documents/([a-zA-Z0-9-]+)`).exec(c.req.path)?.[1]
-		c.res.headers.set('cache-tag', slug ? `${PUBLISHED_CACHE_TAG},${cacheTagFor(slug)}` : PUBLISHED_CACHE_TAG)
+		c.res.headers.set(
+			'cache-tag',
+			slug ? `${PUBLISHED_CACHE_TAG},${cacheTagFor(slug)}` : PUBLISHED_CACHE_TAG,
+		)
 	})
 	registerRest(app, {
 		base: API_BASE,
@@ -80,7 +83,9 @@ export function createApiApp(): Hono<Bindings> {
 		const ctx = apiContext(c.env)
 		const v = await versionOf(ctx.d, slug)
 		const rendered = await c.env.BROWSER.quickAction('pdf', {
-			url: guide ? `${documentUrl(ctx.origin, v.slug)}/quick-reference-guide` : documentUrl(ctx.origin, v.slug),
+			url: guide
+				? `${documentUrl(ctx.origin, v.slug)}/quick-reference-guide`
+				: documentUrl(ctx.origin, v.slug),
 			pdfOptions: {
 				format: 'a4',
 				printBackground: true,

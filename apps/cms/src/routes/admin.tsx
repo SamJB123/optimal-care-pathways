@@ -47,9 +47,22 @@ function AdminPage() {
 		const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)
 		const docs = data().admin.documents
 		return [
-			{ label: 'Core templates', documents: docs.filter((doc) => doc.kind === 'core').toSorted(byName) },
-			{ label: 'Cancer-specific pathways', documents: docs.filter((doc) => doc.kind === 'pathway' && doc.audience === 'cancer').toSorted(byName) },
-			{ label: 'Population pathways', documents: docs.filter((doc) => doc.kind === 'pathway' && doc.audience === 'population').toSorted(byName) },
+			{
+				label: 'Core templates',
+				documents: docs.filter((doc) => doc.kind === 'core').toSorted(byName),
+			},
+			{
+				label: 'Cancer-specific pathways',
+				documents: docs
+					.filter((doc) => doc.kind === 'pathway' && doc.audience === 'cancer')
+					.toSorted(byName),
+			},
+			{
+				label: 'Population pathways',
+				documents: docs
+					.filter((doc) => doc.kind === 'pathway' && doc.audience === 'population')
+					.toSorted(byName),
+			},
 		].filter((group) => group.documents.length > 0)
 	})
 
@@ -63,18 +76,26 @@ function AdminPage() {
 		run(async () => {
 			const result = await finaliseLegacyImports()
 			const made = `${result.finalised.length} organisation${result.finalised.length === 1 ? '' : 's'} created, ${result.rendered} published sections rendered.`
-			if (result.errors.length > 0) throw new Error(`${made} Not finalised: ${result.errors.join('; ')}.`)
+			if (result.errors.length > 0)
+				throw new Error(`${made} Not finalised: ${result.errors.join('; ')}.`)
 			return made
 		})
 
 	return (
 		<>
-			<Masthead crumbs={[{ label: 'Pathways', href: '/' }, { label: 'Administration' }]} central={data().admin.central} />
+			<Masthead
+				crumbs={[{ label: 'Pathways', href: '/' }, { label: 'Administration' }]}
+				central={data().admin.central}
+			/>
 			<main class="ocp-admin">
 				<h1>Administration</h1>
 				<Show when={report()}>
 					{(r) => (
-						<p class="ocp-admin-report" data-tone={r().tone} role={r().tone === 'error' ? 'alert' : 'status'}>
+						<p
+							class="ocp-admin-report"
+							data-tone={r().tone}
+							role={r().tone === 'error' ? 'alert' : 'status'}
+						>
 							{r().text}
 						</p>
 					)}
@@ -84,13 +105,19 @@ function AdminPage() {
 					<h2 id="ocp-admin-deployment">This deployment</h2>
 					<Show
 						when={data().admin.setUp || data().admin.leadless || data().admin.pending.length > 0}
-						fallback={<p class="ocp-muted">Nothing is waiting: the central organisation owns the core templates and every import is finalised.</p>}
+						fallback={
+							<p class="ocp-muted">
+								Nothing is waiting: the central organisation owns the core templates and every
+								import is finalised.
+							</p>
+						}
 					>
 						<Show when={data().admin.setUp}>
 							<div class="ocp-admin-door">
 								<p>
-									The core templates have no owner yet. Setting up creates (or finds) the central organisation, makes you
-									its lead, and hands it the core templates. Only an administrator listed for this deployment can do this.
+									The core templates have no owner yet. Setting up creates (or finds) the central
+									organisation, makes you its lead, and hands it the core templates. Only an
+									administrator listed for this deployment can do this.
 								</p>
 								<Button variant="solid" disabled={busy()} onClick={() => void setUp()}>
 									Set up the central organisation
@@ -100,8 +127,8 @@ function AdminPage() {
 						<Show when={!data().admin.setUp && data().admin.leadless}>
 							<div class="ocp-admin-door">
 								<p>
-									The central organisation has no lead, so nobody can review the core templates or manage its team. An
-									administrator listed for this deployment can take the lead.
+									The central organisation has no lead, so nobody can review the core templates or
+									manage its team. An administrator listed for this deployment can take the lead.
 								</p>
 								<Button variant="solid" disabled={busy()} onClick={() => void setUp()}>
 									Take the lead of the central organisation
@@ -111,9 +138,10 @@ function AdminPage() {
 						<Show when={data().admin.pending.length > 0}>
 							<div class="ocp-admin-door">
 								<p>
-									{data().admin.pending.length} imported {data().admin.pending.length === 1 ? 'pathway has' : 'pathways have'} a
-									published edition and a draft but no organisation. Finalising creates each organisation with you as its
-									lead and renders the published edition for the public pages.
+									{data().admin.pending.length} imported{' '}
+									{data().admin.pending.length === 1 ? 'pathway has' : 'pathways have'} a published
+									edition and a draft but no organisation. Finalising creates each organisation with
+									you as its lead and renders the published edition for the public pages.
 								</p>
 								<ul class="ocp-admin-pending">
 									<For each={data().admin.pending}>{(p) => <li>{p.name}</li>}</For>
@@ -137,10 +165,15 @@ function AdminPage() {
 											{core.name}
 										</a>
 										<span class="ocp-admin-core-links">
-											<Show when={core.published} fallback={<span class="ocp-muted">Not yet published</span>}>
+											<Show
+												when={core.published}
+												fallback={<span class="ocp-muted">Not yet published</span>}
+											>
 												<a href={publishedHref(core.slug)}>The published page</a>
 											</Show>
-											<a href={`${workspaceHref(core.id)}/suggestions`}>Suggestions from pathways</a>
+											<a href={`${workspaceHref(core.id)}/suggestions`}>
+												Suggestions from pathways
+											</a>
 											<a href={fidelityHref(core.id)}>Against the template PDF</a>
 										</span>
 									</li>
@@ -152,8 +185,9 @@ function AdminPage() {
 					<section class="ocp-admin-section" aria-labelledby="ocp-admin-colours">
 						<h2 id="ocp-admin-colours">Family colours</h2>
 						<p class="ocp-muted">
-							Each document’s colour, read from its print: the atlas row, the spine, the published page’s steps and links. A
-							colour is set at the lightness its text needs on each ground; the fill keeps the print’s own.
+							Each document’s colour, read from its print: the atlas row, the spine, the published
+							page’s steps and links. A colour is set at the lightness its text needs on each
+							ground; the fill keeps the print’s own.
 						</p>
 						<For each={colourGroups()}>
 							{(group) => (
@@ -163,7 +197,11 @@ function AdminPage() {
 										<For each={group.documents}>
 											{(doc) => (
 												<li>
-													<a class="ocp-admin-colour-name" href={workspaceHref(doc.id)} style={familyStyle(doc.accent)}>
+													<a
+														class="ocp-admin-colour-name"
+														href={workspaceHref(doc.id)}
+														style={familyStyle(doc.accent)}
+													>
 														{doc.name}
 													</a>
 													<AccentEditor

@@ -18,8 +18,23 @@
  * the live roster, so their standing follows a change made to them.
  */
 
-import { displayNameOf, normalizeMemberCode, userTagOf } from '@aicolab/better-auth/cloudflare/shared/user-tag'
-import { Avatar, Button, Chip, EmptyState, Field, RichList, RichListItem, SelectControl, TextInput, toast } from '@aicolab/ui-solid'
+import {
+	displayNameOf,
+	normalizeMemberCode,
+	userTagOf,
+} from '@aicolab/better-auth/cloudflare/shared/user-tag'
+import {
+	Avatar,
+	Button,
+	Chip,
+	EmptyState,
+	Field,
+	RichList,
+	RichListItem,
+	SelectControl,
+	TextInput,
+	toast,
+} from '@aicolab/ui-solid'
 import { createEffect, createMemo, createSignal, For, onSettled, Show } from 'solid-js'
 import type { Role } from '#/lib/roles.ts'
 import { teamClientFor } from '#/lib/team-client.ts'
@@ -48,12 +63,14 @@ import {
 import { InviteQrSheet } from './InviteQrSheet.tsx'
 import './team.css'
 
-const messageOf = (error: unknown, fallback: string): string => (error instanceof Error ? error.message : fallback)
+const messageOf = (error: unknown, fallback: string): string =>
+	error instanceof Error ? error.message : fallback
 const fail = (error: unknown, fallback: string): void => {
 	toast.error(messageOf(error, fallback))
 }
 
-const nameOf = (m: { userId: string; name: string }): string => displayNameOf({ id: m.userId, name: m.name })
+const nameOf = (m: { userId: string; name: string }): string =>
+	displayNameOf({ id: m.userId, name: m.name })
 
 export function TeamPanel(props: {
 	team: TeamSummary
@@ -118,7 +135,13 @@ export function TeamPanel(props: {
 			})
 	}
 	const mayRemove = (member: TeamMemberWireRow) =>
-		mayChange({ standing: standing(), self: member.userId === selfId(), from: member.role, to: null, leads: leads() }).ok
+		mayChange({
+			standing: standing(),
+			self: member.userId === selfId(),
+			from: member.role,
+			to: null,
+			leads: leads(),
+		}).ok
 
 	// ---- the ways in -------------------------------------------------------------------
 	const [joinAs, setJoinAs] = createSignal<Role>('member')
@@ -133,8 +156,13 @@ export function TeamPanel(props: {
 	const reported = (result: AddResult) => {
 		if (result.kind === 'invited') toast.success(`Invitation emailed to ${result.email}.`)
 		else if (result.kind === 'already')
-			toast.info(`${result.name} is already on the team${result.role ? ` as a ${word(result.role)}` : ''}.`)
-		else toast.success(`${result.name} added as a ${word(result.role)}. ${result.emailed ? 'They have been emailed.' : 'The email to them could not be sent.'}`)
+			toast.info(
+				`${result.name} is already on the team${result.role ? ` as a ${word(result.role)}` : ''}.`,
+			)
+		else
+			toast.success(
+				`${result.name} added as a ${word(result.role)}. ${result.emailed ? 'They have been emailed.' : 'The email to them could not be sent.'}`,
+			)
 	}
 	const run = (work: Promise<AddResult>, then: () => void) => {
 		setBusy(true)
@@ -148,11 +176,19 @@ export function TeamPanel(props: {
 	}
 	const addByEmail = () => {
 		const address = email().trim()
-		if (address) run(addTeamMemberByEmail({ data: { orgId: props.team.orgId, email: address, role: role() } }), () => setEmail(''))
+		if (address)
+			run(
+				addTeamMemberByEmail({ data: { orgId: props.team.orgId, email: address, role: role() } }),
+				() => setEmail(''),
+			)
 	}
 	const addByCode = () => {
 		const value = normalizeMemberCode(code())
-		if (value) run(addTeamMemberByCode({ data: { orgId: props.team.orgId, code: value, role: role() } }), () => setCode(''))
+		if (value)
+			run(
+				addTeamMemberByCode({ data: { orgId: props.team.orgId, code: value, role: role() } }),
+				() => setCode(''),
+			)
 	}
 	const addPerson = (hit: PersonHit) =>
 		run(addTeamPerson({ data: { orgId: props.team.orgId, userId: hit.id, role: role() } }), () => {
@@ -215,8 +251,10 @@ export function TeamPanel(props: {
 		const s = standing()
 		if (s === 'steward') return 'You manage this team as a member of Cancer Australia.'
 		if (s === null) return 'You are no longer on this team.'
-		if (s === 'owner') return `You are the team’s ${word('owner')}${leads() > 1 ? `, one of ${leads()}` : ''}.`
-		if (s === 'admin') return 'You are a reviewer: you can bring in and change drafters and viewers.'
+		if (s === 'owner')
+			return `You are the team’s ${word('owner')}${leads() > 1 ? `, one of ${leads()}` : ''}.`
+		if (s === 'admin')
+			return 'You are a reviewer: you can bring in and change drafters and viewers.'
 		return `You are a ${word(s)}. The ${word('owner')} and the reviewers manage the team.`
 	}
 
@@ -225,7 +263,12 @@ export function TeamPanel(props: {
 			<p class="ocp-team-standing">{standingLine()}</p>
 			<Show
 				when={members().length > 0}
-				fallback={<EmptyState title="No one is on this team yet" hint={manages() ? 'Bring the first people in below.' : undefined} />}
+				fallback={
+					<EmptyState
+						title="No one is on this team yet"
+						hint={manages() ? 'Bring the first people in below.' : undefined}
+					/>
+				}
 			>
 				<RichList class="ocp-team-roster" label={`${props.team.name} team`} colorBase="neutral">
 					<For each={members()}>
@@ -244,9 +287,19 @@ export function TeamPanel(props: {
 								trailing={
 									<span class="ocp-team-trailing">
 										<Show
-											when={rolesFor({ standing: standing(), self: member.userId === selfId(), from: member.role, leads: leads() }).length > 0}
+											when={
+												rolesFor({
+													standing: standing(),
+													self: member.userId === selfId(),
+													from: member.role,
+													leads: leads(),
+												}).length > 0
+											}
 											fallback={
-												<Chip variant="soft" colorBase={member.role === 'owner' ? 'primary' : 'neutral'}>
+												<Chip
+													variant="soft"
+													colorBase={member.role === 'owner' ? 'primary' : 'neutral'}
+												>
 													{label(member.role)}
 												</Chip>
 											}
@@ -255,15 +308,25 @@ export function TeamPanel(props: {
 												aria-label={`Role of ${member.name}`}
 												value={member.role}
 												onChange={(e) => {
-													const to = rolesFor({ standing: standing(), self: member.userId === selfId(), from: member.role, leads: leads() }).find(
-														(r) => r === e.currentTarget.value,
-													)
+													const to = rolesFor({
+														standing: standing(),
+														self: member.userId === selfId(),
+														from: member.role,
+														leads: leads(),
+													}).find((r) => r === e.currentTarget.value)
 													if (to && to !== member.role) change(member, to)
 												}}
 											>
 												{/* `selected`, not only `value`: a select's value does not serialise
 												    to HTML, so SSR would first-paint the first option on every row. */}
-												<For each={rolesFor({ standing: standing(), self: member.userId === selfId(), from: member.role, leads: leads() }).toReversed()}>
+												<For
+													each={rolesFor({
+														standing: standing(),
+														self: member.userId === selfId(),
+														from: member.role,
+														leads: leads(),
+													}).toReversed()}
+												>
 													{(r) => (
 														<option value={r} selected={r === member.role}>
 															{label(r)}
@@ -276,10 +339,18 @@ export function TeamPanel(props: {
 											<Button
 												variant="text"
 												colorBase="error"
-												onClick={() => (confirming() === member.userId ? change(member, null) : setConfirming(member.userId))}
+												onClick={() =>
+													confirming() === member.userId
+														? change(member, null)
+														: setConfirming(member.userId)
+												}
 												onBlur={() => setConfirming(null)}
 											>
-												{confirming() === member.userId ? 'Confirm' : member.userId === selfId() ? 'Leave' : 'Remove'}
+												{confirming() === member.userId
+													? 'Confirm'
+													: member.userId === selfId()
+														? 'Leave'
+														: 'Remove'}
 											</Button>
 										</Show>
 									</span>
@@ -290,14 +361,22 @@ export function TeamPanel(props: {
 				</RichList>
 			</Show>
 			<Show when={!props.team.central}>
-				<p class="ocp-team-note">The Cancer Australia team reviews every pathway and publishes it. They are not listed here.</p>
+				<p class="ocp-team-note">
+					The Cancer Australia team reviews every pathway and publishes it. They are not listed
+					here.
+				</p>
 			</Show>
 
 			<Show when={manages()}>
 				<section class="ocp-team-in" aria-labelledby="ocp-team-in-heading">
 					<h2 id="ocp-team-in-heading">Bring people in</h2>
 					<Field label="Join as">
-						<SelectControl value={role()} onChange={(e) => setJoinAs(grantable().find((r) => r === e.currentTarget.value) ?? role())}>
+						<SelectControl
+							value={role()}
+							onChange={(e) =>
+								setJoinAs(grantable().find((r) => r === e.currentTarget.value) ?? role())
+							}
+						>
 							<For each={grantable().toReversed()}>
 								{(r) => (
 									<option value={r} selected={r === role()}>
@@ -317,7 +396,12 @@ export function TeamPanel(props: {
 							}}
 						>
 							<Field label="By email">
-								<TextInput type="email" placeholder="name@example.org" value={email()} onInput={(e) => setEmail(e.currentTarget.value)} />
+								<TextInput
+									type="email"
+									placeholder="name@example.org"
+									value={email()}
+									onInput={(e) => setEmail(e.currentTarget.value)}
+								/>
 							</Field>
 							<Button type="submit" variant="outline" disabled={busy()}>
 								Add
@@ -333,7 +417,11 @@ export function TeamPanel(props: {
 							}}
 						>
 							<Field label="By member code">
-								<TextInput placeholder="#k3v7q2xd" value={code()} onInput={(e) => setCode(e.currentTarget.value)} />
+								<TextInput
+									placeholder="#k3v7q2xd"
+									value={code()}
+									onInput={(e) => setCode(e.currentTarget.value)}
+								/>
 							</Field>
 							<Button type="submit" variant="outline" disabled={busy()}>
 								Add
@@ -343,18 +431,29 @@ export function TeamPanel(props: {
 
 						<div class="ocp-team-way ocp-team-search">
 							<Field label="People on other OCP teams">
-								<TextInput type="search" placeholder="Search by name or email" value={query()} onInput={(e) => search(e.currentTarget.value)} />
+								<TextInput
+									type="search"
+									placeholder="Search by name or email"
+									value={query()}
+									onInput={(e) => search(e.currentTarget.value)}
+								/>
 							</Field>
 							<Show when={hits().length > 0}>
 								<RichList class="ocp-team-hits" label="People found" colorBase="neutral">
 									<For each={hits()}>
 										{(hit) => (
 											<RichListItem
-												leading={<Avatar name={hit.name} image={hit.image ?? undefined} size="28px" />}
+												leading={
+													<Avatar name={hit.name} image={hit.image ?? undefined} size="28px" />
+												}
 												title={hit.name}
 												description={<span class="ocp-team-tag">#{userTagOf(hit.id)}</span>}
 												trailing={
-													<Button variant="outline" disabled={busy()} onClick={() => addPerson(hit)}>
+													<Button
+														variant="outline"
+														disabled={busy()}
+														onClick={() => addPerson(hit)}
+													>
 														Add
 													</Button>
 												}
@@ -368,7 +467,9 @@ export function TeamPanel(props: {
 
 					<div class="ocp-team-links">
 						<h3>Invite links</h3>
-						<p class="ocp-team-hint">Anyone who opens a link and signs in joins at its role. Links work for 14 days.</p>
+						<p class="ocp-team-hint">
+							Anyone who opens a link and signs in joins at its role. Links work for 14 days.
+						</p>
 						<For each={links()}>
 							{(link) => (
 								<div class="ocp-team-link">
@@ -406,7 +507,14 @@ export function TeamPanel(props: {
 			</Show>
 
 			<Show when={qr()}>
-				{(link) => <InviteQrSheet link={link()} teamName={props.team.name} central={props.team.central} onDismiss={() => setQr(null)} />}
+				{(link) => (
+					<InviteQrSheet
+						link={link()}
+						teamName={props.team.name}
+						central={props.team.central}
+						onDismiss={() => setQr(null)}
+					/>
+				)}
 			</Show>
 		</div>
 	)

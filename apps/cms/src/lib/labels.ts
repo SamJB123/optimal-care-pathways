@@ -10,7 +10,9 @@ export const numberLabel = (printedNumber: string): string =>
 /** A changed section's size, as its chips read: characters added and removed, or — when
  *  only links, formatting or layout moved (the diff counts words) — that. */
 export const changeSize = (size: { inserted: number; deleted: number }): string =>
-	size.inserted === 0 && size.deleted === 0 ? 'Links or layout' : `+${size.inserted} −${size.deleted}`
+	size.inserted === 0 && size.deleted === 0
+		? 'Links or layout'
+		: `+${size.inserted} −${size.deleted}`
 
 /** What a document is called where space is short (the atlas, the masthead, the jump):
  *  a pathway by its subject ("Breast cancer"), a core document by what it is. The full
@@ -33,8 +35,18 @@ export function documentName(document: {
 /** Dates read in Australian time wherever they are rendered, so the server's text and the
  *  hydrating client's agree. */
 const ZONE = 'Australia/Sydney'
-const IMPRINT = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: ZONE })
-const SHORT = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric', timeZone: ZONE })
+const IMPRINT = new Intl.DateTimeFormat('en-AU', {
+	day: 'numeric',
+	month: 'long',
+	year: 'numeric',
+	timeZone: ZONE,
+})
+const SHORT = new Intl.DateTimeFormat('en-AU', {
+	day: 'numeric',
+	month: 'short',
+	year: 'numeric',
+	timeZone: ZONE,
+})
 const MONTH = new Intl.DateTimeFormat('en-AU', { month: 'long', year: 'numeric', timeZone: ZONE })
 
 /** A date as the imprint sets it: '14 March 2026'. */

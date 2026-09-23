@@ -32,7 +32,9 @@ export function TickRuns(props: { ticks: readonly TickState[]; class?: string })
 	}
 	return (
 		<span class={['ocp-tick-runs', props.class]} aria-hidden="true">
-			<For each={runs()}>{(run) => <i data-s={run.state} style={{ 'flex-grow': run.length }} />}</For>
+			<For each={runs()}>
+				{(run) => <i data-s={run.state} style={{ 'flex-grow': run.length }} />}
+			</For>
 		</span>
 	)
 }

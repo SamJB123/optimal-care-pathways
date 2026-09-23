@@ -10,7 +10,18 @@ import { NIGHT, PAPER } from './palette.ts'
 
 /** The step-band colours the legacy import read off the 33 printed editions (a sample
  *  across hues and lightness), plus the extremes. */
-const PRINT = ['#b65673', '#00856e', '#5b78a8', '#015740', '#e36f1e', '#7d4b99', '#f2c230', '#8c1d40', '#1a1a1a', '#fafafa']
+const PRINT = [
+	'#b65673',
+	'#00856e',
+	'#5b78a8',
+	'#015740',
+	'#e36f1e',
+	'#7d4b99',
+	'#f2c230',
+	'#8c1d40',
+	'#1a1a1a',
+	'#fafafa',
+]
 
 describe('contrast', () => {
 	it('is 21 between black and white and 1 between a colour and itself', () => {

@@ -57,7 +57,10 @@ const seededAt = Date.now()
 const emit = async (seeded: SeedResult) => {
 	// Bodies in the schema's normal form (every attribute's default written), as the
 	// editor holds them: a section's first open in its room then changes nothing.
-	const result: SeedResult = { ...seeded, sections: seeded.sections.map((s) => ({ ...s, bodyJson: normalBody(s.bodyJson) })) }
+	const result: SeedResult = {
+		...seeded,
+		sections: seeded.sections.map((s) => ({ ...s, bodyJson: normalBody(s.bodyJson) })),
+	}
 	const { template: t, document: d } = result
 	statements.push(
 		insert('templates', {
