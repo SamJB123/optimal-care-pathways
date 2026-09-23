@@ -1055,8 +1055,18 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		originsSeen.add(key)
 		origins.push({ sectionId: draft.row.id, legacySectionId: node.id, chars: textOfBlocks(node.blocks).length })
 	}
-	const place = (draft: DraftSection, node: LegacyNode, nodes: JsonNode[], how: PlacementHow, options: { heading?: string | null; note?: string } = {}) => {
+	/** The body without a first paragraph that only repeats the section's title (the
+	 *  front matter's bold "Statement of acknowledgement" under the template's section of
+	 *  that name): the heading says it once (decision 145). */
+	const titleEcho = (draft: DraftSection, nodes: JsonNode[]): JsonNode[] => {
+		const [first, ...rest] = nodes
+		const said = (t: string) => t.replace(/[:\s]+$/, '').trim().toLowerCase()
+		if (first?.type === 'paragraph' && draft.row.title && said(textOfNodes([first])) === said(draft.row.title)) return rest
+		return nodes
+	}
+	const place = (draft: DraftSection, node: LegacyNode, placed: JsonNode[], how: PlacementHow, options: { heading?: string | null; note?: string } = {}) => {
 		if (draft.row.ownership !== 'owned') throw new Error(`cannot place text into the shared section '${draft.row.address}'`)
+		const nodes = options.heading ? placed : titleEcho(draft, placed)
 		draft.contributions.push({ heading: options.heading ?? null, nodes })
 		draft.pages.push(node.pages)
 		recordOrigin(draft, node)
@@ -1073,7 +1083,7 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	const diverge = (draft: DraftSection, node: LegacyNode, nodes: JsonNode[], options: { heading?: string | null; note?: string } = {}) => {
 		if (draft.row.ownership !== 'shared') throw new Error(`cannot diverge the owned section '${draft.row.address}'`)
 		const entry = divergences.get(draft.row.address) ?? { nodes: [], pages: [] }
-		entry.nodes.push(...(options.heading ? [headingNode(options.heading, 3)] : []), ...nodes)
+		entry.nodes.push(...(options.heading ? [headingNode(options.heading, 3), ...nodes] : titleEcho(draft, nodes)))
 		entry.pages.push(node.pages)
 		divergences.set(draft.row.address, entry)
 		recordOrigin(draft, node)

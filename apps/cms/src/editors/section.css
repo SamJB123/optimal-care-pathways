@@ -63,6 +63,26 @@
 	margin-block: 0.55em;
 }
 
+/* Headings inside a body (a merged subsection, "Principle 2: Safe and quality care")
+   read as headings, below the section's own title. */
+.ocp-body :is(h1, h2, h3, h4, h5, h6) {
+	font-weight: 600;
+	line-height: 1.3;
+	margin-block: 1.1em 0.4em;
+}
+
+.ocp-body :is(h1, h2) {
+	font-size: 1.15em;
+}
+
+.ocp-body h3 {
+	font-size: 1.05em;
+}
+
+.ocp-body :is(h4, h5, h6) {
+	font-size: 1em;
+}
+
 /* The number is derived at render (decision 15): the citation carries data-number. A
    heading's own citation sits outside the body, so the rule is not scoped to it. */
 sup[data-ocp="citation"]::before {
