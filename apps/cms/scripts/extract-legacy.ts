@@ -9,7 +9,7 @@
  * The PDFs are read from public/legacy-sources by default (decision 139).
  */
 
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { LEGACY_PATHWAYS, legacyBySlug } from '../src/legacy/catalogue.ts'
 import { readLayoutDocument } from '../src/legacy/read-layout.ts'
@@ -35,9 +35,16 @@ if (targets.length === 0) {
 	process.exit(2)
 }
 
+// Complete entries of the corpus's gap-separated name lists (scripts/build-entry-lexicon.ts),
+// the evidence a tight list's lines are resolved against.
+const lexiconPath = join(appDir, 'legacy', 'entries.json')
+const entryLexicon: { entries: string[]; roles: string[]; names: string[] } = existsSync(lexiconPath)
+	? JSON.parse(readFileSync(lexiconPath, 'utf8'))
+	: { entries: [], roles: [], names: [] }
+
 for (const pathway of targets) {
 	const doc = await openPdf(join(pdfDir, pathway.file))
-	const model = await readLayoutDocument(doc, pathway.file)
+	const model = await readLayoutDocument(doc, pathway.file, { entryLexicon })
 	writeFileSync(join(outDir, `${pathway.slug}.model.json`), `${JSON.stringify(model, null, '\t')}\n`)
 	const counts = { sections: 0, paragraphs: 0, lists: 0, items: 0, tables: 0, figures: 0 }
 	const countBlocks = (blocks: Block[]) => {

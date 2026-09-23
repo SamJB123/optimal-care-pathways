@@ -590,6 +590,8 @@ function titleTokens(title: string, subject: string): Set<string> {
 		.toLowerCase()
 		.replace(/\bgp'?s?\b/g, 'general practitioner')
 		.replace(/\bmdt\b/g, 'multidisciplinary team')
+		// "work-up", "work up" and "workup" are one word.
+		.replace(/\bwork[\s-]?up\b/g, 'workup')
 		.split(/[^a-z0-9]+/)
 		.filter((w) => w && !/^\d+$/.test(w) && !STOPWORDS.has(w))
 		.map(stem)
@@ -616,11 +618,15 @@ function matchTitle(title: string, candidates: Candidate[], subject: string): Co
 	const tokens = titleTokens(title, subject)
 	if (tokens.size === 0) return null
 	let best: { candidate: Candidate; score: { containment: number; jaccard: number } } | null = null
+	// A one-word legacy title ("Treatment") names only a one- or two-word section — unless
+	// exactly one section of the step carries the word at all ("Screening" and 1.2.1
+	// Population-based screening recommendations).
+	const [only] = tokens
+	const carrying = tokens.size === 1 && only !== undefined ? candidates.filter((c) => c.tokens.has(only)) : []
 	for (const c of candidates) {
 		const score = titleScore(tokens, c.tokens)
 		if (score.containment < 0.6 || score.jaccard < 0.25) continue
-		// A one-word legacy title ("Treatment") names only a one- or two-word section.
-		if (tokens.size === 1 && c.tokens.size > 2) continue
+		if (tokens.size === 1 && c.tokens.size > 2 && !(carrying.length === 1 && carrying[0] === c)) continue
 		// The closer title wins; between equals, the shorter (the more specific) one.
 		if (!best || score.jaccard > best.score.jaccard || (score.jaccard === best.score.jaccard && c.tokens.size < best.candidate.tokens.size))
 			best = { candidate: c, score }
@@ -795,18 +801,19 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 
 	// ---- references --------------------------------------------------------------------
 	// A numbered list is cited by raised numbers: the reader made its entries endnotes and
-	// its markers endnote runs, which the block mapper turns into citation atoms itself.
-	const numbered = model.endnotes.length > 0
+	// its markers endnote runs, which the block mapper turns into citation atoms itself. An
+	// author–year list (whatever the References chapter kept as prose) is cited by name and
+	// year in the text. A document may carry both: an appendix's numbered list beside an
+	// author–year References chapter.
 	const referencesNode = tree.find((n) => n.l1 === 'references')
 	const entries: ReferenceEntry[] = []
-	if (numbered) {
-		for (const e of model.endnotes) {
-			const citation = plainText(e.runs).replace(/\s+/g, ' ').trim()
-			const url = e.runs.find((r) => r.link && 'url' in r.link)?.link
-			const printed = citation.match(/<\s*(https?:\/\/[^>\s]+|www\.[^>\s]+)\s*>/)?.[1] ?? null
-			entries.push({ id: referenceIdOf(e.number), citation, url: url && 'url' in url ? url.url : printed, keys: new Set(), number: e.number })
-		}
-	} else if (referencesNode) {
+	for (const e of model.endnotes) {
+		const citation = plainText(e.runs).replace(/\s+/g, ' ').trim()
+		const url = e.runs.find((r) => r.link && 'url' in r.link)?.link
+		const printed = citation.match(/<\s*(https?:\/\/[^>\s]+|www\.[^>\s]+)\s*>/)?.[1] ?? null
+		entries.push({ id: referenceIdOf(e.number), citation, url: url && 'url' in url ? url.url : printed, keys: new Set(), number: e.number })
+	}
+	if (referencesNode) {
 		const paragraphs = flatten([referencesNode]).flatMap((n) => n.blocks.filter((b): b is Paragraph => b.kind === 'paragraph'))
 		for (const [i, p] of paragraphs.entries()) {
 			const citation = plainText(p.runs).replace(/\s+/g, ' ').trim()
@@ -823,10 +830,12 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	}
 	const citations: CitationIndex = { byKey: new Map(), matched: 0, unmatched: [], byName: [] }
 	for (const e of entries) for (const k of e.keys) if (!citations.byKey.has(k)) citations.byKey.set(k, e)
+	/** The text cites by author and year only when there is an author–year list to resolve against. */
+	const authorYear = citations.byKey.size > 0
 
 	/** A legacy node's blocks as content nodes, cited. */
 	const nodesOf = (blocks: Block[], options: { cite?: boolean } = {}): JsonNode[] =>
-		options.cite === false || numbered ? mapper.blocks(blocks) : citeNodes(mapper.blocks(blocks), citations)
+		options.cite === false || !authorYear ? mapper.blocks(blocks) : citeNodes(mapper.blocks(blocks), citations)
 
 	// ---- legacy rows -----------------------------------------------------------------
 	const legacyDocument: LegacyDocumentInsert = {
@@ -1027,18 +1036,25 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			drafts.get(`${step}/timeframes`) ?? addSection(String(step), 'Timeframes', { note: `proposed: timeframes of Step ${step} whose section is shared core text; move each into its section`, pointOfCare: false })
 		// A timeframe subsection: a timeframe box in the section above it, whose care
 		// point is that section (the printed summary table names the section too).
-		if (/^timeframes?\b/i.test(title) && parentDestination && own.length > 0) {
-			const carePoint = parentDestination.row.title ?? title
+		// A numbered timeframe section at the step's own level ("2.3 Optimal timeframes for
+		// investigations and referrals") names its own care point.
+		if (/^(?:optimal )?timeframes?\b/i.test(title) && own.length > 0) {
+			const carePoint = parentDestination?.row.title ?? title
 			const target = host ?? timeframesSection()
 			ledger.timeframes.boxes++
 			bodyTimeframes.push({ step, text: textOfBlocks(node.blocks) })
 			place(target, node, [{ type: 'timeframe', content: [{ type: 'carePoint', content: [{ type: 'text', text: carePoint }] }, ...own] }], 'timeframe')
 			return target
 		}
-		// "More information": a resources box in the section above it.
-		if (/^more information$/i.test(title) && parentDestination && own.length > 0) {
-			placeOrDiverge(parentDestination, node, [{ type: 'box', attrs: { kind: 'resources', icon: 'info', family: '', variant: 'soft' }, content: [{ type: 'banner', attrs: { tone: 'band' }, content: [{ type: 'text', text: 'More information' }] }, ...own] }], 'resources')
-			return parentDestination
+		// "More information" (the population designs say "Further information"): a resources
+		// box in the section above it — or, printed under a step's own introduction, in the
+		// step itself.
+		if (/^(?:more|further) information$/i.test(title) && own.length > 0) {
+			const above = parentDestination ?? drafts.get(String(step))
+			if (above) {
+				placeOrDiverge(above, node, [{ type: 'box', attrs: { kind: 'resources', icon: 'info', family: '', variant: 'soft' }, content: [{ type: 'banner', attrs: { tone: 'band' }, content: [{ type: 'text', text: title.replace(/\s+/g, ' ') }] }, ...own] }], 'resources')
+				return above
+			}
 		}
 		if (matched) {
 			const draft = byAddress(matched.address)
@@ -1091,7 +1107,7 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			for (const child of node.children) visitStep(child, step, standing.draft)
 			return
 		}
-		const matched = /^(timeframes?\b|more information$)/i.test(title) ? null : matchTitle(title, stepCandidates(step), pathway.subject)
+		const matched = /^((?:optimal )?timeframes?\b|(?:more|further) information$)/i.test(title) ? null : matchTitle(title, stepCandidates(step), pathway.subject)
 		const destination = placeNode(node, step, parentDestination, matched)
 		for (const child of node.children) visitStep(child, step, destination)
 	}
@@ -1558,5 +1574,7 @@ function publicationDateOf(model: ExtractedDocument, pathway: LegacyPathway): st
 		if (month < 0 || !year) continue
 		return `${year}-${String(month + 1).padStart(2, '0')}-01`
 	}
-	return null
+	// Nothing printed and no date in the file name: the PDF's own creation month (the
+	// January-2020 cervical pathway was made the same day as its two siblings).
+	return model.createdAt ? `${model.createdAt.slice(0, 7)}-01` : null
 }

@@ -1,5 +1,6 @@
 {
 	"pathway": "keratinocyte-cancer-basal-cell-carcinoma-or-squamous-cell-carcinoma",
+	"visualPass": null,
 	"edition": "Second edition",
 	"publicationDate": "2021-06-01",
 	"placements": [
@@ -845,6 +846,24 @@
 			"legacyKey": "summary/step-4/timeframe",
 			"legacyTitle": "Timeframe",
 			"destination": "4/quick-reference-guide/timeframe",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/surgery",
+			"legacyTitle": "Surgery",
+			"destination": "4/quick-reference-guide/surgery",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/radiation-therapy",
+			"legacyTitle": "Radiation therapy",
+			"destination": "4/quick-reference-guide/radiation-therapy",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/other-therapies",
+			"legacyTitle": "Other therapies",
+			"destination": "4/quick-reference-guide/other-therapies",
 			"how": "guide"
 		},
 		{

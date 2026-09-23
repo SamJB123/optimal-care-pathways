@@ -1,5 +1,18 @@
 {
 	"pathway": "sarcoma-bone-soft-tissue-tumours",
+	"visualPass": {
+		"pages": "1-58 of 58",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-8) read as step rows; bold 'Label:' lead-ins are the panels ('Risk factors for soft tissue sarcoma include:' is set as one); footnote 1 hangs off the Step 2 communication panel.",
+			"The contents page lists no Step 6, as printed; Figure 1 (tiered approach, page 45) is a rendered figure; the timeframes summary (page 9) is the table.",
+			"The foreword signature image is design and dropped; the signatory's name and title are kept as one paragraph.",
+			"Acknowledgements are set one entry per line with no gaps and resolved as for cancer of unknown primary.",
+			"Misprints ('manageing', 'Prothetist', 'metastic') are kept as printed.",
+			"No edition is printed; the date comes from the file name (January 2020).",
+			"Back cover (page 58) carries only the cover artwork."
+		]
+	},
 	"edition": null,
 	"publicationDate": "2020-01-01",
 	"placements": [
@@ -45,8 +58,8 @@
 		{
 			"legacyKey": "step-1/early-detection/screening",
 			"legacyTitle": "1.3.1 Screening",
-			"destination": "1.2",
-			"how": "diverged"
+			"destination": "1.2.1",
+			"how": "title"
 		},
 		{
 			"legacyKey": "step-2",
@@ -298,7 +311,7 @@
 			"legacyKey": "step-4/palliative-care/further-information",
 			"legacyTitle": "Further information",
 			"destination": "4.4.4",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-4/research-and-clinical-trials",
@@ -317,7 +330,7 @@
 			"legacyKey": "step-4/complementary-or-alternative-therapies/further-information",
 			"legacyTitle": "Further information",
 			"destination": "4.5.5",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-4/rehabilitation-support-and-communication",
@@ -386,8 +399,8 @@
 		{
 			"legacyKey": "step-5/survivorship",
 			"legacyTitle": "5.1 Survivorship",
-			"destination": "5/survivorship",
-			"how": "unplaced"
+			"destination": "5.3.3",
+			"how": "title"
 		},
 		{
 			"legacyKey": "step-5/post-treatment-care-planning",
@@ -474,7 +487,7 @@
 			"legacyKey": "step-5/support-and-communication/palliative-care/further-information",
 			"legacyTitle": "Further information",
 			"destination": "5/palliative-care",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-5/support-and-communication/communication-with-the-patient-carer-and-family",
@@ -1157,6 +1170,18 @@
 			"legacyTitle": "Expert working group",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
+		},
+		{
+			"legacyKey": "contributors/governance-project-steering-committee-representation",
+			"legacyTitle": "Governance – project steering committee representation",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
 		}
 	],
 	"citations": {
@@ -1234,11 +1259,6 @@
 			"address": "about-this-cancer/special-considerations",
 			"title": "Special considerations",
 			"note": "proposed: the legacy pathway’s opening section \"Special considerations\"; check where it belongs"
-		},
-		{
-			"address": "5/survivorship",
-			"title": "Survivorship",
-			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
 		},
 		{
 			"address": "5/palliative-care",

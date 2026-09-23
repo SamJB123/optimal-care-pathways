@@ -1,5 +1,6 @@
 {
 	"pathway": "colorectal-cancer",
+	"visualPass": null,
 	"edition": "Second edition",
 	"publicationDate": "2021-06-01",
 	"placements": [
@@ -37,21 +38,21 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-1/risk-factors/category-1-near-average-risk",
+			"legacyKey": "step-1/risk-factors/summary-of-recommendations-for-risk-and-screening-based-on-famil/category-1-near-average-risk",
 			"legacyTitle": "Category 1: Near average risk*",
-			"destination": "1.1.1",
+			"destination": "1.2.1",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-1/risk-factors/category-2-moderately-increased-risk",
+			"legacyKey": "step-1/risk-factors/summary-of-recommendations-for-risk-and-screening-based-on-famil/category-2-moderately-increased-risk",
 			"legacyTitle": "Category 2: Moderately increased risk*",
-			"destination": "1.1.1",
+			"destination": "1.2.1",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-1/risk-factors/category-3-high-risk",
+			"legacyKey": "step-1/risk-factors/summary-of-recommendations-for-risk-and-screening-based-on-famil/category-3-high-risk",
 			"legacyTitle": "Category 3: High risk*",
-			"destination": "1.1.1",
+			"destination": "1.2.1",
 			"how": "merged"
 		},
 		{
@@ -1141,7 +1142,19 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/other-stakeholders-consulted-to-provide",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "contributors/governance-project-steering-committee-representation",
+			"legacyTitle": "Governance – project steering committee representation",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "contributors/governance-project-steering-committee-representation/other-stakeholders-consulted-to-provide",
 			"legacyTitle": "Other stakeholders consulted to provide",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"

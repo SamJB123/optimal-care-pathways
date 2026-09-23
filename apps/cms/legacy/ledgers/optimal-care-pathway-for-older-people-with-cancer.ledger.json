@@ -1,5 +1,20 @@
 {
 	"pathway": "older-people-with-cancer",
+	"visualPass": {
+		"pages": "1-158 of 158",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 8-13) read as the 2021 design's step pages: bold panel headings, checklists as check items, the repeated side band recorded once as furniture.",
+			"The welcome's three signatories (page 7) are bold-name paragraphs with their roles, not headings; the signature images are dropped as design.",
+			"Figure 1 (page 15), Figure 2 (page 19) and Figure A1 (page 112) are rendered figures; the population design's art layer along each page foot is dropped as design.",
+			"Appendix F (pages 122-124) is one ruled table carried over three pages (the repeated header row recorded as furniture); its own numbered 'Appendix references' (33 entries, pages 124-126) are endnotes cited from the appendix by raised numbers, while the References chapter is author-year and cited by name.",
+			"Contributors (pages 108-111): black bold headings group the lists, accent-coloured ones subgroup them; Primary Health Networks are one entry per line.",
+			"Raised footnote and citation markers that share a baseline with another column's text are rejoined to their word; the space after a marker belongs to the next word.",
+			"Misprints ('3.4.1.' with a trailing stop) are kept as printed.",
+			"Published November 2025 (imprint page); first edition.",
+			"Back cover (page 158) is blank."
+		]
+	},
 	"edition": "First edition",
 	"publicationDate": "2025-11-01",
 	"placements": [
@@ -878,6 +893,12 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-3/multidisciplinary-team-membership-and-responsibilities",
+			"legacyTitle": "Multidisciplinary team membership and responsibilities",
+			"destination": "3/quick-reference-guide/multidisciplinary-team-membership-and-responsibilities",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-3/research-and-clinical-trials",
 			"legacyTitle": "Research and clinical trials",
 			"destination": "3/quick-reference-guide/research-and-clinical-trials",
@@ -1097,18 +1118,6 @@
 			"legacyKey": "welcome-and-introduction",
 			"legacyTitle": "Welcome and introduction",
 			"destination": "optimal-care-pathway-for-with-cancer/welcome-and-introduction",
-			"how": "proposed"
-		},
-		{
-			"legacyKey": "welcome-and-introduction/professor-meera-agar",
-			"legacyTitle": "Professor Meera Agar",
-			"destination": "optimal-care-pathway-for-with-cancer/welcome-and-introduction/professor-meera-agar",
-			"how": "proposed"
-		},
-		{
-			"legacyKey": "welcome-and-introduction/a-professor-christopher-steer",
-			"legacyTitle": "A/Professor Christopher Steer",
-			"destination": "optimal-care-pathway-for-with-cancer/welcome-and-introduction/a-professor-christopher-steer",
 			"how": "proposed"
 		},
 		{
@@ -1418,7 +1427,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/other-invited-contributors",
+			"legacyKey": "contributors/expert-working-group/other-invited-contributors",
 			"legacyTitle": "Other invited contributors",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1430,43 +1439,55 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/primary-health-networks",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/primary-health-networks",
 			"legacyTitle": "Primary Health Networks",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/health-services-systems-state-level",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/health-services-systems-state-level",
 			"legacyTitle": "Health services/systems (state level)",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/professional-colleges-and-societies",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/aboriginal-and-torres-strait-islander-organisations",
+			"legacyTitle": "Aboriginal and Torres Strait Islander organisations",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/professional-colleges-and-societies",
 			"legacyTitle": "Professional colleges and societies",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/cancer-cooperative-trials-groups",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/cancer-cooperative-trials-groups",
 			"legacyTitle": "Cancer Cooperative Trials Groups",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/aged-care-service-providers",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/aged-care-service-providers",
 			"legacyTitle": "Aged care service providers",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/consumer-representatives-and-organisations",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/consumer-representatives-and-organisations",
 			"legacyTitle": "Consumer representatives and organisations",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/advocacy-groups",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/advocacy-groups",
 			"legacyTitle": "Advocacy groups",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1544,74 +1565,8 @@
 			"how": "proposed"
 		},
 		{
-			"legacyKey": "appendix-f/domain",
-			"legacyTitle": "Domain",
-			"destination": "find-out-more/appendix-f-geriatric-domains",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "appendix-f/social-support",
-			"legacyTitle": "Social support",
-			"destination": "find-out-more/appendix-f-geriatric-domains",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "appendix-f/measure-tool",
-			"legacyTitle": "Measure/tool",
-			"destination": "find-out-more/appendix-f-geriatric-domains",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "appendix-f/recommendations-if-impairments-found1-2",
-			"legacyTitle": "Recommendations if impairments found1,2",
-			"destination": "find-out-more/appendix-f-geriatric-domains",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "appendix-f/domain",
-			"legacyTitle": "Domain",
-			"destination": "find-out-more/appendix-f-geriatric-domains",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "appendix-f/comorbidity",
-			"legacyTitle": "Comorbidity",
-			"destination": "find-out-more/appendix-f-geriatric-domains",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "appendix-f/measure-tool",
-			"legacyTitle": "Measure/tool",
-			"destination": "find-out-more/appendix-f-geriatric-domains",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "appendix-f/recommendations-if-impairments-found1-2",
-			"legacyTitle": "Recommendations if impairments found1,2",
-			"destination": "find-out-more/appendix-f-geriatric-domains",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "appendix-f/domain",
-			"legacyTitle": "Domain",
-			"destination": "find-out-more/appendix-f-geriatric-domains",
-			"how": "merged"
-		},
-		{
 			"legacyKey": "appendix-f/appendix-references",
 			"legacyTitle": "Appendix references",
-			"destination": "find-out-more/appendix-f-geriatric-domains",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "appendix-f/measure-tool",
-			"legacyTitle": "Measure/tool",
-			"destination": "find-out-more/appendix-f-geriatric-domains",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "appendix-f/recommendations-if-impairments-found1-2",
-			"legacyTitle": "Recommendations if impairments found1,2",
 			"destination": "find-out-more/appendix-f-geriatric-domains",
 			"how": "merged"
 		},
@@ -1845,7 +1800,7 @@
 		}
 	],
 	"citations": {
-		"matched": 732,
+		"matched": 798,
 		"unmatched": [
 			"John A Hartford Foundation 2024 — \"John A Hartford Foundation 2024\": no entry in the printed reference list",
 			"John A Hartford Foundation 2024; WHO 2004 — \"John A Hartford Foundation 2024\": no entry in the printed reference list",
@@ -2000,16 +1955,6 @@
 			"address": "optimal-care-pathway-for-with-cancer/welcome-and-introduction",
 			"title": "Welcome and introduction",
 			"note": "proposed: holds the legacy \"Welcome and introduction\"; check it belongs here"
-		},
-		{
-			"address": "optimal-care-pathway-for-with-cancer/welcome-and-introduction/professor-meera-agar",
-			"title": "Professor Meera Agar",
-			"note": "proposed: a part of the legacy \"Welcome and introduction\"; check it belongs here"
-		},
-		{
-			"address": "optimal-care-pathway-for-with-cancer/welcome-and-introduction/a-professor-christopher-steer",
-			"title": "A/Professor Christopher Steer",
-			"note": "proposed: a part of the legacy \"Welcome and introduction\"; check it belongs here"
 		},
 		{
 			"address": "about-this-population-group/key-considerations-for-delivery-of-optimal-cancer-care/age-friendly-cancer-care",

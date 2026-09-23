@@ -1,5 +1,6 @@
 {
 	"pathway": "ovarian-cancer",
+	"visualPass": null,
 	"edition": "Second edition",
 	"publicationDate": "2021-06-01",
 	"placements": [
@@ -710,6 +711,12 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-1/checklist",
+			"legacyTitle": "Checklist",
+			"destination": "1/quick-reference-guide/checklist",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-2",
 			"legacyTitle": "Step 2: Presentation, initial investigations and referral",
 			"destination": "2/quick-reference-guide",
@@ -719,6 +726,12 @@
 			"legacyKey": "summary/step-2/signs-and-symptoms",
 			"legacyTitle": "Signs and symptoms",
 			"destination": "2/quick-reference-guide/signs-and-symptoms",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-2/checklist",
+			"legacyTitle": "Checklist",
+			"destination": "2/quick-reference-guide/checklist",
 			"how": "guide"
 		},
 		{
@@ -803,6 +816,24 @@
 			"legacyKey": "summary/step-4/treatment-options",
 			"legacyTitle": "Treatment options",
 			"destination": "4/quick-reference-guide/treatment-options",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/surgery",
+			"legacyTitle": "Surgery",
+			"destination": "4/quick-reference-guide/surgery",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/systemic-therapy",
+			"legacyTitle": "Systemic therapy",
+			"destination": "4/quick-reference-guide/systemic-therapy",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/radiation-therapy",
+			"legacyTitle": "Radiation therapy",
+			"destination": "4/quick-reference-guide/radiation-therapy",
 			"how": "guide"
 		},
 		{

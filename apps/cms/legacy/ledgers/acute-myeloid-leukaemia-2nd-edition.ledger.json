@@ -1,5 +1,6 @@
 {
 	"pathway": "acute-myeloid-leukaemia",
+	"visualPass": null,
 	"edition": "Second edition",
 	"publicationDate": "2021-06-01",
 	"placements": [
@@ -307,7 +308,7 @@
 			"how": "timeframe"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/treatment-with-intention-to-induce-remission/radiation-therapy",
+			"legacyKey": "step-4/treatment-options/treatment-with-intention-to-induce-remission/timeframes-for-starting-treatment/radiation-therapy",
 			"legacyTitle": "Radiation therapy",
 			"destination": "4.4.2",
 			"how": "title"
@@ -729,9 +730,27 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-3/specialist-testing-including-genetic-testing",
+			"legacyTitle": "Specialist testing (including genetic testing)",
+			"destination": "3/quick-reference-guide/specialist-testing-including-genetic-testing",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-3/treatment-planning",
+			"legacyTitle": "Treatment planning",
+			"destination": "3/quick-reference-guide/treatment-planning",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-3/checklist",
 			"legacyTitle": "Checklist",
 			"destination": "3/quick-reference-guide/checklist",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-3/communication",
+			"legacyTitle": "Communication",
+			"destination": "3/quick-reference-guide/communication",
 			"how": "guide"
 		},
 		{
@@ -753,9 +772,21 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-4/treatment-options-to-induce-remission",
-			"legacyTitle": "Treatment options to induce remission",
-			"destination": "4/quick-reference-guide/treatment-options-to-induce-remission",
+			"legacyKey": "summary/step-4/patients-not-fit-for-intensive-chemotherapy",
+			"legacyTitle": "Patients not fit for intensive chemotherapy",
+			"destination": "4/quick-reference-guide/patients-not-fit-for-intensive-chemotherapy",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/allogeneic-stem-cell-transplant",
+			"legacyTitle": "Allogeneic stem cell transplant",
+			"destination": "4/quick-reference-guide/allogeneic-stem-cell-transplant",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/radiation-therapy",
+			"legacyTitle": "Radiation therapy",
+			"destination": "4/quick-reference-guide/radiation-therapy",
 			"how": "guide"
 		},
 		{

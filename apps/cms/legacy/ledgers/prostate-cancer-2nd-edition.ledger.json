@@ -1,5 +1,6 @@
 {
 	"pathway": "prostate-cancer",
+	"visualPass": null,
 	"edition": "Second edition",
 	"publicationDate": "2021-06-01",
 	"placements": [
@@ -335,7 +336,7 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/radiation-therapy-by-external-beam-radiation-therapy-and-or-brac",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/health-service-characteristics/radiation-therapy-by-external-beam-radiation-therapy-and-or-brac",
 			"legacyTitle": "Radiation therapy (by external beam radiation therapy and/or brachytherapy)",
 			"destination": "4.4.2",
 			"how": "title"
@@ -833,6 +834,18 @@
 			"legacyKey": "summary/step-4/establish-intent-of-treatment",
 			"legacyTitle": "Establish intent of treatment",
 			"destination": "4/quick-reference-guide/establish-intent-of-treatment",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/care-and-treatment-of-localised-or-locally-advanced-prostate-can",
+			"legacyTitle": "Care and treatment of localised or locally advanced prostate cancer",
+			"destination": "4/quick-reference-guide/care-and-treatment-of-localised-or-locally-advanced-prostate-can",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/treatment-of-advanced-or-metastatic-prostate-cancer",
+			"legacyTitle": "Treatment of advanced or metastatic prostate cancer",
+			"destination": "4/quick-reference-guide/treatment-of-advanced-or-metastatic-prostate-cancer",
 			"how": "guide"
 		},
 		{

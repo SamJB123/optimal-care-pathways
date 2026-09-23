@@ -337,12 +337,16 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 		const spans = spansByMcid.get(mcid) ?? []
 		const last = spans.at(-1)
 		const face = fontAlias
+		// One span is one style drawn along one baseline: text that moves to another
+		// baseline (the next line) opens a new span, so a span's origin and advances place
+		// every glyph it holds.
 		if (
 			last &&
 			last.font === face &&
 			last.size === fontSize &&
 			last.fill === fill &&
-			last.rise === rise
+			last.rise === rise &&
+			Math.abs(last.origin.y - oy) <= 0.5
 		) {
 			last.text += text
 			last.advances.push(...advances)

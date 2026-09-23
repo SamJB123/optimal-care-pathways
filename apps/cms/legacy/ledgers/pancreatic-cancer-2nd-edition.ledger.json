@@ -1,5 +1,6 @@
 {
 	"pathway": "pancreatic-cancer",
+	"visualPass": null,
 	"edition": "Second edition",
 	"publicationDate": "2021-06-01",
 	"placements": [
@@ -797,6 +798,24 @@
 			"legacyKey": "summary/step-4/establish-intent-of-treatment",
 			"legacyTitle": "Establish intent of treatment",
 			"destination": "4/quick-reference-guide/establish-intent-of-treatment",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/treatment-for-resectable-pancreatic-cancer",
+			"legacyTitle": "Treatment for resectable pancreatic cancer",
+			"destination": "4/quick-reference-guide/treatment-for-resectable-pancreatic-cancer",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/treatment-for-unresectable-pancreatic-cancer",
+			"legacyTitle": "Treatment for unresectable pancreatic cancer",
+			"destination": "4/quick-reference-guide/treatment-for-unresectable-pancreatic-cancer",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/palliative-care",
+			"legacyTitle": "Palliative care",
+			"destination": "4/quick-reference-guide/palliative-care",
 			"how": "guide"
 		},
 		{

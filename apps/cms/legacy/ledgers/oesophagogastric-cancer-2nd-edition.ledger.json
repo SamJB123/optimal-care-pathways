@@ -1,5 +1,6 @@
 {
 	"pathway": "oesophagogastric-cancer",
+	"visualPass": null,
 	"edition": "Second edition",
 	"publicationDate": "2021-06-01",
 	"placements": [
@@ -693,9 +694,27 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-1/prevention",
+			"legacyTitle": "Prevention",
+			"destination": "1/quick-reference-guide/prevention",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-1/checklist",
 			"legacyTitle": "Checklist",
 			"destination": "1/quick-reference-guide/checklist",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-1/risk-factors",
+			"legacyTitle": "Risk factors",
+			"destination": "1/quick-reference-guide/risk-factors",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-1/early-detection",
+			"legacyTitle": "Early detection",
+			"destination": "1/quick-reference-guide/early-detection",
 			"how": "guide"
 		},
 		{
@@ -708,6 +727,12 @@
 			"legacyKey": "summary/step-2/signs-and-symptoms",
 			"legacyTitle": "Signs and symptoms",
 			"destination": "2/quick-reference-guide/signs-and-symptoms",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-2/symptoms-red-flag-requiring-urgent-consultation",
+			"legacyTitle": "Symptoms (red flag) requiring urgent consultation",
+			"destination": "2/quick-reference-guide/symptoms-red-flag-requiring-urgent-consultation",
 			"how": "guide"
 		},
 		{

@@ -135,6 +135,9 @@ export interface ExtractedDocument {
 	source: string
 	pages: number
 	title: string
+	/** The PDF's own creation date (its document information), ISO date; the last word on
+	 *  a publication date when the print names none. */
+	createdAt?: string
 	/** Blocks before the first heading (a cover). */
 	front: Block[]
 	sections: Section[]

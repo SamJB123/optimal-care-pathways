@@ -1,0 +1,155 @@
+{
+	"$comment": "Decision 141: every page of every legacy pathway compared against a 60 dpi raster of the PDF, construct by construct. The seed merges each entry into the pathway's ledger as `visualPass`. Notes name what the model deliberately does not carry as content.",
+	"breast-cancer-2nd-edition": {
+		"pages": "1-90 of 90",
+		"checked": "2026-09-23",
+		"notes": [
+			"Cover icon field, principle icons, dotted rules, the foreword signature image and a booklet thumbnail inside a callout are design, not content: dropped.",
+			"Accent-coloured lead statements are bold paragraphs (the schema has no colour mark).",
+			"The endorsement logos on the title page are a figure labelled 'Endorsed by'.",
+			"Page 53 prints a stray bullet before 'and cardiovascular health'; kept as printed.",
+			"Back cover (page 90) is blank."
+		]
+	},
+	"cancer-of-unknown-primary-january-2020": {
+		"pages": "1-66 of 66",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-8) read as step rows; bold 'Label:' lead-ins are the panels; callout titles split at the dash as the 2021 design prints them.",
+			"Figures 1 and 2 (flowcharts) and Figure 3 (tiered approach) are rendered figures; Table 1 is a ruled table with its header row; the abbreviations page is a two-column table.",
+			"Acknowledgements are set one entry per line with no gaps: an entry opens with a title, a name the corpus knows, or a name and a role the corpus knows; a comma or dash at a line's end carries the entry on; an entry closes on a known organisation (legacy/entries.json).",
+			"No edition or publication date is printed; the date comes from the file name (January 2020), the edition is left empty.",
+			"Back cover (page 66) is blank."
+		]
+	},
+	"cervical-cancer-optimal-cancer-care-pathway": {
+		"pages": "1-62 of 62",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-8) read as step rows; bold 'Label:' lead-ins are the panels; callout titles split at the dash.",
+			"The screening, abnormal-bleeding and diagnosis flowcharts (pages 18, 20, 23) and the tiered approach (page 47) are rendered figures anchored to their captions, lettering and all; the timeframes summary (page 9) is the table.",
+			"The foreword signature image is design and dropped; the signatory's name and title are kept as one paragraph.",
+			"Acknowledgements are set one entry per line with no gaps and resolved as for cancer of unknown primary; the pink closing statement is a bold paragraph.",
+			"No edition or publication date is printed and the file name carries none; the PDF's own creation date (18 January 2020) is the date, the edition is left empty.",
+			"Back cover (page 62) carries only the cover artwork."
+		]
+	},
+	"sarcoma-bone-soft-tissue-tumours-january-2020": {
+		"pages": "1-58 of 58",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-8) read as step rows; bold 'Label:' lead-ins are the panels ('Risk factors for soft tissue sarcoma include:' is set as one); footnote 1 hangs off the Step 2 communication panel.",
+			"The contents page lists no Step 6, as printed; Figure 1 (tiered approach, page 45) is a rendered figure; the timeframes summary (page 9) is the table.",
+			"The foreword signature image is design and dropped; the signatory's name and title are kept as one paragraph.",
+			"Acknowledgements are set one entry per line with no gaps and resolved as for cancer of unknown primary.",
+			"Misprints ('manageing', 'Prothetist', 'metastic') are kept as printed.",
+			"No edition is printed; the date comes from the file name (January 2020).",
+			"Back cover (page 58) carries only the cover artwork."
+		]
+	},
+	"acute-leukaemia-in-children-adolescents-young-adults-1st-edition": {
+		"pages": "1-94 of 94",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10): panel headings are one level whatever their colour; 'Checklist' on page 7, which the print set in the light face by mistake, is the panel heading it was meant to be; a step carried over the page ('… continued') rejoins the paragraph the previous page left unfinished, in the panel it belonged to.",
+			"Blue subheadings under the black run-in headings ('Treatment options – newly diagnosed ALL', 'Urgent pathway', 'Standard pathway') are one level deeper, as printed; blue body text under 'Urgent pathway' and 'Standard pathway' on page 30 is body text.",
+			"Figure 1 (page 11), Figure 2 (page 15), Figure A1 (page 69) and the needs-of-adolescents bubble diagram (page 73, uncaptioned) are rendered figures; the cover icon field and the foreword signature image are dropped as design.",
+			"Figure 3 (page 25) is the timeframes table with a row-spanning statement per step; the seven-steps callout on page 26 is a callout.",
+			"The contributors' lists are one entry per paragraph as printed; the closing thanks to the Blood Cancer Taskforce is a bold paragraph.",
+			"Misprints ('two 6.2 sections', 'Treatment for should start') are kept as printed.",
+			"'This edition published in October 2021' on the imprint page; first edition.",
+			"Back cover (page 94) carries only the cover artwork."
+		]
+	},
+	"acute-myeloid-leukaemia-2nd-edition": {
+		"pages": "1-88 of 88",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages: bold panel headings and bold 'Label:' lead-ins are the panels ('Treatment planning: Because of …', 'Patients fit for intensive chemotherapy:' over its text); a whole bold line ending in the colon over a list is a lead-in; 'Other treatment options' and 'Acute promyelocytic leukaemia' are two headings (the first line had room for the second's first word); a step carried over the page ('… continued') resumes at the step, so 'Research and clinical trials:' on page 9 opens its own panel.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 64) are rendered figures; Figure 3 (page 24) is the timeframes table; the seven-steps box, the resource callouts (thumbnails dropped as design), the validated-tools box and the closing 'Visit our guides' band are one-cell tables.",
+			"The welcome's signatory (page 6) is one paragraph of name and role; the signature image is dropped as design; the endorsement logos on the title page leave 'Endorsed by' as text.",
+			"Contributors (pages 62-63) one entry per line under bold group headings; the closing stakeholder statement is a bold paragraph.",
+			"Body text sets '10⁹/L' flat as '109/L' in its text layer (pages 27, 7 has the superscript): kept as the PDF encodes it.",
+			"'First published in June 2016. This edition published in June 2021.' on the imprint page; second edition.",
+			"Page 87 is blank; back cover (page 88) carries only the cover artwork."
+		]
+	},
+	"al-amyloidosis": {
+		"pages": "1-88 of 88",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages: bold panel headings and 'Label:' lead-ins are the panels; a bold label wrapped over two lines with prose under it ('Initial investigations by the GP should' / 'include:') is a heading; 'Systemic therapy' and 'Induction therapy' open their sentences in bold without a colon and are bold lead-ins.",
+			"The welcome's signatory (page 6) is set in the light face over three role lines: four paragraphs, one per printed line (the roles were broken by hand, each had room on the line above); the signature image is dropped as design.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 63) are rendered figures; Figure 3 (page 24) is the timeframes table; the seven-steps box, the resource callouts (thumbnails dropped as design), the validated-tools box and the closing 'Visit our guides' band are one-cell tables.",
+			"Step 2 (page 28) nests bullets, dashes and chevrons three deep, as printed. Contributors (pages 61-62) are one entry per paragraph across the gaps; the closing thanks to the Blood Cancer Taskforce is a bold paragraph.",
+			"'This edition published in June 2023' on the imprint page; first edition.",
+			"Pages 2, 86 and 87 are blank; back cover (page 88) carries only the cover artwork."
+		]
+	},
+	"chronic-lymphocytic-leukaemia-1st-edition": {
+		"pages": "1-90 of 90",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages: bold panel headings are the panels; lead-ins the print set in the light face ('Initial investigations by the GP include:', 'The GP's responsibilities include:') are paragraphs as printed; the accent-coloured bold ones are bold paragraphs.",
+			"The welcome's signatory (page 6) is a bold name over one role line; the signature image is dropped as design; the endorsement logos on the title page leave 'Endorsed by' as text.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 65) are rendered figures; Figure 3 (pages 24-25) is the timeframes table, its caption on the page before the grid; the seven-steps box, the resource callouts (thumbnails dropped as design), the validated-tools box and the closing 'Visit our guides' band are one-cell tables.",
+			"Superscript 9 in '× 10⁹/L' is a raised run (pages 24, 28, 34), except on page 29 where the print itself sets it flat as '109/L'.",
+			"Contributors (pages 62-64) are one entry per paragraph across the gaps; the closing thanks to the Blood Cancer Taskforce is a bold paragraph.",
+			"'This edition published in October 2021' on the imprint page; first edition.",
+			"Pages 2 and 89 are blank; back cover (page 90) carries only the cover artwork."
+		]
+	},
+	"acute-lymphoblastic-leukaemia": {
+		"pages": "1-88 of 88",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages; a bold lead-in wrapped over two lines ('If ALL is suspected initial investigations by the GP should include:') is a paragraph.",
+			"The welcome's signatory (page 6) is one paragraph of name and roles; the signature image is dropped as design.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 64) are rendered figures; Figure 3 (pages 24-25) is the timeframes table with a row-spanning statement per step.",
+			"Appendix E marks core members with an asterisk and a footnote-like note; kept as printed.",
+			"'This edition published in June 2023' on the imprint page; first edition.",
+			"Back cover (page 88) carries only the cover artwork."
+		]
+	},
+	"optimal-care-pathway-for-older-people-with-cancer": {
+		"pages": "1-158 of 158",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 8-13) read as the 2021 design's step pages: bold panel headings, checklists as check items, the repeated side band recorded once as furniture.",
+			"The welcome's three signatories (page 7) are bold-name paragraphs with their roles, not headings; the signature images are dropped as design.",
+			"Figure 1 (page 15), Figure 2 (page 19) and Figure A1 (page 112) are rendered figures; the population design's art layer along each page foot is dropped as design.",
+			"Appendix F (pages 122-124) is one ruled table carried over three pages (the repeated header row recorded as furniture); its own numbered 'Appendix references' (33 entries, pages 124-126) are endnotes cited from the appendix by raised numbers, while the References chapter is author-year and cited by name.",
+			"Contributors (pages 108-111): black bold headings group the lists, accent-coloured ones subgroup them; Primary Health Networks are one entry per line.",
+			"Raised footnote and citation markers that share a baseline with another column's text are rejoined to their word; the space after a marker belongs to the next word.",
+			"Misprints ('3.4.1.' with a trailing stop) are kept as printed.",
+			"Published November 2025 (imprint page); first edition.",
+			"Back cover (page 158) is blank."
+		]
+	},
+	"optimal-care-pathway-for-adolescents-and-young-adults-with-cancer": {
+		"pages": "1-108 of 108",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-11) read as the 2021 design's step pages; the welcome's two signatories (page 6) are bold-name paragraphs.",
+			"Figure 1 (page 13) and Figure 2 (page 17) are rendered figures; the art layer along each page foot is dropped as design.",
+			"The numbered reference list (359 entries, pages 80-107) is the endnotes, cited by raised numbers; a cited range ('6-9') cites every number in it; raised numbers that pdf.js emitted as lines of their own are rejoined to the word they follow.",
+			"Bold statements set over several lines under a step title are one paragraph; a bold lead-in wrapped over two lines ('In collaboration with the AYA care coordinator, the lead clinician's responsibilities include:') is one paragraph.",
+			"Misprints ('3.4.1.' with a trailing stop, 'Provide aa process') are kept as printed.",
+			"'First edition: June 2022' on the imprint page.",
+			"Back cover (page 108) carries only the cover artwork."
+		]
+	},
+	"optimal-care-pathway-for-aboriginal-and-torres-strait-islander-people-with-cancer": {
+		"pages": "1-126 of 126",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-12): three-column step panels set on the design's art; bold 'Label:' lead-ins are the panels; 'Support and communication – lead clinician to:' is the panel over its lead-in, split at the dash; the footnote on page 8 has no marker in the print and is kept as a footnote of that page.",
+			"Tinted boxes (National action, the implementation support checklists, the case studies of Appendix A) are one-cell tables carrying the tint; 'Further information' callouts are accent-coloured headings over their lists, the information icon dropped as design.",
+			"Figures 1 (page 16), 2 (page 19) and 3 (page 47) are rendered figures; the wave and dots along each page foot are dropped as design.",
+			"Glossary terms that wrap over two lines ('Aboriginal and/or Torres Strait Islander Health Worker –') are one paragraph each; resource-list headings that wrap ('Australian Commission on Safety and Quality in Health Care') are one heading each; the italic 'Info' of HealthInfoNet keeps its bold weight.",
+			"Misprints ('Step 4: Step 4: Treatment', '6.4 6.4 Pain management', 'Torres strait') and stakeholder entries the print sets without a gap between them ('Aboriginal Health Service, Tasmania Aboriginal Medical Services Alliance Northern Territory') are kept as printed.",
+			"'First published in August 2018. This edition published in October 2024.' on the imprint page; second edition.",
+			"Back cover (page 126) carries only the cover artwork."
+		]
+	}
+}

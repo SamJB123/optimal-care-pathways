@@ -1,5 +1,18 @@
 {
 	"pathway": "aboriginal-and-torres-strait-islander-people-with-cancer",
+	"visualPass": {
+		"pages": "1-126 of 126",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-12): three-column step panels set on the design's art; bold 'Label:' lead-ins are the panels; 'Support and communication – lead clinician to:' is the panel over its lead-in, split at the dash; the footnote on page 8 has no marker in the print and is kept as a footnote of that page.",
+			"Tinted boxes (National action, the implementation support checklists, the case studies of Appendix A) are one-cell tables carrying the tint; 'Further information' callouts are accent-coloured headings over their lists, the information icon dropped as design.",
+			"Figures 1 (page 16), 2 (page 19) and 3 (page 47) are rendered figures; the wave and dots along each page foot are dropped as design.",
+			"Glossary terms that wrap over two lines ('Aboriginal and/or Torres Strait Islander Health Worker –') are one paragraph each; resource-list headings that wrap ('Australian Commission on Safety and Quality in Health Care') are one heading each; the italic 'Info' of HealthInfoNet keeps its bold weight.",
+			"Misprints ('Step 4: Step 4: Treatment', '6.4 6.4 Pain management', 'Torres strait') and stakeholder entries the print sets without a gap between them ('Aboriginal Health Service, Tasmania Aboriginal Medical Services Alliance Northern Territory') are kept as printed.",
+			"'First published in August 2018. This edition published in October 2024.' on the imprint page; second edition.",
+			"Back cover (page 126) carries only the cover artwork."
+		]
+	},
 	"edition": "Second edition",
 	"publicationDate": "2024-10-01",
 	"placements": [
@@ -20,8 +33,8 @@
 		{
 			"legacyKey": "step-1/further-information",
 			"legacyTitle": "Further Information",
-			"destination": "1/further-information",
-			"how": "unplaced"
+			"destination": "1",
+			"how": "diverged"
 		},
 		{
 			"legacyKey": "step-1/risk-factors",
@@ -45,7 +58,7 @@
 			"legacyKey": "step-1/risk-reduction/cancer-risk-reduction/further-information",
 			"legacyTitle": "Further Information",
 			"destination": "1.1.2",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-1/risk-reduction/smoking",
@@ -57,7 +70,7 @@
 			"legacyKey": "step-1/risk-reduction/smoking/further-information",
 			"legacyTitle": "Further Information",
 			"destination": "1.1.2",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-1/risk-reduction/immunisation",
@@ -75,7 +88,7 @@
 			"legacyKey": "step-1/risk-reduction/individual-assessment/further-information",
 			"legacyTitle": "Further information",
 			"destination": "1.1.2",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-1/risk-reduction/genetic-counselling-and-testing",
@@ -87,26 +100,19 @@
 			"legacyKey": "step-1/risk-reduction/genetic-counselling-and-testing/further-information",
 			"legacyTitle": "Further information",
 			"destination": "1.1.3",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "step-1/risk-reduction/genetic-counselling-and-testing/implementation-support-checklist-prevention-and-early-detection",
-			"legacyTitle": "Implementation support checklist – Prevention and early detection",
-			"destination": "1.2",
-			"how": "diverged",
-			"note": "legacy text of the shared 1.2: version 1 publishes it as a divergence; the draft carries the core text"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-1/screening",
 			"legacyTitle": "1.3 Screening",
-			"destination": "1/screening",
-			"how": "unplaced"
+			"destination": "1.2.1",
+			"how": "title"
 		},
 		{
 			"legacyKey": "step-1/screening/further-information",
 			"legacyTitle": "Further information",
-			"destination": "1/screening",
-			"how": "merged"
+			"destination": "1.2.1",
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-1/early-detection",
@@ -144,13 +150,13 @@
 			"legacyKey": "step-2/referral/further-information",
 			"legacyTitle": "Further information",
 			"destination": "2.3",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-2/optimal-timeframes-for-investigations-and-referrals",
 			"legacyTitle": "2.3 Optimal timeframes for investigations and referrals",
-			"destination": "2/optimal-timeframes-for-investigations-and-referrals",
-			"how": "unplaced"
+			"destination": "2/timeframes",
+			"how": "timeframe"
 		},
 		{
 			"legacyKey": "step-2/support-and-communication",
@@ -175,13 +181,7 @@
 			"legacyKey": "step-2/support-and-communication/communication-with-the-patient-family-and-carer/further-information",
 			"legacyTitle": "Further information",
 			"destination": "2/supportive-care",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "step-2/support-and-communication/communication-with-the-patient-family-and-carer/implementation-support-checklist-presentation-initial-investigat",
-			"legacyTitle": "Implementation support checklist – Presentation, initial investigations and referral",
-			"destination": "2.3",
-			"how": "title"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-3",
@@ -193,13 +193,14 @@
 		{
 			"legacyKey": "step-3/diagnostic-workup",
 			"legacyTitle": "3.1 Diagnostic workup",
-			"destination": "3/diagnostic-workup",
-			"how": "unplaced"
+			"destination": "3.1",
+			"how": "diverged",
+			"note": "legacy text of the shared 3.1: version 1 publishes it as a divergence; the draft carries the core text"
 		},
 		{
 			"legacyKey": "step-3/diagnostic-workup/timeframe-for-completing-the-diagnostic-workup",
 			"legacyTitle": "3.1.1 Timeframe for completing the diagnostic workup",
-			"destination": "3/diagnostic-workup",
+			"destination": "3/timeframes",
 			"how": "timeframe"
 		},
 		{
@@ -212,7 +213,7 @@
 			"legacyKey": "step-3/staging/further-information",
 			"legacyTitle": "Further Information",
 			"destination": "3.3",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-3/treatment-planning",
@@ -249,7 +250,7 @@
 			"legacyKey": "step-3/treatment-planning/the-optimal-timing-for-multidisciplinary-team-planning/further-information",
 			"legacyTitle": "Further information",
 			"destination": "3.5.1",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-3/research-and-clinical-trials",
@@ -262,7 +263,7 @@
 			"legacyKey": "step-3/research-and-clinical-trials/further-information",
 			"legacyTitle": "Further information",
 			"destination": "4.3.1",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-3/support-and-communication",
@@ -288,20 +289,13 @@
 			"legacyKey": "step-3/support-and-communication/communication-with-the-patient-family-supports-and-carer-s/further-information",
 			"legacyTitle": "Further information",
 			"destination": "3/supportive-care",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-3/support-and-communication/communication-and-coordination-with-the-general-practitioner",
 			"legacyTitle": "3.5.3 Communication and coordination with the general practitioner",
 			"destination": "3.6",
 			"how": "title"
-		},
-		{
-			"legacyKey": "step-3/support-and-communication/communication-and-coordination-with-the-general-practitioner/implementation-support-checklist-diagnosis-staging-and-treatment",
-			"legacyTitle": "Implementation support checklist – Diagnosis, staging and treatment planning",
-			"destination": "3.5",
-			"how": "diverged",
-			"note": "legacy text of the shared 3.5: version 1 publishes it as a divergence; the draft carries the core text"
 		},
 		{
 			"legacyKey": "step-4",
@@ -327,13 +321,13 @@
 			"legacyKey": "step-4/treatment-options/further-information",
 			"legacyTitle": "Further information",
 			"destination": "4.4",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-4/optimal-timeframes-for-treatment",
 			"legacyTitle": "4.3 Optimal timeframes for treatment",
-			"destination": "4/optimal-timeframes-for-treatment",
-			"how": "unplaced"
+			"destination": "4/timeframes",
+			"how": "timeframe"
 		},
 		{
 			"legacyKey": "step-4/pain-management",
@@ -364,7 +358,7 @@
 			"legacyKey": "step-4/place-of-care/further-information",
 			"legacyTitle": "Further information",
 			"destination": "4/place-of-care",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-4/traditional-healing",
@@ -376,7 +370,7 @@
 			"legacyKey": "step-4/traditional-healing/further-information",
 			"legacyTitle": "Further information",
 			"destination": "4/traditional-healing",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-4/support-and-communication",
@@ -485,12 +479,6 @@
 			"note": "standing home for \"Communication with the general practitioner\""
 		},
 		{
-			"legacyKey": "step-5/support-and-communication/communication-with-the-general-practitioner/implementation-support-checklist-care-after-initial-treatment-an",
-			"legacyTitle": "Implementation support checklist – Care after initial treatment and recovery",
-			"destination": "5.4",
-			"how": "merged"
-		},
-		{
 			"legacyKey": "step-6",
 			"legacyTitle": "Step 6: Managing recurrent, residual or metastatic disease",
 			"destination": "6",
@@ -533,7 +521,7 @@
 			"legacyKey": "step-6/advance-care-planning/further-information",
 			"legacyTitle": "Further information",
 			"destination": "6.7",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-6/palliative-care",
@@ -592,7 +580,7 @@
 			"legacyKey": "step-7/multidisciplinary-palliative-care/further-information",
 			"legacyTitle": "Further information",
 			"destination": "7.1.3",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-7/multidisciplinary-palliative-care/return-to-country",
@@ -663,7 +651,7 @@
 			"legacyKey": "step-7/support-and-communication/communication-with-the-general-practitioner/further-information",
 			"legacyTitle": "Further information",
 			"destination": "7.2.4",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "summary",
@@ -699,9 +687,33 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-1/risk-reduction",
+			"legacyTitle": "Risk reduction",
+			"destination": "1/quick-reference-guide/risk-reduction",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-1/screening",
+			"legacyTitle": "Screening",
+			"destination": "1/quick-reference-guide/screening",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-2",
 			"legacyTitle": "Step 2: Presentation, initial investigations and referral",
 			"destination": "2/quick-reference-guide",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-2/presentation",
+			"legacyTitle": "Presentation",
+			"destination": "2/quick-reference-guide/presentation",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-2/referral",
+			"legacyTitle": "Referral",
+			"destination": "2/quick-reference-guide/referral",
 			"how": "guide"
 		},
 		{
@@ -711,9 +723,39 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-2/support-and-communication",
+			"legacyTitle": "Support and communication",
+			"destination": "2/quick-reference-guide/support-and-communication",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-3",
 			"legacyTitle": "Step 3: Diagnosis, staging and treatment planning",
 			"destination": "3/quick-reference-guide",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-3/diagnosis-and-staging",
+			"legacyTitle": "Diagnosis and staging",
+			"destination": "3/quick-reference-guide/diagnosis-and-staging",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-3/treatment-planning",
+			"legacyTitle": "Treatment planning",
+			"destination": "3/quick-reference-guide/treatment-planning",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-3/research-and-clinical-trials",
+			"legacyTitle": "Research and clinical trials",
+			"destination": "3/quick-reference-guide/research-and-clinical-trials",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-3/support-and-communication",
+			"legacyTitle": "Support and communication",
+			"destination": "3/quick-reference-guide/support-and-communication",
 			"how": "guide"
 		},
 		{
@@ -723,9 +765,63 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-4/treatment-intent",
+			"legacyTitle": "Treatment intent",
+			"destination": "4/quick-reference-guide/treatment-intent",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/treatment-options",
+			"legacyTitle": "Treatment options",
+			"destination": "4/quick-reference-guide/treatment-options",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/pain-management",
+			"legacyTitle": "Pain management",
+			"destination": "4/quick-reference-guide/pain-management",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/palliative-care",
+			"legacyTitle": "Palliative care",
+			"destination": "4/quick-reference-guide/palliative-care",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/place-of-care",
+			"legacyTitle": "Place of care",
+			"destination": "4/quick-reference-guide/place-of-care",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/support-and-communication",
+			"legacyTitle": "Support and communication",
+			"destination": "4/quick-reference-guide/support-and-communication",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-5",
 			"legacyTitle": "Step 5: Care after initial treatment and recovery",
 			"destination": "5/quick-reference-guide",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-5/treatment-summary",
+			"legacyTitle": "Treatment summary",
+			"destination": "5/quick-reference-guide/treatment-summary",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-5/follow-up-care-plan",
+			"legacyTitle": "Follow-up care plan",
+			"destination": "5/quick-reference-guide/follow-up-care-plan",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-5/support-and-communication",
+			"legacyTitle": "Support and communication",
+			"destination": "5/quick-reference-guide/support-and-communication",
 			"how": "guide"
 		},
 		{
@@ -735,9 +831,57 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-6/treatment",
+			"legacyTitle": "Treatment",
+			"destination": "6/quick-reference-guide/treatment",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-6/pain-management",
+			"legacyTitle": "Pain management",
+			"destination": "6/quick-reference-guide/pain-management",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-6/palliative-care",
+			"legacyTitle": "Palliative care",
+			"destination": "6/quick-reference-guide/palliative-care",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-6/support-and-communication",
+			"legacyTitle": "Support and communication",
+			"destination": "6/quick-reference-guide/support-and-communication",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-7",
 			"legacyTitle": "Step 7: End-of-life care",
 			"destination": "7/quick-reference-guide",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-7/return-to-country",
+			"legacyTitle": "Return to Country",
+			"destination": "7/quick-reference-guide/return-to-country",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-7/pain-management",
+			"legacyTitle": "Pain management",
+			"destination": "7/quick-reference-guide/pain-management",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-7/voluntary-assisted-dying",
+			"legacyTitle": "Voluntary assisted dying",
+			"destination": "7/quick-reference-guide/voluntary-assisted-dying",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-7/support-and-communication",
+			"legacyTitle": "Support and communication",
+			"destination": "7/quick-reference-guide/support-and-communication",
 			"how": "guide"
 		},
 		{
@@ -774,12 +918,6 @@
 			"legacyKey": "context",
 			"legacyTitle": "Context",
 			"destination": "about-this-population-group/overview-of-the-population",
-			"how": "proposed"
-		},
-		{
-			"legacyKey": "context/national-action",
-			"legacyTitle": "National action",
-			"destination": "about-this-population-group/overview-of-the-population/national-action",
 			"how": "proposed"
 		},
 		{
@@ -825,6 +963,12 @@
 			"how": "merged"
 		},
 		{
+			"legacyKey": "principle-1/place-based-care-approach/further-information",
+			"legacyTitle": "Further information",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"how": "merged"
+		},
+		{
 			"legacyKey": "principle-2",
 			"legacyTitle": "Principle 2: Safe and quality care",
 			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
@@ -837,13 +981,7 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "principle-2/implementation-support-checklist-cultural-competence",
-			"legacyTitle": "Implementation support checklist – Cultural competence",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "principle-2/implementation-support-checklist-cultural-competence/further-information",
+			"legacyKey": "principle-2/culturally-safe-and-responsive-practice/further-information",
 			"legacyTitle": "Further information",
 			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
 			"how": "merged"
@@ -863,12 +1001,6 @@
 		{
 			"legacyKey": "principle-2/data-driven-quality-care",
 			"legacyTitle": "Data-driven quality care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "principle-2/implementation-support-strategy-identification",
-			"legacyTitle": "Implementation support strategy – Identification",
 			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
 			"how": "merged"
 		},
@@ -1023,8 +1155,8 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/cancer-australias-leadership-group-on",
-			"legacyTitle": "Cancer Australia’s Leadership Group on",
+			"legacyKey": "contributors/cancer-australias-leadership-group-on-aboriginal-and-torres-stra",
+			"legacyTitle": "Cancer Australia’s Leadership Group on Aboriginal and Torres strait Islander Cancer Control (this edition)",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
@@ -1041,8 +1173,14 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/cancer-australias-leadership-group-on",
-			"legacyTitle": "Cancer Australia’s Leadership Group on",
+			"legacyKey": "contributors/cancer-australias-leadership-group-on-aboriginal-and-torres-stra",
+			"legacyTitle": "Cancer Australia’s Leadership Group on Aboriginal and Torres Strait Islander Cancer Control",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "contributors/other-stakeholders-invited-to-provide-feedback",
+			"legacyTitle": "Other stakeholders invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
@@ -1051,30 +1189,6 @@
 			"legacyTitle": "Appendix A: Case study examples",
 			"destination": "find-out-more/appendix-a-case-study-examples",
 			"how": "proposed"
-		},
-		{
-			"legacyKey": "appendix-a/the-beautiful-shawl-project-co-design-and-womens-business",
-			"legacyTitle": "The Beautiful Shawl Project, co-design and Women’s Business",
-			"destination": "find-out-more/appendix-a-case-study-examples",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "appendix-a/cervical-screening-self-sampling",
-			"legacyTitle": "Cervical screening self-sampling",
-			"destination": "find-out-more/appendix-a-case-study-examples",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "appendix-a/the-one-stop-liver-shop",
-			"legacyTitle": "The one stop liver shop",
-			"destination": "find-out-more/appendix-a-case-study-examples",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "appendix-a/peter-maccallum-cancer-centre-a-welcoming-environment",
-			"legacyTitle": "Peter MacCallum Cancer Centre – A welcoming environment",
-			"destination": "find-out-more/appendix-a-case-study-examples",
-			"how": "merged"
 		},
 		{
 			"legacyKey": "resource-list",
@@ -1125,6 +1239,12 @@
 			"how": "merged"
 		},
 		{
+			"legacyKey": "resource-list/for-patients-families-and-carers/australian-commission-on-safety-and-quality-in-health-care",
+			"legacyTitle": "Australian Commission on Safety and Quality in Health Care",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
 			"legacyKey": "resource-list/for-patients-families-and-carers/beyond-blue",
 			"legacyTitle": "Beyond Blue",
 			"destination": "find-out-more/resource-list",
@@ -1133,6 +1253,12 @@
 		{
 			"legacyKey": "resource-list/for-patients-families-and-carers/can-assist",
 			"legacyTitle": "Can Assist",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-patients-families-and-carers/cancer-councils-cancer-information-and-support-service",
+			"legacyTitle": "Cancer Council’s Cancer Information and Support Service",
 			"destination": "find-out-more/resource-list",
 			"how": "merged"
 		},
@@ -1263,6 +1389,18 @@
 			"how": "merged"
 		},
 		{
+			"legacyKey": "resource-list/for-health-providers/australian-commission-on-safety-and-quality-in-health-care",
+			"legacyTitle": "Australian Commission on Safety and Quality in Health Care",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-health-providers/australian-indigenous-healthinfonet",
+			"legacyTitle": "Australian Indigenous HealthInfoNet",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
 			"legacyKey": "resource-list/for-health-providers/cancer-australia",
 			"legacyTitle": "Cancer Australia",
 			"destination": "find-out-more/resource-list",
@@ -1287,6 +1425,18 @@
 			"how": "merged"
 		},
 		{
+			"legacyKey": "resource-list/for-health-providers/consumers-perspective-of-the-quality-of-care-survey-protocol-201",
+			"legacyTitle": "Consumer’s Perspective of the Quality of Care Survey Protocol (2015)",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-health-providers/culturally-safe-communication-skills-tips-for-non-indigenous-hea",
+			"legacyTitle": "Culturally safe communication skills – tips for non-Indigenous health professionals",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
 			"legacyKey": "resource-list/for-health-providers/eviq",
 			"legacyTitle": "eviQ",
 			"destination": "find-out-more/resource-list",
@@ -1299,8 +1449,14 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "resource-list/for-health-providers/new-south-wales-department-of-community",
-			"legacyTitle": "New South Wales Department of Community",
+			"legacyKey": "resource-list/for-health-providers/national-best-practice-guidelines-for-collecting-indigenous-stat",
+			"legacyTitle": "National best practice guidelines for collecting Indigenous status in health data sets",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-health-providers/new-south-wales-department-of-community-services-resource-workin",
+			"legacyTitle": "New South Wales Department of Community Services resource: Working with Aboriginal people and communities – a practice resource",
 			"destination": "find-out-more/resource-list",
 			"how": "merged"
 		},
@@ -1323,36 +1479,6 @@
 			"how": "proposed"
 		},
 		{
-			"legacyKey": "glossary/aboriginal-and-or-torres-strait-islander",
-			"legacyTitle": "Aboriginal and/or Torres Strait Islander",
-			"destination": "find-out-more/glossary",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "glossary/aboriginal-and-or-torres-strait-islander",
-			"legacyTitle": "Aboriginal and/or Torres Strait Islander",
-			"destination": "find-out-more/glossary",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "glossary/aboriginal-community-controlled-health",
-			"legacyTitle": "Aboriginal Community Controlled Health",
-			"destination": "find-out-more/glossary",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "glossary/patient-reported-experience-measures",
-			"legacyTitle": "Patient-reported experience measures",
-			"destination": "find-out-more/glossary",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "glossary/patient-reported-outcome-measures",
-			"legacyTitle": "Patient-reported outcome measures",
-			"destination": "find-out-more/glossary",
-			"how": "merged"
-		},
-		{
 			"legacyKey": "references",
 			"legacyTitle": "References",
 			"destination": "references",
@@ -1362,20 +1488,20 @@
 	"citations": {
 		"matched": 368,
 		"unmatched": [
+			"National Lung Cancer Screening Program planned for July 2025 — \"National Lung Cancer Screening Program planned for July 2025\": no entry in the printed reference list",
 			"Coalition of Aboriginal and Torres Strait Islander Peak Organisations and Australian Governments 2020 — \"Coalition of Aboriginal and Torres Strait Islander Peak Organisations and Australian Governments 2020\": no entry in the printed reference list",
 			"COAG 2016; APHRA 2020 — \"APHRA 2020\": no entry in the printed reference list",
 			"APHRA 2020 — \"APHRA 2020\": no entry in the printed reference list",
 			"HealthInfoNet 2024., Nasir et al. 2021; Atkinson 2013 — \"HealthInfoNet 2024.\": no entry in the printed reference list",
 			"AIHWc 2023 — \"AIHWc 2023\": no entry in the printed reference list",
 			"2023 — \"RACGP 2023\": no entry in the printed reference list",
-			"2015 — \"Protocol 2015\": no entry in the printed reference list",
 			"2023 — \"RACGP 2023\": no entry in the printed reference list",
+			"National Lung Cancer Screening Program planned for July 2025 — \"National Lung Cancer Screening Program planned for July 2025\": no entry in the printed reference list",
 			"Coalition of Aboriginal and Torres Strait Islander Peak Organisations and Australian Governments 2020 — \"Coalition of Aboriginal and Torres Strait Islander Peak Organisations and Australian Governments 2020\": no entry in the printed reference list",
 			"COAG 2016; APHRA 2020 — \"APHRA 2020\": no entry in the printed reference list",
 			"APHRA 2020 — \"APHRA 2020\": no entry in the printed reference list",
 			"HealthInfoNet 2024., Nasir et al. 2021; Atkinson 2013 — \"HealthInfoNet 2024.\": no entry in the printed reference list",
-			"AIHWc 2023 — \"AIHWc 2023\": no entry in the printed reference list",
-			"2015 — \"Protocol 2015\": no entry in the printed reference list"
+			"AIHWc 2023 — \"AIHWc 2023\": no entry in the printed reference list"
 		],
 		"byName": [
 			"\"AHPRA 2020\" → Australian Health Practitioner Regulation Agency (AHPRA) 2023, Shared Code of co",
@@ -1386,7 +1512,7 @@
 	},
 	"timeframes": {
 		"figureRows": 0,
-		"boxes": 1,
+		"boxes": 3,
 		"rows": []
 	},
 	"checkItems": 0,
@@ -1437,19 +1563,9 @@
 			"note": "proposed: holds the legacy \"Supporting the delivery of optimal care for Aboriginal and Torres Strait Islander people with cancer: further considerations\"; check it belongs here"
 		},
 		{
-			"address": "1/further-information",
-			"title": "Further Information",
-			"note": "unplaced: the population template has no section for this under Step 1; keep, move or remove it"
-		},
-		{
-			"address": "1/screening",
-			"title": "Screening",
-			"note": "unplaced: the population template has no section for this under Step 1; keep, move or remove it"
-		},
-		{
-			"address": "2/optimal-timeframes-for-investigations-and-referrals",
-			"title": "Optimal timeframes for investigations and referrals",
-			"note": "unplaced: the population template has no section for this under Step 2; keep, move or remove it"
+			"address": "2/timeframes",
+			"title": "Timeframes",
+			"note": "proposed: timeframes of Step 2 whose section is shared core text; move each into its section"
 		},
 		{
 			"address": "2/support-and-communication",
@@ -1457,14 +1573,14 @@
 			"note": "unplaced: the population template has no section for this under Step 2; keep, move or remove it"
 		},
 		{
-			"address": "3/diagnostic-workup",
-			"title": "Diagnostic workup",
-			"note": "unplaced: the population template has no section for this under Step 3; keep, move or remove it"
+			"address": "3/timeframes",
+			"title": "Timeframes",
+			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "4/optimal-timeframes-for-treatment",
-			"title": "Optimal timeframes for treatment",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
+			"address": "4/timeframes",
+			"title": "Timeframes",
+			"note": "proposed: timeframes of Step 4 whose section is shared core text; move each into its section"
 		},
 		{
 			"address": "4/pain-management",
@@ -1490,11 +1606,6 @@
 			"address": "optimal-care-pathway-for-with-cancer/welcome-and-introduction",
 			"title": "Welcome and introduction",
 			"note": "proposed: holds the legacy \"Welcome and introduction\"; check it belongs here"
-		},
-		{
-			"address": "about-this-population-group/overview-of-the-population/national-action",
-			"title": "National action",
-			"note": "proposed: a part of the legacy \"Context\"; check it belongs here"
 		},
 		{
 			"address": "about-this-population-group/key-considerations-for-delivery-of-optimal-cancer-care/healthcare-environment",

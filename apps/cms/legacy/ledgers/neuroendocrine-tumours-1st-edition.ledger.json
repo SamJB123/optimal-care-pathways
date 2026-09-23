@@ -1,5 +1,6 @@
 {
 	"pathway": "neuroendocrine-tumours",
+	"visualPass": null,
 	"edition": "First edition",
 	"publicationDate": "2022-06-01",
 	"placements": [
@@ -215,54 +216,54 @@
 			"note": "standing home for \"Research and clinical trials\""
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication",
+			"legacyKey": "step-3/6-support-and-communication",
 			"legacyTitle": "3. 6 Support and communication",
 			"destination": null,
 			"how": "unplaced",
 			"note": "a container heading with no text of its own; its subsections were placed separately"
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication/prehabilitation",
+			"legacyKey": "step-3/6-support-and-communication/prehabilitation",
 			"legacyTitle": "3.6.1 Prehabilitation",
 			"destination": "4.2",
 			"how": "rule",
 			"note": "standing home for \"Prehabilitation\""
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication/fertility-preservation-and-contraception",
+			"legacyKey": "step-3/6-support-and-communication/fertility-preservation-and-contraception",
 			"legacyTitle": "3.6.2 Fertility preservation and contraception",
 			"destination": "3/supportive-care",
 			"how": "rule",
 			"note": "standing home for \"Fertility preservation and contraception\""
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication/fertility-preservation-and-contraception/more-information",
+			"legacyKey": "step-3/6-support-and-communication/fertility-preservation-and-contraception/more-information",
 			"legacyTitle": "More information",
 			"destination": "3/supportive-care",
 			"how": "resources"
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication/supportive-care",
+			"legacyKey": "step-3/6-support-and-communication/supportive-care",
 			"legacyTitle": "3.6.3 Supportive care",
 			"destination": "3/supportive-care",
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication/communication-with-patients-carers-and-families",
+			"legacyKey": "step-3/6-support-and-communication/communication-with-patients-carers-and-families",
 			"legacyTitle": "3.6.4 Communication with patients, carers and families",
 			"destination": "3/supportive-care",
 			"how": "rule",
 			"note": "standing home for \"Communication with patients, carers and families\""
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication/communication-with-the-general-practitioner",
+			"legacyKey": "step-3/6-support-and-communication/communication-with-the-general-practitioner",
 			"legacyTitle": "3.6.5 Communication with the general practitioner",
 			"destination": "3.6",
 			"how": "diverged",
 			"note": "standing home for \"Communication with the general practitioner\""
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication/communication-with-the-general-practitioner/more-information",
+			"legacyKey": "step-3/6-support-and-communication/communication-with-the-general-practitioner/more-information",
 			"legacyTitle": "More information",
 			"destination": "3.6",
 			"how": "diverged"
@@ -354,19 +355,19 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/systemic-radiation-therapy-peptide-receptor-radionuclide-therapy/timeframes-for-starting-treatment",
+			"legacyKey": "step-4/treatment-options/systemic-radiation-therapy-peptide-receptor-radionuclide-therapy/monitoring-of-prrt-side-effects/timeframes-for-starting-treatment",
 			"legacyTitle": "Timeframes for starting treatment",
 			"destination": "4.4.2",
 			"how": "timeframe"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/systemic-radiation-therapy-peptide-receptor-radionuclide-therapy/training-and-experience-required-of-the-appropriate-specialists",
+			"legacyKey": "step-4/treatment-options/systemic-radiation-therapy-peptide-receptor-radionuclide-therapy/monitoring-of-prrt-side-effects/training-and-experience-required-of-the-appropriate-specialists",
 			"legacyTitle": "Training and experience required of the appropriate specialists",
 			"destination": "4.4.2",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/systemic-radiation-therapy-peptide-receptor-radionuclide-therapy/health-service-characteristics",
+			"legacyKey": "step-4/treatment-options/systemic-radiation-therapy-peptide-receptor-radionuclide-therapy/monitoring-of-prrt-side-effects/health-service-characteristics",
 			"legacyTitle": "Health service characteristics",
 			"destination": "4.8",
 			"how": "title"
@@ -397,19 +398,19 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/systemic-therapy/timeframes-for-starting-treatment",
+			"legacyKey": "step-4/treatment-options/systemic-therapy/chemotherapy/timeframes-for-starting-treatment",
 			"legacyTitle": "Timeframes for starting treatment",
-			"destination": "4/timeframes",
+			"destination": "4.4.3/chemotherapy",
 			"how": "timeframe"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/systemic-therapy/training-and-experience-required-of-the-appropriate-specialists",
+			"legacyKey": "step-4/treatment-options/systemic-therapy/chemotherapy/training-and-experience-required-of-the-appropriate-specialists",
 			"legacyTitle": "Training and experience required of the appropriate specialists",
-			"destination": "4.4.3",
-			"how": "diverged"
+			"destination": "4.4.3/chemotherapy",
+			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/systemic-therapy/health-service-characteristics",
+			"legacyKey": "step-4/treatment-options/systemic-therapy/chemotherapy/health-service-characteristics",
 			"legacyTitle": "Health service characteristics",
 			"destination": "4.8",
 			"how": "title"
@@ -441,8 +442,8 @@
 		{
 			"legacyKey": "step-4/treatment-options/immunotherapy",
 			"legacyTitle": "4.2.7 Immunotherapy",
-			"destination": "4.4",
-			"how": "merged"
+			"destination": "4.4.3/immunotherapy-and-personalised-medicine",
+			"how": "title"
 		},
 		{
 			"legacyKey": "step-4/treatment-options/emerging-therapies",
@@ -536,13 +537,7 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-5/follow-up-care/table-2-prognostic-factors-and-outcomes-for-patients-with-neuroe",
-			"legacyTitle": "Table 2: Prognostic factors and outcomes for patients with neuroendocrine tumours",
-			"destination": "5.3.2",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "step-5/follow-up-care/more-information",
+			"legacyKey": "step-5/follow-up-care/prognosis/more-information",
 			"legacyTitle": "More information",
 			"destination": "5.3.2",
 			"how": "resources"
@@ -814,6 +809,12 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-1/screening-and-surveillance-recommendations",
+			"legacyTitle": "Screening and surveillance recommendations",
+			"destination": "1/quick-reference-guide/screening-and-surveillance-recommendations",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-1/checklist",
 			"legacyTitle": "Checklist",
 			"destination": "1/quick-reference-guide/checklist",
@@ -829,6 +830,12 @@
 			"legacyKey": "summary/step-2/checklist",
 			"legacyTitle": "Checklist",
 			"destination": "2/quick-reference-guide/checklist",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-2/refer-to-the-optimal-care-pathway",
+			"legacyTitle": "Refer to the optimal care pathway",
+			"destination": "2/quick-reference-guide/refer-to-the-optimal-care-pathway",
 			"how": "guide"
 		},
 		{
@@ -886,6 +893,12 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-3/communication",
+			"legacyTitle": "Communication",
+			"destination": "3/quick-reference-guide/communication",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-3/checklist",
 			"legacyTitle": "Checklist",
 			"destination": "3/quick-reference-guide/checklist",
@@ -910,15 +923,39 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-4/no-treatment-active-surveillance",
-			"legacyTitle": "No treatment / active surveillance",
-			"destination": "4/quick-reference-guide/no-treatment-active-surveillance",
+			"legacyKey": "summary/step-4/surgery",
+			"legacyTitle": "Surgery",
+			"destination": "4/quick-reference-guide/surgery",
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-4/peptide-receptor-radionuclide-therapy",
-			"legacyTitle": "Peptide receptor radionuclide therapy",
-			"destination": "4/quick-reference-guide/peptide-receptor-radionuclide-therapy",
+			"legacyKey": "summary/step-4/no-treatment-active-surveillance-watch-and-wait",
+			"legacyTitle": "No treatment / active surveillance (watch and wait)",
+			"destination": "4/quick-reference-guide/no-treatment-active-surveillance-watch-and-wait",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/localised-radiation-therapy",
+			"legacyTitle": "Localised radiation therapy",
+			"destination": "4/quick-reference-guide/localised-radiation-therapy",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/peptide-receptor-radionuclide-therapy-prrt",
+			"legacyTitle": "Peptide receptor radionuclide therapy (PRRT)",
+			"destination": "4/quick-reference-guide/peptide-receptor-radionuclide-therapy-prrt",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/liver-directed-therapy",
+			"legacyTitle": "Liver-directed therapy",
+			"destination": "4/quick-reference-guide/liver-directed-therapy",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/clinical-trials",
+			"legacyTitle": "Clinical trials",
+			"destination": "4/quick-reference-guide/clinical-trials",
 			"how": "guide"
 		},
 		{
@@ -937,6 +974,30 @@
 			"legacyKey": "summary/step-4/timeframe",
 			"legacyTitle": "Timeframe",
 			"destination": "4/quick-reference-guide/timeframe",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/surgery",
+			"legacyTitle": "Surgery",
+			"destination": "4/quick-reference-guide/surgery",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/prrt",
+			"legacyTitle": "PRRT",
+			"destination": "4/quick-reference-guide/prrt",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/systemic-therapy",
+			"legacyTitle": "Systemic therapy",
+			"destination": "4/quick-reference-guide/systemic-therapy",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/liver-directed-therapy",
+			"legacyTitle": "Liver directed therapy",
+			"destination": "4/quick-reference-guide/liver-directed-therapy-2",
 			"how": "guide"
 		},
 		{
@@ -1051,18 +1112,6 @@
 			"legacyKey": "welcome-and-introduction",
 			"legacyTitle": "Welcome and introduction",
 			"destination": "optimal-care-pathway-for-people-with/preface",
-			"how": "proposed"
-		},
-		{
-			"legacyKey": "welcome-and-introduction/dr-david-chan",
-			"legacyTitle": "Dr David Chan",
-			"destination": "optimal-care-pathway-for-people-with/preface/dr-david-chan",
-			"how": "proposed"
-		},
-		{
-			"legacyKey": "welcome-and-introduction/professor-dorothy-keefe-psm-md",
-			"legacyTitle": "Professor Dorothy Keefe PSM MD",
-			"destination": "optimal-care-pathway-for-people-with/preface/professor-dorothy-keefe-psm-md",
 			"how": "proposed"
 		},
 		{
@@ -1196,6 +1245,18 @@
 		{
 			"legacyKey": "contributors/additional-review-panel",
 			"legacyTitle": "Additional Review Panel",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "contributors/governance-project-steering-committee-representation",
+			"legacyTitle": "Governance – project steering committee representation",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
@@ -1562,11 +1623,6 @@
 			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "4/timeframes",
-			"title": "Timeframes",
-			"note": "proposed: timeframes of Step 4 whose section is shared core text; move each into its section"
-		},
-		{
 			"address": "6/carcinoid-syndrome",
 			"title": "Carcinoid syndrome",
 			"note": "unplaced: the cancer template has no section for this under Step 6; keep, move or remove it"
@@ -1580,16 +1636,6 @@
 			"address": "6/carcinoid-heart-disease",
 			"title": "Carcinoid heart disease",
 			"note": "unplaced: the cancer template has no section for this under Step 6; keep, move or remove it"
-		},
-		{
-			"address": "optimal-care-pathway-for-people-with/preface/dr-david-chan",
-			"title": "Dr David Chan",
-			"note": "proposed: a part of the legacy \"Welcome and introduction\"; check it belongs here"
-		},
-		{
-			"address": "optimal-care-pathway-for-people-with/preface/professor-dorothy-keefe-psm-md",
-			"title": "Professor Dorothy Keefe PSM MD",
-			"note": "proposed: a part of the legacy \"Welcome and introduction\"; check it belongs here"
 		},
 		{
 			"address": "find-out-more/appendix-a-supportive-care-domains",

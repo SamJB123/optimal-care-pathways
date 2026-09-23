@@ -1,10 +1,12 @@
 /**
  * Coverage audit of a legacy extraction against its PDF: every printed word placed once.
  *
- *   pnpm exec tsx scripts/audit-legacy.ts <slug|all> [--pdf-dir <dir>] [--max <lines>]
+ *   pnpm exec tsx scripts/audit-legacy.ts <slug|all> [--pdf-dir <dir>] [--max <lines>] [--figure-lines]
  *
  * Reads legacy/extracted/<slug>.model.json (run extract-legacy.ts first). Exits 1 when
- * any word is missing or placed twice.
+ * any word is missing or placed twice. `--figure-lines` lists the printed lines the model
+ * carries only as figure lettering — the one class of text the count excuses, so it is
+ * read by eye against the page.
  */
 
 import { readFileSync } from 'node:fs'
@@ -40,6 +42,7 @@ for (const pathway of targets) {
 	const doc = await openPdf(join(pdfDir, pathway.file))
 	const report = await auditCoverage(doc, model)
 	console.log(`${pathway.slug}: ${formatReport(report, { maxLines })}`)
+	if (args.includes('--figure-lines')) for (const l of report.figureLines) console.log(`  p.${l.page} FIGURE ← ${l.text}`)
 	if (report.missingLines.length > 0 || report.extras.length > 0) failed = true
 }
 process.exit(failed ? 1 : 0)

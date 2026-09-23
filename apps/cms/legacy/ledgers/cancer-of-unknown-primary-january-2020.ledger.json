@@ -1,5 +1,16 @@
 {
 	"pathway": "cancer-of-unknown-primary",
+	"visualPass": {
+		"pages": "1-66 of 66",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-8) read as step rows; bold 'Label:' lead-ins are the panels; callout titles split at the dash as the 2021 design prints them.",
+			"Figures 1 and 2 (flowcharts) and Figure 3 (tiered approach) are rendered figures; Table 1 is a ruled table with its header row; the abbreviations page is a two-column table.",
+			"Acknowledgements are set one entry per line with no gaps: an entry opens with a title, a name the corpus knows, or a name and a role the corpus knows; a comma or dash at a line's end carries the entry on; an entry closes on a known organisation (legacy/entries.json).",
+			"No edition or publication date is printed; the date comes from the file name (January 2020), the edition is left empty.",
+			"Back cover (page 66) is blank."
+		]
+	},
 	"edition": null,
 	"publicationDate": "2020-01-01",
 	"placements": [
@@ -134,19 +145,20 @@
 		{
 			"legacyKey": "step-3/diagnostic-workup",
 			"legacyTitle": "3.1 Diagnostic workup",
-			"destination": "3/diagnostic-workup",
-			"how": "unplaced"
+			"destination": "3.1",
+			"how": "diverged",
+			"note": "legacy text of the shared 3.1: version 1 publishes it as a divergence; the draft carries the core text"
 		},
 		{
 			"legacyKey": "step-3/diagnostic-workup/pathological-examination",
 			"legacyTitle": "3.1.1 Pathological examination",
-			"destination": "3/diagnostic-workup",
-			"how": "merged"
+			"destination": "3.1",
+			"how": "diverged"
 		},
 		{
 			"legacyKey": "step-3/diagnostic-workup/pathological-examination/timeframe-for-obtaining-a-diagnosis",
 			"legacyTitle": "Timeframe for obtaining a diagnosis",
-			"destination": "3/diagnostic-workup",
+			"destination": "3/timeframes",
 			"how": "timeframe"
 		},
 		{
@@ -285,30 +297,6 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/treatment-regimens-for-patients-in-the-specific-cup-subset/equivalent-known-primary-tumour",
-			"legacyTitle": "Equivalent known primary tumour",
-			"destination": "4.4",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "step-4/treatment-options/treatment-regimens-for-patients-in-the-specific-cup-subset/cup-with-an-intestinal-phenotype-and-ihc-ck20-cdx2-ck7-or-molecu",
-			"legacyTitle": "CUP with an intestinal phenotype and IHC (CK20+/CDX2+/CK7−) or molecular profile",
-			"destination": "4.4",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "step-4/treatment-options/treatment-regimens-for-patients-in-the-specific-cup-subset/isolated-inguinal-adenopathy-squamous-carcinoma",
-			"legacyTitle": "Isolated inguinal adenopathy (squamous carcinoma)",
-			"destination": "4.4",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "step-4/treatment-options/treatment-regimens-for-patients-in-the-specific-cup-subset/recommended-treatment",
-			"legacyTitle": "Recommended treatment",
-			"destination": "4.4",
-			"how": "merged"
-		},
-		{
 			"legacyKey": "step-4/treatment-options/treatment-regimens-for-patients-with-non-specific-cup",
 			"legacyTitle": "4.2.2 Treatment regimens for patients with non-specific CUP",
 			"destination": "4.4",
@@ -349,7 +337,7 @@
 			"legacyKey": "step-4/palliative-care/further-information",
 			"legacyTitle": "Further information",
 			"destination": "4.4.4",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-4/complementary-or-alternative-therapies",
@@ -361,7 +349,7 @@
 			"legacyKey": "step-4/complementary-or-alternative-therapies/further-information",
 			"legacyTitle": "Further information",
 			"destination": "4.5.5",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-4/support-and-communication",
@@ -430,8 +418,8 @@
 		{
 			"legacyKey": "step-5/survivorship",
 			"legacyTitle": "5.1 Survivorship",
-			"destination": "5/survivorship",
-			"how": "unplaced"
+			"destination": "5.3.3",
+			"how": "title"
 		},
 		{
 			"legacyKey": "step-5/post-treatment-care-planning",
@@ -511,7 +499,7 @@
 			"legacyKey": "step-5/support-and-communication/palliative-care/further-information",
 			"legacyTitle": "Further information",
 			"destination": "5/palliative-care",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-5/support-and-communication/communication-with-the-patient-carer-and-family",
@@ -1071,102 +1059,6 @@
 			"how": "proposed"
 		},
 		{
-			"legacyKey": "abbreviations/aya",
-			"legacyTitle": "AYA",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/ct",
-			"legacyTitle": "CT",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/cup",
-			"legacyTitle": "CUP",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/ecog",
-			"legacyTitle": "ECOG",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/esmo",
-			"legacyTitle": "ESMO",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/fna",
-			"legacyTitle": "FNA",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/franzcr",
-			"legacyTitle": "FRANZCR",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/gp",
-			"legacyTitle": "GP",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/ihc",
-			"legacyTitle": "IHC",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/ldh",
-			"legacyTitle": "LDH",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/mdt",
-			"legacyTitle": "MDT",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/mri",
-			"legacyTitle": "MRI",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/nccn",
-			"legacyTitle": "NCCN",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/ncerg",
-			"legacyTitle": "NCERG",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/pet",
-			"legacyTitle": "PET",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
-			"legacyKey": "abbreviations/psa",
-			"legacyTitle": "PSA",
-			"destination": "find-out-more/abbreviations",
-			"how": "merged"
-		},
-		{
 			"legacyKey": "references",
 			"legacyTitle": "References",
 			"destination": "references",
@@ -1183,10 +1075,22 @@
 			"legacyTitle": "Expert working group",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
+		},
+		{
+			"legacyKey": "contributors/governance-project-steering-committee-representation",
+			"legacyTitle": "Governance – project steering committee representation",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
 		}
 	],
 	"citations": {
-		"matched": 336,
+		"matched": 332,
 		"unmatched": [],
 		"byName": [
 			"\"Karapetis et al. 2016\" → Karapetis CS, Guccione L, Tattersall MH, Gooden H, Vajdic CM, Lambert S, et al. ",
@@ -1246,14 +1150,9 @@
 			"note": "proposed: the legacy pathway’s opening section \"CUP subsets\"; check where it belongs"
 		},
 		{
-			"address": "3/diagnostic-workup",
-			"title": "Diagnostic workup",
-			"note": "unplaced: the cancer template has no section for this under Step 3; keep, move or remove it"
-		},
-		{
-			"address": "5/survivorship",
-			"title": "Survivorship",
-			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
+			"address": "3/timeframes",
+			"title": "Timeframes",
+			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
 		},
 		{
 			"address": "5/palliative-care",

@@ -1,5 +1,6 @@
 {
 	"pathway": "endometrial-cancer",
+	"visualPass": null,
 	"edition": "Second edition",
 	"publicationDate": "2021-06-01",
 	"placements": [
@@ -225,54 +226,54 @@
 			"note": "standing home for \"Research and clinical trials\""
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication",
+			"legacyKey": "step-3/6-support-and-communication",
 			"legacyTitle": "3. 6 Support and communication",
 			"destination": null,
 			"how": "unplaced",
 			"note": "a container heading with no text of its own; its subsections were placed separately"
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication/prehabilitation",
+			"legacyKey": "step-3/6-support-and-communication/prehabilitation",
 			"legacyTitle": "3.6.1 Prehabilitation",
 			"destination": "4.2",
 			"how": "rule",
 			"note": "standing home for \"Prehabilitation\""
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication/fertility-preservation-and-contraception",
+			"legacyKey": "step-3/6-support-and-communication/fertility-preservation-and-contraception",
 			"legacyTitle": "3.6.2 Fertility preservation and contraception",
 			"destination": "3/supportive-care",
 			"how": "rule",
 			"note": "standing home for \"Fertility preservation and contraception\""
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication/fertility-preservation-and-contraception/more-information",
+			"legacyKey": "step-3/6-support-and-communication/fertility-preservation-and-contraception/more-information",
 			"legacyTitle": "More information",
 			"destination": "3/supportive-care",
 			"how": "resources"
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication/supportive-care",
+			"legacyKey": "step-3/6-support-and-communication/supportive-care",
 			"legacyTitle": "3.6.3 Supportive care",
 			"destination": "3/supportive-care",
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication/communication-with-patients-carers-and-families",
+			"legacyKey": "step-3/6-support-and-communication/communication-with-patients-carers-and-families",
 			"legacyTitle": "3.6.4 Communication with patients, carers and families",
 			"destination": "3/supportive-care",
 			"how": "rule",
 			"note": "standing home for \"Communication with patients, carers and families\""
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication/communication-with-the-general-practitioner",
+			"legacyKey": "step-3/6-support-and-communication/communication-with-the-general-practitioner",
 			"legacyTitle": "3.6.5 Communication with the general practitioner",
 			"destination": "3.6",
 			"how": "diverged",
 			"note": "standing home for \"Communication with the general practitioner\""
 		},
 		{
-			"legacyKey": "step-3/3-6-support-and-communication/communication-with-the-general-practitioner/more-information",
+			"legacyKey": "step-3/6-support-and-communication/communication-with-the-general-practitioner/more-information",
 			"legacyTitle": "More information",
 			"destination": "3.6",
 			"how": "diverged"
@@ -838,6 +839,12 @@
 			"legacyKey": "summary/step-4/establish-intent-of-treatment",
 			"legacyTitle": "Establish intent of treatment",
 			"destination": "4/quick-reference-guide/establish-intent-of-treatment",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/refer-to-the-endometrial-optimal-care",
+			"legacyTitle": "Refer to the endometrial optimal care",
+			"destination": "4/quick-reference-guide/refer-to-the-endometrial-optimal-care",
 			"how": "guide"
 		},
 		{

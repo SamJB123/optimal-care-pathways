@@ -1,5 +1,6 @@
 {
 	"pathway": "multiple-myeloma",
+	"visualPass": null,
 	"edition": "First edition",
 	"publicationDate": "2021-10-01",
 	"placements": [
@@ -830,12 +831,6 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-4/autologous-stem-cell-transplant",
-			"legacyTitle": "Autologous stem cell transplant",
-			"destination": "4/quick-reference-guide/autologous-stem-cell-transplant",
-			"how": "guide"
-		},
-		{
 			"legacyKey": "summary/step-4/palliative-care",
 			"legacyTitle": "Palliative care",
 			"destination": "4/quick-reference-guide/palliative-care",
@@ -1115,14 +1110,14 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/optimal-care-pathways-steering-committee",
-			"legacyTitle": "Optimal Care Pathways Steering Committee",
+			"legacyKey": "contributors/medical-colleges-peak-organisations-and-government-representativ",
+			"legacyTitle": "Medical colleges, peak organisations and government representatives",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/our-thanks-also-to-the-blood-cancer",
-			"legacyTitle": "Our thanks also to the Blood Cancer",
+			"legacyKey": "contributors/optimal-care-pathways-steering-committee",
+			"legacyTitle": "Optimal Care Pathways Steering Committee",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},

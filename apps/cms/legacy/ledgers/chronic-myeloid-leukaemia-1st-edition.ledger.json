@@ -1,5 +1,6 @@
 {
 	"pathway": "chronic-myeloid-leukaemia",
+	"visualPass": null,
 	"edition": "First edition",
 	"publicationDate": "2021-10-01",
 	"placements": [
@@ -704,6 +705,12 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-3/diagnosis-and-disease-phase-assessment",
+			"legacyTitle": "Diagnosis and disease phase assessment",
+			"destination": "3/quick-reference-guide/diagnosis-and-disease-phase-assessment",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-3/treatment-planning",
 			"legacyTitle": "Treatment planning",
 			"destination": "3/quick-reference-guide/treatment-planning",
@@ -743,6 +750,12 @@
 			"legacyKey": "summary/step-4/establish-intent-of-treatment",
 			"legacyTitle": "Establish intent of treatment",
 			"destination": "4/quick-reference-guide/establish-intent-of-treatment",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/targeted-therapies-and-immunotherapy",
+			"legacyTitle": "Targeted therapies and immunotherapy",
+			"destination": "4/quick-reference-guide/targeted-therapies-and-immunotherapy",
 			"how": "guide"
 		},
 		{
@@ -1072,12 +1085,6 @@
 		{
 			"legacyKey": "contributors/optimal-care-pathways-steering-committee",
 			"legacyTitle": "Optimal Care Pathways Steering Committee",
-			"destination": "contributors-and-reviewers",
-			"how": "diverged"
-		},
-		{
-			"legacyKey": "contributors/optimal-care-pathways-steering-committee/our-thanks-also-to-the-blood-cancer",
-			"legacyTitle": "Our thanks also to the Blood Cancer",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},

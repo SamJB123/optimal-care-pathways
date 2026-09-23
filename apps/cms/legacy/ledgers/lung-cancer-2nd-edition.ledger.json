@@ -1,5 +1,6 @@
 {
 	"pathway": "lung-cancer",
+	"visualPass": null,
 	"edition": "Second edition",
 	"publicationDate": "2021-06-01",
 	"placements": [
@@ -827,6 +828,12 @@
 			"legacyKey": "summary/step-3/research-and-clinical-trials",
 			"legacyTitle": "Research and clinical trials",
 			"destination": "3/quick-reference-guide/research-and-clinical-trials",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-3/communication",
+			"legacyTitle": "Communication",
+			"destination": "3/quick-reference-guide/communication",
 			"how": "guide"
 		},
 		{

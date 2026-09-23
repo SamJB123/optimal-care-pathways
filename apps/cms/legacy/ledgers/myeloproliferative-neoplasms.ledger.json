@@ -1,5 +1,6 @@
 {
 	"pathway": "myeloproliferative-neoplasms",
+	"visualPass": null,
 	"edition": "First edition",
 	"publicationDate": "2023-06-01",
 	"placements": [
@@ -75,19 +76,19 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-2/signs-and-symptoms/polycythaemia-vera",
+			"legacyKey": "step-2/signs-and-symptoms/clinical-manifestations-of-mpns/polycythaemia-vera",
 			"legacyTitle": "Polycythaemia vera",
 			"destination": "2.1",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-2/signs-and-symptoms/essential-thrombocythaemia",
+			"legacyKey": "step-2/signs-and-symptoms/clinical-manifestations-of-mpns/essential-thrombocythaemia",
 			"legacyTitle": "Essential thrombocythaemia",
 			"destination": "2.1",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-2/signs-and-symptoms/myelofibrosis-with-or-without-a-preceding-diagnosis-of-pv-or-et",
+			"legacyKey": "step-2/signs-and-symptoms/clinical-manifestations-of-mpns/myelofibrosis-with-or-without-a-preceding-diagnosis-of-pv-or-et",
 			"legacyTitle": "Myelofibrosis (with or without a preceding diagnosis of PV or ET)",
 			"destination": "2.1",
 			"how": "merged"
@@ -845,6 +846,12 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-3/communication",
+			"legacyTitle": "Communication",
+			"destination": "3/quick-reference-guide/communication",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-3/checklist",
 			"legacyTitle": "Checklist",
 			"destination": "3/quick-reference-guide/checklist",
@@ -1205,8 +1212,8 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/our-thanks-also-to-the-blood-cancer",
-			"legacyTitle": "Our thanks also to the Blood Cancer",
+			"legacyKey": "contributors/ocp-steering-committee/our-thanks-also-to-the-blood-cancer-taskforce-which-recommended-",
+			"legacyTitle": "Our thanks also to the Blood Cancer Taskforce, which recommended the development of optimal care pathways for all",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},

@@ -1,5 +1,19 @@
 {
 	"pathway": "acute-leukaemia-in-children-adolescents-young-adults",
+	"visualPass": {
+		"pages": "1-94 of 94",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10): panel headings are one level whatever their colour; 'Checklist' on page 7, which the print set in the light face by mistake, is the panel heading it was meant to be; a step carried over the page ('… continued') rejoins the paragraph the previous page left unfinished, in the panel it belonged to.",
+			"Blue subheadings under the black run-in headings ('Treatment options – newly diagnosed ALL', 'Urgent pathway', 'Standard pathway') are one level deeper, as printed; blue body text under 'Urgent pathway' and 'Standard pathway' on page 30 is body text.",
+			"Figure 1 (page 11), Figure 2 (page 15), Figure A1 (page 69) and the needs-of-adolescents bubble diagram (page 73, uncaptioned) are rendered figures; the cover icon field and the foreword signature image are dropped as design.",
+			"Figure 3 (page 25) is the timeframes table with a row-spanning statement per step; the seven-steps callout on page 26 is a callout.",
+			"The contributors' lists are one entry per paragraph as printed; the closing thanks to the Blood Cancer Taskforce is a bold paragraph.",
+			"Misprints ('two 6.2 sections', 'Treatment for should start') are kept as printed.",
+			"'This edition published in October 2021' on the imprint page; first edition.",
+			"Back cover (page 94) carries only the cover artwork."
+		]
+	},
 	"edition": "First edition",
 	"publicationDate": "2021-10-01",
 	"placements": [
@@ -397,31 +411,31 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/urgent-pathway",
+			"legacyKey": "step-4/treatment-options/timeframes-for-starting-treatment/urgent-pathway",
 			"legacyTitle": "Urgent pathway",
 			"destination": "4.4",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/standard-pathway",
+			"legacyKey": "step-4/treatment-options/timeframes-for-starting-treatment/standard-pathway",
 			"legacyTitle": "Standard pathway",
 			"destination": "4.4",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/after-hours-admission-of-newly-diagnosed-patients",
+			"legacyKey": "step-4/treatment-options/timeframes-for-starting-treatment/after-hours-admission-of-newly-diagnosed-patients",
 			"legacyTitle": "‘After-hours’ admission of newly diagnosed patients",
 			"destination": "4.4",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/urgent-pathway",
+			"legacyKey": "step-4/treatment-options/timeframes-for-starting-treatment/urgent-pathway",
 			"legacyTitle": "Urgent pathway",
 			"destination": "4.4",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/standard-pathway",
+			"legacyKey": "step-4/treatment-options/timeframes-for-starting-treatment/standard-pathway",
 			"legacyTitle": "Standard pathway",
 			"destination": "4.4",
 			"how": "merged"
@@ -617,8 +631,8 @@
 		{
 			"legacyKey": "step-5/transitioning-from-active-treatment/survivorship",
 			"legacyTitle": "Survivorship",
-			"destination": "5.1",
-			"how": "diverged"
+			"destination": "5.3.3",
+			"how": "title"
 		},
 		{
 			"legacyKey": "step-5/transitioning-from-active-treatment/transition-from-paediatric-to-adult-care",
@@ -909,6 +923,12 @@
 			"legacyKey": "summary/step-2/referral-options",
 			"legacyTitle": "Referral options",
 			"destination": "2/quick-reference-guide/referral-options",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-2/checklist",
+			"legacyTitle": "Checklist",
+			"destination": "2/quick-reference-guide/checklist",
 			"how": "guide"
 		},
 		{
@@ -1316,12 +1336,6 @@
 		{
 			"legacyKey": "contributors/optimal-care-pathways-steering-committee",
 			"legacyTitle": "Optimal Care Pathways Steering Committee",
-			"destination": "contributors-and-reviewers",
-			"how": "diverged"
-		},
-		{
-			"legacyKey": "contributors/optimal-care-pathways-steering-committee/our-thanks-also-to-the-blood-cancer",
-			"legacyTitle": "Our thanks also to the Blood Cancer",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},

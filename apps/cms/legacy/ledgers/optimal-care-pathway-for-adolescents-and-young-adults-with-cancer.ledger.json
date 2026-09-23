@@ -1,5 +1,18 @@
 {
 	"pathway": "adolescents-and-young-adults-with-cancer",
+	"visualPass": {
+		"pages": "1-108 of 108",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-11) read as the 2021 design's step pages; the welcome's two signatories (page 6) are bold-name paragraphs.",
+			"Figure 1 (page 13) and Figure 2 (page 17) are rendered figures; the art layer along each page foot is dropped as design.",
+			"The numbered reference list (359 entries, pages 80-107) is the endnotes, cited by raised numbers; a cited range ('6-9') cites every number in it; raised numbers that pdf.js emitted as lines of their own are rejoined to the word they follow.",
+			"Bold statements set over several lines under a step title are one paragraph; a bold lead-in wrapped over two lines ('In collaboration with the AYA care coordinator, the lead clinician's responsibilities include:') is one paragraph.",
+			"Misprints ('3.4.1.' with a trailing stop, 'Provide aa process') are kept as printed.",
+			"'First edition: June 2022' on the imprint page.",
+			"Back cover (page 108) carries only the cover artwork."
+		]
+	},
 	"edition": "First edition",
 	"publicationDate": "2022-06-01",
 	"placements": [
@@ -145,7 +158,7 @@
 			"how": "provenance"
 		},
 		{
-			"legacyKey": "step-3/treatment-planning/3-4-1-key-considerations-beyond-treatment-recommendations",
+			"legacyKey": "step-3/treatment-planning/key-considerations-beyond-treatment-recommendations",
 			"legacyTitle": "3.4.1. Key considerations beyond treatment recommendations",
 			"destination": "3.5",
 			"how": "diverged"
@@ -300,8 +313,8 @@
 		{
 			"legacyKey": "step-5/follow-up-care/cancer-survivorship",
 			"legacyTitle": "5.2.2 Cancer survivorship",
-			"destination": "5.3.2",
-			"how": "merged"
+			"destination": "5.3.3",
+			"how": "title"
 		},
 		{
 			"legacyKey": "step-5/follow-up-care/optimising-wellbeing-and-preventing-subsequent-cancer-developmen",
@@ -769,18 +782,6 @@
 			"how": "proposed"
 		},
 		{
-			"legacyKey": "welcome-and-introduction/ian-olver-am-md-phd",
-			"legacyTitle": "Ian Olver AM MD PhD",
-			"destination": "optimal-care-pathway-for-with-cancer/welcome-and-introduction/ian-olver-am-md-phd",
-			"how": "proposed"
-		},
-		{
-			"legacyKey": "welcome-and-introduction/professor-dorothy-keefe-psm-md",
-			"legacyTitle": "Professor Dorothy Keefe PSM MD",
-			"destination": "optimal-care-pathway-for-with-cancer/welcome-and-introduction/professor-dorothy-keefe-psm-md",
-			"how": "proposed"
-		},
-		{
 			"legacyKey": "intent",
 			"legacyTitle": "Intent of the optimal care pathways",
 			"destination": "about-optimal-care-pathways/intent-of-the-optimal-care-pathways",
@@ -1063,6 +1064,12 @@
 			"how": "diverged"
 		},
 		{
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
+		},
+		{
 			"legacyKey": "appendix-a",
 			"legacyTitle": "Appendix A: Special population groups",
 			"destination": "find-out-more/appendix-a-special-population-groups",
@@ -1310,7 +1317,7 @@
 		}
 	],
 	"citations": {
-		"matched": 110,
+		"matched": 1240,
 		"unmatched": [],
 		"byName": []
 	},
@@ -1385,16 +1392,6 @@
 			"address": "optimal-care-pathway-for-with-cancer/welcome-and-introduction",
 			"title": "Welcome and introduction",
 			"note": "proposed: holds the legacy \"Welcome and introduction\"; check it belongs here"
-		},
-		{
-			"address": "optimal-care-pathway-for-with-cancer/welcome-and-introduction/ian-olver-am-md-phd",
-			"title": "Ian Olver AM MD PhD",
-			"note": "proposed: a part of the legacy \"Welcome and introduction\"; check it belongs here"
-		},
-		{
-			"address": "optimal-care-pathway-for-with-cancer/welcome-and-introduction/professor-dorothy-keefe-psm-md",
-			"title": "Professor Dorothy Keefe PSM MD",
-			"note": "proposed: a part of the legacy \"Welcome and introduction\"; check it belongs here"
 		},
 		{
 			"address": "about-this-population-group/key-considerations-for-delivery-of-optimal-cancer-care/unique-health-system-approaches",

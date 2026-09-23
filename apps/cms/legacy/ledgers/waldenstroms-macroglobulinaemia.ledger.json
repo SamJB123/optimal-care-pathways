@@ -1,5 +1,6 @@
 {
 	"pathway": "waldenstroms-macroglobulinaemia",
+	"visualPass": null,
 	"edition": "First edition",
 	"publicationDate": "2023-06-01",
 	"placements": [
@@ -1191,8 +1192,8 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/our-thanks-also-to-the-blood-cancer",
-			"legacyTitle": "Our thanks also to the Blood Cancer",
+			"legacyKey": "contributors/our-thanks-also-to-the-blood-cancer-taskforce-which-recommended-",
+			"legacyTitle": "Our thanks also to the Blood Cancer Taskforce, which recommended the development of optimal care pathways for",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},

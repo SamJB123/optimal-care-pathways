@@ -17,7 +17,7 @@
  * Column names come from the drizzle schema, never typed by hand here.
  */
 
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { getTableColumns, getTableName, type Table } from 'drizzle-orm'
 import { parseBody } from '../src/content/schema.ts'
@@ -113,6 +113,9 @@ const emit = (result: LegacyImport) => {
 
 const ledgerDir = join(appDir, 'legacy', 'ledgers')
 mkdirSync(ledgerDir, { recursive: true })
+/** The visual pass over each pathway's pages (decision 141), kept by hand beside the ledgers. */
+const verificationPath = join(appDir, 'legacy', 'verification.json')
+const verification: Record<string, unknown> = existsSync(verificationPath) ? JSON.parse(readFileSync(verificationPath, 'utf8')) : {}
 for (const pathway of targets) {
 	const core = cores.get(pathway.audience)
 	if (!core) throw new Error(`no core mapping for ${pathway.audience}`)
@@ -129,7 +132,7 @@ for (const pathway of targets) {
 	)
 	writeFileSync(
 		join(ledgerDir, `${pathway.slug}.ledger.json`),
-		`${JSON.stringify({ pathway: pathway.pathwaySlug, ...ledger, unplacedSections: result.sections.filter((s) => s.migrationNote).map((s) => ({ address: s.address, title: s.title, note: s.migrationNote })) }, null, '\t')}\n`,
+		`${JSON.stringify({ pathway: pathway.pathwaySlug, visualPass: verification[pathway.slug] ?? null, ...ledger, unplacedSections: result.sections.filter((s) => s.migrationNote).map((s) => ({ address: s.address, title: s.title, note: s.migrationNote })) }, null, '\t')}\n`,
 	)
 }
 

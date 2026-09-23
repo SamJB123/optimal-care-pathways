@@ -1,5 +1,6 @@
 {
 	"pathway": "acute-lymphoblastic-leukaemia",
+	"visualPass": null,
 	"edition": "First edition",
 	"publicationDate": "2023-06-01",
 	"placements": [
@@ -1136,6 +1137,13 @@
 		{
 			"legacyKey": "summary-timeframes",
 			"legacyTitle": "Summary – optimal timeframes",
+			"destination": "2.2",
+			"how": "timeframe-row",
+			"note": "row \"Initial investigations initiated by GP\" of the summary timeframes table"
+		},
+		{
+			"legacyKey": "summary-timeframes",
+			"legacyTitle": "Summary – optimal timeframes",
 			"destination": "3.3",
 			"how": "timeframe-row",
 			"note": "row \"Diagnosis and staging\" of the summary timeframes table"
@@ -1168,12 +1176,6 @@
 		{
 			"legacyKey": "contributors/optimal-care-pathways-steering-committee",
 			"legacyTitle": "Optimal Care Pathways Steering Committee",
-			"destination": "contributors-and-reviewers",
-			"how": "diverged"
-		},
-		{
-			"legacyKey": "contributors/our-thanks-also-to-the-blood-cancer",
-			"legacyTitle": "Our thanks also to the Blood Cancer",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
@@ -1476,9 +1478,27 @@
 		]
 	},
 	"timeframes": {
-		"figureRows": 4,
-		"boxes": 9,
+		"figureRows": 7,
+		"boxes": 10,
 		"rows": [
+			{
+				"step": 2,
+				"carePoint": "Signs and symptoms",
+				"source": "body",
+				"destination": null
+			},
+			{
+				"step": 2,
+				"carePoint": "Initial investigations initiated by GP",
+				"source": "row",
+				"destination": "2.2"
+			},
+			{
+				"step": 2,
+				"carePoint": "Referral for emergency assessment/initial referral",
+				"source": "body",
+				"destination": null
+			},
 			{
 				"step": 3,
 				"carePoint": "Diagnosis and staging",

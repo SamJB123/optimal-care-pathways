@@ -1,5 +1,6 @@
 {
 	"pathway": "chronic-lymphocytic-leukaemia",
+	"visualPass": null,
 	"edition": "First edition",
 	"publicationDate": "2021-10-01",
 	"placements": [
@@ -1101,12 +1102,6 @@
 		{
 			"legacyKey": "contributors/optimal-care-pathways-steering-committee",
 			"legacyTitle": "Optimal Care Pathways Steering Committee",
-			"destination": "contributors-and-reviewers",
-			"how": "diverged"
-		},
-		{
-			"legacyKey": "contributors/optimal-care-pathways-steering-committee/our-thanks-also-to-the-blood-cancer",
-			"legacyTitle": "Our thanks also to the Blood Cancer",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},

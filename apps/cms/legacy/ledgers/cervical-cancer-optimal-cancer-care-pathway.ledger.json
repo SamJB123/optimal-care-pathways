@@ -1,7 +1,19 @@
 {
 	"pathway": "cervical-cancer",
+	"visualPass": {
+		"pages": "1-62 of 62",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-8) read as step rows; bold 'Label:' lead-ins are the panels; callout titles split at the dash.",
+			"The screening, abnormal-bleeding and diagnosis flowcharts (pages 18, 20, 23) and the tiered approach (page 47) are rendered figures anchored to their captions, lettering and all; the timeframes summary (page 9) is the table.",
+			"The foreword signature image is design and dropped; the signatory's name and title are kept as one paragraph.",
+			"Acknowledgements are set one entry per line with no gaps and resolved as for cancer of unknown primary; the pink closing statement is a bold paragraph.",
+			"No edition or publication date is printed and the file name carries none; the PDF's own creation date (18 January 2020) is the date, the edition is left empty.",
+			"Back cover (page 62) carries only the cover artwork."
+		]
+	},
 	"edition": null,
-	"publicationDate": null,
+	"publicationDate": "2020-01-01",
 	"placements": [
 		{
 			"legacyKey": "pathway-note",
@@ -33,8 +45,8 @@
 		{
 			"legacyKey": "step-1/immunisation-and-screening/screening",
 			"legacyTitle": "1.1.2 Screening",
-			"destination": "1/screening",
-			"how": "unplaced"
+			"destination": "1.2.1",
+			"how": "title"
 		},
 		{
 			"legacyKey": "step-1/risk-factors",
@@ -116,13 +128,14 @@
 		{
 			"legacyKey": "step-3/diagnostic-workup",
 			"legacyTitle": "3.1 Diagnostic workup",
-			"destination": "3/diagnostic-workup",
-			"how": "unplaced"
+			"destination": "3.1",
+			"how": "diverged",
+			"note": "legacy text of the shared 3.1: version 1 publishes it as a divergence; the draft carries the core text"
 		},
 		{
 			"legacyKey": "step-3/diagnostic-workup/timeframe-for-completing-investigations",
 			"legacyTitle": "3.1.1 Timeframe for completing investigations",
-			"destination": "3/diagnostic-workup",
+			"destination": "3/timeframes",
 			"how": "timeframe"
 		},
 		{
@@ -269,7 +282,7 @@
 			"legacyKey": "step-4/palliative-care/further-information",
 			"legacyTitle": "Further information",
 			"destination": "4.4.4",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-4/research-and-clinical-trials",
@@ -288,7 +301,7 @@
 			"legacyKey": "step-4/complementary-or-alternative-therapies/further-information",
 			"legacyTitle": "Further information",
 			"destination": "4.5.5",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-4/support-and-communication",
@@ -327,8 +340,8 @@
 		{
 			"legacyKey": "step-5/survivorship",
 			"legacyTitle": "5.1 Survivorship",
-			"destination": "5/survivorship",
-			"how": "unplaced"
+			"destination": "5.3.3",
+			"how": "title"
 		},
 		{
 			"legacyKey": "step-5/post-treatment-care-planning",
@@ -397,7 +410,7 @@
 			"legacyKey": "step-5/support-and-communication/palliative-care/further-information",
 			"legacyTitle": "Further information",
 			"destination": "5/palliative-care",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-5/support-and-communication/communication-with-the-patient-carer-and-family",
@@ -450,7 +463,7 @@
 			"legacyKey": "step-6/palliative-care/further-information",
 			"legacyTitle": "Further information",
 			"destination": "6.6",
-			"how": "merged"
+			"how": "resources"
 		},
 		{
 			"legacyKey": "step-6/research-and-clinical-trials",
@@ -1033,6 +1046,18 @@
 			"legacyTitle": "Expert working group",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
+		},
+		{
+			"legacyKey": "contributors/governance-project-steering-committee-representation",
+			"legacyTitle": "Governance – project steering committee representation",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
 		}
 	],
 	"citations": {
@@ -1111,11 +1136,6 @@
 			"note": "unplaced: the cancer template has no section for this under Step 1; keep, move or remove it"
 		},
 		{
-			"address": "1/screening",
-			"title": "Screening",
-			"note": "unplaced: the cancer template has no section for this under Step 1; keep, move or remove it"
-		},
-		{
 			"address": "1/special-considerations",
 			"title": "Special considerations",
 			"note": "unplaced: the cancer template has no section for this under Step 1; keep, move or remove it"
@@ -1126,9 +1146,9 @@
 			"note": "unplaced: the cancer template has no section for this under Step 2; keep, move or remove it"
 		},
 		{
-			"address": "3/diagnostic-workup",
-			"title": "Diagnostic workup",
-			"note": "unplaced: the cancer template has no section for this under Step 3; keep, move or remove it"
+			"address": "3/timeframes",
+			"title": "Timeframes",
+			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
 		},
 		{
 			"address": "3/special-considerations",
@@ -1139,11 +1159,6 @@
 			"address": "4/special-considerations",
 			"title": "Special considerations",
 			"note": "unplaced: the cancer template has no section for this under Step 4; keep, move or remove it"
-		},
-		{
-			"address": "5/survivorship",
-			"title": "Survivorship",
-			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
 		},
 		{
 			"address": "5/special-considerations",
