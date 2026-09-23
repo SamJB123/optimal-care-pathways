@@ -28,6 +28,7 @@ import { searchText } from '../src/server/search-index.ts'
 import * as schema from '../src/db/schema.ts'
 import { LEGACY_PATHWAYS, type LegacyFamily, type LegacyPathway } from '../src/legacy/catalogue.ts'
 import { type LegacyImport, mapLegacy } from '../src/legacy/map-legacy.ts'
+import { hyperlinkTargets } from '../src/template/extract/hyperlinks.ts'
 import { mapTemplate } from '../src/template/extract/map-to-content.ts'
 import type { ExtractedDocument } from '../src/template/extract/model.ts'
 import { TEMPLATES } from '../src/template/templates.ts'
@@ -59,10 +60,19 @@ const ACTOR = 'legacy-import'
 const readModel = (dir: string, key: string): ExtractedDocument =>
 	JSON.parse(readFileSync(join(appDir, dir, `${key}.model.json`), 'utf8'))
 
+// The cores as the template seed writes them, their "<hyperlink to be added>" notes
+// resolved the same way (seed-templates.ts): a pathway's own copy of a template section
+// must not keep a note the template itself has turned into a link.
+const principles = TEMPLATES.find((t) => t.kind === 'principles')
+if (!principles) throw new Error('the Principles template is not catalogued')
+const hyperlinks = hyperlinkTargets(
+	mapTemplate({ model: readModel('template/2026/extracted', principles.key), template: principles, orgId: 'central', id: deterministicId }),
+	LEGACY_PATHWAYS,
+)
 const cores = new Map(
 	TEMPLATES.filter((t) => t.kind !== 'principles').map((t) => [
 		t.kind,
-		mapTemplate({ model: readModel('template/2026/extracted', t.key), template: t, orgId: 'central', id: deterministicId }),
+		mapTemplate({ model: readModel('template/2026/extracted', t.key), template: t, orgId: 'central', id: deterministicId, hyperlinks }),
 	]),
 )
 
