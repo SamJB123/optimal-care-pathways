@@ -10,15 +10,21 @@ import { createFileRoute, useRouter } from '@tanstack/solid-router'
 import { createMemo, createSignal, For, Show } from 'solid-js'
 import { AccentEditor } from '#/components/AccentEditor.tsx'
 import { Masthead } from '#/components/Masthead.tsx'
+import { TeamPanel } from '#/components/TeamPanel.tsx'
 import { familyStyle } from '#/lib/family.ts'
 import { fidelityHref, publishedHref, workspaceHref } from '#/lib/links.ts'
 import { adminSnapshot } from '#/server/admin.ts'
 import { bootstrapCentral } from '#/server/documents.ts'
 import { finaliseLegacyImports } from '#/server/legacy-fns.ts'
+import { centralTeam } from '#/server/team-fns.ts'
 import './admin.css'
 
 export const Route = createFileRoute('/admin')({
-	loader: async () => ({ admin: await adminSnapshot() }),
+	loader: async () => {
+		const admin = await adminSnapshot()
+		// The central team is the central organisation's own: shown to its members only.
+		return { admin, team: admin.central ? await centralTeam() : null }
+	},
 	component: AdminPage,
 })
 
@@ -153,6 +159,25 @@ function AdminPage() {
 						</Show>
 					</Show>
 				</section>
+
+				<Show when={data().team}>
+					{(view) => (
+						<section class="ocp-admin-section" aria-labelledby="ocp-admin-team">
+							<h2 id="ocp-admin-team">The central team</h2>
+							<p class="ocp-muted">
+								Cancer Australia reviews and publishes every pathway, and writes the core templates.
+								Here, a reviewer decides reviews of the core templates and a drafter edits them. A
+								pathway's own team is on that pathway's Team page.
+							</p>
+							<TeamPanel
+								team={view().team}
+								standing={view().standing}
+								members={view().members}
+								onLeft={() => void router.invalidate()}
+							/>
+						</section>
+					)}
+				</Show>
 
 				<Show when={data().admin.central}>
 					<section class="ocp-admin-section" aria-labelledby="ocp-admin-cores">
