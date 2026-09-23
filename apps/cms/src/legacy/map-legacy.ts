@@ -388,6 +388,9 @@ const CITED_NAME = String.raw`(?:\p{Lu}[\p{L}’'-]*|de|del|den|der|da|di|la|le|
 /** The comma between two citations in one parenthesis ("AIHW 2018, Brewster et al. 2014"):
  *  a name and a year follow it. A comma before a bare year ("2018a, 2018b") is not one. */
 const CITATION_COMMA = new RegExp(String.raw`,\s*(?=${CITED_NAME}\s(?:19|20)\d\d)`, 'u')
+/** Two citations the print ran together with no separator ("Jaenke et al. 2021 Whop et al.
+ *  2022"): a year, then a capitalised name and its year. */
+const CITATION_RUN_ON = new RegExp(String.raw`(?<=(?:19|20)\d\d[a-z]?)\s+(?=\p{Lu}[\p{L}’'-]+(?:\s(?:\p{Lu}[\p{L}’'-]*|&|and|et al\.?))*\s(?:19|20)\d\d)`, 'u')
 /** Words a citation may open with that name no author: "adapted from Fizazi et al. 2015". */
 const CITATION_PREFIX = /^(?:adapted\s+from|summarised\s+in|reviewed\s+in|see\s+table\s+\d+\s+in|from|see|e\.g\.|cf\.|source|in)\s*:?\s+/i
 /** A month and year in parentheses: a date, not a citation. */
@@ -476,7 +479,9 @@ const initialsOf = (head: string): string =>
 function lookupByName(index: CitationIndex, key: string): ReferenceEntry | null {
 	const name = key.replace(/\s(?:19|20)\d\d[a-z]?$/, '')
 	if (!name) return null
-	const found = new Set([...index.byKey.entries()].filter(([k]) => k.startsWith(`${name} `) && /\s(?:19|20)\d\d[a-z]?$/.test(k)).map(([, e]) => e))
+	// The entry's whole name, not a longer one it opens ("Cancer Council Australia 2012" is
+	// not the Cancer Council Australia Sarcoma Guidelines Working Party 2014).
+	const found = new Set([...index.byKey.entries()].filter(([k]) => k.startsWith(`${name} `) && /^(?:19|20)\d\d[a-z]?$/.test(k.slice(name.length + 1))).map(([, e]) => e))
 	return found.size === 1 ? ([...found][0] ?? null) : null
 }
 
@@ -530,6 +535,7 @@ function citeInline(nodes: JsonNode[], index: CitationIndex): JsonNode[] {
 			for (const p of inner
 				.split(/;\s*/)
 				.flatMap((p) => p.split(CITATION_COMMA))
+				.flatMap((p) => p.split(CITATION_RUN_ON))
 				.map((p) => p.trim())
 				.filter(Boolean)) {
 				const previous = parts.at(-1)
