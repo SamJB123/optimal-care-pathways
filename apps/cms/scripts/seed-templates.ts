@@ -4,13 +4,16 @@
  * to the content schema with `mapTemplate`, checks every body against the schema, and
  * writes one SQL file for wrangler to apply:
  *
- *   pnpm exec tsx scripts/seed-templates.ts --org-id <central organisation id> [--out <file>]
+ *   pnpm exec tsx scripts/seed-templates.ts [--out <file>]
  *   → .wrangler/seed/templates-2026.sql
  *
- * The central organisation must exist first (it owns core content), which is why its id
- * is an argument and not a constant. Rows are `INSERT OR REPLACE`, keyed by deterministic
- * ids, so re-running replaces the same rows. One statement per row keeps every statement
- * far below D1's per-statement size cap.
+ * The same file seeds any deployment: the core documents are written owned by the
+ * placeholder `pending:central`, and "Set up the central organisation" (bootstrapCentral,
+ * the home page's first-run door) creates or finds the central organisation and adopts
+ * them. A placeholder never counts as the central organisation (access.ts centralOrgId),
+ * so after a re-seed the door is offered again. Rows are `INSERT OR REPLACE`, keyed by
+ * deterministic ids, so re-running replaces the same rows. One statement per row keeps
+ * every statement far below D1's per-statement size cap.
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -22,12 +25,8 @@ import type { SeedResult } from '../src/template/rows.ts'
 import { TEMPLATES } from '../src/template/templates.ts'
 import { deterministicId } from './ids.ts'
 
-const orgFlag = process.argv.indexOf('--org-id')
-const orgId = orgFlag > 0 ? process.argv[orgFlag + 1] : undefined
-if (!orgId) {
-	console.error('usage: tsx scripts/seed-templates.ts --org-id <central organisation id>')
-	process.exit(2)
-}
+/** Who owns the core documents until the first-run door adopts them. */
+const orgId = 'pending:central'
 
 const dataDir = join(import.meta.dirname, '..', 'template', '2026', 'extracted')
 const read = (key: string): ExtractedDocument =>
@@ -139,8 +138,7 @@ prune(results)
 
 const outDir = join(import.meta.dirname, '..', '.wrangler', 'seed')
 mkdirSync(outDir, { recursive: true })
-// `--out <file>` names the SQL file (a remote seed carries another organisation's id and
-// must not overwrite the local one).
+// `--out <file>` names the SQL file.
 const outFlag = process.argv.indexOf('--out')
 const target =
 	outFlag > 0 && process.argv[outFlag + 1]

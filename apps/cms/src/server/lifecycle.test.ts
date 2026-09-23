@@ -230,11 +230,13 @@ describe('review of the core document', () => {
 		)
 	})
 
-	it('reads the gate: subject placeholders pass, open guidance warns, review approved', async () => {
+	it('reads the gate: a template scaffold’s placeholders and guidance are the pathway’s, review approved', async () => {
 		const readiness = await lc.publishReadiness(lifecycle(), CORE_ID, `owner@${CENTRAL}`)
 		const byKey = Object.fromEntries(readiness.items.map((i) => [i.key, i]))
 		expect(byKey.placeholders?.level).toBe('ok')
-		expect(byKey.guidance?.level).toBe('warn')
+		// The owned section is a scaffold pathways write for themselves: its open guidance
+		// gates their publish, not the template's.
+		expect(byKey.guidance?.level).toBe('ok')
 		expect(byKey.review?.level).toBe('ok')
 		expect(readiness.blocked).toBe(false)
 	})

@@ -164,7 +164,8 @@ for (const pathway of targets) {
 // A full seed also removes an import it no longer writes — a pathway renamed in the
 // catalogue leaves its old document behind — but only one never finalised (its
 // organisation still the placeholder); sections, versions and the rest cascade.
-if (which === 'all') statements.push(`DELETE FROM documents WHERE org_id LIKE 'pending:%' AND id NOT IN (${written.map(q).join(', ')});`)
+// Pathways only: the core documents wait on a placeholder too (`pending:central`).
+if (which === 'all') statements.push(`DELETE FROM documents WHERE kind = 'pathway' AND org_id LIKE 'pending:%' AND id NOT IN (${written.map(q).join(', ')});`)
 
 const outDir = join(appDir, '.wrangler', 'seed')
 mkdirSync(outDir, { recursive: true })

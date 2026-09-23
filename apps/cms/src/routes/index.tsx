@@ -123,17 +123,25 @@ function Documents(props: { snapshot: Awaited<ReturnType<typeof documentsSnapsho
 					</Notice>
 				)}
 			</Show>
+			{/* After a seed the core documents wait for the central organisation, whatever
+			    else the caller can see: the door is offered until it has adopted them. */}
+			<Show when={props.snapshot?.setUp}>
+				<Panel title="Set up this deployment" variant="soft">
+					<p>
+						The core content has no central organisation yet. If you are an administrator of this
+						deployment, set it up: the central organisation is created (or found) and takes the core
+						documents.
+					</p>
+					<Button variant="solid" disabled={busy()} onClick={() => void bootstrap()}>
+						Set up the central organisation
+					</Button>
+				</Panel>
+			</Show>
 			<Show
 				when={documents().length > 0}
 				fallback={
 					<Panel title="Nothing here yet" variant="soft">
-						<p>
-							You are not a member of any pathway. If you are an administrator of this deployment,
-							set up the central organisation first.
-						</p>
-						<Button variant="solid" disabled={busy()} onClick={() => void bootstrap()}>
-							Set up the central organisation
-						</Button>
+						<p>You are not a member of any pathway.</p>
 					</Panel>
 				}
 			>

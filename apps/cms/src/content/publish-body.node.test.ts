@@ -13,7 +13,7 @@ import { TEMPLATES } from '#/template/templates.ts'
 import { deterministicId } from '../../scripts/ids.ts'
 import { annotateChanges } from './diff.ts'
 import { publishBody } from './publish.ts'
-import { parseBody } from './schema.ts'
+import { type JsonNode, parseBody } from './schema.ts'
 
 const readModel = (key: string): ExtractedDocument =>
 	JSON.parse(
@@ -48,5 +48,36 @@ describe('publishable bodies and first-publication diffs over the seeded templat
 			}
 			expect(failures).toEqual([])
 		})
+
+		it(`${template.key}: the developer instructions are apparatus, never a pathway's section`, () => {
+			const mapped = mapTemplate({ model: readModel(template.key), template, orgId: 'org-test', id: deterministicId })
+			const instructions = mapped.sections.filter((s) => /(^|\/)instructions-for-developers(\/|$)/.test(s.address))
+			if (template.kind === 'principles') return
+			expect(instructions.length).toBeGreaterThan(0)
+			for (const s of instructions) expect(s.apparatus).toBe(true)
+		})
 	}
+})
+
+describe('subject placeholders', () => {
+	const text = (label: string, written = label): JsonNode => ({
+		type: 'doc',
+		content: [{ type: 'paragraph', content: [{ type: 'text', text: 'For people with ' }, { type: 'text', text: written, marks: [{ type: 'placeholder', attrs: { label } }] }] }],
+	})
+	const filled = (label: string, written?: string) => {
+		const body = text(label, written)
+		parseBody(body)
+		return JSON.stringify(publishBody(body, 'breast cancer'))
+	}
+	it('fill every form the templates write, the stop after it kept', () => {
+		expect(filled('[cancer type]')).toContain('"text":"breast cancer"')
+		expect(filled('[Cancer type]')).toContain('breast cancer')
+		expect(filled('<cancer type>')).toContain('breast cancer')
+		expect(filled('[insert cancer type]')).toContain('breast cancer')
+		expect(filled('[cancer type].')).toContain('breast cancer.')
+		expect(filled('[cancer type]')).not.toContain('placeholder')
+	})
+	it('leave every other placeholder for the author', () => {
+		expect(filled('[insert timeframe]')).toContain('[insert timeframe]')
+	})
 })

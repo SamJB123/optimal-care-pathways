@@ -514,9 +514,15 @@ export async function publishReadiness(
 	const changed = await changedSections(lc, documentId)
 	const items: GateItem[] = []
 
-	const placeholders = resolved.filter(
-		(s) => live(s) && s.row.ownership === 'owned' && blockingPlaceholders(s.body) > 0,
-	)
+	// The text that publishes as written: a pathway's own sections; in a template, the
+	// sections every pathway shares word for word. A template section a pathway writes for
+	// itself (pathwayOwnership 'owned') is a scaffold: its placeholders and guidance are
+	// for the pathway, and they gate the pathway's publish, not the template's.
+	const asWritten = (s: ResolvedSection): boolean =>
+		live(s) &&
+		s.row.ownership === 'owned' &&
+		(document.kind === 'pathway' || s.row.pathwayOwnership !== 'owned')
+	const placeholders = resolved.filter((s) => asWritten(s) && blockingPlaceholders(s.body) > 0)
 	items.push(
 		placeholders.length > 0
 			? {
@@ -528,9 +534,7 @@ export async function publishReadiness(
 			: { key: 'placeholders', level: 'ok', message: 'No placeholder text is left.' },
 	)
 
-	const guidance = resolved.filter(
-		(s) => live(s) && s.row.ownership === 'owned' && openItemsIn(s.body) > 0,
-	)
+	const guidance = resolved.filter((s) => asWritten(s) && openItemsIn(s.body) > 0)
 	items.push(
 		guidance.length > 0
 			? {

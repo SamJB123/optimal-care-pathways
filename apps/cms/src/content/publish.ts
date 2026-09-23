@@ -19,8 +19,13 @@ import { contentSchema, emptyBody, type JsonNode } from './schema.ts'
  *  in an owned section blocks publishing. */
 export const SUBJECT_PLACEHOLDERS = ['[cancer type]', '[population group]'] as const
 
-export const isSubjectPlaceholder = (label: string): boolean =>
-	SUBJECT_PLACEHOLDERS.some((p) => label.trim().toLowerCase() === p)
+/** The subject as the templates write it: "[cancer type]", and the variants the print
+ *  also uses — "[Cancer type]", "<cancer type>", "[insert cancer type]", and the highlight
+ *  running on over the stop after it ("[cancer type]."). */
+const SUBJECT = /[[<]\s*(?:insert\s+)?(?:cancer type|population group)\s*[\]>]/gi
+const SUBJECT_WHOLE = /^[[<]\s*(?:insert\s+)?(?:cancer type|population group)\s*[\]>][.,;:]?$/i
+
+export const isSubjectPlaceholder = (label: string): boolean => SUBJECT_WHOLE.test(label.trim())
 
 const placeholderLabel = (node: JsonNode): string | null => {
 	const placeholder = node.marks?.find((m) => m.type === 'placeholder')
@@ -68,7 +73,10 @@ export function publishBody(body: JsonNode | null, subject: string): JsonNode | 
 			) {
 				const marks = node.marks?.filter((m) => m.type !== 'placeholder') ?? []
 				const { marks: _dropped, ...rest } = node
-				return [marks.length > 0 ? { ...rest, text: subject, marks } : { ...rest, text: subject }]
+				// The subject in place of the bracketed form, the stop after it kept.
+				const written = node.text ?? ''
+				const text = SUBJECT_WHOLE.test(written.trim()) ? written.replace(SUBJECT, subject) : subject
+				return [marks.length > 0 ? { ...rest, text, marks } : { ...rest, text }]
 			}
 			return [node]
 		}

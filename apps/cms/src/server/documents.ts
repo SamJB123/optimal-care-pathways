@@ -96,6 +96,9 @@ export const documentsSnapshot = createServerFn({ method: 'GET' }).handler(
 	}): Promise<{
 		documents: DocumentWireRow[]
 		central: boolean
+		/** The core documents wait for the central organisation (a fresh deployment, or a
+		 *  re-seed): the first-run door is to be offered. */
+		setUp: boolean
 		roles: Record<string, Role>
 		states: Record<string, DocumentListState>
 	}> => {
@@ -140,6 +143,7 @@ export const documentsSnapshot = createServerFn({ method: 'GET' }).handler(
 		return {
 			documents: rows.map(documentWireRow),
 			central: isCentral,
+			setUp: central === null,
 			roles: Object.fromEntries(roleEntries),
 			states: Object.fromEntries(
 				rows.map((row) => [

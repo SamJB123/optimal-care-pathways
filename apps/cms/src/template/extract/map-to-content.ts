@@ -1643,7 +1643,10 @@ const slugify = (value: string): string =>
 		.slice(0, 64) || 'section'
 
 const APPARATUS = /^(contents|cancer-specific-template|population-based-template|core-content)$/
-const APPARATUS_SUBTREE = /^cover\/instructions-for-developers(\/|$)/
+/** The template's instructions to its developers, wherever the title page puts them
+ *  ("optimal-care-pathway-for-people-with/instructions-for-developers/…"): scaffolding for
+ *  whoever builds a pathway, never a section of one. */
+const APPARATUS_SUBTREE = /(^|\/)instructions-for-developers(\/|$)/
 
 interface Placed {
 	section: Section
