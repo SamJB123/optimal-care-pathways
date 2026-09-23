@@ -258,6 +258,20 @@
 			"Page 2 is blank; back cover (page 82) carries only the cover artwork."
 		]
 	},
+	"multiple-myeloma-1st-edition": {
+		"pages": "1-86 of 86",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages; Step 4 opens with its statement on MM's course at step level; 'For MM:' and 'For solitary plasmacytoma:' are lead-ins of their lists; the treatments open their sentences in bold and are bold lead-ins.",
+			"Section 3.1 (pages 31-32) groups its tests under three black subheadings; 4.2.1 (pages 39-40) holds the accent-coloured transplant and therapy subheadings, then 'Timeframes for starting treatment' and 'Training and experience …' in black as printed, which the model nests under 4.2.1.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 62) are rendered figures; Figure 3 (page 24) is the timeframes table.",
+			"The welcome's signatory (page 6) is a bold name over one role line; the signature image and the endorsement logos are dropped as design.",
+			"Contributors (pages 59-60) one entry per paragraph under their group headings; the closing thanks to the Blood Cancer Taskforce is a bold paragraph.",
+			"Misprints ('administed' on page 9) are kept as printed.",
+			"'This edition published in October 2021' on the imprint page; first edition.",
+			"Pages 2 and 85 are blank; back cover (page 86) carries only the cover artwork."
+		]
+	},
 	"acute-lymphoblastic-leukaemia": {
 		"pages": "1-88 of 88",
 		"checked": "2026-09-23",
