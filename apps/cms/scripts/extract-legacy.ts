@@ -6,7 +6,8 @@
  *   → legacy/extracted/<slug>.model.json
  *   → public/legacy-figures/<slug>/p<page>-<n>.png
  *
- * The PDFs are read from public/legacy-sources by default (decision 139).
+ * The PDFs are read from legacy/source by default (decision 139). They are not part of
+ * the site's static files: readers get them from R2 (scripts/upload-legacy-pdfs.ts).
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -25,7 +26,7 @@ if (!which) {
 }
 const pdfDirFlag = args.indexOf('--pdf-dir')
 const appDir = join(import.meta.dirname, '..')
-const pdfDir = pdfDirFlag > 0 ? (args[pdfDirFlag + 1] ?? '') : join(appDir, 'public', 'legacy-sources')
+const pdfDir = pdfDirFlag > 0 ? (args[pdfDirFlag + 1] ?? '') : join(appDir, 'legacy', 'source')
 const outDir = join(appDir, 'legacy', 'extracted')
 mkdirSync(outDir, { recursive: true })
 

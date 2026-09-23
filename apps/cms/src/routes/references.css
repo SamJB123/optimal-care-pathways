@@ -64,6 +64,8 @@
 	.ocp-reference-meta a,
 	.ocp-reference-text a {
 		color: var(--color-primary);
+		text-decoration-line: underline;
+		text-underline-offset: 0.15em;
 	}
 	.ocp-reference[data-missing] .ocp-reference-text {
 		color: var(--color-error);

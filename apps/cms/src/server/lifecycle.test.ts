@@ -457,7 +457,7 @@ describe('the pathway', () => {
 		const listed = await lc.listComments(lifecycle(), PATHWAY_ID, `member@${PATHWAY_ORG}`)
 		expect(listed.map((c) => c.id)).toEqual(expect.arrayContaining([suggestion.id, comment.id]))
 		const forCore = await lc.suggestionsForCore(lifecycle(), CORE_ID, `admin@${CENTRAL}`)
-		expect(forCore.map((s) => [s.id, s.coreSectionId, s.pathwayTitle])).toEqual([
+		expect(forCore.map((s) => [s.id, s.coreSectionId, s.pathway.title])).toEqual([
 			[suggestion.id, S_SHARED, 'Breast cancer'],
 		])
 		const resolved = await lc.resolveComment(lifecycle(), {
@@ -600,5 +600,68 @@ describe('a draft that removes sections', () => {
 		])
 		const own = frozen.find((s) => s.sectionId === P_OWNED)
 		expect(own?.markdown).toContain('[^2]')
+	})
+})
+
+describe('answering suggestions, replies and mentions', () => {
+	it('the central team answers a suggestion in its own thread, resolving it, and the drafter is emailed', async () => {
+		const suggestion = await lc.addComment(lifecycle(), {
+			documentId: PATHWAY_ID,
+			sectionId: P_SHARED,
+			kind: 'suggestion',
+			body: 'Name the lead clinician.',
+			userId: `member@${PATHWAY_ORG}`,
+		})
+		// Only the central team answers suggestions.
+		await expect(
+			lc.replyToSuggestion(lifecycle(), { suggestionId: suggestion.id, body: 'No.', resolve: false, userId: `admin@${PATHWAY_ORG}` }),
+		).rejects.toThrow(/central organisation/)
+		const before = sentMail.length
+		const reply = await lc.replyToSuggestion(lifecycle(), {
+			suggestionId: suggestion.id,
+			body: 'Added to the next edition of the core.',
+			resolve: true,
+			userId: `admin@${CENTRAL}`,
+		})
+		expect(reply?.replyTo).toBe(suggestion.id)
+		expect(reply?.sectionId).toBe(P_SHARED)
+		// The drafter reads it in their margin: the reply is in the pathway section's thread.
+		const thread = await lc.listComments(lifecycle(), PATHWAY_ID, `member@${PATHWAY_ORG}`)
+		expect(thread.find((c) => c.id === reply?.id)?.replyTo).toBe(suggestion.id)
+		expect(thread.find((c) => c.id === suggestion.id)?.resolvedAt).not.toBeNull()
+		const mail = sentMail.slice(before).find((m) => m.to.includes(`member@${PATHWAY_ORG}.test`))
+		expect(mail?.subject).toMatch(/resolved/)
+		expect(mail?.text).toContain('Added to the next edition of the core.')
+		// The central team reads it with its reply.
+		const forCore = await lc.suggestionsForCore(lifecycle(), CORE_ID, `admin@${CENTRAL}`)
+		expect(forCore.find((s) => s.id === suggestion.id)?.replies.map((r) => r.body)).toEqual(['Added to the next edition of the core.'])
+	})
+
+	it('a reply joins its comment’s thread; a mention emails the people who may read the document', async () => {
+		const first = await lc.addComment(lifecycle(), {
+			documentId: PATHWAY_ID,
+			sectionId: P_OWNED,
+			kind: 'comment',
+			body: 'Is ECOG right here?',
+			userId: `member@${PATHWAY_ORG}`,
+		})
+		// A reply must answer a comment in the same section.
+		await expect(
+			lc.addComment(lifecycle(), { documentId: PATHWAY_ID, sectionId: P_SHARED, kind: 'comment', body: 'x', replyTo: first.id, userId: `admin@${PATHWAY_ORG}` }),
+		).rejects.toThrow(/thread/)
+		const before = sentMail.length
+		const reply = await lc.addComment(lifecycle(), {
+			documentId: PATHWAY_ID,
+			sectionId: P_OWNED,
+			kind: 'comment',
+			body: 'Yes — @member@org-p see the guideline.',
+			replyTo: first.id,
+			mentions: [`member@${PATHWAY_ORG}`, 'nobody', `admin@${PATHWAY_ORG}`],
+			userId: `admin@${PATHWAY_ORG}`,
+		})
+		expect(reply.replyTo).toBe(first.id)
+		const mentioned = sentMail.slice(before).filter((m) => /mentioned you/.test(m.subject))
+		// The drafter is named and may read it; "nobody" may not; the author is never mailed.
+		expect(mentioned.flatMap((m) => m.to)).toEqual([`member@${PATHWAY_ORG}.test`])
 	})
 })

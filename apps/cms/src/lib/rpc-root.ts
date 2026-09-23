@@ -20,8 +20,9 @@ import { PublishedApi } from '#/api/rpc.ts'
 import { apiContext } from '#/api/server.ts'
 import { db, schema } from '#/db/index.ts'
 import { DocumentsLiveTopic, type LiveTopicHost, SectionsLiveTopic } from '#/lib/live-topics.ts'
-import type { Role } from '#/lib/roles.ts'
-import { documentRoleOf } from '#/server/access.ts'
+import { OCP_NAMESPACE, type Role } from '#/lib/roles.ts'
+import { TeamLiveTopic } from '#/lib/team-topic.ts'
+import { documentRoleOf, isCentralMember } from '#/server/access.ts'
 import { type DocRoomCapability, documentRoomName } from '#/rooms/document-room.ts'
 
 /** Data-less fan-out for this worker's reactive-D1 topics: one instance per topic. */
@@ -29,6 +30,7 @@ export class OcpBell extends D1BellServer {}
 
 export class CoreRpcRoot extends WorkerRoot<Cloudflare.Env> implements LiveTopicHost {
 	readonly #sectionsTopics = new Map<string, SectionsLiveTopic>()
+	readonly #teamTopics = new Map<string, TeamLiveTopic>()
 	#documentsTopic: DocumentsLiveTopic | null = null
 	readonly #roles = new Map<string, Promise<Role | null>>()
 
@@ -99,6 +101,23 @@ export class CoreRpcRoot extends WorkerRoot<Cloudflare.Env> implements LiveTopic
 		if (!topic) {
 			topic = new SectionsLiveTopic(this, input.documentId)
 			this.#sectionsTopics.set(input.documentId, topic)
+		}
+		return topic
+	}
+
+	/** A team's live roster: for its members and the central team's (who review every
+	 *  document). Outside the ocp namespace the auth worker lists no one. */
+	async connectTeamTopic(input: { organizationId: string }): Promise<TeamLiveTopic> {
+		const orgId = input.organizationId
+		if (!/^[a-zA-Z0-9-]{1,64}$/.test(orgId)) throw new Error(`[ocp] invalid organizationId: ${JSON.stringify(orgId)}`)
+		const own = await this.env.AUTH.getOrgMembershipById(this.userId, orgId, OCP_NAMESPACE)
+		if (!own && !(await isCentralMember(this.env.AUTH, db(this.env.DB), this.userId))) {
+			throw new Error('[ocp] not on this team')
+		}
+		let topic = this.#teamTopics.get(orgId)
+		if (!topic) {
+			topic = new TeamLiveTopic(this, orgId)
+			this.#teamTopics.set(orgId, topic)
 		}
 		return topic
 	}

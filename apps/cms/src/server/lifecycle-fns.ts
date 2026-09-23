@@ -107,6 +107,8 @@ export const addComment = createServerFn({ method: 'POST' })
 			sectionId: z.string().min(1).max(64),
 			kind: z.enum(['comment', 'suggestion']),
 			body: z.string().trim().min(1).max(5000),
+			replyTo: z.string().min(1).max(64).nullable().optional(),
+			mentions: z.array(z.string().min(1).max(64)).max(20).optional(),
 		}),
 	)
 	.handler(async ({ data, context }) =>
@@ -134,6 +136,19 @@ export const suggestionsForCore = createServerFn({ method: 'GET' })
 	.handler(async ({ data, context }) =>
 		lifecycle.suggestionsForCore(await lifecycleOf(), data.documentId, requireUser(context.userId)),
 	)
+
+export const replyToSuggestion = createServerFn({ method: 'POST' })
+	.inputValidator(
+		z.object({
+			suggestionId: z.string().min(1).max(64),
+			body: z.string().trim().max(5000).nullable(),
+			resolve: z.boolean(),
+		}),
+	)
+	.handler(async ({ data, context }) => {
+		const reply = await lifecycle.replyToSuggestion(await lifecycleOf(), { ...data, userId: requireUser(context.userId) })
+		return reply ? commentWire(reply) : null
+	})
 
 export const divergeSection = createServerFn({ method: 'POST' })
 	.inputValidator(z.object({ sectionId: z.string().min(1).max(64) }))

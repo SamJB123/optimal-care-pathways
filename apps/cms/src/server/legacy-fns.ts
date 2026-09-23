@@ -115,7 +115,8 @@ export const legacyDocumentBySlug = createServerFn({ method: 'GET' })
 				audience: document.audience,
 				edition: document.edition,
 				publicationDate: document.publicationDate,
-				pdfUrl: document.pdfKey ? `/${document.pdfKey}` : null,
+				// Served from the files bucket, like an uploaded image (routes/files.$.ts).
+				pdfUrl: document.pdfKey ? `/files/${document.pdfKey}` : null,
 			},
 			/** The pathway it became; `published` when readers can open its current edition. */
 			pathway: successor ? { slug: successor.slug, title: successor.title, accent: successor.accent, published: published !== undefined } : null,

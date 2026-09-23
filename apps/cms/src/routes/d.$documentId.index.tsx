@@ -9,7 +9,8 @@
  */
 
 import { ActivityFeed, Button, EmptyState } from '@aicolab/ui-solid'
-import { createFileRoute } from '@tanstack/solid-router'
+import { createFileRoute, useRouter } from '@tanstack/solid-router'
+import { AccentEditor } from '#/components/AccentEditor.tsx'
 import { createMemo, For, Loading, Show, useContext } from 'solid-js'
 import { PathwayMap } from '#/content/blocks.tsx'
 import { RenderedBody } from '#/content/render.tsx'
@@ -75,6 +76,7 @@ function describe(event: ActivityRow): string {
 function OverviewPage() {
 	const hub = Route.useLoaderData()
 	const workspace = useContext(DocumentContext)
+	const router = useRouter()
 	const state = () => workspace.state()
 	const instructions = createMemo(() => (workspace.guidance === 'margin' ? instructionsFor({ data: { documentId: workspace.documentId } }) : null))
 	const partOf = (address: string) => {
@@ -145,6 +147,20 @@ function OverviewPage() {
 							{lastChange() ? ` · last change ${lastChange()}` : ''}
 						</dd>
 					</div>
+					<Show when={state().central}>
+						<div>
+							<dt>Colour</dt>
+							<dd>
+								<AccentEditor
+									documentId={workspace.documentId}
+									name={workspace.document.title}
+									accent={workspace.document.accent}
+									printAccent={workspace.document.printAccent}
+									onSaved={() => router.invalidate()}
+								/>
+							</dd>
+						</div>
+					</Show>
 					<Show when={state().review}>
 						{(r) => (
 							<div>

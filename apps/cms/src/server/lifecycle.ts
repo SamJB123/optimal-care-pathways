@@ -1120,20 +1120,34 @@ export async function addComment(
 		kind: 'comment' | 'suggestion'
 		body: string
 		userId: string
+		/** The comment this answers, in the same section's thread. */
+		replyTo?: string | null
+		/** People the comment names with @: each is emailed, if they may read the document. */
+		mentions?: string[]
 	},
 ): Promise<CommentRow> {
 	const document = await documentOf(lc, input.documentId)
 	await requireRole(lc, input.userId, document, 'member', 'comment')
 	const section = (
 		await lc.d
-			.select({ ownership: schema.sections.ownership, documentId: schema.sections.documentId })
+			.select({
+				ownership: schema.sections.ownership,
+				documentId: schema.sections.documentId,
+				address: schema.sections.address,
+				printedNumber: schema.sections.printedNumber,
+				title: schema.sections.title,
+			})
 			.from(schema.sections)
 			.where(eq(schema.sections.id, input.sectionId))
 			.limit(1)
 	)[0]
-	if (!section || section.documentId !== document.id) refuse('Section not found.')
-	if (input.kind === 'suggestion' && section?.ownership !== 'shared')
+	if (!section || section.documentId !== document.id) return refuse('Section not found.')
+	if (input.kind === 'suggestion' && section.ownership !== 'shared')
 		refuse('A suggestion is for a shared section; comment on an owned one instead.')
+	if (input.replyTo) {
+		const parent = (await lc.d.select().from(schema.comments).where(eq(schema.comments.id, input.replyTo)).limit(1))[0]
+		if (!parent || parent.sectionId !== input.sectionId) refuse('That comment is not in this section’s thread.')
+	}
 	const body = input.body.trim()
 	if (body.length === 0) refuse('Write something first.')
 	const actor = await lc.auth.getUserById(input.userId)
@@ -1144,6 +1158,7 @@ export async function addComment(
 			documentId: document.id,
 			sectionId: input.sectionId,
 			kind: input.kind,
+			replyTo: input.replyTo ?? null,
 			body,
 			authorId: input.userId,
 			authorName: actor?.name ?? input.userId,
@@ -1151,6 +1166,13 @@ export async function addComment(
 		.returning()
 	const row = inserted[0]
 	if (!row) refuse('Could not save the comment.')
+	await notifyMentioned(lc, {
+		document,
+		section,
+		body,
+		authorName: actor?.name ?? 'Someone',
+		mentions: (input.mentions ?? []).filter((id) => id !== input.userId),
+	})
 	if (input.kind === 'suggestion') {
 		await record(lc, document.id, 'suggestion.made', input.userId, { sectionId: input.sectionId })
 		const central = await lc.centralOrgId()
@@ -1193,9 +1215,107 @@ export async function resolveComment(
 	return updated[0] as CommentRow
 }
 
+/** A section as mail names it: its number and title. */
+const sectionName = (s: { printedNumber: string | null; title: string | null; address: string }): string =>
+	[s.printedNumber, s.title].filter((part) => part).join(' ') || s.address
+
+/** Email each person a comment names (with @), if they may read the document. Best-effort,
+ *  like every notification. */
+async function notifyMentioned(
+	lc: Lifecycle,
+	input: {
+		document: DocumentRow
+		section: { printedNumber: string | null; title: string | null; address: string }
+		body: string
+		authorName: string
+		mentions: string[]
+	},
+): Promise<void> {
+	const addresses: string[] = []
+	for (const userId of new Set(input.mentions)) {
+		if (!(await roleOn(lc, userId, input.document))) continue
+		const person = await lc.auth.getUserById(userId)
+		if (person?.email) addresses.push(person.email)
+	}
+	if (addresses.length === 0) return
+	await notify(
+		lc,
+		addresses,
+		`${input.authorName} mentioned you: ${input.document.title}`,
+		`${input.authorName} mentioned you in a comment on ${sectionName(input.section)} of "${input.document.title}":\n\n${input.body}\n\n${documentLink(lc, input.document.id)}`,
+	)
+}
+
+/**
+ * The central team answers a suggestion (decision 26): the reply joins the suggestion's
+ * own thread, on the pathway's section, where its drafter reads it in their margin; it may
+ * resolve the suggestion in the same act. The drafter is emailed.
+ */
+export async function replyToSuggestion(
+	lc: Lifecycle,
+	input: { suggestionId: string; body: string | null; resolve: boolean; userId: string },
+): Promise<CommentRow | null> {
+	await requireCentral(lc, input.userId, 'answer a suggestion')
+	const suggestion = (await lc.d.select().from(schema.comments).where(eq(schema.comments.id, input.suggestionId)).limit(1))[0]
+	if (!suggestion || suggestion.kind !== 'suggestion') return refuse('Suggestion not found.')
+	const body = input.body?.trim() ?? ''
+	if (body.length === 0 && !input.resolve) refuse('Write a reply, or resolve the suggestion.')
+	const document = await documentOf(lc, suggestion.documentId)
+	const actor = await lc.auth.getUserById(input.userId)
+	const reply =
+		body.length > 0
+			? ((
+					await lc.d
+						.insert(schema.comments)
+						.values({
+							id: crypto.randomUUID(),
+							documentId: suggestion.documentId,
+							sectionId: suggestion.sectionId,
+							kind: 'comment',
+							replyTo: suggestion.id,
+							body,
+							authorId: input.userId,
+							authorName: actor?.name ?? input.userId,
+						})
+						.returning()
+				)[0] ?? null)
+			: null
+	if (input.resolve && !suggestion.resolvedAt)
+		await lc.d
+			.update(schema.comments)
+			.set({ resolvedAt: new Date(), resolvedBy: input.userId })
+			.where(eq(schema.comments.id, suggestion.id))
+	await record(lc, document.id, 'suggestion.answered', input.userId, { suggestionId: suggestion.id, resolved: input.resolve })
+	const drafter = await lc.auth.getUserById(suggestion.authorId)
+	if (drafter?.email)
+		await notify(
+			lc,
+			[drafter.email],
+			`${input.resolve ? 'Your suggestion is resolved' : 'A reply to your suggestion'}: ${document.title}`,
+			`You suggested a change to shared content in "${document.title}":\n\n${suggestion.body}\n\n${
+				body.length > 0 ? `${actor?.name ?? 'The central team'} replied:\n\n${body}\n\n` : ''
+			}${input.resolve ? 'The central team has marked it resolved.\n\n' : ''}${documentLink(lc, document.id)}`,
+		)
+	return reply
+}
+
+/** A suggestion as the central team reads it: who, where, the words, and its thread. */
+export interface SuggestionWire {
+	id: string
+	body: string
+	authorName: string
+	createdAt: number
+	resolvedAt: number | null
+	/** The core section it is about. */
+	coreSectionId: string | null
+	/** The pathway it came from, and its section there (for its own copy, if it has one). */
+	pathway: { documentId: string; title: string; sectionId: string; diverged: boolean }
+	replies: { id: string; body: string; authorName: string; createdAt: number }[]
+}
+
 /** Suggestions made on any pathway's shared sections that render this core document's
- *  sections, for the central team (decision 26). */
-export async function suggestionsForCore(lc: Lifecycle, coreDocumentId: string, userId: string) {
+ *  sections, for the central team (decision 26), newest first, with their replies. */
+export async function suggestionsForCore(lc: Lifecycle, coreDocumentId: string, userId: string): Promise<SuggestionWire[]> {
 	await requireCentral(lc, userId, 'read suggestions')
 	const shared = lc.d
 		.select({ id: schema.sections.id })
@@ -1205,6 +1325,7 @@ export async function suggestionsForCore(lc: Lifecycle, coreDocumentId: string, 
 		.select({
 			comment: schema.comments,
 			coreSectionId: schema.sections.coreSectionId,
+			ownership: schema.sections.ownership,
 			pathwayTitle: schema.documents.title,
 		})
 		.from(schema.comments)
@@ -1214,12 +1335,24 @@ export async function suggestionsForCore(lc: Lifecycle, coreDocumentId: string, 
 			and(eq(schema.comments.kind, 'suggestion'), inArray(schema.sections.coreSectionId, shared)),
 		)
 		.orderBy(desc(schema.comments.createdAt))
+	const ids = rows.map((r) => r.comment.id)
+	const replies =
+		ids.length > 0
+			? await inGroups(ids, (group) =>
+					lc.d.select().from(schema.comments).where(inArray(schema.comments.replyTo, group)).orderBy(schema.comments.createdAt),
+				)
+			: []
 	return rows.map((r) => ({
-		...r.comment,
+		id: r.comment.id,
+		body: r.comment.body,
+		authorName: r.comment.authorName,
 		createdAt: r.comment.createdAt.getTime(),
 		resolvedAt: r.comment.resolvedAt?.getTime() ?? null,
 		coreSectionId: r.coreSectionId,
-		pathwayTitle: r.pathwayTitle,
+		pathway: { documentId: r.comment.documentId, title: r.pathwayTitle, sectionId: r.comment.sectionId, diverged: r.ownership === 'owned' },
+		replies: replies
+			.filter((reply) => reply.replyTo === r.comment.id)
+			.map((reply) => ({ id: reply.id, body: reply.body, authorName: reply.authorName, createdAt: reply.createdAt.getTime() })),
 	}))
 }
 

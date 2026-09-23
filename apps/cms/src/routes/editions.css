@@ -1,7 +1,8 @@
 /* The edition imprint and the comparison, in the workspace's text column (.ocp-part):
    the draft at the head, the editions as imprint entries ruled off one from the next,
-   then the two pickers and the sections that read differently, grouped by band. */
-@scope (.ocp-editions) {
+   then the two pickers and the sections that read differently, grouped by band. The
+   sections' own text keeps its own sheets: the scope stops at it. */
+@scope (.ocp-editions) to (.ocp-body) {
 	:scope {
 		display: grid;
 		gap: 1.75rem;

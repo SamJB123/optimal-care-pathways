@@ -53,6 +53,8 @@ export type DocumentWireRow = {
 	audience: DocumentRow['audience']
 	/** The family colour (#rrggbb), or null for the neutral core documents. */
 	accent: string | null
+	/** The print's own colour, which a changed colour can return to. */
+	printAccent: string | null
 	/** Who has the document open (its room's roster, as last announced). */
 	present: { id: string; name: string }[]
 	createdAt: number
@@ -71,6 +73,7 @@ export function documentWireRow(row: DocumentRow): DocumentWireRow {
 		subject: row.subject,
 		audience: row.audience,
 		accent: row.accent,
+		printAccent: row.printAccent,
 		present: row.present ?? [],
 		createdAt: row.createdAt.getTime(),
 		updatedAt: row.updatedAt?.getTime() ?? null,

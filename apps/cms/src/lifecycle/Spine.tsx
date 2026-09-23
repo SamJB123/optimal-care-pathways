@@ -14,7 +14,6 @@ import {
 	WorkspaceNavigation,
 	WorkspaceNavigationGroup,
 	WorkspaceNavigationItem,
-	WorkspaceNavigationList,
 } from '@aicolab/ui-solid'
 import { useLocation, useNavigate, useParams } from '@tanstack/solid-router'
 import { createMemo, createSignal, For, Show, useContext } from 'solid-js'
@@ -81,7 +80,7 @@ export function Spine(props: { onRequestReview: () => void }) {
 		const p = params()
 		if ('part' in p && typeof p.part === 'string') return p.part
 		const page = location().pathname.split('/').at(-1)
-		return page === 'versions' || page === 'references' || page === 'suggestions' ? page : null
+		return page === 'versions' || page === 'references' || page === 'suggestions' || page === 'team' ? page : null
 	}
 	const hiddenCount = () => workspace.sections().filter((s) => s.hidden && !s.apparatus).length
 
@@ -156,7 +155,7 @@ export function Spine(props: { onRequestReview: () => void }) {
 							/>
 							{/* The part being read opens in place, beneath its own entry. */}
 							<Show when={current() === part.key}>
-								<li class="ocp-spine-part-open" role="none">
+								<li class="ocp-spine-part-open">
 									<PartSections root={part.root} />
 								</li>
 							</Show>
@@ -171,47 +170,46 @@ export function Spine(props: { onRequestReview: () => void }) {
 				/>
 			</WorkspaceNavigationGroup>
 
+			{/* The group is itself the list: where the document stands is its first item. */}
 			<WorkspaceNavigationGroup id="ocp-spine-publish" label="Review and publish">
-				<p class="ocp-spine-standing">{reviewLine()}</p>
-				<WorkspaceNavigationList label="Review and publish">
-					<Show when={changes() > 0}>
-						<WorkspaceNavigationItem
-							label={workspace.mode() === 'review' ? 'Back to writing' : 'Read the changes'}
-							mark={workspace.mode() === 'review' ? '✎' : '⇄'}
-							current={workspace.mode() === 'review'}
-							onSelect={() => (workspace.mode() === 'review' ? workspace.setMode('edit') : workspace.startReview())}
-						/>
-					</Show>
-					<Show when={atLeast(workspace.role, 'member') && changes() > 0}>
-						<WorkspaceNavigationItem
-							label={review() && review()?.decision === null ? 'Ask for review again' : 'Ask for review'}
-							mark="→"
-							onSelect={props.onRequestReview}
-						/>
-					</Show>
-					<Show when={state().central}>
-						<WorkspaceNavigationItem label="Publish…" mark="↑" onSelect={() => workspace.openPublish()} />
-					</Show>
+				<li class="ocp-spine-standing">{reviewLine()}</li>
+				<Show when={changes() > 0}>
 					<WorkspaceNavigationItem
-						label="Editions"
-						mark="≡"
-						current={current() === 'versions'}
-						onSelect={() => void navigate({ to: '/d/$documentId/versions', params: { documentId: workspace.documentId } })}
+						label={workspace.mode() === 'review' ? 'Back to writing' : 'Read the changes'}
+						mark={workspace.mode() === 'review' ? '✎' : '⇄'}
+						current={workspace.mode() === 'review'}
+						onSelect={() => (workspace.mode() === 'review' ? workspace.setMode('edit') : workspace.startReview())}
 					/>
-					<WorkspaceNavigationItem label="Preview the draft" mark="◫" onSelect={() => void navigate({ href: previewHref(workspace.documentId) })} />
-					<Show when={state().published}>
-						<WorkspaceNavigationItem label="The published page" mark="↗" onSelect={() => window.location.assign(publishedHref(workspace.document.slug))} />
-					</Show>
-					<Show when={workspace.document.kind === 'core' && state().central}>
-						<WorkspaceNavigationItem
-							label="Suggestions from pathways"
-							mark="✉"
-							current={current() === 'suggestions'}
-							onSelect={() => void navigate({ to: '/d/$documentId/suggestions', params: { documentId: workspace.documentId } })}
-						/>
-						<WorkspaceNavigationItem label="Against the template PDF" mark="⧉" onSelect={() => void navigate({ href: fidelityHref(workspace.documentId) })} />
-					</Show>
-				</WorkspaceNavigationList>
+				</Show>
+				<Show when={atLeast(workspace.role, 'member') && changes() > 0}>
+					<WorkspaceNavigationItem
+						label={review() && review()?.decision === null ? 'Ask for review again' : 'Ask for review'}
+						mark="→"
+						onSelect={props.onRequestReview}
+					/>
+				</Show>
+				<Show when={state().central}>
+					<WorkspaceNavigationItem label="Publish…" mark="↑" onSelect={() => workspace.openPublish()} />
+				</Show>
+				<WorkspaceNavigationItem
+					label="Editions"
+					mark="≡"
+					current={current() === 'versions'}
+					onSelect={() => void navigate({ to: '/d/$documentId/versions', params: { documentId: workspace.documentId } })}
+				/>
+				<WorkspaceNavigationItem label="Preview the draft" mark="◫" onSelect={() => void navigate({ href: previewHref(workspace.documentId) })} />
+				<Show when={state().published}>
+					<WorkspaceNavigationItem label="The published page" mark="↗" onSelect={() => window.location.assign(publishedHref(workspace.document.slug))} />
+				</Show>
+				<Show when={workspace.document.kind === 'core' && state().central}>
+					<WorkspaceNavigationItem
+						label="Suggestions from pathways"
+						mark="✉"
+						current={current() === 'suggestions'}
+						onSelect={() => void navigate({ to: '/d/$documentId/suggestions', params: { documentId: workspace.documentId } })}
+					/>
+					<WorkspaceNavigationItem label="Against the template PDF" mark="⧉" onSelect={() => void navigate({ href: fidelityHref(workspace.documentId) })} />
+				</Show>
 			</WorkspaceNavigationGroup>
 		</WorkspaceNavigation>
 	)

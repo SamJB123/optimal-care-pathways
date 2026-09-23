@@ -1,0 +1,1 @@
+ALTER TABLE `documents` ADD `print_accent` text;

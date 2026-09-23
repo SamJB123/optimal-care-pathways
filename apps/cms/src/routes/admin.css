@@ -55,4 +55,64 @@
 		content: "Not done. ";
 		color: var(--color-error);
 	}
+
+	/* The core templates and their ways in. */
+	.ocp-admin-cores {
+		display: grid;
+		gap: 0.6rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.ocp-admin-cores li {
+		display: grid;
+		gap: 0.2rem;
+		padding-inline-start: 0.75rem;
+		border-inline-start: 3px solid var(--family, var(--hair-strong));
+	}
+	.ocp-admin-core-name,
+	.ocp-admin-colour-name {
+		font-weight: 600;
+		color: var(--family-ink, var(--color-base-content));
+		text-decoration: none;
+	}
+	.ocp-admin-core-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.2rem 1.1rem;
+		font-size: var(--t-sm);
+	}
+	.ocp-admin-core-links a {
+		color: var(--color-primary);
+	}
+
+	/* The colour register. */
+	.ocp-admin-section > p {
+		margin: 0 0 1rem;
+		max-inline-size: 60ch;
+	}
+	.ocp-admin-colour-group h3 {
+		margin: 1rem 0 0.4rem;
+		font-size: var(--t-sm);
+		font-weight: 600;
+	}
+	.ocp-admin-colours {
+		display: grid;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.ocp-admin-colours li {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+		align-items: start;
+		gap: 0.3rem 1rem;
+		padding-block: 0.5rem;
+		border-block-end: 1px solid var(--hair);
+	}
+	@media (width < 40rem) {
+		.ocp-admin-colours li {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
 }

@@ -137,9 +137,12 @@
 	font-size: var(--t-md);
 }
 
+/* The body's ink: the family ink is set for the page ground, and on the reading column's
+   surface at night it falls short of AA. The family colour is the heading's rule. */
 .ocp-review-number {
 	font-variant-numeric: tabular-nums;
-	color: var(--family-ink, var(--color-base-content-muted));
+	font-weight: 600;
+	color: var(--color-base-content);
 }
 
 .ocp-review-meta {
@@ -153,7 +156,7 @@
 
 .ocp-review-address {
 	font-family: var(--font-data);
-	color: var(--color-base-content-faint);
+	color: var(--color-base-content-muted);
 	overflow-wrap: anywhere;
 }
 

@@ -169,8 +169,11 @@
 		padding-block: 0.55rem;
 		border-block-end: 1px solid var(--hair);
 	}
+	/* A resolved thread steps back by a rule, not by fading (faded text fails contrast):
+	   its "Resolved" tag says the rest. */
 	.ocp-comment[data-resolved="true"] {
-		opacity: 0.6;
+		padding-inline-start: 0.6rem;
+		border-inline-start: 2px solid var(--hair-strong);
 	}
 	.ocp-comment header {
 		display: flex;

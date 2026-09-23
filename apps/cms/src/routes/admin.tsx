@@ -7,8 +7,11 @@
 
 import { Button } from '@aicolab/ui-solid'
 import { createFileRoute, useRouter } from '@tanstack/solid-router'
-import { createSignal, For, Show } from 'solid-js'
+import { createMemo, createSignal, For, Show } from 'solid-js'
+import { AccentEditor } from '#/components/AccentEditor.tsx'
 import { Masthead } from '#/components/Masthead.tsx'
+import { familyStyle } from '#/lib/family.ts'
+import { fidelityHref, publishedHref, workspaceHref } from '#/lib/links.ts'
 import { adminSnapshot } from '#/server/admin.ts'
 import { bootstrapCentral } from '#/server/documents.ts'
 import { finaliseLegacyImports } from '#/server/legacy-fns.ts'
@@ -37,6 +40,18 @@ function AdminPage() {
 			setBusy(false)
 		}
 	}
+
+	const cores = createMemo(() => data().admin.documents.filter((doc) => doc.kind === 'core'))
+	/** The register, as the atlas groups it: the core templates, then each kind of pathway. */
+	const colourGroups = createMemo(() => {
+		const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)
+		const docs = data().admin.documents
+		return [
+			{ label: 'Core templates', documents: docs.filter((doc) => doc.kind === 'core').toSorted(byName) },
+			{ label: 'Cancer-specific pathways', documents: docs.filter((doc) => doc.kind === 'pathway' && doc.audience === 'cancer').toSorted(byName) },
+			{ label: 'Population pathways', documents: docs.filter((doc) => doc.kind === 'pathway' && doc.audience === 'population').toSorted(byName) },
+		].filter((group) => group.documents.length > 0)
+	})
 
 	const setUp = () =>
 		run(async () => {
@@ -99,6 +114,63 @@ function AdminPage() {
 						</Show>
 					</Show>
 				</section>
+
+				<Show when={data().admin.central}>
+					<section class="ocp-admin-section" aria-labelledby="ocp-admin-cores">
+						<h2 id="ocp-admin-cores">The core templates</h2>
+						<ul class="ocp-admin-cores">
+							<For each={cores()}>
+								{(core) => (
+									<li style={familyStyle(core.accent)}>
+										<a class="ocp-admin-core-name" href={workspaceHref(core.id)}>
+											{core.name}
+										</a>
+										<span class="ocp-admin-core-links">
+											<Show when={core.published} fallback={<span class="ocp-muted">Not yet published</span>}>
+												<a href={publishedHref(core.slug)}>The published page</a>
+											</Show>
+											<a href={`${workspaceHref(core.id)}/suggestions`}>Suggestions from pathways</a>
+											<a href={fidelityHref(core.id)}>Against the template PDF</a>
+										</span>
+									</li>
+								)}
+							</For>
+						</ul>
+					</section>
+
+					<section class="ocp-admin-section" aria-labelledby="ocp-admin-colours">
+						<h2 id="ocp-admin-colours">Family colours</h2>
+						<p class="ocp-muted">
+							Each document’s colour, read from its print: the atlas row, the spine, the published page’s steps and links. A
+							colour is set at the lightness its text needs on each ground; the fill keeps the print’s own.
+						</p>
+						<For each={colourGroups()}>
+							{(group) => (
+								<div class="ocp-admin-colour-group">
+									<h3>{group.label}</h3>
+									<ul class="ocp-admin-colours">
+										<For each={group.documents}>
+											{(doc) => (
+												<li>
+													<a class="ocp-admin-colour-name" href={workspaceHref(doc.id)} style={familyStyle(doc.accent)}>
+														{doc.name}
+													</a>
+													<AccentEditor
+														documentId={doc.id}
+														name={doc.name}
+														accent={doc.accent}
+														printAccent={doc.printAccent}
+														onSaved={() => router.invalidate()}
+													/>
+												</li>
+											)}
+										</For>
+									</ul>
+								</div>
+							)}
+						</For>
+					</section>
+				</Show>
 			</main>
 		</>
 	)

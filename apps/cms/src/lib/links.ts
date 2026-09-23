@@ -23,6 +23,8 @@ export const fidelityHref = (documentId: string): string => `/review/${documentI
 export const draftPdfHref = (documentId: string): string => `/d/${documentId}/draft.pdf`
 export const draftDocxHref = (documentId: string): string => `/d/${documentId}/draft.docx`
 export const editionsHref = (documentId: string): string => `/d/${documentId}/versions`
+/** The document's team: who works on it, and the ways in. */
+export const teamHref = (documentId: string): string => `/d/${documentId}/team`
 /** Two editions side by side; `draft` stands for the draft in work. */
 export const compareHref = (documentId: string, from: number | 'draft', to: number | 'draft'): string =>
 	`/d/${documentId}/versions?from=${from}&to=${to}`

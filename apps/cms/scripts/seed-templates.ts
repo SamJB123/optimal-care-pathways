@@ -1,7 +1,8 @@
 /**
  * Seeds the three 2026 templates as core-content documents: reads the extracted models
  * (`template/2026/extracted/<key>.model.json`, from `pnpm template:extract`), maps them
- * to the content schema with `mapTemplate`, checks every body against the schema, and
+ * to the content schema with `mapTemplate` (the authors' "<hyperlink to be added>" notes
+ * resolved into links), checks every body against the schema, and
  * writes one SQL file for wrangler to apply:
  *
  *   pnpm exec tsx scripts/seed-templates.ts [--out <file>]
@@ -21,10 +22,12 @@ import { join } from 'node:path'
 import { publishableHash } from '../src/content/publish.ts'
 import { normalBody, parseBody } from '../src/content/schema.ts'
 import { searchText } from '../src/server/search-index.ts'
+import { LEGACY_PATHWAYS } from '../src/legacy/catalogue.ts'
+import { hyperlinkTargets } from '../src/template/extract/hyperlinks.ts'
 import { mapTemplate } from '../src/template/extract/map-to-content.ts'
 import type { ExtractedDocument } from '../src/template/extract/model.ts'
 import type { SeedResult } from '../src/template/rows.ts'
-import { TEMPLATES } from '../src/template/templates.ts'
+import { TEMPLATES, templateByKey } from '../src/template/templates.ts'
 import { deterministicId } from './ids.ts'
 
 /** Who owns the core documents until the first-run door adopts them. */
@@ -75,6 +78,7 @@ const emit = async (seeded: SeedResult) => {
 			subject: d.subject,
 			audience: d.audience,
 			accent: d.accent,
+			print_accent: d.accent,
 		}),
 	)
 	// The search index holds each section's words (server/search-index.ts); rebuilt whole.
@@ -136,18 +140,30 @@ const prune = (results: SeedResult[]) => {
 	)
 }
 
+// The authors' "<hyperlink to be added>" notes resolve against the Principles document's
+// sections and the pathways' slugs (template/extract/hyperlinks.ts): the Principles are
+// mapped once first to learn their sections. `scripts/hyperlink-resolutions.ts` lists
+// what each note became.
+const principles = templateByKey('principles')
+const hyperlinks = hyperlinkTargets(
+	mapTemplate({ model: read(principles.key), template: principles, orgId, id: deterministicId }),
+	LEGACY_PATHWAYS,
+)
+
 const results: SeedResult[] = []
 for (const template of TEMPLATES) {
 	const model = read(template.key)
-	const result = mapTemplate({ model, template, orgId, id: deterministicId })
+	const result = mapTemplate({ model, template, orgId, id: deterministicId, hyperlinks })
 	results.push(result)
 	await emit(result)
 	const { stats } = result
+	const resolved = result.hyperlinks.filter((h) => h.resolution.outcome === 'resolved').length
 	console.log(
 		`${template.key}: ${result.sections.length} sections, ${result.references.length} references; ` +
 			`${stats.boxes} boxes, ${stats.variants} variant groups, ${stats.timeframes} timeframes, ${stats.tables} tables, ` +
 			`${stats.checkItems} check items, ${stats.guidance} guidance, ${stats.citations} citations, ${stats.footnotes} footnotes, ` +
-			`${stats.figures} figures, ${stats.links} links, ${stats.placeholders} placeholders`,
+			`${stats.figures} figures, ${stats.links} links, ${stats.placeholders} placeholders; ` +
+			`${result.hyperlinks.length} hyperlink notes, ${resolved} resolved`,
 	)
 }
 

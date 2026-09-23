@@ -67,10 +67,13 @@ const providing =
 /** ProseMirror's content element: a div for block content, a span for inline content,
  *  classed so it takes no space of its own (section.css). */
 const contentElement =
-	(tag: 'div' | 'span'): NodeViewDOMSpec =>
+	(tag: 'div' | 'span', options: { presentation?: boolean } = {}): NodeViewDOMSpec =>
 	() => {
 		const element = document.createElement(tag)
 		element.className = 'ocp-node-content'
+		// Where the block is a list, its content element stands between the list and its
+		// items: it is layout only, so assistive technology reads the items as the list's.
+		if (options.presentation) element.setAttribute('role', 'presentation')
 		return element
 	}
 
@@ -166,14 +169,20 @@ export function defineTemplateNodeViews(derived: () => DerivedView, guidance: Gu
 			hasContent: true,
 			readAttrs: none,
 			component: provide(viewOf(ResourceListBlock)),
-			contentAs: contentElement('div'),
+			contentAs: contentElement('div', { presentation: true }),
 		}),
 		defineSolidNodeView<ResourceAttrs>({
 			name: 'resource',
 			hasContent: true,
 			readAttrs: asAttrs((a) => ({ title: str(a.title), url: str(a.url) })),
 			component: provide(viewOf(ResourceBlock)),
-			as: 'li',
+			// The row the component draws is the list item; the node view's own element is
+			// layout only around it.
+			as: () => {
+				const element = document.createElement('div')
+				element.setAttribute('role', 'presentation')
+				return element
+			},
 			contentAs: contentElement('div'),
 		}),
 		defineSolidNodeView<Record<string, never>>({

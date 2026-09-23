@@ -23,6 +23,8 @@
 		"legacy:seed:build": "tsx scripts/seed-legacy.ts",
 		"legacy:seed:local": "wrangler d1 execute ocp-cms-d1 --local --persist-to ./.wrangler/state --file",
 		"legacy:seed:remote": "wrangler d1 execute ocp-cms-d1 --remote --file",
+		"r2:legacy:local": "tsx scripts/upload-legacy-pdfs.ts --local",
+		"r2:legacy:remote": "tsx scripts/upload-legacy-pdfs.ts --remote",
 		"db:seed:build": "tsx scripts/seed-templates.ts",
 		"db:seed:local": "wrangler d1 execute ocp-cms-d1 --local --persist-to ./.wrangler/state --file .wrangler/seed/templates-2026.sql",
 		"db:seed:remote": "wrangler d1 execute ocp-cms-d1 --remote --file .wrangler/seed/templates-2026.sql",

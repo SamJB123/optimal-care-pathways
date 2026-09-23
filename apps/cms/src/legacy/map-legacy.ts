@@ -957,7 +957,8 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		format: 'full',
 		edition: ledger.edition,
 		publicationDate: ledger.publicationDate,
-		pdfKey: `legacy-sources/${pathway.file}`,
+		// Its key in the files bucket (scripts/upload-legacy-pdfs.ts puts it there).
+		pdfKey: `legacy/${pathway.file}`,
 	}
 	const legacySections: LegacySectionInsert[] = all.map((n) => {
 		// The reference list's own entries are not citations of one another.
@@ -1682,6 +1683,7 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		subject: pathway.subject,
 		audience: pathway.audience,
 		accent: accentOf(model),
+		printAccent: accentOf(model),
 	}
 	// Raised-number markers were resolved by the block mapper; a number the list lacks was
 	// left as printed and recorded by the reader.

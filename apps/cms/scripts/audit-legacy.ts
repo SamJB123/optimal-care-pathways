@@ -27,7 +27,7 @@ const flag = (name: string) => {
 	return at > 0 ? args[at + 1] : undefined
 }
 const appDir = join(import.meta.dirname, '..')
-const pdfDir = flag('--pdf-dir') ?? join(appDir, 'public', 'legacy-sources')
+const pdfDir = flag('--pdf-dir') ?? join(appDir, 'legacy', 'source')
 const maxLines = Number(flag('--max') ?? 60)
 
 const targets = which === 'all' ? LEGACY_PATHWAYS : [legacyBySlug(which)].flatMap((p) => (p ? [p] : []))

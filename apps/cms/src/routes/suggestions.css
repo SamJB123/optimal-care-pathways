@@ -1,0 +1,74 @@
+/* Suggestions from pathways, grouped by the core section they are about. */
+@scope (.ocp-suggestions-page) {
+	.ocp-suggestions-head {
+		display: grid;
+		gap: 0.3rem;
+		margin-block-end: 1.5rem;
+	}
+	.ocp-suggestions-head h1 {
+		margin: 0;
+		font-size: var(--t-2xl);
+		font-weight: 600;
+	}
+	.ocp-suggestions-head p {
+		margin: 0;
+	}
+	.ocp-suggestions-group {
+		display: grid;
+		gap: 0.25rem;
+		margin-block-end: 2rem;
+		font-size: var(--t-sm);
+	}
+	.ocp-suggestions-group > header {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: 0.3rem 1rem;
+		padding-block-end: 0.4rem;
+		border-block-end: 2px solid var(--family, var(--color-primary));
+	}
+	.ocp-suggestions-group h2 {
+		margin: 0;
+		font-size: var(--t-lg);
+		font-weight: 600;
+		color: var(--family-ink, var(--color-base-content));
+	}
+	/* The comment look is the margin's; on the page it needs its own copy of it. */
+	.ocp-comment {
+		display: grid;
+		gap: 0.25rem;
+		padding-block: 0.7rem;
+		border-block-end: 1px solid var(--hair);
+	}
+	.ocp-comment[data-resolved="true"] {
+		padding-inline-start: 0.6rem;
+		border-inline-start: 2px solid var(--hair-strong);
+	}
+	.ocp-comment header {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		align-items: baseline;
+	}
+	.ocp-comment p {
+		margin: 0;
+		white-space: pre-wrap;
+	}
+	.ocp-comment-kind {
+		font-size: var(--t-2xs);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--color-accent);
+	}
+	.ocp-composer {
+		display: grid;
+		gap: 0.5rem;
+		max-inline-size: 36rem;
+	}
+	.ui-tool-panel-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+	}
+}

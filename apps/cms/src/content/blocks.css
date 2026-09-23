@@ -18,9 +18,12 @@
 	border-radius: 0.3em;
 }
 
-/* Citations on a band read in the band's ink, not the link colour. */
-.ocp-body p[data-ocp="banner"] sup[data-ocp="citation"]::before {
+/* Citations and links on a band read in the band's ink, not the link colour (which on a
+   dark band would all but vanish); a link keeps its underline. */
+.ocp-body p[data-ocp="banner"] sup[data-ocp="citation"]::before,
+.ocp-body p[data-ocp="banner"] a[href] {
 	color: inherit;
+	text-decoration-color: currentColor;
 }
 
 .ocp-body p[data-ocp="carePoint"] {

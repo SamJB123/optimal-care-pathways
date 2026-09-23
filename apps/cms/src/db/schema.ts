@@ -113,6 +113,9 @@ export const documents = sqliteTable(
 		 *  pathway; for a core document, the colour its template's headings are printed in.
 		 *  Editable by the central team (lib/family.ts derives the legible text pair). */
 		accent: text('accent'),
+		/** The colour the print gave the document, as the import or the seed read it: what
+		 *  "Back to the print colour" returns `accent` to. Null for a pathway made here. */
+		printAccent: text('print_accent'),
 		/** Who has the document open now, as its room last announced it: the atlas's dot. */
 		present: text('present', { mode: 'json' }).$type<{ id: string; name: string }[]>(),
 		createdAt: createdAt(),
@@ -595,4 +598,32 @@ export const events = sqliteTable(
 		at: createdAt(),
 	},
 	(t) => [index('events_document_at').on(t.documentId, t.at)],
+)
+
+// ---------------------------------------------------------------------------
+// Invite links — a team's way in for a workshop room
+// ---------------------------------------------------------------------------
+
+/**
+ * A link that brings whoever opens it, once signed in, into a team at a role. Made by
+ * someone who may bring people in at that role, for 14 days, revocable; redeemed at
+ * /join/{token} through the auth worker's grant door with the maker's authority, so a
+ * maker who has since lost it makes the link fail. `document_id` is where the link was
+ * made (a pathway's team page) and where it lands; null for the central team.
+ */
+export const inviteLinks = sqliteTable(
+	'invite_links',
+	{
+		token: text('token').primaryKey(),
+		orgId: text('org_id').notNull(),
+		/** The team's name when the link was made, for the join page. */
+		teamName: text('team_name').notNull(),
+		role: text('role').$type<'viewer' | 'member' | 'admin' | 'owner'>().notNull(),
+		documentId: text('document_id').references(() => documents.id, { onDelete: 'cascade' }),
+		createdBy: text('created_by').notNull(),
+		createdAt: createdAt(),
+		expiresAt: timestampMs('expires_at').notNull(),
+		revokedAt: timestampMs('revoked_at'),
+	},
+	(t) => [index('invite_links_org').on(t.orgId)],
 )

@@ -95,7 +95,7 @@ for (const pathway of LEGACY_PATHWAYS) {
 			const core = cores.get(pathway.audience)?.()
 			if (!core) throw new Error(`no template core for ${pathway.audience}`)
 			const result = mapLegacy({ model, pathway, core, id: deterministicId, orgId: `pending:${pathway.pathwaySlug}`, actorId: 'test' })
-			const report = await auditCoverage(await openPdf(join(appDir, 'public', 'legacy-sources', pathway.file)), model)
+			const report = await auditCoverage(await openPdf(join(appDir, 'legacy', 'source', pathway.file)), model)
 
 			// Every printed word placed once.
 			expect(report.missingLines.map((l) => `p.${l.page} ${l.missing.join(' ')} ← ${l.text}`)).toEqual([])

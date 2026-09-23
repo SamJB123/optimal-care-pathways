@@ -174,28 +174,27 @@ function GuidanceInline(props: BlockProps<GuidanceAttrs>) {
 			summary={() => (
 				<span class="ocp-guidance-summary">
 					<span class="ocp-guidance-label">Drafting guidance</span>
-					<Show
-						when={props.edit}
-						fallback={
-							<Show when={props.attrs.done}>
-								<span class="ocp-guidance-done">done</span>
-							</Show>
-						}
-					>
-						<button
-							type="button"
-							class="ocp-guidance-tick"
-							aria-pressed={props.attrs.done ? 'true' : 'false'}
-							title={props.attrs.done ? 'Reopen this guidance' : 'Mark this guidance done'}
-							onClick={toggle}
-						>
-							<span aria-hidden="true">{props.attrs.done ? '☑' : '☐'}</span>
-							<span>Done</span>
-						</button>
+					<Show when={props.attrs.done}>
+						<span class="ocp-guidance-done">done</span>
 					</Show>
 				</span>
 			)}
 		>
+			{/* The Done control opens the body, not the summary: a control inside the
+			    summary would be a control inside a control. */}
+			<Show when={props.edit}>
+				<button
+					type="button"
+					class="ocp-guidance-tick"
+					contenteditable="false"
+					aria-pressed={props.attrs.done ? 'true' : 'false'}
+					title={props.attrs.done ? 'Reopen this guidance' : 'Mark this guidance done'}
+					onClick={toggle}
+				>
+					<span aria-hidden="true">{props.attrs.done ? '☑' : '☐'}</span>
+					<span>Done</span>
+				</button>
+			</Show>
 			{props.children}
 		</AccordionItem>
 	)
@@ -243,8 +242,10 @@ export function ColumnBlock(props: BlockProps<Record<string, never>>) {
 }
 
 export function ResourceListBlock(props: BlockProps<Record<string, never>>) {
+	// In the editor the node views' own elements stand between the list and its rows, which
+	// a `ul` may not hold: there the list is a `div` with the list role.
 	return (
-		<RichList colorBase="primary" class="ocp-resources" label="Resources">
+		<RichList as={props.edit ? 'div' : 'ul'} colorBase="primary" class="ocp-resources" label="Resources">
 			{props.children}
 		</RichList>
 	)

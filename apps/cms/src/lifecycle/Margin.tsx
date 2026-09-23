@@ -27,11 +27,12 @@ import { forgetBody, restingBody } from '#/editors/SectionView.tsx'
 import { ago, shortDate } from '#/lib/labels.ts'
 import { sectionAnchor } from '#/lib/links.ts'
 import { legacyOriginsOf } from '#/server/legacy-fns.ts'
-import { addComment, decideSection, divergeSection, resolveComment, revertSection } from '#/server/lifecycle-fns.ts'
+import { addComment, decideSection, divergeSection, revertSection, suggestionsForCore } from '#/server/lifecycle-fns.ts'
 import { addSubsection, deleteSection, renameSection, setPointOfCare, setSectionHidden } from '#/server/structure-fns.ts'
 import type { SectionChange } from '#/server/lifecycle.ts'
 import { divergedFrom, instructionsFor } from '#/server/workspace-fns.ts'
 import { type MarginNote, marginNotesOf } from './guidance.ts'
+import { CommentThread, Composer, SuggestionCard } from './Thread.tsx'
 import { atLeast, DocumentContext, MARK_GLYPH, MARK_WORDS, markOf, sectionLabel } from './workspace.ts'
 import './margin.css'
 
@@ -320,6 +321,7 @@ function SectionMargin(props: { sectionId: string }) {
 										await workspace.refreshComments()
 									})
 								}
+								// A suggestion goes to the central team as a whole: it names no one.
 							/>
 							<Confirming
 								label="Take your own copy"
@@ -380,51 +382,18 @@ function SectionMargin(props: { sectionId: string }) {
 						<ReviewDecision sectionId={row().id} />
 					</Show>
 
+					<Show when={workspace.document.kind === 'core' && workspace.state().central}>
+						<SectionSuggestions coreSectionId={row().id} />
+					</Show>
+
 					<ToolPanelSection title="Comments" meta={thread().length > 0 ? `${thread().length}` : undefined}>
-						<Show when={thread().length > 0} fallback={<p class="ocp-muted">No comments on this section.</p>}>
-							<For each={thread()}>
-								{(comment) => (
-									<article class="ocp-comment" data-resolved={comment.resolvedAt ? 'true' : undefined}>
-										<header>
-											<strong>{comment.authorName}</strong>
-											<span class="ocp-muted"> {shortDate(comment.createdAt)}</span>
-											<Show when={comment.kind === 'suggestion'}>
-												<span class="ocp-comment-kind">Suggestion to the core</span>
-											</Show>
-										</header>
-										<p>{comment.body}</p>
-										<Show when={canEdit()}>
-											<button
-												type="button"
-												class="ocp-link-button"
-												disabled={busy()}
-												onClick={() =>
-													run(async () => {
-														await resolveComment({ data: { commentId: comment.id, resolved: !comment.resolvedAt } })
-														await workspace.refreshComments()
-													})
-												}
-											>
-												{comment.resolvedAt ? 'Reopen' : 'Resolve'}
-											</button>
-										</Show>
-									</article>
-								)}
-							</For>
-						</Show>
-						<Show when={canEdit()}>
-							<Composer
-								label="Comment"
-								action="Add the comment"
-								busy={busy()}
-								onSubmit={(text) =>
-									run(async () => {
-										await addComment({ data: { documentId: workspace.documentId, sectionId: row().id, kind: 'comment', body: text } })
-										await workspace.refreshComments()
-									})
-								}
-							/>
-						</Show>
+						<CommentThread
+							documentId={workspace.documentId}
+							sectionId={row().id}
+							comments={thread()}
+							canWrite={canEdit()}
+							onChanged={workspace.refreshComments}
+						/>
 					</ToolPanelSection>
 
 					<Show when={origins()}>
@@ -706,17 +675,23 @@ function ReviewDecision(props: { sectionId: string }) {
 }
 
 function DecisionStrip(props: { busy: boolean; onDecide: (decision: 'approved' | 'changes_requested', note: string | null) => void }) {
-	let note!: HTMLTextAreaElement
+	let note: HTMLTextAreaElement | undefined
+	const written = () => note?.value.trim() || null
 	return (
 		<div class="ocp-decision">
 			<Field label="A note for the drafter (optional)">
-				<TextArea ref={note} rows={2} />
+				<TextArea
+					ref={(el) => {
+						note = el
+					}}
+					rows={2}
+				/>
 			</Field>
 			<ToolPanelActions>
-				<Button variant="solid" colorBase="success" disabled={props.busy} onClick={() => props.onDecide('approved', note.value.trim() || null)}>
+				<Button variant="solid" colorBase="success" disabled={props.busy} onClick={() => props.onDecide('approved', written())}>
 					Approve
 				</Button>
-				<Button variant="outline" colorBase="warning" disabled={props.busy} onClick={() => props.onDecide('changes_requested', note.value.trim() || null)}>
+				<Button variant="outline" colorBase="warning" disabled={props.busy} onClick={() => props.onDecide('changes_requested', written())}>
 					Ask for changes
 				</Button>
 			</ToolPanelActions>
@@ -724,27 +699,33 @@ function DecisionStrip(props: { busy: boolean; onDecide: (decision: 'approved' |
 	)
 }
 
-function Composer(props: { label: string; action: string; busy: boolean; onSubmit: (body: string) => void }) {
-	let body!: HTMLTextAreaElement
+/** A core section's suggestions from the pathways that share it, for the central team:
+ *  what they asked, and the answer, beside the text it is about. */
+function SectionSuggestions(props: { coreSectionId: string }) {
+	const workspace = useContext(DocumentContext)
+	const [version, setVersion] = createSignal(0)
+	const all = createMemo(() => {
+		version()
+		return suggestionsForCore({ data: { documentId: workspace.documentId } })
+	})
+	const here = () => all().filter((s) => s.coreSectionId === props.coreSectionId)
+	const open = () => here().filter((s) => !s.resolvedAt).length
 	return (
-		<form
-			class="ocp-composer"
-			onSubmit={(event) => {
-				event.preventDefault()
-				const text = body.value.trim()
-				if (!text) return
-				props.onSubmit(text)
-				body.value = ''
-			}}
-		>
-			<Field label={props.label}>
-				<TextArea ref={body} rows={3} />
-			</Field>
-			<ToolPanelActions>
-				<Button type="submit" variant="solid" disabled={props.busy}>
-					{props.action}
-				</Button>
-			</ToolPanelActions>
-		</form>
+		<Loading fallback={null}>
+			<Show when={here().length > 0}>
+				<ToolPanelSection title="Suggestions from pathways" meta={open() > 0 ? `${open()} open` : 'all resolved'}>
+					<For each={here()}>
+						{(suggestion) => (
+							<SuggestionCard
+								suggestion={suggestion}
+								onChanged={async () => {
+									setVersion((v) => v + 1)
+								}}
+							/>
+						)}
+					</For>
+				</ToolPanelSection>
+			</Show>
+		</Loading>
 	)
 }

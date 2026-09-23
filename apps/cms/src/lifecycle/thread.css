@@ -1,0 +1,58 @@
+/* Conversation on a section: the thread, replies set under what they answer, the
+   composer's list of people to name. The comment itself is margin.css's .ocp-comment. */
+
+.ocp-thread {
+	display: grid;
+	gap: 0.25rem;
+}
+
+.ocp-replies {
+	display: grid;
+	gap: 0.1rem;
+	margin-block-start: 0.35rem;
+	padding-inline-start: 0.75rem;
+	border-inline-start: 2px solid var(--hair-strong);
+}
+
+.ocp-reply {
+	border-block-end: 0;
+	padding-block: 0.3rem;
+}
+
+.ocp-comment-actions {
+	display: flex;
+	gap: 0.9rem;
+	margin: 0.2rem 0 0;
+	font-size: var(--t-xs);
+}
+
+.ocp-composer {
+	position: relative;
+}
+
+/* The people "@" offers, under the text area. */
+.ocp-mentions {
+	display: grid;
+	margin: -0.3rem 0 0;
+	padding: 0.25rem;
+	border: 1px solid var(--hair-strong);
+	border-radius: 0.4rem;
+	background: var(--color-base-100);
+	box-shadow: 0 12px 28px -18px rgb(0 0 0 / 0.45);
+	font-size: var(--t-sm);
+}
+
+.ocp-mentions [role="option"] {
+	padding: 0.3rem 0.5rem;
+	border-radius: 0.3rem;
+	cursor: pointer;
+}
+
+.ocp-mentions [role="option"][aria-selected="true"] {
+	background: color-mix(in oklab, var(--family, var(--color-primary)) 14%, transparent);
+	color: var(--family-ink, var(--color-base-content));
+}
+
+.ocp-suggestion .ocp-composer {
+	margin-block-start: 0.4rem;
+}

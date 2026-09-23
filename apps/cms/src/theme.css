@@ -25,6 +25,11 @@
 	--color-warning: light-dark(#a87800, #f2c94c);
 	--color-error: light-dark(#b8323c, #f28b8b);
 
+	/* Quieter text stays readable: the package's muted ink (76%) falls short of AA on the
+	   paper ground at the small sizes it is used for (labels, times, eyebrows). */
+	--color-base-content-muted: color-mix(in oklab, var(--color-base-content) 84%, transparent);
+	--color-base-content-faint: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+
 	/* Hairlines, not cards (decision U2): one rule weight for structure, one for emphasis. */
 	--hair: color-mix(in oklab, var(--color-base-content) 13%, transparent);
 	--hair-strong: color-mix(in oklab, var(--color-base-content) 28%, transparent);

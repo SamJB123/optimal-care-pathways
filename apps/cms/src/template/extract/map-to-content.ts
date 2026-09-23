@@ -27,6 +27,12 @@ import type { ColorFamily, JsonMark, JsonNode } from '#/content/schema.ts'
 import type { Ownership } from '#/db/schema.ts'
 import type { DocumentRow, ReferenceRow, SectionRow, SeedResult, TemplateRow } from '../rows.ts'
 import { figureUrl, type TemplateInfo } from '../templates.ts'
+import {
+	type HyperlinkOccurrence,
+	type HyperlinkTargets,
+	hasHyperlinkNote,
+	resolveHyperlinks,
+} from './hyperlinks.ts'
 import type {
 	Block,
 	ExtractedDocument,
@@ -48,6 +54,18 @@ export interface MapInput {
 	orgId: string
 	/** Deterministic id for a (kind, key) pair. */
 	id: (kind: 'template' | 'document' | 'section' | 'reference', key: string) => string
+	/** Where the authors' "<hyperlink to be added>" notes point (hyperlinks.ts). Without
+	 *  it the notes stay as printed. */
+	hyperlinks?: HyperlinkTargets
+}
+
+/** The rows, and what became of each "<hyperlink to be added>" note, in section order. */
+export interface MappedTemplate extends SeedResult {
+	hyperlinks: (HyperlinkOccurrence & {
+		address: string
+		printedNumber: string | null
+		title: string | null
+	})[]
 }
 
 // ---------------------------------------------------------------------------
@@ -71,6 +89,8 @@ interface Grammar {
 	stats: SeedResult['stats']
 	/** Each content figure's per-page index (see `contentFigures`). */
 	figureIndex: Map<Figure, number>
+	/** Resource entries whose only address was a "<hyperlink to be added>" note. */
+	notedResources: Set<JsonNode>
 }
 
 /** The band glyphs by their alt text, first match wins ("Calligraphy Pen", "Information",
@@ -934,6 +954,14 @@ const isBareTitleRow = (blocks: Block[]): boolean => {
 	return text !== '' && text.split(/\s+/).length <= 12 && !/[:.]$/.test(text)
 }
 
+/** An entry left without an address whose note was "<hyperlink to be added>" is
+ *  remembered: the seed's resolver gives it the address its title names (hyperlinks.ts). */
+function noteResource(node: JsonNode, paragraphs: Paragraph[], g: Grammar): JsonNode {
+	if (node.attrs?.url === '' && hasHyperlinkNote(plainText(paragraphs.flatMap((p) => p.runs))))
+		g.notedResources.add(node)
+	return node
+}
+
 function resourceNode(paragraphs: Paragraph[], g: Grammar): JsonNode {
 	const [lead, ...more] = paragraphs
 	const runs = (lead?.runs ?? []).filter(
@@ -974,7 +1002,11 @@ function resourceNode(paragraphs: Paragraph[], g: Grammar): JsonNode {
 				.find((u): u is string => u !== null) ??
 			urlInNotes(paragraphs) ??
 			''
-		return { type: 'resource', attrs: { title, url }, content: description }
+		return noteResource(
+			{ type: 'resource', attrs: { title, url }, content: description },
+			paragraphs,
+			g,
+		)
 	}
 	const title = plainText(runs.slice(0, titleEnd)).replace(/\s+/g, ' ').trim()
 	const rest = runs.slice(titleEnd)
@@ -999,7 +1031,7 @@ function resourceNode(paragraphs: Paragraph[], g: Grammar): JsonNode {
 			.find((u): u is string => u !== null) ??
 		urlInNotes(paragraphs) ??
 		''
-	return { type: 'resource', attrs: { title, url }, content: kept }
+	return noteResource({ type: 'resource', attrs: { title, url }, content: kept }, paragraphs, g)
 }
 
 function boxContent(rows: ClassifiedRow[], g: Grammar, kind: string = 'plain'): JsonNode[] {
@@ -1827,6 +1859,7 @@ export function createBlockMapper(
 		figureUrl: options.figureUrl,
 		stats,
 		figureIndex: new Map(contentFigures(model).map(({ figure, index }) => [figure, index])),
+		notedResources: new Set(),
 	}
 	return {
 		blocks: (blocks) => blockNodes(blocks, g),
@@ -1835,7 +1868,7 @@ export function createBlockMapper(
 	}
 }
 
-export function mapTemplate(input: MapInput): SeedResult {
+export function mapTemplate(input: MapInput): MappedTemplate {
 	const { model, template, orgId, id } = input
 	const documentId = id('document', `${template.templateId}:core`)
 	const learned = learnGrammar(model)
@@ -1849,7 +1882,17 @@ export function mapTemplate(input: MapInput): SeedResult {
 		figureUrl: (page, index) => figureUrl(template.key, page, index),
 		stats,
 		figureIndex: new Map(contentFigures(model).map(({ figure, index }) => [figure, index])),
+		notedResources: new Set(),
 	}
+	// A step's cross-reference is checked against this document's own sections.
+	const showing = {
+		kind: template.kind,
+		sections: placed.map((p) => ({
+			address: p.address,
+			title: titleOf(p.section.headingText, p.section.number),
+		})),
+	}
+	const hyperlinks: MappedTemplate['hyperlinks'] = []
 
 	const templateRow: TemplateRow = {
 		id: template.templateId,
@@ -1894,6 +1937,24 @@ export function mapTemplate(input: MapInput): SeedResult {
 						]
 					: blockNodes(p.section.blocks, g)
 		const number = p.section.number
+		const mapped: JsonNode = {
+			type: 'doc',
+			content: body.length > 0 ? body : [{ type: 'paragraph' }],
+		}
+		let bodyJson = mapped
+		if (input.hyperlinks) {
+			const resolved = resolveHyperlinks(mapped, showing, input.hyperlinks, (n) =>
+				g.notedResources.has(n),
+			)
+			bodyJson = resolved.body
+			for (const found of resolved.found)
+				hyperlinks.push({
+					...found,
+					address: p.address,
+					printedNumber: number,
+					title: titleOf(p.section.headingText, number),
+				})
+		}
 		return {
 			id: sectionId(p),
 			documentId,
@@ -1909,7 +1970,7 @@ export function mapTemplate(input: MapInput): SeedResult {
 			pathwayOwnership: ownershipOf(p.section, g),
 			apparatus,
 			instructions: INSTRUCTIONS_SUBTREE.test(p.address),
-			bodyJson: { type: 'doc', content: body.length > 0 ? body : [{ type: 'paragraph' }] },
+			bodyJson,
 			sourcePages: sourcePagesOf(p.section),
 			icon: p.section.icon
 				? figureUrl(template.key, p.section.icon.page, g.figureIndex.get(p.section.icon) ?? 0)
@@ -1934,5 +1995,5 @@ export function mapTemplate(input: MapInput): SeedResult {
 		}
 	})
 
-	return { template: templateRow, document, sections, references, stats }
+	return { template: templateRow, document, sections, references, stats, hyperlinks }
 }

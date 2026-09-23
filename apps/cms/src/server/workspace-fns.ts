@@ -11,7 +11,8 @@ import type { JsonNode } from '#/content/schema.ts'
 import { schema } from '#/db/index.ts'
 import { documentName } from '#/lib/labels.ts'
 import { outlineOrder } from '#/lib/outline.ts'
-import { documentRoleOf } from './access.ts'
+import { OCP_NAMESPACE } from '#/lib/roles.ts'
+import { centralOrgId, documentRoleOf } from './access.ts'
 import { envOf, requireUser } from './env.ts'
 
 const idSchema = z.string().min(1).max(64)
@@ -79,6 +80,27 @@ export const divergedFrom = createServerFn({ method: 'GET' })
 			.innerJoin(schema.documents, eq(schema.documents.id, schema.sections.documentId))
 			.where(and(eq(schema.sections.coreSectionId, data.sectionId), eq(schema.sections.ownership, 'owned')))
 		return rows.map((r) => ({ documentId: r.documentId, sectionId: r.sectionId, name: documentName(r) })).sort((a, b) => a.name.localeCompare(b.name))
+	})
+
+/** Who a comment on this document may name with @: its own team, then the central team
+ *  (reviewers of every document). Names only — never an address. */
+export const mentionable = createServerFn({ method: 'GET' })
+	.inputValidator(z.object({ documentId: idSchema }))
+	.handler(async ({ data, context }): Promise<{ userId: string; name: string; team: 'document' | 'central' }[]> => {
+		const document = await requireMemberOf(requireUser(context.userId), data.documentId)
+		const { env, d } = await envOf()
+		const central = await centralOrgId(env.AUTH, d)
+		const [own, centre] = await Promise.all([
+			env.AUTH.listOrgMembers(document.orgId, OCP_NAMESPACE),
+			central && central !== document.orgId ? env.AUTH.listOrgMembers(central, OCP_NAMESPACE) : Promise.resolve([]),
+		])
+		const out: { userId: string; name: string; team: 'document' | 'central' }[] = []
+		const add = (members: { userId: string; name: string }[], team: 'document' | 'central') => {
+			for (const m of members) if (!out.some((o) => o.userId === m.userId)) out.push({ userId: m.userId, name: m.name, team })
+		}
+		add(own, 'document')
+		add(centre, 'central')
+		return out.sort((a, b) => (a.team === b.team ? a.name.localeCompare(b.name) : a.team === 'document' ? -1 : 1))
 	})
 
 /** The names of people in a document's room (its roster carries only their ids). */
