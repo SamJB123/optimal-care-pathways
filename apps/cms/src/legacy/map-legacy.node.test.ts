@@ -11,7 +11,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { deterministicId } from '../../scripts/ids.ts'
-import { parseBody } from '../content/schema.ts'
+import { type JsonNode, parseBody } from '../content/schema.ts'
 import { mapTemplate } from '../template/extract/map-to-content.ts'
 import type { ExtractedDocument } from '../template/extract/model.ts'
 import { templateByKey } from '../template/templates.ts'
@@ -122,13 +122,13 @@ describe.skipIf(!existsSync(join(appDir, modelPath)))(
 
 		it('turns timeframe subsections into timeframe boxes and checklists into point-of-care items', () => {
 			const body = (address: string) => result.sections.find((s) => s.address === address)?.bodyJson
-			const types = (node: unknown): string[] => {
+			const types = (node: JsonNode | null | undefined): string[] => {
 				const out: string[] = []
-				const walk = (n: { type: string; content?: unknown[] }) => {
+				const walk = (n: JsonNode) => {
 					out.push(n.type)
-					for (const c of n.content ?? []) walk(c as { type: string; content?: unknown[] })
+					for (const c of n.content ?? []) walk(c)
 				}
-				walk(node as { type: string; content?: unknown[] })
+				if (node) walk(node)
 				return out
 			}
 			expect(types(body('2.1'))).toContain('timeframe')
@@ -181,11 +181,10 @@ describe.skipIf(!existsSync(join(appDir, modelPath)))(
 			// The legacy bodies cite legacy references only (the template scaffold's own
 			// bodies cite the core's rows, which is right: shared content is stored once).
 			const cited = new Set<string>()
-			const walk = (n: { type: string; attrs?: Record<string, unknown>; content?: unknown[] }) => {
-				if (n.type === 'citation' && typeof n.attrs?.referenceId === 'string')
-					cited.add(n.attrs.referenceId)
-				for (const c of n.content ?? [])
-					walk(c as { type: string; attrs?: Record<string, unknown>; content?: unknown[] })
+			const walk = (n: JsonNode) => {
+				const referenceId = n.attrs?.referenceId
+				if (n.type === 'citation' && typeof referenceId === 'string') cited.add(referenceId)
+				for (const c of n.content ?? []) walk(c)
 			}
 			for (const s of result.legacySections) if (s.bodyJson) walk(s.bodyJson)
 			expect(cited.size).toBeGreaterThan(60)

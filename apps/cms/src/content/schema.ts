@@ -129,7 +129,7 @@ export const COLOR_FAMILIES = [
 ] as const
 export type ColorFamily = (typeof COLOR_FAMILIES)[number]
 export const isColorFamily = (value: string): value is ColorFamily =>
-	(COLOR_FAMILIES as readonly string[]).includes(value)
+	COLOR_FAMILIES.some((family) => family === value)
 
 export interface BannerAttrs {
 	/** 'band' = the box's navy title band; 'sub' = a light group header inside a box. */
@@ -191,8 +191,7 @@ const BOX_FAMILY: Record<BoxKind, string> = {
 	plain: 'secondary',
 }
 
-const isBoxKind = (value: string): value is BoxKind =>
-	(BOX_KINDS as readonly string[]).includes(value)
+const isBoxKind = (value: string): value is BoxKind => BOX_KINDS.some((kind) => kind === value)
 
 /** A box's attributes read off loose node attributes (JSON, a ProseMirror node). */
 export const boxAttrsOf = (attrs: Record<string, unknown>): BoxAttrs => ({

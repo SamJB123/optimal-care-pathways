@@ -30,12 +30,7 @@ import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist/legacy/build/pdf
 import { getDocument, OPS, Util } from 'pdfjs-dist/legacy/build/pdf.mjs'
 // The display-layer record types are declared in pdf.js's typings but not re-exported
 // from the entry module.
-import type {
-	StructTreeContent,
-	StructTreeNode,
-	TextItem,
-	TextMarkedContent,
-} from 'pdfjs-dist/types/src/display/api.js'
+import type { StructTreeContent, StructTreeNode } from 'pdfjs-dist/types/src/display/api.js'
 
 export type { StructTreeContent, StructTreeNode }
 
@@ -82,7 +77,12 @@ export interface TextRun {
 	mcid: string
 	text: string
 	hasEOL: boolean
+	/** The run along its own line: baseline origin, advance as width, size as height. What
+	 *  the readers lay text out by (the size is the height), whichever way the run is set. */
 	box: Box
+	/** Where the run's ink lies on the page: the same as `box` for horizontal text, the
+	 *  rotated rectangle's bounds for a run set on its side (a figure's rotated label). */
+	extent: Box
 	/** pdf.js's font alias for the run (joins to `fonts`). */
 	fontName: string
 }
@@ -260,9 +260,29 @@ function boxOf(minMax: number[], ctm: number[]): Box {
 	}
 }
 
+/**
+ * A text run's box on the page. pdf.js reports the run's advance (`width`) and its size
+ * (`height`) in page units along the run's own direction; the transform's translation is
+ * the baseline origin, (a, b) the direction the text runs and (c, d) its up. Horizontal
+ * text is the origin plus width and height; a run set on its side (a figure's rotated
+ * label) spans the rotated rectangle's bounds, not its advance laid flat across the page.
+ */
+export function runBox(transform: number[], width: number, height: number): Box {
+	const [a = 1, b = 0, c = 0, d = 1, e = 0, f = 0] = transform
+	const along = Math.hypot(a, b) || 1
+	const up = Math.hypot(c, d) || 1
+	const [ux, uy] = [(a / along) * width, (b / along) * width]
+	const [vx, vy] = [(c / up) * height, (d / up) * height]
+	const xs = [e, e + ux, e + vx, e + ux + vx]
+	const ys = [f, f + uy, f + vy, f + uy + vy]
+	const x = Math.min(...xs)
+	const y = Math.min(...ys)
+	return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y }
+}
+
 export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promise<PdfPage> {
 	const page = await doc.getPage(pageNumber)
-	const [, , width, height] = page.view as [number, number, number, number]
+	const [, , width = 0, height = 0] = page.view
 	const pageObjId = `p${page.ref?.num ?? pageNumber}R`
 	const tree: TreeNode | null = await page.getStructTree()
 	const content = await page.getTextContent({ includeMarkedContent: true })
@@ -273,7 +293,7 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 	const textByMcid = new Map<string, TextRun[]>()
 	const textRuns: TextRun[] = []
 	const mcStack: (string | null)[] = []
-	for (const item of content.items as (TextItem | TextMarkedContent)[]) {
+	for (const item of content.items) {
 		if ('type' in item) {
 			if (item.type === 'beginMarkedContentProps') mcStack.push(item.id ?? null)
 			else if (item.type === 'beginMarkedContent') mcStack.push(null)
@@ -281,7 +301,7 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 			continue
 		}
 		const mcid = mcStack.findLast((id) => id !== null) ?? '<none>'
-		const [, , , , e, f] = item.transform
+		const [, , , , e = 0, f = 0] = item.transform
 		const run: TextRun = {
 			mcid,
 			text: item.str,
@@ -289,7 +309,8 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 			fontName: item.fontName,
 			// pdf.js reports width and height already in page units; the transform's
 			// translation is the baseline origin.
-			box: { x: e ?? 0, y: f ?? 0, width: item.width, height: item.height },
+			box: { x: e, y: f, width: item.width, height: item.height },
+			extent: runBox(item.transform, item.width, item.height),
 		}
 		textRuns.push(run)
 		const runs = textByMcid.get(mcid) ?? []

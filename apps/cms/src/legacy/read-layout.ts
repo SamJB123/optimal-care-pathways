@@ -66,6 +66,8 @@ type Weight = 'light' | 'roman' | 'medium' | 'black'
 interface Run {
 	text: string
 	box: Box
+	/** Where the run's ink lies (pdf-page's `extent`): a rotated label's true bounds. */
+	extent: Box
 	size: number
 	weight: Weight
 	italic: boolean
@@ -145,6 +147,7 @@ function runsOf(page: PdfPage): Run[] {
 		out.push({
 			text: r.text,
 			box: r.box,
+			extent: r.extent,
 			size,
 			weight: weightOf(name),
 			italic: isItalicFont(name),
@@ -434,6 +437,12 @@ const union = (boxes: Box[]): Box => {
 	return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 }
 }
 
+/** Where a line's ink lies on the page: the bounds of its runs' extents. A figure's box is
+ *  cut to its lettering's ink, so a label set on its side counts at its true height and
+ *  width, not its advance laid flat across the page. */
+const inkBox = (line: Line): Box =>
+	line.runs.length > 0 ? union(line.runs.map((r) => r.extent)) : lineBox(line)
+
 const lineBox = (line: Line): Box => ({
 	x: line.x0,
 	y: line.y - 1,
@@ -462,6 +471,41 @@ const isOffPage = (p: PaintedPath, page: PdfPage): boolean =>
 	p.box.y < -2 ||
 	p.box.x + p.box.width > page.width + 2 ||
 	p.box.y + p.box.height > page.height + 2
+
+/**
+ * A page's bleeding motifs: art that runs off the page, with every fill of the same colour
+ * chained to it within 40pt (the population pathways' corner shapes, spaced up to ~37pt
+ * apart; the dotted band under the Aboriginal and Torres Strait Islander pathway's map).
+ * A motif that bleeds is the page's decoration, all of it: only its off-page pieces were
+ * excluded before, and the pieces on the page joined the figure beside them.
+ */
+function bleedingMotifs(page: PdfPage): Set<PaintedPath> {
+	const REACH = 40
+	// Seeded by art that runs off the page; grown through every fill of its colour, since
+	// a motif mixes shapes and plain (translucent) rectangles.
+	const art = page.paths.filter((p) => p.kind === 'fill')
+	const bleeding = new Set(art.filter((p) => isArt(p) && isOffPage(p, page)))
+	const near = (a: Box, b: Box) =>
+		a.x - REACH < b.x + b.width &&
+		b.x < a.x + a.width + REACH &&
+		a.y - REACH < b.y + b.height &&
+		b.y < a.y + a.height + REACH
+	let grew = true
+	while (grew) {
+		grew = false
+		for (const p of art) {
+			if (bleeding.has(p)) continue
+			for (const q of bleeding) {
+				if (q.colour === p.colour && near(p.box, q.box)) {
+					bleeding.add(p)
+					grew = true
+					break
+				}
+			}
+		}
+	}
+	return bleeding
+}
 
 // ---------------------------------------------------------------------------
 // Columns and reading order
@@ -2126,12 +2170,13 @@ function figureRegions(
 	ornaments: Set<string>,
 	images: Box[],
 ): { box: Box; labels: Line[] }[] {
+	const motifs = bleedingMotifs(page)
 	const art = page.paths.filter(
 		(p) =>
 			isArt(p) &&
 			p.colour !== '#ffffff' &&
 			area(p.box) > 30 &&
-			!isOffPage(p, page) &&
+			!motifs.has(p) &&
 			!ornaments.has(
 				`${Math.round(p.box.x)},${Math.round(p.box.y)},${Math.round(p.box.width)},${Math.round(p.box.height)}`,
 			),
@@ -2203,6 +2248,7 @@ function figureRegions(
 				p.colour !== '#ffffff' &&
 				!pageSized(p.box, page) &&
 				!isOffPage(p, page) &&
+				!motifs.has(p) &&
 				overlapsBox(
 					{ x: box.x - 12, y: box.y - 12, width: box.width + 24, height: box.height + 24 },
 					p.box,
@@ -2242,7 +2288,7 @@ function figureRegions(
 					(l.weight !== 'light' && l.text.length < 60) ||
 					(l.size <= ladder.body + 1.5 && l.text.length < 40)),
 		)
-		regions.push({ box: labels.length > 0 ? union([box, ...labels.map(lineBox)]) : box, labels })
+		regions.push({ box: labels.length > 0 ? union([box, ...labels.map(inkBox)]) : box, labels })
 	}
 	return regions
 }
@@ -2276,7 +2322,7 @@ function panelRegions(
 		// lettering is bold, small or a handful of lines.
 		if (labels.filter((l) => l.size >= ladder.body - 0.5 && l.weight === 'light').length >= 10)
 			continue
-		regions.push({ box: union([p.box, ...labels.map(lineBox)]), labels })
+		regions.push({ box: union([p.box, ...labels.map(inkBox)]), labels })
 	}
 	return regions
 }
@@ -2335,7 +2381,7 @@ function captionRegion(
 		...page.images.filter((b) => !pageSized(b, page)),
 	].filter((b) => b.y + b.height <= last.y + 2 && b.y >= floor - 2)
 	if (drawn.length === 0 && labels.length < 2) return null
-	return { box: union([...drawn, ...labels.map(lineBox)]), labels }
+	return { box: union([...drawn, ...labels.map(inkBox)]), labels }
 }
 
 /** The line under a caption that continues it: same left edge, weight and size, one
@@ -3420,7 +3466,7 @@ export async function readLayoutDocument(
 						: undefined
 				const labels = beside ? [beside] : region.labels
 				if (labels.length === 0) continue
-				const box = union([region.box, ...labels.map(lineBox)])
+				const box = union([region.box, ...labels.map(inkBox)])
 				marks.push({
 					kind: 'figure',
 					alt: labels.map((l) => l.text).join(' '),
@@ -3463,6 +3509,8 @@ export async function readLayoutDocument(
 		// definition list, is a block of its own, and its shading is no figure's art.
 		const foundTables = [...ruledTables(page, lines, ctx), ...definitionTables(page, lines, ctx)]
 		const tableBoxes = foundTables.map((t) => t.box)
+		// The page's bleeding decoration is no figure's drawing, whichever way a figure is found.
+		const motifs = bleedingMotifs(page)
 		// Figures: panels, then art regions, then caption-named drawings; each takes its
 		// labels out of the text flow.
 		const figureBoxes: Box[] = []
@@ -3557,6 +3605,7 @@ export async function readLayoutDocument(
 						(p) =>
 							p.colour !== '#ffffff' &&
 							!isOffPage(p, page) &&
+							!motifs.has(p) &&
 							!pageSized(p.box, page) &&
 							overlapsBox(wider, p.box),
 					)
@@ -3585,7 +3634,13 @@ export async function readLayoutDocument(
 			if (pieces.length > 0 && !gridInBand) {
 				const drawn = [
 					...page.paths
-						.filter((p) => p.colour !== '#ffffff' && !isOffPage(p, page) && !pageSized(p.box, page))
+						.filter(
+							(p) =>
+								p.colour !== '#ffffff' &&
+								!isOffPage(p, page) &&
+								!motifs.has(p) &&
+								!pageSized(p.box, page),
+						)
 						.map((p) => p.box),
 					...images,
 				].filter((b) => b.y + b.height <= band.top + 2 && b.y >= band.floor - 2)
@@ -3605,7 +3660,7 @@ export async function readLayoutDocument(
 						height: (f.bbox?.[3] ?? 0) - (f.bbox?.[1] ?? 0),
 					})),
 					...drawn,
-					...lettering.map(lineBox),
+					...lettering.map(inkBox),
 				])
 				for (const piece of pieces) ctx.figures.splice(ctx.figures.indexOf(piece), 1)
 				figureBoxes.length = 0
@@ -3890,11 +3945,13 @@ export async function readLayoutDocument(
 	}
 
 	// The PDF's creation date ("D:20200118105544+11'00'"), for a print that names no date.
-	const info = (await doc.getMetadata()).info as { CreationDate?: unknown }
+	const { info } = await doc.getMetadata()
+	const creationDate =
+		typeof info === 'object' && info !== null && 'CreationDate' in info
+			? info.CreationDate
+			: undefined
 	const created =
-		typeof info.CreationDate === 'string'
-			? /^D:(\d{4})(\d{2})(\d{2})/.exec(info.CreationDate)
-			: null
+		typeof creationDate === 'string' ? /^D:(\d{4})(\d{2})(\d{2})/.exec(creationDate) : null
 	const createdAt = created ? `${created[1]}-${created[2]}-${created[3]}` : undefined
 
 	return {
@@ -4271,9 +4328,11 @@ export interface PageLine {
 	x1: number
 	size: number
 	text: string
+	/** Where the line's ink lies (a rotated label's true bounds; see `inkBox`). */
+	ink: Box
 }
 
 export const pageTextLines = (page: PdfPage): PageLine[] =>
 	linesFrom(runsOf(page), page.pageNumber)
 		.filter((l) => l.y >= FOOTER_Y)
-		.map((l) => ({ y: l.y, x0: l.x0, x1: l.x1, size: l.size, text: l.text }))
+		.map((l) => ({ y: l.y, x0: l.x0, x1: l.x1, size: l.size, text: l.text, ink: inkBox(l) }))

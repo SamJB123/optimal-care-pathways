@@ -10,6 +10,7 @@
 import { env } from 'cloudflare:test'
 import { eq } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import type { JsonNode } from '#/content/schema.ts'
 import { db, schema } from '#/db/index.ts'
 import * as lc from '#/server/lifecycle.ts'
@@ -309,28 +310,38 @@ describe('REST through chanfana', () => {
 	it('serves JSON from the same handlers, with 404s for missing things', async () => {
 		const list = await call('/api/v1/documents')
 		expect(list.status).toBe(200)
-		const body = (await list.json()) as { documents: { slug: string }[] }
+		const body = z
+			.object({ documents: z.array(z.object({ slug: z.string() })) })
+			.parse(await list.json())
 		expect(body.documents.some((d) => d.slug === PARTNER_SLUG)).toBe(true)
 		const section = await call(`/api/v1/documents/${PARTNER_SLUG}/sections/1`)
 		expect(section.status).toBe(200)
 		expect(
-			((await section.json()) as { section: { markdown: string } }).section.markdown,
+			z.object({ section: z.object({ markdown: z.string() }) }).parse(await section.json()).section
+				.markdown,
 		).toContain('[^1]')
 		const missing = await call(`/api/v1/documents/${PARTNER_SLUG}/sections/9`)
 		expect(missing.status).toBe(404)
 		const nowhere = await call('/api/v1/documents/no-such-document')
 		expect(nowhere.status).toBe(404)
 		const searched = await call('/api/v1/search?query=frailty&limit=5')
-		expect(((await searched.json()) as { results: unknown[] }).results).toHaveLength(1)
+		expect(
+			z.object({ results: z.array(z.unknown()) }).parse(await searched.json()).results,
+		).toHaveLength(1)
 	})
 
 	it('publishes an OpenAPI 3.1 document naming every operation, and a Scalar page', async () => {
 		const spec = await call('/api/v1/openapi.json')
 		expect(spec.status).toBe(200)
-		const json = (await spec.json()) as {
-			openapi: string
-			paths: Record<string, Record<string, { operationId?: string }>>
-		}
+		const json = z
+			.object({
+				openapi: z.string(),
+				paths: z.record(
+					z.string(),
+					z.record(z.string(), z.looseObject({ operationId: z.string().optional() })),
+				),
+			})
+			.parse(await spec.json())
 		expect(json.openapi.startsWith('3.1')).toBe(true)
 		const operationIds = Object.values(json.paths).flatMap((methods) =>
 			Object.values(methods).map((op) => op.operationId),
@@ -371,7 +382,11 @@ describe('MCP', () => {
 		)
 		expect(list.status).toBe(200)
 		const payload = await responseJson(list)
-		const names = (payload.result as { tools: { name: string }[] }).tools.map((t) => t.name).sort()
+		const names = z
+			.object({ tools: z.array(z.object({ name: z.string() })) })
+			.parse(payload.result)
+			.tools.map((t) => t.name)
+			.sort()
 		expect(names).toEqual(
 			[
 				'fetch',
@@ -408,17 +423,21 @@ describe('MCP', () => {
 		)
 		expect(response.status).toBe(200)
 		const payload = await responseJson(response)
-		const result = payload.result as {
-			structuredContent: { section: { address: string } }
-			content: { type: string; text: string }[]
-		}
+		const result = z
+			.object({
+				structuredContent: z.object({ section: z.object({ address: z.string() }) }),
+				content: z.array(z.object({ type: z.string(), text: z.string() })),
+			})
+			.parse(payload.result)
 		expect(result.structuredContent.section.address).toBe('1')
 		expect(result.content[0]?.text).toContain('"address":"1"')
 	})
 })
 
 /** The handler answers JSON or SSE by client preference; read whichever came back. */
-async function responseJson(response: Response): Promise<{ result?: unknown; error?: unknown }> {
+const rpcReply = z.object({ result: z.unknown().optional(), error: z.unknown().optional() })
+
+async function responseJson(response: Response): Promise<z.infer<typeof rpcReply>> {
 	const type = response.headers.get('content-type') ?? ''
 	const body = await response.text()
 	if (type.includes('text/event-stream')) {
@@ -427,9 +446,9 @@ async function responseJson(response: Response): Promise<{ result?: unknown; err
 			.filter((line) => line.startsWith('data:'))
 			.map((line) => line.slice(5).trim())
 			.at(-1)
-		return JSON.parse(data ?? '{}') as { result?: unknown }
+		return rpcReply.parse(JSON.parse(data ?? '{}'))
 	}
-	return JSON.parse(body) as { result?: unknown }
+	return rpcReply.parse(JSON.parse(body))
 }
 
 // Keep the reference row queryable by id in the assertions above.

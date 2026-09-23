@@ -179,9 +179,14 @@ export async function auditCoverage(
 		const pageLines = joinUrlBreaks(pageTextLines(page))
 		for (const line of pageLines) {
 			// A label's baseline lies inside the figure's box; a caption just above it does not.
+			// A label set on its side is judged by its ink: laid flat, its advance runs past the
+			// figure's box (which is cut to the ink).
 			const inFigure = figures.some(
 				([x0, y0, x1, y1]) =>
-					line.x0 >= x0 - 6 && line.x1 <= x1 + 6 && line.y >= y0 - 3 && line.y <= y1 - 3,
+					line.y >= y0 - 3 &&
+					line.y <= y1 - 3 &&
+					((line.x0 >= x0 - 6 && line.x1 <= x1 + 6) ||
+						(line.ink.x >= x0 - 6 && line.ink.x + line.ink.width <= x1 + 6)),
 			)
 			if (inFigure) {
 				report.figureLines.push({ page: n, text: line.text })
