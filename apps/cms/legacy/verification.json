@@ -415,5 +415,19 @@
 			"'First published in July 2015. Updated April 2016. This edition published in June 2021.' on the imprint page; second edition.",
 			"Page 2 is blank, page 85 carries only its footer, and the back cover (page 86) carries only the cover artwork."
 		]
+	},
+	"waldenstroms-macroglobulinaemia": {
+		"pages": "1-92 of 92",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages; 'Timeframe continued' boxes (pages 8 and 9) resume the Step 2 and Step 3 timeframes; Steps 2, 3 and 5 open with text of their own under the band; Step 1's checklist is the 'General health checklist' it is printed as.",
+			"The body's Step 1 heading and the contents misprint Step 1 as 'Presentation, initial investigations and referral'; kept as printed. Figure 3's step labels are read against the template's step titles, so its rows fall in Steps 2 to 4.",
+			"Figure 3 (pages 24-25) is the timeframes table carried over two pages ('(continued)'); all eight rows become timeframe boxes.",
+			"The haematology design sets the body's run-in headings ('Molecular genetics tests', 'Watchful waiting', 'Training and experience required of the appropriate specialists', the contributor groups) in bold at body size; they nest under the numbered section above them, as printed. '3.1.3 Pharmocogenetics' is kept as printed.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 67) are rendered figures.",
+			"Citations the printed list has no entry for (Kleinstern et al., WHO 2018, Herishanu et al., Molica et al., Shanafelt et al., Temel et al., ACSQHC 2020, AIHW 2017) are recorded in the ledger; 'Australian Government Department of Health 2017' is the list's 'Commonwealth Department of Health 2017'.",
+			"'This edition published in June 2023.' on the imprint page; first edition.",
+			"Page 2 is blank, page 90 carries only its folio, page 91 only its footer, and the back cover (page 92) carries only the cover artwork."
+		]
 	}
 }
