@@ -20,7 +20,8 @@ import { PublishedApi } from '#/api/rpc.ts'
 import { apiContext } from '#/api/server.ts'
 import { db, schema } from '#/db/index.ts'
 import { DocumentsLiveTopic, type LiveTopicHost, SectionsLiveTopic } from '#/lib/live-topics.ts'
-import { OCP_NAMESPACE, ROLE_LADDER, type Role } from '#/lib/roles.ts'
+import type { Role } from '#/lib/roles.ts'
+import { documentRoleOf } from '#/server/access.ts'
 import { type DocRoomCapability, documentRoomName } from '#/rooms/document-room.ts'
 
 /** Data-less fan-out for this worker's reactive-D1 topics: one instance per topic. */
@@ -65,13 +66,7 @@ export class CoreRpcRoot extends WorkerRoot<Cloudflare.Env> implements LiveTopic
 						.limit(1)
 				)[0]
 				if (!row) return null
-				const membership = await this.env.AUTH.getOrgMembershipById(
-					this.userId,
-					row.orgId,
-					OCP_NAMESPACE,
-				)
-				if (!membership) return null
-				return ROLE_LADDER.find((role) => role === membership.role) ?? null
+				return documentRoleOf(this.env.AUTH, db(this.env.DB), this.userId, row.orgId)
 			})()
 			this.#roles.set(documentId, cached)
 		}

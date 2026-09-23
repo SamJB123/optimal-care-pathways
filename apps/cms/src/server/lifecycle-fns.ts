@@ -5,12 +5,9 @@
  */
 
 import { createServerFn } from '@tanstack/solid-start'
-import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { renderBodyHtml } from '#/content/render-html.tsx'
-import { schema } from '#/db/index.ts'
-import { OCP_NAMESPACE } from '#/lib/roles.ts'
-import { CENTRAL_ORG_NAME, CENTRAL_ORG_SLUG } from './documents.ts'
+import { centralOrgId } from './access.ts'
 import { envOf, requireUser } from './env.ts'
 import * as lifecycle from './lifecycle.ts'
 
@@ -25,22 +22,7 @@ async function lifecycleOf(): Promise<lifecycle.Lifecycle> {
 		auth: env.AUTH,
 		rooms: env.DOCUMENT_ROOM,
 		centralOrgId: () => {
-			central ??= (async () => {
-				const core = (
-					await d
-						.select({ orgId: schema.documents.orgId })
-						.from(schema.documents)
-						.where(eq(schema.documents.kind, 'core'))
-						.limit(1)
-				)[0]
-				if (!core) return null
-				const org = await env.AUTH.ensureOrganization({
-					slug: CENTRAL_ORG_SLUG,
-					name: CENTRAL_ORG_NAME,
-					namespace: OCP_NAMESPACE,
-				})
-				return org.id === core.orgId ? org.id : null
-			})()
+			central ??= centralOrgId(env.AUTH, d)
 			return central
 		},
 		origin: env.PUBLIC_ORIGIN ?? 'https://ocp-cms.aicolab.workers.dev',

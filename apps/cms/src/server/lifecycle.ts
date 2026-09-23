@@ -30,6 +30,7 @@ import { publishDocumentRows, publishSectionRows } from '#/lib/live-publish.ts'
 import { OCP_NAMESPACE, ROLE_LADDER, type Role } from '#/lib/roles.ts'
 import { cacheTagFor, PUBLISHED_CACHE_TAG } from '#/api/published.ts'
 import { documentRoomName } from '#/rooms/document-room.ts'
+import { documentRole, type MembershipAuth } from './access.ts'
 
 type DocumentRow = typeof schema.documents.$inferSelect
 type SectionRow = typeof schema.sections.$inferSelect
@@ -41,12 +42,7 @@ export type CommentRow = typeof schema.comments.$inferSelect
  *  mail, and the document rooms to fold live bodies before a snapshot. */
 export interface Lifecycle {
 	d: Db
-	auth: {
-		getOrgMembershipById(
-			userId: string,
-			orgId: string,
-			namespace: string,
-		): Promise<{ role: string } | null>
+	auth: MembershipAuth & {
 		getUserById(userId: string): Promise<{ id: string; name: string; email: string } | null>
 		listOrgMembers(
 			organizationId: string,
@@ -81,17 +77,9 @@ const refuse = (message: string): never => {
 // Roles
 // ---------------------------------------------------------------------------
 
+/** The one access rule (access.ts), with the lifecycle's own central-organisation source. */
 async function roleOn(lc: Lifecycle, userId: string, document: DocumentRow): Promise<Role | null> {
-	const membership = await lc.auth.getOrgMembershipById(userId, document.orgId, OCP_NAMESPACE)
-	const own = membership ? (ROLE_LADDER.find((r) => r === membership.role) ?? null) : null
-	if (own) return own
-	// Central members see every document as reviewers (decision 27).
-	const central = await lc.centralOrgId()
-	if (central && central !== document.orgId) {
-		const centralMembership = await lc.auth.getOrgMembershipById(userId, central, OCP_NAMESPACE)
-		if (centralMembership) return 'admin'
-	}
-	return null
+	return documentRole(lc.auth, userId, document.orgId, await lc.centralOrgId())
 }
 
 const atLeast = (role: Role | null, floor: Role): boolean =>

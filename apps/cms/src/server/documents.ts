@@ -27,42 +27,27 @@ import {
 } from '#/lib/live-topics.ts'
 import { OCP_NAMESPACE, ROLE_LADDER, type Role, roles } from '#/lib/roles.ts'
 import { TEMPLATES } from '#/template/templates.ts'
+import * as access from './access.ts'
+import { CENTRAL_ORG_NAME, CENTRAL_ORG_SLUG } from './access.ts'
 import { envOf, requireUser } from './env.ts'
 
-/** The central organisation: Cancer Australia, owner of core content and of publishing. */
-export const CENTRAL_ORG_SLUG = 'cancer-australia'
-export const CENTRAL_ORG_NAME = 'Cancer Australia'
-
-/** The central organisation's id, from the core documents it owns; null before bootstrap. */
+/** The central organisation's id in this request's environment (see access.ts). */
 async function centralOrgId(): Promise<string | null> {
 	const { env, d } = await envOf()
-	const core = (
-		await d
-			.select({ orgId: schema.documents.orgId })
-			.from(schema.documents)
-			.where(eq(schema.documents.kind, 'core'))
-			.limit(1)
-	)[0]
-	if (!core) return null
-	// The seed may have written a placeholder; only a real organisation counts.
-	const org = await env.AUTH.ensureOrganization({
-		slug: CENTRAL_ORG_SLUG,
-		name: CENTRAL_ORG_NAME,
-		namespace: OCP_NAMESPACE,
-	})
-	return org.id === core.orgId ? org.id : null
+	return access.centralOrgId(env.AUTH, d)
 }
 
+/** The caller's role on a document owned by `orgId`: the one rule, from access.ts. */
 async function roleOn(userId: string, orgId: string): Promise<Role | null> {
-	const { env } = await envOf()
-	return roles.roleOf(env.AUTH, userId, orgId)
+	const { env, d } = await envOf()
+	return access.documentRoleOf(env.AUTH, d, userId, orgId)
 }
 
 async function requireCentralMember(userId: string): Promise<string> {
 	const central = await centralOrgId()
 	if (!central) throw new Error('The central organisation has not been set up yet.')
-	const role = await roleOn(userId, central)
-	if (!role) throw new Error('Only members of the central organisation may do that.')
+	const { env } = await envOf()
+	if (!(await roles.roleOf(env.AUTH, userId, central))) throw new Error('Only members of the central organisation may do that.')
 	return central
 }
 

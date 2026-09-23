@@ -14,22 +14,10 @@ import { bodyToMarkdown } from '#/content/markdown.ts'
 import { renderBodyHtml } from '#/content/render-html.tsx'
 import type { JsonNode } from '#/content/schema.ts'
 import { schema } from '#/db/index.ts'
-import { OCP_NAMESPACE, roles } from '#/lib/roles.ts'
-import { CENTRAL_ORG_NAME, CENTRAL_ORG_SLUG } from './documents.ts'
+import { OCP_NAMESPACE } from '#/lib/roles.ts'
+import { documentRoleOf, isCentralMember } from './access.ts'
 import { envOf, requireUser } from './env.ts'
 import { outlineOrder } from './lifecycle.ts'
-
-// The membership checks live inside the handlers (a plain exported helper that reaches
-// the worker's environment would be kept in the client bundle and drag
-// `cloudflare:workers` in with it).
-async function requireMember(auth: Awaited<ReturnType<typeof envOf>>['env']['AUTH'], userId: string, orgId: string): Promise<void> {
-	if (!(await roles.roleOf(auth, userId, orgId))) throw new Error('You are not a member of this document.')
-}
-
-async function requireCentral(auth: Awaited<ReturnType<typeof envOf>>['env']['AUTH'], userId: string): Promise<void> {
-	const central = await auth.ensureOrganization({ slug: CENTRAL_ORG_SLUG, name: CENTRAL_ORG_NAME, namespace: OCP_NAMESPACE })
-	if (!(await roles.roleOf(auth, userId, central.id))) throw new Error('Only members of the central organisation may do that.')
-}
 
 export interface LegacyOrigin {
 	id: string
@@ -55,7 +43,7 @@ export const legacyOriginsOf = createServerFn({ method: 'GET' })
 				.limit(1)
 		)[0]
 		if (!section) throw new Error('Section not found.')
-		await requireMember(env.AUTH, userId, section.orgId)
+		if (!(await documentRoleOf(env.AUTH, d, userId, section.orgId))) throw new Error('You are not a member of this document.')
 		const rows = await d
 			.select({
 				id: schema.legacySections.id,
@@ -129,7 +117,7 @@ const PENDING = 'pending:%'
 export const finaliseLegacyImports = createServerFn({ method: 'POST' }).handler(async ({ context }) => {
 	const userId = requireUser(context.userId)
 	const { env, d } = await envOf()
-	await requireCentral(env.AUTH, userId)
+	if (!(await isCentralMember(env.AUTH, d, userId))) throw new Error('Only members of the central organisation may do that.')
 	const actor = await env.AUTH.getUserById(userId)
 	const pending = await d.select().from(schema.documents).where(like(schema.documents.orgId, PENDING))
 	const finalised: { slug: string; organizationId: string }[] = []

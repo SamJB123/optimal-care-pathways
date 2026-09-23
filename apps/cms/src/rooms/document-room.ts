@@ -27,7 +27,8 @@ import { emptyBody, type JsonNode } from '#/content/schema.ts'
 import { bodyFromRoot, hydrateRoot, replaceRoot } from '#/content/yjs.ts'
 import { db, schema } from '#/db/index.ts'
 import { publishSectionRows } from '#/lib/live-publish.ts'
-import { OCP_NAMESPACE, ROLE_LADDER, type Role, tierForRole } from '#/lib/roles.ts'
+import { type Role, tierForRole } from '#/lib/roles.ts'
+import { documentRoleOf } from '#/server/access.ts'
 
 const ROOM_PREFIX = 'document:'
 
@@ -63,14 +64,10 @@ export class DocumentRoom extends DocRoom {
 		return this.#orgId
 	}
 
+	/** The one access rule (access.ts): the user's role on this document's organisation,
+	 *  else a reviewer when they belong to the central organisation. */
 	async roleFor(userId: string): Promise<Role | null> {
-		const membership = await this.env.AUTH.getOrgMembershipById(
-			userId,
-			await this.#organisation(),
-			OCP_NAMESPACE,
-		)
-		if (!membership) return null
-		return ROLE_LADDER.find((role) => role === membership.role) ?? null
+		return documentRoleOf(this.env.AUTH, db(this.env.DB), userId, await this.#organisation())
 	}
 
 	// ---- the seams ----------------------------------------------------------
