@@ -729,6 +729,20 @@ function opensBoldStatement(lines: Line[], index: number, pitch: number): boolea
 	// colon instead, the last line is a label of its own ("Patients fit for intensive
 	// chemotherapy:" under the heading "Treatment options to induce remission").
 	const closing = block.at(-1)?.text.trim() ?? ''
+	// A statement may run on into its web address, set in the text face ("… and risk
+	// categories <https://www." / "health.gov.au/…>."): the line that opens in bold and
+	// carries on into the bracketed address is the statement's last.
+	const after = lines[index + block.length]
+	const intoAddress = (l: Line | undefined): boolean => {
+		if (!l || l.page !== first.page || Math.abs(l.columnX - first.columnX) > 4) return false
+		const runs = l.runs.filter((r) => !r.dingbat && r.size >= l.size - 1.5)
+		const split = runs.findIndex((r) => r.weight !== 'medium')
+		return split > 0 && /^\s*</.test(joinRuns(runs.slice(split)))
+	}
+	if (!/[.!?:]$/.test(closing) && block.length >= 2 && intoAddress(after)) {
+		const right = Math.max(...block.map((l) => l.x1))
+		return first.x1 >= right - (right - first.x0) * 0.35
+	}
 	if (block.length < 2 || !/[.!?:]$/.test(closing)) return false
 	if (/:$/.test(closing)) {
 		const after = lines[index + block.length]
@@ -2735,35 +2749,75 @@ export async function readLayoutDocument(
 				outline.stack.push(...path)
 			}
 		}
+		// A list the page break cut: the page (or a step band carrying the step over it)
+		// opens with list items and the last text set in the open section is a list. Each
+		// list the page opens with carries on the level of that list whose items share its
+		// marker (dash sub-items under their bullet, the bullets after them at the top),
+		// however the page's own indents would have nested them — in the panel it stood in.
+		// The levels of the list a section's text ends with, top first.
+		const levelsOf = (s: Section): List[] => {
+			const levels: List[] = []
+			const last = s.blocks.at(-1)
+			for (let level: List | undefined = last?.kind === 'list' ? last : undefined; level; ) {
+				levels.push(level)
+				const tail: Block | undefined = level.items.at(-1)?.blocks.at(-1)
+				level = tail?.kind === 'list' ? tail : undefined
+			}
+			return levels
+		}
+		// A checklist panel stands in a column of its own beside the text, read after it:
+		// the list the page break cut may stand in the panel before it.
+		const isChecklist = (s: Section): boolean => s.blocks.every((b) => b.kind === 'list' && b.items.every((i) => i.marker === 'check' || i.marker === 'cross'))
+		const carryList = (at: number, section: Section): void => {
+			const next0 = sequence[at]?.block
+			if (next0?.kind !== 'list') return
+			const marker0 = next0.items[0]?.marker
+			const chain: Section[] = []
+			const flatten = (s: Section) => {
+				chain.push(s)
+				for (const c of s.children) flatten(c)
+			}
+			flatten(section)
+			let holder: Section | undefined
+			for (const s of chain.reverse().filter((c) => c.blocks.length > 0)) {
+				if (levelsOf(s).some((l) => l.items[0]?.marker === marker0)) {
+					holder = s
+					break
+				}
+				if (!isChecklist(s)) break
+			}
+			let joined = false
+			while (holder && sequence[at]?.block?.kind === 'list') {
+				const next = sequence[at]?.block
+				if (next?.kind !== 'list') break
+				const marker = next.items[0]?.marker
+				const target = [...levelsOf(holder)].reverse().find((l) => l.items[0]?.marker === marker)
+				if (!target) break
+				target.items.push(...next.items)
+				sequence.splice(at, 1)
+				joined = true
+			}
+			if (!joined || !holder || holder === section) return
+			const path = pathTo(section, (s) => s === holder)
+			if (path) {
+				while (outline.stack.at(-1) !== section) outline.stack.pop()
+				outline.stack.push(...path)
+			}
+		}
 		const openAtStart = outline.stack.at(-1)
 		if (openAtStart && sequence[0]?.block) carryOver(0, openAtStart)
-		// A list the page break cut: the page opens with list items and the open section
-		// ends in a list. Each list the page opens with carries on the level of that list
-		// whose items share its marker (dash sub-items under their bullet, the bullets after
-		// them at the top), however the page's own indents would have nested them.
-		while (openAtStart && sequence[0]?.block?.kind === 'list') {
-			const previous = openAtStart.blocks.at(-1)
-			const next = sequence[0].block
-			if (previous?.kind !== 'list') break
-			const levels: List[] = []
-			for (let at: List | undefined = previous; at; ) {
-				levels.push(at)
-				const tail: Block | undefined = at.items.at(-1)?.blocks.at(-1)
-				at = tail?.kind === 'list' ? tail : undefined
-			}
-			const marker = next.items[0]?.marker
-			const target = [...levels].reverse().find((l) => l.items[0]?.marker === marker)
-			if (!target) break
-			target.items.push(...next.items)
-			sequence.splice(0, 1)
-		}
+		if (openAtStart) carryList(0, openAtStart)
 		for (const [i, e] of sequence.entries()) {
 			if (e.heading) {
 				const wasOpen = [...outline.stack]
 				const section = pushSection(outline, e.heading.level ?? 5, e.heading.lines, n, boldWeights, warnings)
 				// A step band carried over the page ("… continued") continues the step: its
-				// first text may carry on the sentence the last page left unfinished.
-				if (wasOpen.includes(section)) carryOver(i + 1, section)
+				// first text may carry on the sentence, or the list, the last page left
+				// unfinished.
+				if (wasOpen.includes(section)) {
+					carryOver(i + 1, section)
+					carryList(i + 1, section)
+				}
 				continue
 			}
 			if (!e.block) continue
