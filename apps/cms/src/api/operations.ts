@@ -283,7 +283,14 @@ export const getQuickReferenceGuide = define({
 	input: z.object({ slug, version }),
 	output: z.object({
 		document: documentSummary,
-		sections: z.array(section),
+		sections: z.array(
+			section.extend({
+				step: z
+					.object({ address: z.string(), title: z.string().nullable() })
+					.nullable()
+					.describe('The pathway step the section belongs to, which the guide is arranged by'),
+			}),
+		),
 		items: z.array(guideItem),
 		references: z.array(reference),
 	}),
@@ -296,9 +303,16 @@ export const getQuickReferenceGuide = define({
 			guide.all.map((s) => s.bodyJson ?? null),
 		)
 		const cited = new Set(Object.keys(citationNumbers([...guide.sections.map((s) => s.bodyJson ?? null), ...guide.items.map((i) => i.list)])))
+		// A step section's address is its number ("2"); its parts' addresses open with it
+		// ("2.3.1", "2/quick-reference-guide").
+		const stepOf = (address: string) => {
+			const head = /^(\d+)(?:[./]|$)/.exec(address)?.[1]
+			const step = head ? guide.all.find((s) => s.address === head) : undefined
+			return step ? { address: step.address, title: step.title } : null
+		}
 		return {
 			document: summaryOf(ctx, v),
-			sections: guide.sections.map((s) => sectionOf(ctx, v.slug, s)),
+			sections: guide.sections.map((s) => ({ ...sectionOf(ctx, v.slug, s), step: stepOf(s.address) })),
 			items: guide.items.map((i) => ({
 				address: i.section.address,
 				title: i.section.title,

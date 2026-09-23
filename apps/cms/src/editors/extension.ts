@@ -8,7 +8,9 @@ import {
 	type CollaborativeExtensionOptions,
 	createCollaborativeExtension,
 } from '@aicolab/app-kit/prosekit/extension'
-import { defineCommands, defineKeymap, union } from '@prosekit/core'
+import { defineCommands, defineKeymap, definePlugin, union } from '@prosekit/core'
+import { Plugin } from '@prosekit/pm/state'
+import { Decoration, DecorationSet } from '@prosekit/pm/view'
 import {
 	defineBlockquoteCommands,
 	defineBlockquoteInputRule,
@@ -110,6 +112,25 @@ const definePageBreakBehaviour = () => {
 
 const ALIGNABLE = ['paragraph', 'heading', 'carePoint']
 
+/** A citation straight after another is marked `data-joined` so the pair reads "26,27",
+ *  as the published render marks it (CitationInline). */
+function defineJoinedCitations() {
+	return definePlugin(
+		new Plugin({
+			props: {
+				decorations(state) {
+					const marks: Decoration[] = []
+					state.doc.descendants((node, pos) => {
+						if (node.type.name !== 'citation') return
+						if (state.doc.resolve(pos).nodeBefore?.type.name === 'citation') marks.push(Decoration.node(pos, pos + node.nodeSize, { 'data-joined': 'true' }))
+					})
+					return DecorationSet.create(state.doc, marks)
+				},
+			},
+		}),
+	)
+}
+
 /** Schema + behaviour. `defineTable()` also carries the table specs; ProseKit merges
  *  same-named specs, so the schema stays the one in content/schema.ts. `derived` is the
  *  page's derived view (citation numbers, timeframes) the node views read. */
@@ -117,6 +138,7 @@ export function defineSectionSchema(derived: () => DerivedView) {
 	return union(
 		defineContentSchema(),
 		defineTemplateNodeViews(derived),
+		defineJoinedCitations(),
 		defineTextAlignCommands(ALIGNABLE),
 		defineTextAlignKeymap(ALIGNABLE),
 		definePageBreakBehaviour(),

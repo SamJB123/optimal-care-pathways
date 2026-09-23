@@ -795,9 +795,12 @@ function headingLevelOf(line: Line, ladder: Ladder, next: Line | undefined, stan
 		while (n < runs.length && runs[n]?.weight === 'medium') n++
 		return !/:\s*$/.test(joinRuns(runs.slice(0, n)).trim())
 	}
+	// A wrapped term keeps its size: a 14-point step band over a bold-led line ("Initial
+	// investigations include a triple test …") is the band, not a term.
 	const wrappedLead =
 		next !== undefined &&
 		next.page === line.page &&
+		Math.abs(next.size - line.size) <= 0.75 &&
 		line.y - next.y > 0 &&
 		line.y - next.y < line.size * 1.55 &&
 		Math.abs(next.x0 - line.x0) <= 4 &&

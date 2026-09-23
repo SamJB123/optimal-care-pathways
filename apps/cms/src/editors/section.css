@@ -71,11 +71,11 @@ sup[data-ocp="citation"]::before {
 	color: var(--color-primary);
 }
 
-.ocp-body sup[data-ocp="citation"] + sup[data-ocp="citation"]::before,
-.ocp-body
-	:has(> sup[data-ocp="citation"]:only-child)
-	+ :has(> sup[data-ocp="citation"]:only-child)
-	sup::before {
+/* A citation straight after another reads "26,27": the renderer marks it, and in the
+   editor a decoration marks its node view (CSS sibling rules would skip the text
+   between two citations a sentence apart). */
+.ocp-body sup[data-ocp="citation"][data-joined="true"]::before,
+.ocp-body [data-joined="true"] > sup[data-ocp="citation"]::before {
 	content: "," attr(data-number);
 }
 
@@ -158,6 +158,7 @@ sup[data-ocp="citation"]::before {
 	right: 100%;
 	width: 1lh;
 	text-align: center;
+	white-space: nowrap;
 }
 
 .ocp-body .prosemirror-flat-list[data-list-kind="check"] > .list-marker::before {
@@ -174,7 +175,9 @@ sup[data-ocp="citation"]::before {
 	color: var(--color-error);
 }
 
-.ocp-body
+/* The author's cue that a row goes into the quick reference guide: an editing aid, not
+   part of the published page. */
+.ocp-body:not(.ocp-published .ocp-body)
 	.prosemirror-flat-list[data-list-kind="check"][data-point-of-care="true"]
 	> .list-marker::after {
 	content: " ◆";

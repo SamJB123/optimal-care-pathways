@@ -236,7 +236,7 @@ function Cell(props: { node: JsonNode }) {
 export function Inline(props: { nodes: JsonNode[] }) {
 	return (
 		<For each={props.nodes}>
-			{(node) => (
+			{(node, i) => (
 				<Switch>
 					<Match when={node.type === 'text'}>
 						<Marked marks={node.marks ?? []} index={0} text={node.text ?? ''} />
@@ -245,7 +245,7 @@ export function Inline(props: { nodes: JsonNode[] }) {
 						<br />
 					</Match>
 					<Match when={node.type === 'citation'}>
-						<CitationInline referenceId={str(node.attrs?.referenceId)} />
+						<CitationInline referenceId={str(node.attrs?.referenceId)} joined={props.nodes[i() - 1]?.type === 'citation'} />
 					</Match>
 					<Match when={node.type === 'footnote'}>
 						<FootnoteInline text={str(node.attrs?.text)} />

@@ -15,7 +15,7 @@ import { RenderedBody } from '#/content/render.tsx'
 import { numberLabel } from '#/lib/labels.ts'
 import './print.css'
 
-export const Route = createFileRoute('/p/$slug/quick-reference-guide')({
+export const Route = createFileRoute('/p/$slug_/quick-reference-guide')({
 	loader: async ({ params }) => {
 		try {
 			return { guide: await publishedGuide({ data: { slug: params.slug } }), error: null }
@@ -62,8 +62,17 @@ function GuidePage() {
 							</p>
 						</header>
 						<For each={guide().sections}>
-							{(section) => (
+							{(section, i) => (
 								<section class="ocp-published-section" id={section.address} data-depth={section.address.split('/').length - 1}>
+									{/* The guide is arranged by step: each step's run opens with its title. */}
+									<Show when={section.step && section.step.address !== guide().sections[i() - 1]?.step?.address ? section.step : null}>
+										{(step) => (
+											<h2 class="ocp-published-title ocp-guide-step">
+												Step {step().address}
+												{step().title ? `: ${step().title}` : ''}
+											</h2>
+										)}
+									</Show>
 									<h2 class="ocp-published-title">
 										<Show when={section.printedNumber}>
 											{(n) => <span class="ocp-published-number">{numberLabel(n())} </span>}

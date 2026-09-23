@@ -4,7 +4,7 @@
 	"edition": "Second edition",
 	"constructs": {
 		"sections": 217,
-		"paragraphs": 1426,
+		"paragraphs": 1425,
 		"lists": 133,
 		"listItems": 654,
 		"checkItems": 39,
@@ -16,7 +16,7 @@
 	},
 	"references": 95,
 	"coverage": {
-		"printed": 31706,
+		"printed": 31698,
 		"figureLines": 70
 	},
 	"timeframes": {

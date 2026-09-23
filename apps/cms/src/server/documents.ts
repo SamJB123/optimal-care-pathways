@@ -17,7 +17,7 @@ import {
 	timeframeRows,
 } from '#/content/derived.ts'
 import type { JsonNode } from '#/content/schema.ts'
-import { schema } from '#/db/index.ts'
+import { inGroups, schema } from '#/db/index.ts'
 import { publishDocumentRows } from '#/lib/live-publish.ts'
 import {
 	type DocumentWireRow,
@@ -207,10 +207,12 @@ async function derivedFor(
 	)
 	const coreBodies = new Map<string, JsonNode | null>()
 	if (coreIds.length > 0) {
-		const cores = await d
-			.select({ id: schema.sections.id, bodyJson: schema.sections.bodyJson })
-			.from(schema.sections)
-			.where(inArray(schema.sections.id, coreIds))
+		const cores = await inGroups(coreIds, (group) =>
+			d
+				.select({ id: schema.sections.id, bodyJson: schema.sections.bodyJson })
+				.from(schema.sections)
+				.where(inArray(schema.sections.id, group)),
+		)
 		for (const c of cores) coreBodies.set(c.id, c.bodyJson ?? null)
 	}
 	const ordered = outlineOrder(rows)

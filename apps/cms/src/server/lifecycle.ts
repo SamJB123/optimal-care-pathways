@@ -25,7 +25,7 @@ import { bodyToMarkdown } from '#/content/markdown.ts'
 import { blockingPlaceholders, publishBody } from '#/content/publish.ts'
 import type { JsonNode } from '#/content/schema.ts'
 import type { Db } from '#/db/index.ts'
-import { schema } from '#/db/index.ts'
+import { inGroups, schema } from '#/db/index.ts'
 import { publishDocumentRows, publishSectionRows } from '#/lib/live-publish.ts'
 import { OCP_NAMESPACE, ROLE_LADDER, type Role } from '#/lib/roles.ts'
 import { cacheTagFor, PUBLISHED_CACHE_TAG } from '#/api/published.ts'
@@ -220,21 +220,25 @@ export async function resolveSections(
 	)
 	const cores = new Map<string, { body: JsonNode | null; source: 'published' | 'draft' }>()
 	if (coreIds.length > 0) {
-		const published = await lc.d
-			.select({
-				sectionId: schema.publishedSections.sectionId,
-				bodyJson: schema.publishedSections.bodyJson,
-			})
-			.from(schema.publishedSections)
-			.where(inArray(schema.publishedSections.sectionId, coreIds))
+		const published = await inGroups(coreIds, (group) =>
+			lc.d
+				.select({
+					sectionId: schema.publishedSections.sectionId,
+					bodyJson: schema.publishedSections.bodyJson,
+				})
+				.from(schema.publishedSections)
+				.where(inArray(schema.publishedSections.sectionId, group)),
+		)
 		for (const p of published)
 			cores.set(p.sectionId, { body: p.bodyJson ?? null, source: 'published' })
 		const missing = coreIds.filter((id) => !cores.has(id))
 		if (missing.length > 0) {
-			const drafts = await lc.d
-				.select({ id: schema.sections.id, bodyJson: schema.sections.bodyJson })
-				.from(schema.sections)
-				.where(inArray(schema.sections.id, missing))
+			const drafts = await inGroups(missing, (group) =>
+				lc.d
+					.select({ id: schema.sections.id, bodyJson: schema.sections.bodyJson })
+					.from(schema.sections)
+					.where(inArray(schema.sections.id, group)),
+			)
 			for (const c of drafts) cores.set(c.id, { body: c.bodyJson ?? null, source: 'draft' })
 		}
 	}

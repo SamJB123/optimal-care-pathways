@@ -46,3 +46,15 @@ export const db = (d1: D1Database) => drizzle(d1, { relations })
 
 export type Db = ReturnType<typeof db>
 export * as schema from './schema.ts'
+
+/** D1 binds at most 100 parameters to one query; a list longer than that (a pathway's
+ *  cited references, its shared template sections) is read in groups, leaving room for
+ *  the query's other parameters. */
+const IN_GROUP = 90
+
+/** Run a query over a list of values in groups D1 accepts, rows concatenated. */
+export async function inGroups<V, R>(values: readonly V[], query: (group: V[]) => Promise<R[]>): Promise<R[]> {
+	const out: R[] = []
+	for (let i = 0; i < values.length; i += IN_GROUP) out.push(...(await query(values.slice(i, i + IN_GROUP))))
+	return out
+}

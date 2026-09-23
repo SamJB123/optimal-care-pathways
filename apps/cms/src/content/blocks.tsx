@@ -478,12 +478,15 @@ export function PathwayMapBlock() {
 	)
 }
 
-export function CitationInline(props: { referenceId: string }) {
+/** A citation's number; `joined` when the node before it is a citation too, so the two
+ *  read "26,27" (a comma CSS cannot place: its sibling rules skip the text between). */
+export function CitationInline(props: { referenceId: string; joined?: boolean }) {
 	const derived = useContext(DerivedContext)
 	const number = () => derived().referenceNumbers[props.referenceId]
 	return (
 		<sup
 			data-ocp="citation"
+			data-joined={props.joined ? 'true' : undefined}
 			data-reference-id={props.referenceId}
 			data-number={number() ? String(number()) : '?'}
 			title={number() ? `Reference ${number()}` : 'Reference not in this document'}

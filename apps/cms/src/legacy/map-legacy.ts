@@ -947,6 +947,14 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	const coreRows = core.sections.filter((s) => !s.apparatus)
 	const sectionId = (address: string) => id('section', `legacy:${pathway.pathwaySlug}:${address}`)
 	const drafts = new Map<string, DraftSection>()
+	/** The template's two title placeholders, as the edition prints them: the title page
+	 *  is the document's own title, "X edition" its edition — or, where the print names no
+	 *  edition (the 2020 design), the publication details the section holds. */
+	const titleFor = (s: CoreSectionRow): string | null => {
+		if (s.parentId === null && /\[insert [^\]]+\]/i.test(s.title ?? '')) return model.title
+		if (/^X edition$/i.test(s.title ?? '')) return ledger.edition ?? 'Publication details'
+		return s.title
+	}
 	for (const s of coreRows) {
 		const shared = s.pathwayOwnership === 'shared'
 		drafts.set(s.address, {
@@ -961,7 +969,7 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 				address: s.address,
 				canonical: s.canonical,
 				printedNumber: s.printedNumber,
-				title: s.title,
+				title: titleFor(s),
 				headingLevel: s.headingLevel,
 				orderIndex: s.orderIndex,
 				stepNumber: s.stepNumber,
@@ -1489,12 +1497,12 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			for (const table of figureTables) placeTimeframeRows(table, chapter)
 			continue
 		}
-		// The edition slot takes the cover and title page as statements (decision 145): the
-		// edition as words, the publication date, who endorsed it. The title is the document's.
+		// The edition slot takes the cover and title page as statements (decision 145): its
+		// heading is the edition as words (titleFor), its body the publication date and who
+		// endorsed it. The title is the document's.
 		const own =
 			chapter.l1 === 'front-matter'
 				? [
-						...(ledger.edition ? [{ type: 'paragraph' as const, content: [{ type: 'text' as const, text: ledger.edition }] }] : []),
 						...(publishedAt ? [{ type: 'paragraph' as const, content: [{ type: 'text' as const, text: `Published ${publishedAt.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })}` }] }] : []),
 						...nodesOf(chapter.blocks.filter((b) => b.kind !== 'paragraph' || /^endorsed by/i.test(plainText(b.runs).trim()))),
 					]

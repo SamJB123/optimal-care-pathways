@@ -114,9 +114,13 @@ describe.skipIf(!existsSync(join(appDir, modelPath)))('legacy import: breast can
 	})
 
 	it('carries the front matter as statements, nothing twice', () => {
+		// The template's title placeholders read as the edition prints them: the title page
+		// is the document's title, the edition slot's heading the edition.
+		expect(result.sections.find((s) => s.address === 'optimal-care-pathway-for-people-with')?.title).toBe('Optimal care pathway for people with breast cancer')
 		const edition = result.sections.find((s) => s.address === 'optimal-care-pathway-for-people-with/x-edition')
+		expect(edition?.title).toBe('Second edition')
 		const text = JSON.stringify(edition?.bodyJson)
-		expect(text).toContain('Second edition')
+		expect(text).not.toContain('Second edition')
 		expect(text).toContain('Published June 2021')
 		expect(text).not.toMatch(/S E C O N D|SECOND EDITION/)
 		const front = result.legacySections.find((s) => s.key === 'front-matter')

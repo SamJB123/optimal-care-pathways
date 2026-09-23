@@ -22,7 +22,7 @@ import { and, desc, eq, inArray, like, or, sql } from 'drizzle-orm'
 import { citationNumbers, inlineText, walkNodes } from '#/content/derived.ts'
 import type { JsonNode } from '#/content/schema.ts'
 import type { Db } from '#/db/index.ts'
-import { schema } from '#/db/index.ts'
+import { inGroups, schema } from '#/db/index.ts'
 
 export interface ApiContext {
 	d: Db
@@ -206,7 +206,7 @@ export async function referencesFor(
 	const numbers = citationNumbers(bodies)
 	const ids = Object.keys(numbers)
 	if (ids.length === 0) return []
-	const rows = await d.select().from(schema.references).where(inArray(schema.references.id, ids))
+	const rows = await inGroups(ids, (group) => d.select().from(schema.references).where(inArray(schema.references.id, group)))
 	const byId = new Map(rows.map((r) => [r.id, r]))
 	return ids
 		.map((id) => ({ id, number: numbers[id] ?? 0, row: byId.get(id) }))

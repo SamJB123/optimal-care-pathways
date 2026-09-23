@@ -9,6 +9,7 @@
 import { createServerFn } from '@tanstack/solid-start'
 import { and, eq, isNull, like } from 'drizzle-orm'
 import { z } from 'zod'
+import { sectionsOf } from '#/api/published.ts'
 import { citationNumbers, type DerivedView } from '#/content/derived.ts'
 import { bodyToMarkdown } from '#/content/markdown.ts'
 import { renderBodyHtml } from '#/content/render-html.tsx'
@@ -163,8 +164,9 @@ export const finaliseLegacyImports = createServerFn({ method: 'POST' }).handler(
 	let rendered = 0
 	for (const versionId of new Set(unrendered.map((r) => r.versionId))) {
 		const rows = await d.select().from(schema.versionSections).where(eq(schema.versionSections.versionId, versionId))
+		// Numbered in reading order, as the page and the publisher number them.
 		const derived: DerivedView = {
-			referenceNumbers: citationNumbers(rows.filter((r) => !r.hidden).map((r) => r.bodyJson ?? null)),
+			referenceNumbers: citationNumbers((await sectionsOf(d, versionId)).map((r) => r.bodyJson ?? null)),
 			timeframes: [],
 			map: null,
 		}
