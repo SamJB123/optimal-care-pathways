@@ -2085,7 +2085,13 @@ function labelDrafts(drafts: Draft[], ctx: PageContext, options: { rows: boolean
 			// A label whose text carries the sentence on in lower case ("Systemic therapy: as
 			// adjuvant therapy, should occur …") is a bold lead-in, not a panel.
 			const leadIn = label?.inline === true && /^[a-z]/.test(label.rest[0]?.text ?? '')
-			if (label && !leadIn && (options.rows || label.inline || label.rest.length > 0)) {
+			// A short bold label alone on its line over prose of its own ("Palliative care:"
+			// over "Early referral to palliative care …"), or over dash sub-items ("Systemic
+			// therapy:" over "– SSAs are …"), names a panel; over a bulleted list it is the
+			// list's lead-in.
+			const underLabel = next?.kind === 'paragraph' || (next?.kind === 'item' && next.marker === 'dash')
+			const overProse = label !== null && !label.inline && label.rest.length === 0 && underLabel && label.head.map((l) => l.text).join(' ').split(/\s+/).length <= 4
+			if (label && !leadIn && (options.rows || label.inline || label.rest.length > 0 || overProse)) {
 				out.push({ kind: 'heading', level: 5, lines: label.head })
 				if (label.rest.length > 0) out.push({ kind: 'paragraph', lines: label.rest })
 				continue
