@@ -333,19 +333,19 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/surgery/timeframe-for-starting-treatment",
+			"legacyKey": "step-4/treatment-options/surgery/breast-reconstruction-surgery/timeframe-for-starting-treatment",
 			"legacyTitle": "Timeframe for starting treatment",
 			"destination": "4.4.1",
 			"how": "timeframe"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/surgery/training-and-experience-required-of-the-surgeon",
+			"legacyKey": "step-4/treatment-options/surgery/breast-reconstruction-surgery/training-and-experience-required-of-the-surgeon",
 			"legacyTitle": "Training and experience required of the surgeon",
 			"destination": "4.4.1",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/surgery/health-service-characteristics",
+			"legacyKey": "step-4/treatment-options/surgery/breast-reconstruction-surgery/health-service-characteristics",
 			"legacyTitle": "Health service characteristics",
 			"destination": "4.8",
 			"how": "title"

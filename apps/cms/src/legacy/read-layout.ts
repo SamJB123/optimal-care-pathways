@@ -681,10 +681,13 @@ function learnLadder(lines: Line[]): Ladder {
 
 /** 1 chapter, 2 part (step, principle, appendix), 3 numbered section, 4 numbered
  *  subsection, 5 run-in heading at body size. */
-type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6
+/** 1 chapter, 2 part, 3 section; the run-in levels below: 4 numbered, 5 bold, 6 bold in
+ *  the accent colour, 7 italic (set under either: "Surgery – resection or transplant" over
+ *  "Timeframe for starting treatment"). */
+type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7
 
 /** A heading set at body size (numbered or not). */
-const runIn = (level: HeadingLevel | null): boolean => level === 4 || level === 5 || level === 6
+const runIn = (level: HeadingLevel | null): boolean => level === 4 || level === 5 || level === 6 || level === 7
 
 /** A line set wholly in one weight (a superscript or dingbat aside). */
 /** … an italic run inside a line set in that weight counts too: a family without an italic
@@ -821,7 +824,7 @@ function headingLevelOf(line: Line, ladder: Ladder, next: Line | undefined, stan
 		!/^[a-z]/.test(next.text) &&
 		Math.abs(next.size - ladder.body) <= 1
 	)
-		return 5
+		return 7
 	if (line.size >= ladder.part - 0.75 && (line.weight === 'roman' || line.weight === 'medium')) return 2
 	if (line.size >= ladder.section - 0.5 && line.size < ladder.part - 0.75 && line.weight !== 'light') return 3
 	// A run-in heading at body size: one whole line in the medium weight, short, not a
