@@ -753,18 +753,6 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-1/refer-to-the-nlcsp-program",
-			"legacyTitle": "Refer to the NLCSP Program",
-			"destination": "1/quick-reference-guide/refer-to-the-nlcsp-program",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-1/checklist",
-			"legacyTitle": "Checklist",
-			"destination": "1/quick-reference-guide/checklist",
-			"how": "guide"
-		},
-		{
 			"legacyKey": "summary/step-2",
 			"legacyTitle": "Step 2: Presentation, initial investigations and referral",
 			"destination": "2/quick-reference-guide",

@@ -843,12 +843,6 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-5/checklist",
-			"legacyTitle": "Checklist",
-			"destination": "5/quick-reference-guide/checklist",
-			"how": "guide"
-		},
-		{
 			"legacyKey": "summary/step-6",
 			"legacyTitle": "Step 6: Managing recurrent or progressive disease",
 			"destination": "6/quick-reference-guide",

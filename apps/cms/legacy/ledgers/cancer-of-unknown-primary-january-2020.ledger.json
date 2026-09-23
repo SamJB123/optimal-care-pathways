@@ -963,8 +963,14 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "resource-list/for-patients-families-and-carers/care-search-palliative-care-knowledge-network",
-			"legacyTitle": "Care Search: Palliative Care Knowledge Network",
+			"legacyKey": "resource-list/for-patients-families-and-carers/care-search-palliative-care",
+			"legacyTitle": "Care Search: Palliative Care",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-patients-families-and-carers/knowledge-network",
+			"legacyTitle": "Knowledge Network",
 			"destination": "find-out-more/resource-list",
 			"how": "merged"
 		},

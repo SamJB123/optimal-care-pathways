@@ -1,6 +1,18 @@
 {
 	"pathway": "chronic-lymphocytic-leukaemia",
-	"visualPass": null,
+	"visualPass": {
+		"pages": "1-90 of 90",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages: bold panel headings are the panels; lead-ins the print set in the light face ('Initial investigations by the GP include:', 'The GP's responsibilities include:') are paragraphs as printed; the accent-coloured bold ones are bold paragraphs.",
+			"The welcome's signatory (page 6) is a bold name over one role line; the signature image is dropped as design; the endorsement logos on the title page leave 'Endorsed by' as text.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 65) are rendered figures; Figure 3 (pages 24-25) is the timeframes table, its caption on the page before the grid; the seven-steps box, the resource callouts (thumbnails dropped as design), the validated-tools box and the closing 'Visit our guides' band are one-cell tables.",
+			"Superscript 9 in '× 10⁹/L' is a raised run (pages 24, 28, 34), except on page 29 where the print itself sets it flat as '109/L'.",
+			"Contributors (pages 62-64) are one entry per paragraph across the gaps; the closing thanks to the Blood Cancer Taskforce is a bold paragraph.",
+			"'This edition published in October 2021' on the imprint page; first edition.",
+			"Pages 2 and 89 are blank; back cover (page 90) carries only the cover artwork."
+		]
+	},
 	"edition": "First edition",
 	"publicationDate": "2021-10-01",
 	"placements": [

@@ -294,19 +294,19 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/surgery/surgery-by-a-specialist-team/timeframe-for-starting-treatment",
+			"legacyKey": "step-4/treatment-options/surgery/timeframe-for-starting-treatment",
 			"legacyTitle": "Timeframe for starting treatment",
 			"destination": "4.4.1",
 			"how": "timeframe"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/surgery/surgery-by-a-specialist-team/training-and-experience-required-of-the-surgeon",
+			"legacyKey": "step-4/treatment-options/surgery/training-and-experience-required-of-the-surgeon",
 			"legacyTitle": "Training and experience required of the surgeon",
 			"destination": "4.4.1",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/surgery/surgery-by-a-specialist-team/health-service-characteristics",
+			"legacyKey": "step-4/treatment-options/surgery/health-service-characteristics",
 			"legacyTitle": "Health service characteristics",
 			"destination": "4.8",
 			"how": "title"
@@ -747,12 +747,6 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-2/checklist",
-			"legacyTitle": "Checklist",
-			"destination": "2/quick-reference-guide/checklist",
-			"how": "guide"
-		},
-		{
 			"legacyKey": "summary/step-2/timeframe",
 			"legacyTitle": "Timeframe",
 			"destination": "2/quick-reference-guide/timeframe",
@@ -807,12 +801,6 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-3/checklist",
-			"legacyTitle": "Checklist",
-			"destination": "3/quick-reference-guide/checklist",
-			"how": "guide"
-		},
-		{
 			"legacyKey": "summary/step-3/timeframe",
 			"legacyTitle": "Timeframe",
 			"destination": "3/quick-reference-guide/timeframe",
@@ -846,12 +834,6 @@
 			"legacyKey": "summary/step-4/timeframe",
 			"legacyTitle": "Timeframe",
 			"destination": "4/quick-reference-guide/timeframe",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-4/systemic-therapy",
-			"legacyTitle": "Systemic therapy",
-			"destination": "4/quick-reference-guide/systemic-therapy",
 			"how": "guide"
 		},
 		{

@@ -877,6 +877,8 @@ interface Draft {
 	indent?: number
 	/** A one-line paragraph nothing continues (a signature). */
 	closed?: boolean
+	/** A paragraph set inside the list item before it, under the item's text. */
+	inItem?: boolean
 }
 
 /**
@@ -1103,6 +1105,49 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 		// first word had room at the end of the line above begins a line of its own.
 		const forcedBreak =
 			signatureBlock && current?.kind === 'paragraph' && previous !== null && /^\p{Lu}/u.test(line.text) && !/[,–—-]$/.test(previous.text.trim()) && wouldHaveFitted(previous, line)
+		// A paragraph set inside a list item: the item's text closes on a colon and the next
+		// line opens a sentence under the item's text ("• tissue biopsy to reliably diagnose
+		// brain cancer:" / "The histological diagnosis …"). Such a paragraph hangs its wrapped
+		// lines; a line back at its first line's indent after a full stop opens the next. A
+		// colon that merely ends a wrapped line ("refer to 'Principle 6:" / "Communication')")
+		// is no lead-in: the lead-in's line was broken with room to spare, and the paragraph
+		// under it hangs its own second line.
+		const lineAfter = lines[index + 1]
+		const opensInItem =
+			current?.kind === 'item' &&
+			previous !== null &&
+			!columnBreak &&
+			near &&
+			!marker &&
+			/:$/.test(previous.text.trim()) &&
+			/^\p{Lu}/u.test(line.text) &&
+			indentOf(line) > (current.indent ?? 0) + 4 &&
+			wouldHaveFitted(previous, line) &&
+			lineAfter !== undefined &&
+			lineAfter.page === line.page &&
+			line.y - lineAfter.y > 0 &&
+			line.y - lineAfter.y < pitch &&
+			indentOf(lineAfter) > indentOf(line) + 4
+		const inItemFirst = current?.kind === 'paragraph' && current.inItem ? current.lines[0] : undefined
+		const inItemWrap = current?.kind === 'paragraph' && current.inItem ? current.lines[1] : undefined
+		const nextInItem =
+			inItemFirst !== undefined &&
+			previous !== null &&
+			!columnBreak &&
+			near &&
+			!marker &&
+			Math.abs(indentOf(line) - indentOf(inItemFirst)) <= 2 &&
+			(inItemWrap === undefined || indentOf(inItemWrap) > indentOf(inItemFirst) + 4) &&
+			/[.!?]$/.test(previous.text.trim()) &&
+			/^\p{Lu}/u.test(line.text)
+		// An item's paragraph ends where a line stands left of its first line.
+		const leavesItem = inItemFirst !== undefined && indentOf(line) < indentOf(inItemFirst) - 2
+		if (opensInItem || nextInItem) {
+			close()
+			current = { kind: 'paragraph', lines: [line], inItem: true }
+			previous = line
+			continue
+		}
 		const continues =
 			current !== null &&
 			!current.closed &&
@@ -1110,6 +1155,7 @@ function draftsOf(lines: Line[], ladder: Ladder, options: { entryLines?: boolean
 			entryOpen &&
 			!nextEntry &&
 			!forcedBreak &&
+			!leavesItem &&
 			(!sizeBreak || sameBaseline) &&
 			// A wrapped line of an item or paragraph starts at or right of the first line
 			// (within its column); a line carried into the next column starts at its edge.
@@ -1222,6 +1268,12 @@ function blocksOf(drafts: Draft[], ctx: PageContext): Event[] {
 			list = { kind: 'list', items: [item], page: ctx.pageNumber }
 			stack = [{ indent, list }]
 			push(list, y)
+			continue
+		}
+		// A paragraph set inside the open list's last item is that item's.
+		const holder = draft.kind === 'paragraph' && draft.inItem ? stack.at(-1)?.list.items.at(-1) : undefined
+		if (holder) {
+			holder.blocks.push(paragraphOf(draft.lines, ctx))
 			continue
 		}
 		closeLists()

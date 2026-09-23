@@ -711,6 +711,12 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-2/signs-and-symptoms",
+			"legacyTitle": "Signs and symptoms",
+			"destination": "2/quick-reference-guide/signs-and-symptoms",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-2/checklist",
 			"legacyTitle": "Checklist",
 			"destination": "2/quick-reference-guide/checklist",
@@ -738,12 +744,6 @@
 			"legacyKey": "summary/step-2/communication",
 			"legacyTitle": "Communication",
 			"destination": "2/quick-reference-guide/communication",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-2/checklist",
-			"legacyTitle": "Checklist",
-			"destination": "2/quick-reference-guide/checklist",
 			"how": "guide"
 		},
 		{
@@ -798,12 +798,6 @@
 			"legacyKey": "summary/step-3/communication",
 			"legacyTitle": "Communication",
 			"destination": "3/quick-reference-guide/communication",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-3/checklist",
-			"legacyTitle": "Checklist",
-			"destination": "3/quick-reference-guide/checklist",
 			"how": "guide"
 		},
 		{

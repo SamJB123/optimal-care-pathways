@@ -821,12 +821,6 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-2/timeframe",
-			"legacyTitle": "Timeframe",
-			"destination": "2/quick-reference-guide/timeframe",
-			"how": "guide"
-		},
-		{
 			"legacyKey": "summary/step-3",
 			"legacyTitle": "Step 3: Diagnosis, staging and treatment planning",
 			"destination": "3/quick-reference-guide",
@@ -866,12 +860,6 @@
 			"legacyKey": "summary/step-3/communication",
 			"legacyTitle": "Communication",
 			"destination": "3/quick-reference-guide/communication",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-3/timeframe",
-			"legacyTitle": "Timeframe",
-			"destination": "3/quick-reference-guide/timeframe",
 			"how": "guide"
 		},
 		{
@@ -1188,12 +1176,6 @@
 		{
 			"legacyKey": "contributors/optimal-care-pathways-steering-committee",
 			"legacyTitle": "Optimal Care Pathways Steering Committee",
-			"destination": "contributors-and-reviewers",
-			"how": "diverged"
-		},
-		{
-			"legacyKey": "contributors/our-thanks-also-to-the-blood-cancer-taskforce-which-recommended-",
-			"legacyTitle": "Our thanks also to the Blood Cancer Taskforce, which recommended the development of optimal care pathways for",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},

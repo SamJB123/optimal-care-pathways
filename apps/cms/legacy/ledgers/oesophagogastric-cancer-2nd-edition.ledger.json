@@ -700,12 +700,6 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-1/checklist",
-			"legacyTitle": "Checklist",
-			"destination": "1/quick-reference-guide/checklist",
-			"how": "guide"
-		},
-		{
 			"legacyKey": "summary/step-1/risk-factors",
 			"legacyTitle": "Risk factors",
 			"destination": "1/quick-reference-guide/risk-factors",
@@ -715,6 +709,18 @@
 			"legacyKey": "summary/step-1/early-detection",
 			"legacyTitle": "Early detection",
 			"destination": "1/quick-reference-guide/early-detection",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-1/screening-recommendations",
+			"legacyTitle": "Screening recommendations",
+			"destination": "1/quick-reference-guide/screening-recommendations",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-1/checklist",
+			"legacyTitle": "Checklist",
+			"destination": "1/quick-reference-guide/checklist",
 			"how": "guide"
 		},
 		{
@@ -763,12 +769,6 @@
 			"legacyKey": "summary/step-2/communication",
 			"legacyTitle": "Communication",
 			"destination": "2/quick-reference-guide/communication",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-2/checklist",
-			"legacyTitle": "Checklist",
-			"destination": "2/quick-reference-guide/checklist",
 			"how": "guide"
 		},
 		{

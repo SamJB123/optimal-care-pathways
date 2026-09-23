@@ -952,8 +952,14 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "resource-list/for-patients-families-and-carers/cancer-council-operated-by-cancer-council-victoria",
-			"legacyTitle": "Cancer Council (operated by Cancer Council Victoria)",
+			"legacyKey": "resource-list/for-patients-families-and-carers/cancer-council-operated-by",
+			"legacyTitle": "Cancer Council (operated by",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-patients-families-and-carers/cancer-council-victoria",
+			"legacyTitle": "Cancer Council Victoria)",
 			"destination": "find-out-more/resource-list",
 			"how": "merged"
 		},
@@ -964,8 +970,14 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "resource-list/for-patients-families-and-carers/care-search-palliative-care-knowledge-network",
-			"legacyTitle": "Care Search: Palliative Care Knowledge Network",
+			"legacyKey": "resource-list/for-patients-families-and-carers/care-search-palliative-care",
+			"legacyTitle": "Care Search: Palliative Care",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-patients-families-and-carers/knowledge-network",
+			"legacyTitle": "Knowledge Network",
 			"destination": "find-out-more/resource-list",
 			"how": "merged"
 		},
@@ -1018,8 +1030,14 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "resource-list/for-health-professionals/national-health-and-medical-research-council",
-			"legacyTitle": "National Health and Medical Research Council",
+			"legacyKey": "resource-list/for-health-professionals/national-health-and-medical",
+			"legacyTitle": "National Health and Medical",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-health-professionals/research-council",
+			"legacyTitle": "Research Council",
 			"destination": "find-out-more/resource-list",
 			"how": "merged"
 		},

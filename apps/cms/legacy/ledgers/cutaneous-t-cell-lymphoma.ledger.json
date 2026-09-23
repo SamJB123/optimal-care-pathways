@@ -1,6 +1,18 @@
 {
 	"pathway": "cutaneous-t-cell-lymphoma",
-	"visualPass": null,
+	"visualPass": {
+		"pages": "1-84 of 84",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages; the Step 2 checklist carried over the page ('Checklist continued', page 8) resumes the page 7 checklist; the paragraph cut by the page break ('When an itchy patch …') rejoins its first half.",
+			"Section 3.1 (pages 25-26) nests bullets, dashes and chevrons three deep; the dash items carried onto page 26 continue under 'A routine evaluation includes:' as printed.",
+			"The welcome's signatory (page 6) is set in the light face over three role lines, one paragraph per printed line; the signature image is dropped as design.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 61) are rendered figures; Figure 3 (page 24) is the timeframes table.",
+			"Contributors (page 60) one entry per paragraph; the closing thanks to the Blood Cancer Taskforce is a bold paragraph.",
+			"'This edition published in June 2023' on the imprint page; first edition.",
+			"Pages 2 and 83 are blank; back cover (page 84) carries only the cover artwork."
+		]
+	},
 	"edition": "First edition",
 	"publicationDate": "2023-06-01",
 	"placements": [
@@ -739,12 +751,6 @@
 			"legacyKey": "summary/step-2/communication",
 			"legacyTitle": "Communication",
 			"destination": "2/quick-reference-guide/communication",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-2/checklist",
-			"legacyTitle": "Checklist",
-			"destination": "2/quick-reference-guide/checklist",
 			"how": "guide"
 		},
 		{

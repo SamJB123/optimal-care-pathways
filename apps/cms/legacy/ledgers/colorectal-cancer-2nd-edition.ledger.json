@@ -1,6 +1,18 @@
 {
 	"pathway": "colorectal-cancer",
-	"visualPass": null,
+	"visualPass": {
+		"pages": "1-84 of 84",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages: bold panel headings are the panels; whole bold lines ending in a colon over lists are bold lead-ins; the closing 'Refer to the colorectal cancer optimal care pathway …' is a bold paragraph.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 62) are rendered figures; Figure 3 (page 24) is the timeframes table, its screening-participation statement a row spanning all three columns.",
+			"Risk categories 1-3 (pages 26-28) are accent-coloured subheadings one level under their section, as printed; each closes with its asterisked exclusion note as a paragraph.",
+			"The welcome's signatory (page 6) is a bold name over one role line; the signature image and the endorsement logos are dropped as design.",
+			"Contributors (pages 60-61) one entry per paragraph; the closing stakeholder statement is a bold paragraph.",
+			"'First published in November 2014. Updated in April 2016. This edition published in June 2021.' with a minor update in April 2025 for the National Bowel Cancer Screening Program; second edition.",
+			"Pages 2 and 83 are blank; back cover (page 84) carries only the cover artwork."
+		]
+	},
 	"edition": "Second edition",
 	"publicationDate": "2021-06-01",
 	"placements": [
@@ -773,12 +785,6 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-2/checklist",
-			"legacyTitle": "Checklist",
-			"destination": "2/quick-reference-guide/checklist",
-			"how": "guide"
-		},
-		{
 			"legacyKey": "summary/step-2/timeframe",
 			"legacyTitle": "Timeframe",
 			"destination": "2/quick-reference-guide/timeframe",
@@ -1150,12 +1156,6 @@
 		{
 			"legacyKey": "contributors/governance-project-steering-committee-representation",
 			"legacyTitle": "Governance – project steering committee representation",
-			"destination": "contributors-and-reviewers",
-			"how": "diverged"
-		},
-		{
-			"legacyKey": "contributors/governance-project-steering-committee-representation/other-stakeholders-consulted-to-provide",
-			"legacyTitle": "Other stakeholders consulted to provide",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},

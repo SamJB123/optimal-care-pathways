@@ -216,54 +216,54 @@
 			"note": "standing home for \"Research and clinical trials\""
 		},
 		{
-			"legacyKey": "step-3/6-support-and-communication",
+			"legacyKey": "step-3/support-and-communication",
 			"legacyTitle": "3. 6 Support and communication",
 			"destination": null,
 			"how": "unplaced",
 			"note": "a container heading with no text of its own; its subsections were placed separately"
 		},
 		{
-			"legacyKey": "step-3/6-support-and-communication/prehabilitation",
+			"legacyKey": "step-3/support-and-communication/prehabilitation",
 			"legacyTitle": "3.6.1 Prehabilitation",
 			"destination": "4.2",
 			"how": "rule",
 			"note": "standing home for \"Prehabilitation\""
 		},
 		{
-			"legacyKey": "step-3/6-support-and-communication/fertility-preservation-and-contraception",
+			"legacyKey": "step-3/support-and-communication/fertility-preservation-and-contraception",
 			"legacyTitle": "3.6.2 Fertility preservation and contraception",
 			"destination": "3/supportive-care",
 			"how": "rule",
 			"note": "standing home for \"Fertility preservation and contraception\""
 		},
 		{
-			"legacyKey": "step-3/6-support-and-communication/fertility-preservation-and-contraception/more-information",
+			"legacyKey": "step-3/support-and-communication/fertility-preservation-and-contraception/more-information",
 			"legacyTitle": "More information",
 			"destination": "3/supportive-care",
 			"how": "resources"
 		},
 		{
-			"legacyKey": "step-3/6-support-and-communication/supportive-care",
+			"legacyKey": "step-3/support-and-communication/supportive-care",
 			"legacyTitle": "3.6.3 Supportive care",
 			"destination": "3/supportive-care",
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-3/6-support-and-communication/communication-with-patients-carers-and-families",
+			"legacyKey": "step-3/support-and-communication/communication-with-patients-carers-and-families",
 			"legacyTitle": "3.6.4 Communication with patients, carers and families",
 			"destination": "3/supportive-care",
 			"how": "rule",
 			"note": "standing home for \"Communication with patients, carers and families\""
 		},
 		{
-			"legacyKey": "step-3/6-support-and-communication/communication-with-the-general-practitioner",
+			"legacyKey": "step-3/support-and-communication/communication-with-the-general-practitioner",
 			"legacyTitle": "3.6.5 Communication with the general practitioner",
 			"destination": "3.6",
 			"how": "diverged",
 			"note": "standing home for \"Communication with the general practitioner\""
 		},
 		{
-			"legacyKey": "step-3/6-support-and-communication/communication-with-the-general-practitioner/more-information",
+			"legacyKey": "step-3/support-and-communication/communication-with-the-general-practitioner/more-information",
 			"legacyTitle": "More information",
 			"destination": "3.6",
 			"how": "diverged"
@@ -833,12 +833,6 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-2/refer-to-the-optimal-care-pathway",
-			"legacyTitle": "Refer to the optimal care pathway",
-			"destination": "2/quick-reference-guide/refer-to-the-optimal-care-pathway",
-			"how": "guide"
-		},
-		{
 			"legacyKey": "summary/step-2/referral-options",
 			"legacyTitle": "Referral options",
 			"destination": "2/quick-reference-guide/referral-options",
@@ -848,12 +842,6 @@
 			"legacyKey": "summary/step-2/communication",
 			"legacyTitle": "Communication",
 			"destination": "2/quick-reference-guide/communication",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-2/checklist",
-			"legacyTitle": "Checklist",
-			"destination": "2/quick-reference-guide/checklist",
 			"how": "guide"
 		},
 		{
@@ -929,9 +917,15 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-4/no-treatment-active-surveillance-watch-and-wait",
-			"legacyTitle": "No treatment / active surveillance (watch and wait)",
-			"destination": "4/quick-reference-guide/no-treatment-active-surveillance-watch-and-wait",
+			"legacyKey": "summary/step-4/no-treatment-active-surveillance",
+			"legacyTitle": "No treatment / active surveillance",
+			"destination": "4/quick-reference-guide/no-treatment-active-surveillance",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/watch-and-wait",
+			"legacyTitle": "(watch and wait)",
+			"destination": "4/quick-reference-guide/watch-and-wait",
 			"how": "guide"
 		},
 		{
@@ -941,9 +935,15 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-4/peptide-receptor-radionuclide-therapy-prrt",
-			"legacyTitle": "Peptide receptor radionuclide therapy (PRRT)",
-			"destination": "4/quick-reference-guide/peptide-receptor-radionuclide-therapy-prrt",
+			"legacyKey": "summary/step-4/peptide-receptor-radionuclide-therapy",
+			"legacyTitle": "Peptide receptor radionuclide therapy",
+			"destination": "4/quick-reference-guide/peptide-receptor-radionuclide-therapy",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/prrt",
+			"legacyTitle": "(PRRT)",
+			"destination": "4/quick-reference-guide/prrt",
 			"how": "guide"
 		},
 		{
@@ -983,9 +983,15 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-4/localised-radiation-therapy",
+			"legacyTitle": "Localised radiation therapy",
+			"destination": "4/quick-reference-guide/localised-radiation-therapy",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-4/prrt",
 			"legacyTitle": "PRRT",
-			"destination": "4/quick-reference-guide/prrt",
+			"destination": "4/quick-reference-guide/prrt-2",
 			"how": "guide"
 		},
 		{

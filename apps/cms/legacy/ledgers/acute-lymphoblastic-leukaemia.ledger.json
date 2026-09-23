@@ -1,6 +1,17 @@
 {
 	"pathway": "acute-lymphoblastic-leukaemia",
-	"visualPass": null,
+	"visualPass": {
+		"pages": "1-88 of 88",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages; a bold lead-in wrapped over two lines ('If ALL is suspected initial investigations by the GP should include:') is a paragraph.",
+			"The welcome's signatory (page 6) is one paragraph of name and roles; the signature image is dropped as design.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 64) are rendered figures; Figure 3 (pages 24-25) is the timeframes table with a row-spanning statement per step.",
+			"Appendix E marks core members with an asterisk and a footnote-like note; kept as printed.",
+			"'This edition published in June 2023' on the imprint page; first edition.",
+			"Back cover (page 88) carries only the cover artwork."
+		]
+	},
 	"edition": "First edition",
 	"publicationDate": "2023-06-01",
 	"placements": [
@@ -867,12 +878,6 @@
 			"legacyKey": "summary/step-3/communication",
 			"legacyTitle": "Communication",
 			"destination": "3/quick-reference-guide/communication",
-			"how": "guide"
-		},
-		{
-			"legacyKey": "summary/step-3/timeframe",
-			"legacyTitle": "Timeframe",
-			"destination": "3/quick-reference-guide/timeframe",
 			"how": "guide"
 		},
 		{

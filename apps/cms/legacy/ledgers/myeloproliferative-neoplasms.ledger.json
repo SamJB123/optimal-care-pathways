@@ -1212,12 +1212,6 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/ocp-steering-committee/our-thanks-also-to-the-blood-cancer-taskforce-which-recommended-",
-			"legacyTitle": "Our thanks also to the Blood Cancer Taskforce, which recommended the development of optimal care pathways for all",
-			"destination": "contributors-and-reviewers",
-			"how": "diverged"
-		},
-		{
 			"legacyKey": "appendix-a",
 			"legacyTitle": "Appendix A: Supportive care domains",
 			"destination": "find-out-more/appendix-a-supportive-care-domains",

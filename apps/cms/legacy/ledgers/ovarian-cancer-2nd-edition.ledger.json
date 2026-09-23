@@ -1128,12 +1128,6 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/governance-project-steering-committee-representation/other-stakeholders-consulted-to-provide",
-			"legacyTitle": "Other stakeholders consulted to provide",
-			"destination": "contributors-and-reviewers",
-			"how": "diverged"
-		},
-		{
 			"legacyKey": "appendix-a",
 			"legacyTitle": "Appendix A: Supportive care domains",
 			"destination": "find-out-more/appendix-a-supportive-care-domains",

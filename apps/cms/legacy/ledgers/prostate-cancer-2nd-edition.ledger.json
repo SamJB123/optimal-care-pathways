@@ -318,43 +318,43 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/timeframe-for-starting-treatment",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/surgery-radical-prostatectomy/timeframe-for-starting-treatment",
 			"legacyTitle": "Timeframe for starting treatment",
-			"destination": "4.4",
+			"destination": "4.4.1",
 			"how": "timeframe"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/training-and-experience-required-of-the-surgeon",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/surgery-radical-prostatectomy/training-and-experience-required-of-the-surgeon",
 			"legacyTitle": "Training and experience required of the surgeon",
-			"destination": "4.4",
+			"destination": "4.4.1",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/health-service-characteristics",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/surgery-radical-prostatectomy/health-service-characteristics",
 			"legacyTitle": "Health service characteristics",
 			"destination": "4.8",
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/health-service-characteristics/radiation-therapy-by-external-beam-radiation-therapy-and-or-brac",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/radiation-therapy-by-external-beam-radiation-therapy-and-or-brac",
 			"legacyTitle": "Radiation therapy (by external beam radiation therapy and/or brachytherapy)",
 			"destination": "4.4.2",
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/timeframe-for-starting-treatment",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/radiation-therapy-by-external-beam-radiation-therapy-and-or-brac/timeframe-for-starting-treatment",
 			"legacyTitle": "Timeframe for starting treatment",
-			"destination": "4.4",
+			"destination": "4.4.2",
 			"how": "timeframe"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/training-and-experience-required-of-the-appropriate-specialists",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/radiation-therapy-by-external-beam-radiation-therapy-and-or-brac/training-and-experience-required-of-the-appropriate-specialists",
 			"legacyTitle": "Training and experience required of the appropriate specialists",
-			"destination": "4.4",
+			"destination": "4.4.2",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/health-service-unit-characteristics",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/radiation-therapy-by-external-beam-radiation-therapy-and-or-brac/health-service-unit-characteristics",
 			"legacyTitle": "Health service unit characteristics",
 			"destination": "4.8",
 			"how": "title"

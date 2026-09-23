@@ -1,6 +1,17 @@
 {
 	"pathway": "al-amyloidosis",
-	"visualPass": null,
+	"visualPass": {
+		"pages": "1-88 of 88",
+		"checked": "2026-09-23",
+		"notes": [
+			"Quick reference guide (pages 7-10) read as the 2021 design's step pages: bold panel headings and 'Label:' lead-ins are the panels; a bold label wrapped over two lines with prose under it ('Initial investigations by the GP should' / 'include:') is a heading; 'Systemic therapy' and 'Induction therapy' open their sentences in bold without a colon and are bold lead-ins.",
+			"The welcome's signatory (page 6) is set in the light face over three role lines: four paragraphs, one per printed line (the roles were broken by hand, each had room on the line above); the signature image is dropped as design.",
+			"Figure 1 (page 11), Figure 2 (page 14) and Figure A1 (page 63) are rendered figures; Figure 3 (page 24) is the timeframes table; the seven-steps box, the resource callouts (thumbnails dropped as design), the validated-tools box and the closing 'Visit our guides' band are one-cell tables.",
+			"Step 2 (page 28) nests bullets, dashes and chevrons three deep, as printed. Contributors (pages 61-62) are one entry per paragraph across the gaps; the closing thanks to the Blood Cancer Taskforce is a bold paragraph.",
+			"'This edition published in June 2023' on the imprint page; first edition.",
+			"Pages 2, 86 and 87 are blank; back cover (page 88) carries only the cover artwork."
+		]
+	},
 	"edition": "First edition",
 	"publicationDate": "2023-06-01",
 	"placements": [
@@ -719,6 +730,12 @@
 			"legacyKey": "summary/step-2/checklist",
 			"legacyTitle": "Checklist",
 			"destination": "2/quick-reference-guide/checklist",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-2/initial-investigations-by-the-gp-should-include",
+			"legacyTitle": "Initial investigations by the GP should include",
+			"destination": "2/quick-reference-guide/initial-investigations-by-the-gp-should-include",
 			"how": "guide"
 		},
 		{

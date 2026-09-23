@@ -807,12 +807,6 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-5/treatment-summary",
-			"legacyTitle": "Treatment summary",
-			"destination": "5/quick-reference-guide/treatment-summary",
-			"how": "guide"
-		},
-		{
 			"legacyKey": "summary/step-5/follow-up-care-plan",
 			"legacyTitle": "Follow-up care plan",
 			"destination": "5/quick-reference-guide/follow-up-care-plan",
@@ -867,9 +861,21 @@
 			"how": "guide"
 		},
 		{
+			"legacyKey": "summary/step-7/multidisciplinary-palliative-care",
+			"legacyTitle": "Multidisciplinary palliative care",
+			"destination": "7/quick-reference-guide/multidisciplinary-palliative-care",
+			"how": "guide"
+		},
+		{
 			"legacyKey": "summary/step-7/pain-management",
 			"legacyTitle": "Pain management",
 			"destination": "7/quick-reference-guide/pain-management",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-7/practices-around-death-and-dying",
+			"legacyTitle": "Practices around death and dying",
+			"destination": "7/quick-reference-guide/practices-around-death-and-dying",
 			"how": "guide"
 		},
 		{
