@@ -19,7 +19,8 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { getTableColumns, getTableName, type Table } from 'drizzle-orm'
+import { getTableColumns, getTableName } from 'drizzle-orm'
+import { getTableConfig, type SQLiteTable } from 'drizzle-orm/sqlite-core'
 import { parseBody } from '../src/content/schema.ts'
 import * as schema from '../src/db/schema.ts'
 import { LEGACY_PATHWAYS, type LegacyFamily, type LegacyPathway } from '../src/legacy/catalogue.ts'
@@ -73,42 +74,63 @@ const q = (value: unknown): string => {
 	return `'${JSON.stringify(value).replace(/'/g, "''")}'`
 }
 
-/** One INSERT OR REPLACE for a row, its column names read off the drizzle table. */
-function insert<T extends Table>(table: T, row: Record<string, unknown>): string {
-	const columns = getTableColumns(table)
-	const names: string[] = []
-	const values: string[] = []
-	for (const [key, column] of Object.entries(columns)) {
-		if (!(key in row) || row[key] === undefined) continue
-		names.push(`"${column.name}"`)
-		values.push(q(row[key]))
-	}
-	return `INSERT OR REPLACE INTO "${getTableName(table)}" (${names.join(', ')}) VALUES (${values.join(', ')});`
+/** D1 refuses a statement over 100 KB; a row that would make one is written in pieces. */
+const STATEMENT_BYTES = 90_000
+const PIECE_CHARS = 20_000
+
+/** One INSERT OR REPLACE for a row, its column names read off the drizzle table. A row
+ *  too long for one statement (the older-people pathway's reference list) goes in with its
+ *  longest value empty, which then grows by `col = col || '…'` appends on its primary key. */
+function insert(table: SQLiteTable, row: Record<string, unknown>): string[] {
+	const present = Object.entries(getTableColumns(table)).filter(([key]) => key in row && row[key] !== undefined)
+	const values = present.map(([key]) => q(row[key]))
+	const statement = (vals: string[]) => `INSERT OR REPLACE INTO "${getTableName(table)}" (${present.map(([, c]) => `"${c.name}"`).join(', ')}) VALUES (${vals.join(', ')});`
+	const whole = statement(values)
+	if (Buffer.byteLength(whole) <= STATEMENT_BYTES) return [whole]
+	const longest = values.reduce((best, v, i) => (v.length > (values[best]?.length ?? 0) ? i : best), 0)
+	const entry = present[longest]
+	if (!entry) return [whole]
+	const [key, column] = entry
+	const raw = row[key]
+	const text = typeof raw === 'string' ? raw : JSON.stringify(raw)
+	const config = getTableConfig(table)
+	const keyColumns = config.primaryKeys[0]?.columns ?? config.columns.filter((c) => c.primary)
+	const where = keyColumns
+		.map((c) => {
+			const field = Object.entries(getTableColumns(table)).find(([, col]) => col.name === c.name)?.[0]
+			return `"${c.name}" = ${q(field ? row[field] : null)}`
+		})
+		.join(' AND ')
+	const out = [statement(values.map((v, i) => (i === longest ? "''" : v)))]
+	// Pieces cut on code points, never inside a surrogate pair.
+	const points = Array.from(text)
+	for (let at = 0; at < points.length; at += PIECE_CHARS) out.push(`UPDATE "${getTableName(table)}" SET "${column.name}" = "${column.name}" || ${q(points.slice(at, at + PIECE_CHARS).join(''))} WHERE ${where};`)
+	return out
 }
 
 const statements: string[] = []
 const emit = (result: LegacyImport) => {
-	statements.push(insert(schema.legacyDocuments, result.legacyDocument))
+	statements.push(...insert(schema.legacyDocuments, result.legacyDocument))
 	for (const s of result.legacySections) {
 		parseBody(s.bodyJson)
-		statements.push(insert(schema.legacySections, s))
+		statements.push(...insert(schema.legacySections, s))
 	}
-	statements.push(insert(schema.documents, result.document))
+	statements.push(...insert(schema.documents, result.document))
 	// A re-run must not leave sections of an earlier import behind.
 	statements.push(`DELETE FROM sections WHERE document_id = ${q(result.document.id)} AND id NOT IN (${result.sections.map((s) => q(s.id)).join(', ')});`)
 	for (const s of result.sections) {
 		if (s.bodyJson) parseBody(s.bodyJson)
-		statements.push(insert(schema.sections, s))
+		statements.push(...insert(schema.sections, s))
 	}
-	for (const r of result.references) statements.push(insert(schema.references, r))
-	for (const v of result.versions) statements.push(insert(schema.versions, v))
+	for (const r of result.references) statements.push(...insert(schema.references, r))
+	for (const v of result.versions) statements.push(...insert(schema.versions, v))
 	statements.push(`DELETE FROM version_sections WHERE version_id = ${q(result.versions[0]?.id ?? '')};`)
 	for (const vs of result.versionSections) {
 		if (vs.bodyJson) parseBody(vs.bodyJson)
-		statements.push(insert(schema.versionSections, vs))
+		statements.push(...insert(schema.versionSections, vs))
 	}
 	statements.push(`DELETE FROM section_origins WHERE section_id IN (${result.sections.map((s) => q(s.id)).join(', ')});`)
-	for (const o of result.origins) statements.push(insert(schema.sectionOrigins, o))
+	for (const o of result.origins) statements.push(...insert(schema.sectionOrigins, o))
 }
 
 const ledgerDir = join(appDir, 'legacy', 'ledgers')
