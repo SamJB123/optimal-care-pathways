@@ -7,17 +7,29 @@
  */
 
 import { createServerFn } from '@tanstack/solid-start'
-import { and, eq, inArray, isNull, like } from 'drizzle-orm'
+import { and, eq, isNull, like } from 'drizzle-orm'
 import { z } from 'zod'
 import { citationNumbers, type DerivedView } from '#/content/derived.ts'
 import { bodyToMarkdown } from '#/content/markdown.ts'
 import { renderBodyHtml } from '#/content/render-html.tsx'
 import type { JsonNode } from '#/content/schema.ts'
 import { schema } from '#/db/index.ts'
-import { OCP_NAMESPACE } from '#/lib/roles.ts'
-import { outlineOrder } from './lifecycle.ts'
-import { requireCentralMember, roleOn } from './documents.ts'
+import { OCP_NAMESPACE, roles } from '#/lib/roles.ts'
+import { CENTRAL_ORG_NAME, CENTRAL_ORG_SLUG } from './documents.ts'
 import { envOf, requireUser } from './env.ts'
+import { outlineOrder } from './lifecycle.ts'
+
+// The membership checks live inside the handlers (a plain exported helper that reaches
+// the worker's environment would be kept in the client bundle and drag
+// `cloudflare:workers` in with it).
+async function requireMember(auth: Awaited<ReturnType<typeof envOf>>['env']['AUTH'], userId: string, orgId: string): Promise<void> {
+	if (!(await roles.roleOf(auth, userId, orgId))) throw new Error('You are not a member of this document.')
+}
+
+async function requireCentral(auth: Awaited<ReturnType<typeof envOf>>['env']['AUTH'], userId: string): Promise<void> {
+	const central = await auth.ensureOrganization({ slug: CENTRAL_ORG_SLUG, name: CENTRAL_ORG_NAME, namespace: OCP_NAMESPACE })
+	if (!(await roles.roleOf(auth, userId, central.id))) throw new Error('Only members of the central organisation may do that.')
+}
 
 export interface LegacyOrigin {
 	id: string
@@ -33,7 +45,7 @@ export const legacyOriginsOf = createServerFn({ method: 'GET' })
 	.inputValidator(z.object({ sectionId: z.string().min(1).max(64) }))
 	.handler(async ({ data, context }): Promise<{ legacySlug: string | null; legacyTitle: string | null; origins: LegacyOrigin[] }> => {
 		const userId = requireUser(context.userId)
-		const { d } = await envOf()
+		const { env, d } = await envOf()
 		const section = (
 			await d
 				.select({ documentId: schema.sections.documentId, orgId: schema.documents.orgId })
@@ -43,7 +55,7 @@ export const legacyOriginsOf = createServerFn({ method: 'GET' })
 				.limit(1)
 		)[0]
 		if (!section) throw new Error('Section not found.')
-		if (!(await roleOn(userId, section.orgId))) throw new Error('You are not a member of this document.')
+		await requireMember(env.AUTH, userId, section.orgId)
 		const rows = await d
 			.select({
 				id: schema.legacySections.id,
@@ -116,8 +128,8 @@ const PENDING = 'pending:%'
  */
 export const finaliseLegacyImports = createServerFn({ method: 'POST' }).handler(async ({ context }) => {
 	const userId = requireUser(context.userId)
-	await requireCentralMember(userId)
 	const { env, d } = await envOf()
+	await requireCentral(env.AUTH, userId)
 	const actor = await env.AUTH.getUserById(userId)
 	const pending = await d.select().from(schema.documents).where(like(schema.documents.orgId, PENDING))
 	const finalised: { slug: string; organizationId: string }[] = []
@@ -178,6 +190,5 @@ export const finaliseLegacyImports = createServerFn({ method: 'POST' }).handler(
 	// Documents whose organisation now exists but whose published version was rendered
 	// earlier are reported too, so the caller sees the whole state.
 	const stillPending = await d.select({ slug: schema.documents.slug }).from(schema.documents).where(like(schema.documents.orgId, PENDING))
-	void inArray
 	return { finalised, rendered, errors, stillPending: stillPending.map((r) => r.slug) }
 })

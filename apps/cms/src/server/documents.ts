@@ -53,12 +53,12 @@ async function centralOrgId(): Promise<string | null> {
 	return org.id === core.orgId ? org.id : null
 }
 
-export async function roleOn(userId: string, orgId: string): Promise<Role | null> {
+async function roleOn(userId: string, orgId: string): Promise<Role | null> {
 	const { env } = await envOf()
 	return roles.roleOf(env.AUTH, userId, orgId)
 }
 
-export async function requireCentralMember(userId: string): Promise<string> {
+async function requireCentralMember(userId: string): Promise<string> {
 	const central = await centralOrgId()
 	if (!central) throw new Error('The central organisation has not been set up yet.')
 	const role = await roleOn(userId, central)
