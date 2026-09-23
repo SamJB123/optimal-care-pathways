@@ -19,7 +19,7 @@ export const PUBLIC_CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalid
 export const PUBLISHED_CACHE_TAG = 'published'
 export const cacheTagFor = (slug: string): string => `document-${slug}`
 import { and, desc, eq, inArray, like, or, sql } from 'drizzle-orm'
-import { citationNumbers, inlineText } from '#/content/derived.ts'
+import { citationNumbers, inlineText, walkNodes } from '#/content/derived.ts'
 import type { JsonNode } from '#/content/schema.ts'
 import type { Db } from '#/db/index.ts'
 import { schema } from '#/db/index.ts'
@@ -127,6 +127,30 @@ export async function versionOf(
 }
 
 export type FrozenSection = typeof schema.versionSections.$inferSelect
+
+/** A point-of-care check list found inside a section that is not itself point of care. */
+export interface GuideItem {
+	section: FrozenSection
+	list: JsonNode
+}
+
+/**
+ * The quick reference guide of a published version (decisions 4, 28, 152): a DERIVED view
+ * — every section flagged point of care, in reading order, plus every check list flagged
+ * point of care inside the other sections, each with the section it sits in.
+ */
+export async function guideOf(d: Db, versionId: string): Promise<{ sections: FrozenSection[]; items: GuideItem[]; all: FrozenSection[] }> {
+	const all = await sectionsOf(d, versionId)
+	const sections = all.filter((s) => s.pointOfCare)
+	const items: GuideItem[] = []
+	for (const s of all) {
+		if (s.pointOfCare || !s.bodyJson) continue
+		walkNodes(s.bodyJson, (n) => {
+			if (n.type === 'list' && n.attrs?.kind === 'check' && n.attrs.pointOfCare === true) items.push({ section: s, list: n })
+		})
+	}
+	return { sections, items, all }
+}
 
 /** The version's sections in reading order, hidden ones left out. */
 export async function sectionsOf(d: Db, versionId: string): Promise<FrozenSection[]> {

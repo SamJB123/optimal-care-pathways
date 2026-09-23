@@ -48,7 +48,7 @@ export async function renderFigures(
 	doc: PDFDocumentProxy,
 	model: ExtractedDocument,
 	outDir: string,
-	scale = 2,
+	scale = 3,
 ): Promise<number> {
 	mkdirSync(outDir, { recursive: true })
 	const factory = canvasFactoryOf(doc)

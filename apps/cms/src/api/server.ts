@@ -69,14 +69,18 @@ export function createApiApp(): Hono<Bindings> {
 		},
 	})
 
-	// The PDF of the current published version, rendered by Browser Run from the public
-	// read page and cached until the document is next published.
-	app.get(`${API_BASE}/documents/:slug{[a-zA-Z0-9-]+}.pdf`, async (c) => {
-		const slug = c.req.param('slug')
+	// The PDF of the current published version — the whole pathway, or its derived quick
+	// reference guide — rendered by Browser Run from the public read page and cached until
+	// the document is next published. (A Hono path parameter is a whole segment, so the
+	// file name is the parameter and the slug is read off it.)
+	app.get(`${API_BASE}/documents/:file{[a-zA-Z0-9-]+\\.pdf}`, async (c) => {
+		const file = c.req.param('file').replace(/\.pdf$/, '')
+		const guide = /-quick-reference-guide$/.test(file)
+		const slug = file.replace(/-quick-reference-guide$/, '')
 		const ctx = apiContext(c.env)
 		const v = await versionOf(ctx.d, slug)
 		const rendered = await c.env.BROWSER.quickAction('pdf', {
-			url: documentUrl(ctx.origin, v.slug),
+			url: guide ? `${documentUrl(ctx.origin, v.slug)}/quick-reference-guide` : documentUrl(ctx.origin, v.slug),
 			pdfOptions: {
 				format: 'a4',
 				printBackground: true,
@@ -88,7 +92,7 @@ export function createApiApp(): Hono<Bindings> {
 		return new Response(rendered.body, {
 			headers: {
 				'content-type': 'application/pdf',
-				'content-disposition': `inline; filename="${v.slug}-v${v.version}.pdf"`,
+				'content-disposition': `inline; filename="${v.slug}${guide ? '-quick-reference-guide' : ''}-v${v.version}.pdf"`,
 				'cache-control': PUBLIC_CACHE_CONTROL,
 				'cache-tag': `${PUBLISHED_CACHE_TAG},${cacheTagFor(v.slug)}`,
 			},

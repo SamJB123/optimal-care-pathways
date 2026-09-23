@@ -8,8 +8,21 @@ import { createServerFn } from '@tanstack/solid-start'
 import { z } from 'zod'
 import { contentNode } from '#/content/schema.ts'
 import { envOf } from '#/server/env.ts'
-import { getDocumentFull } from './operations.ts'
+import { getDocumentFull, getQuickReferenceGuide } from './operations.ts'
 import { apiContext } from './server.ts'
+
+/** The derived quick reference guide for /p/{slug}/quick-reference-guide. */
+export const publishedGuide = createServerFn({ method: 'GET' })
+	.inputValidator(z.object({ slug: z.string().min(1).max(120), version: z.number().int().positive().optional() }))
+	.handler(async ({ data }) => {
+		const { env } = await envOf()
+		const guide = await getQuickReferenceGuide.handler(data, apiContext(env))
+		return {
+			...guide,
+			sections: guide.sections.map((section) => ({ ...section, body: contentNode(section.body) })),
+			items: guide.items.map((item) => ({ ...item, list: contentNode(item.list) })),
+		}
+	})
 
 export const publishedDocumentFull = createServerFn({ method: 'GET' })
 	.inputValidator(

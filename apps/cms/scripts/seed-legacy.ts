@@ -124,7 +124,7 @@ for (const pathway of targets) {
 	console.log(
 		`${pathway.pathwaySlug}: ${result.sections.length} draft sections (${result.sections.filter((s) => s.migrationNote?.startsWith('unplaced')).length} unplaced, ${result.sections.filter((s) => s.migrationNote?.startsWith('proposed')).length} proposed), ` +
 			`${result.legacySections.length} legacy sections, ${result.versionSections.length} published sections, ${result.references.length} references; ` +
-			`placements: title ${by('title') + by('title-child')}, rule ${by('rule')}, merged ${by('merged')}, timeframe ${by('timeframe')}, resources ${by('resources')}, checklist ${by('checklist')}, provenance ${by('provenance')}, proposed ${by('proposed')}, unplaced ${by('unplaced')}, derived ${by('derived')}; ` +
+			`placements: title ${by('title') + by('title-child')}, rule ${by('rule')}, merged ${by('merged')}, timeframe ${by('timeframe')}, resources ${by('resources')}, diverged ${by('diverged')}, provenance ${by('provenance')}, proposed ${by('proposed')}, unplaced ${by('unplaced')}, derived ${by('derived')}; ` +
 			`citations ${ledger.citations.matched} matched / ${ledger.citations.unmatched.length} unmatched; ${ledger.checkItems} check lists; figure rows ${ledger.timeframes.figureRows} → timeframe boxes ${ledger.timeframes.boxes}; edition ${ledger.edition ?? '?'} ${ledger.publicationDate ?? '?'}`,
 	)
 	writeFileSync(

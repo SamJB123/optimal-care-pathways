@@ -63,13 +63,17 @@ export type PlacementHow =
 	| 'title-child'
 	| 'rule'
 	| 'timeframe'
+	| 'timeframe-row'
 	| 'resources'
-	| 'checklist'
+	| 'guide'
 	| 'merged'
 	| 'provenance'
 	| 'derived'
 	| 'proposed'
 	| 'unplaced'
+	/** Legacy text of a shared template section: version 1 carries it as a divergence of
+	 *  that section; the draft carries the core text (decisions 153, 157). */
+	| 'diverged'
 
 export interface Placement {
 	legacyKey: string
@@ -84,9 +88,12 @@ export interface Ledger {
 	edition: string | null
 	publicationDate: string | null
 	placements: Placement[]
-	citations: { matched: number; unmatched: string[] }
-	/** Rows the summary timeframes table printed, and timeframe boxes the import made. */
-	timeframes: { figureRows: number; boxes: number }
+	/** Resolved citations; the misses with their reasons; and the ones resolved to the
+	 *  list's only entry for the author when the printed year matches none. */
+	citations: { matched: number; unmatched: string[]; byName: string[] }
+	/** Rows the summary timeframes table printed, and how each was met: by a timeframe box
+	 *  the body's own subsection made, or by a box created from the row (decision 148). */
+	timeframes: { figureRows: number; boxes: number; rows: { step: number | null; carePoint: string; source: 'body' | 'row'; destination: string | null }[] }
 	checkItems: number
 }
 
@@ -145,6 +152,9 @@ function l1KeyOf(heading: string): string {
 	if (/^principles/.test(h)) return 'principles-intro'
 	if (/^optimal (cancer )?care pathway$/.test(h)) return 'pathway-note'
 	if (/^(contributors|acknowledgements)/.test(h)) return 'contributors'
+	if (/^scope$/.test(h)) return 'scope'
+	if (/^context$/.test(h)) return 'context'
+	if (/further considerations/.test(h)) return 'further-considerations'
 	const appendix = /^appendix(?:\s+([a-z]))?\b/.exec(h)
 	if (appendix) return appendix[1] ? `appendix-${appendix[1]}` : 'appendix-a'
 	if (/^resource list/.test(h)) return 'resource-list'
@@ -213,7 +223,7 @@ function legacyTree(model: ExtractedDocument, id: (kind: string, key: string) =>
 	const ackAt = frontBlocks.findIndex(isAcknowledgement)
 	const imprintAt = frontBlocks.findIndex((b, i) => i > (ackAt < 0 ? -1 : ackAt) && isImprint(b))
 	const front: [string, string, Block[]][] = [
-		['front-matter', 'Front matter', frontBlocks.slice(0, ackAt < 0 ? (imprintAt < 0 ? frontBlocks.length : imprintAt) : ackAt)],
+		['front-matter', 'Front matter', frontMatterAsPrinted(frontBlocks.slice(0, ackAt < 0 ? (imprintAt < 0 ? frontBlocks.length : imprintAt) : ackAt), model.title)],
 		['acknowledgement', 'Statement of acknowledgement', ackAt < 0 ? [] : frontBlocks.slice(ackAt, imprintAt < 0 ? frontBlocks.length : imprintAt)],
 		['isbn', 'Publication details', imprintAt < 0 ? [] : frontBlocks.slice(imprintAt)],
 	]
@@ -261,6 +271,37 @@ function legacyTree(model: ExtractedDocument, id: (kind: string, key: string) =>
 
 const flatten = (nodes: LegacyNode[]): LegacyNode[] => nodes.flatMap((n) => [n, ...flatten(n.children)])
 
+/** The cover's letter-spaced edition ("S E C O N D E D I T I O N") as words. */
+const EDITION_WORDS: Record<string, string> = { first: 'First edition', second: 'Second edition', third: 'Third edition', fourth: 'Fourth edition' }
+function editionWords(text: string): string | null {
+	const compact = text.replace(/\s+/g, '').toLowerCase()
+	const m = /^(first|second|third|fourth)edition$/.exec(compact)
+	return m?.[1] ? (EDITION_WORDS[m[1]] ?? null) : null
+}
+
+/**
+ * The cover and title page as one statement each (decision 145): the title is the
+ * document's, an edition line reads as words, and a line printed on both pages appears
+ * once.
+ */
+function frontMatterAsPrinted(blocks: Block[], title: string): Block[] {
+	const seen = new Set<string>([title.replace(/\s+/g, ' ').trim().toLowerCase()])
+	const out: Block[] = []
+	for (const b of blocks) {
+		if (b.kind !== 'paragraph') {
+			out.push(b)
+			continue
+		}
+		const text = plainText(b.runs).replace(/\s+/g, ' ').trim()
+		const edition = editionWords(text)
+		const key = (edition ?? text).toLowerCase()
+		if (seen.has(key)) continue
+		seen.add(key)
+		out.push(edition ? { ...b, runs: [{ ...(b.runs[0] ?? { text: '', bold: false, italic: false, underline: false, superscript: false, subscript: false, size: 0, colour: '#000000', background: null, link: null, footnote: null, endnote: null }), text: edition }] } : b)
+	}
+	return out
+}
+
 // ---------------------------------------------------------------------------
 // References and author–year citations
 // ---------------------------------------------------------------------------
@@ -271,6 +312,8 @@ interface ReferenceEntry {
 	url: string | null
 	/** Keys the in-text form can name: "acsqhc 2019a", "wildiers 2014", "silver baima 2013". */
 	keys: Set<string>
+	/** The entry's printed number in a numbered list (cited by raised numbers). */
+	number?: number
 }
 
 const normaliseKey = (value: string): string =>
@@ -282,6 +325,10 @@ const normaliseKey = (value: string): string =>
 
 /** The entry's year token, with its letter ("2019a"). */
 const YEAR = /\b((?:19|20)\d\d[a-z]?)\b/
+
+/** A surname as a reference list prints it, with its particles: "van Weert", "Høilund-Carlsen". */
+const PARTICLES = String.raw`(?:(?:de|del|den|der|da|di|la|le|van|von)\s)*`
+const SURNAME = new RegExp(String.raw`^${PARTICLES}\p{Lu}[\p{L}’'-]+(?:\s${PARTICLES}\p{Lu}[\p{L}’'-]+)?$`, 'u')
 
 /** Author–year keys for one printed reference entry. */
 function referenceKeys(citation: string): Set<string> {
@@ -298,11 +345,13 @@ function referenceKeys(citation: string): Set<string> {
 	} else keys.add(`${normaliseKey(head)} ${y}`)
 	// Personal authors: "Wildiers H, Heeren P, Puts M, …, et al." — surnames are the words
 	// before each initials group; the in-text form names one, two, or the first with "et al.".
+	// Nothing after "et al." names an author (a trial group's name follows it).
 	const authors = head
+		.replace(/\bet al\.?[\s\S]*$/i, '')
 		.split(/,\s*|\s+&\s+|\s+and\s+/)
 		.map((a) => a.trim())
-		.filter((a) => a && !/^et al\.?$/i.test(a))
-	const surnames = authors.map((a) => a.replace(/\s+[A-Z]{1,3}$/, '').trim()).filter((s) => /^[A-Z][A-Za-z’'-]+(?:\s[A-Z][A-Za-z’'-]+)?$/.test(s))
+		.filter((a) => a)
+	const surnames = authors.map((a) => a.replace(/\s+\p{Lu}{1,3}$/u, '').trim()).filter((s) => SURNAME.test(s))
 	if (surnames.length > 0 && surnames.length === authors.length) {
 		const first = normaliseKey(surnames[0] ?? '')
 		keys.add(`${first} ${y}`)
@@ -311,20 +360,37 @@ function referenceKeys(citation: string): Set<string> {
 	return keys
 }
 
-/** A citation as printed in the text — "(COSA 2013; palliAGED 2018)", "[WHO 2018]", or a
- *  year alone after the author's name: "Fitch’s (2000) model". */
-const IN_TEXT = /\(([^()]*?(?:19|20)\d\d[a-z]?(?![0-9])[^()]*)\)|\[([^[\]]*?(?:19|20)\d\d[a-z]?(?![0-9])[^[\]]*)\]/g
+/** A citation as printed in the text — "(COSA 2013; palliAGED 2018)", "[WHO 2018]" (also
+ *  inside a parenthesis: "(… may also be malnourished [WHO 2018])"), or a year alone
+ *  after the author's name: "Fitch’s (2000) model". Brackets are matched first so a
+ *  bracketed citation inside a parenthetical aside is found on its own. */
+const IN_TEXT = /\[([^[\]]*?(?:19|20)\d\d[a-z]?(?![0-9])[^[\]]*)\]|\(([^()[\]]*?(?:19|20)\d\d[a-z]?(?![0-9])[^()[\]]*)\)/g
 /** The name a year-only citation belongs to, at the end of the text before it. */
 const NAME_BEFORE = /([A-Z][A-Za-z’'-]+(?:\s(?:&|and)\s[A-Z][A-Za-z’'-]+)?(?:\set al\.?)?)[’']?s?\s*$/
+/** A name as the text cites it: capitalised words, particles, "&" or "and", "et al.". */
+const CITED_NAME = String.raw`(?:\p{Lu}[\p{L}’'-]*|de|del|den|der|da|di|la|le|van|von|&|and|et al\.?)(?:\s(?:\p{Lu}[\p{L}’'-]*|de|del|den|der|da|di|la|le|van|von|&|and|et al\.?))*`
+/** The comma between two citations in one parenthesis ("AIHW 2018, Brewster et al. 2014"):
+ *  a name and a year follow it. A comma before a bare year ("2018a, 2018b") is not one. */
+const CITATION_COMMA = new RegExp(String.raw`,\s*(?=${CITED_NAME}\s(?:19|20)\d\d)`, 'u')
+/** Words a citation may open with that name no author: "adapted from Fizazi et al. 2015". */
+const CITATION_PREFIX = /^(?:adapted\s+from|from|see|e\.g\.|cf\.|source|in)\s*:?\s+/i
+/** A month and year in parentheses: a date, not a citation. */
+const MONTH_YEAR = /^(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+(?:19|20)\d\d$/i
 
 /** One part's key(s): "Wildiers et al. 2014" → "wildiers 2014"; "Laidsaar-Powell et al.
  *  2018a, 2018b" → two keys; "Vijayvergia & Denlinger 2015" → "vijayvergia denlinger 2015". */
 function partKeys(part: string): string[] {
-	const years = [...part.matchAll(/((?:19|20)\d\d[a-z]?)(?![0-9])/g)].map((m) => m[1]?.toLowerCase() ?? '')
+	const cleaned = part.replace(CITATION_PREFIX, '').replace(/\*+$/, '')
+	const years = [...cleaned.matchAll(/((?:19|20)\d\d[a-z]?)(?![0-9])/g)].map((m) => m[1]?.toLowerCase() ?? '')
 	if (years.length === 0) return []
-	const at = part.search(/(?:19|20)\d\d/)
-	const head = part.slice(0, at).replace(/\bet al\.?/i, '').replace(/\s+&\s+|\s+and\s+/g, ' ')
-	const name = normaliseKey(head)
+	const at = cleaned.search(/(?:19|20)\d\d/)
+	// "et al." (or its misprint "el al") and stray initials ("Simms K T") name no author.
+	const head = cleaned
+		.slice(0, at)
+		.replace(/\be[tl] al\.?/i, '')
+		.replace(/\s+&\s+|\s+and\s+/g, ' ')
+	const words = normaliseKey(head).split(' ').filter(Boolean)
+	const name = (words.length > 1 ? words.filter((w) => w.length > 1) : words).join(' ')
 	if (!name) return []
 	return years.map((y) => `${name} ${y}`)
 }
@@ -333,6 +399,46 @@ interface CitationIndex {
 	byKey: Map<string, ReferenceEntry>
 	matched: number
 	unmatched: string[]
+	/** Citations resolved to the list's only entry for that author, the printed year
+	 *  differing — the print's own slip, recorded (decision 147). */
+	byName: string[]
+}
+
+/** The entry a key names: its own, or — for an organisation the text names by the head of
+ *  its title ("Australian Cancer Network 2009" for the Network's working party) — the one
+ *  entry of that year whose key begins with it. */
+function lookup(index: CitationIndex, key: string): ReferenceEntry | null {
+	const exact = index.byKey.get(key)
+	if (exact) return exact
+	const m = /^(.*)\s((?:19|20)\d\d[a-z]?)$/.exec(key)
+	if (!m?.[1] || !m[2]) return null
+	const [, name, year] = m
+	const sameYear = [...index.byKey.entries()].filter(([k]) => k.endsWith(` ${year}`))
+	const found = new Set(sameYear.filter(([k]) => k.startsWith(`${name} `)).map(([, e]) => e))
+	if (found.size === 1) return [...found][0] ?? null
+	// An organisation cited by its initials ("WHO 2018") when the list spells its name out.
+	if (/^[a-z]{2,7}$/.test(name)) {
+		const byInitials = new Set(sameYear.filter(([k]) => initialsOf(k.slice(0, -(year.length + 1))) === name).map(([, e]) => e))
+		if (byInitials.size === 1) return [...byInitials][0] ?? null
+	}
+	return null
+}
+
+/** The initials of a spelt-out organisation: "world health organization" → "who". */
+const initialsOf = (head: string): string =>
+	head
+		.split(' ')
+		.filter((w) => w && !/^(?:of|and|the|for|on|in|to|a|an)$/.test(w))
+		.map((w) => w[0] ?? '')
+		.join('')
+
+/** The list's one entry for the author a key names, whatever its year: the print cites
+ *  "Karapetis et al. 2016" and lists only Karapetis et al. 2017. */
+function lookupByName(index: CitationIndex, key: string): ReferenceEntry | null {
+	const name = key.replace(/\s(?:19|20)\d\d[a-z]?$/, '')
+	if (!name) return null
+	const found = new Set([...index.byKey.entries()].filter(([k]) => k.startsWith(`${name} `) && /\s(?:19|20)\d\d[a-z]?$/.test(k)).map(([, e]) => e))
+	return found.size === 1 ? ([...found][0] ?? null) : null
 }
 
 /** Replace the author–year citations in a paragraph's inline nodes with citation atoms. */
@@ -348,31 +454,80 @@ function citeInline(nodes: JsonNode[], index: CitationIndex): JsonNode[] {
 		for (const m of text.matchAll(IN_TEXT)) {
 			const inner = (m[1] ?? m[2] ?? '').trim()
 			let before = text.slice(last, m.index)
-			let parts = inner.split(/;\s*/).map((p) => p.trim()).filter(Boolean)
-			// A year alone takes the name the sentence just gave: "Fitch’s (2000) model".
-			if (/^(?:19|20)\d\d[a-z]?(?:,\s*(?:19|20)\d\d[a-z]?)*$/.test(inner)) {
-				const name = NAME_BEFORE.exec(before)?.[1]
-				if (!name) {
-					index.unmatched.push(inner)
+			// A date in parentheses ("(May 2019)") names no reference.
+			if (MONTH_YEAR.test(inner)) continue
+			let parts: string[] = []
+			for (const p of inner
+				.split(/;\s*/)
+				.flatMap((p) => p.split(CITATION_COMMA))
+				.map((p) => p.trim())
+				.filter(Boolean)) {
+				const previous = parts.at(-1)
+				if (previous && /^(?:19|20)\d\d[a-z]?$/.test(p)) {
+					// A year alone after a separator takes the name before it: "Royal College of
+					// Pathologists 2013; 2017", "Laidsaar-Powell et al; 2018a".
+					if (!YEAR.test(previous)) {
+						parts[parts.length - 1] = `${previous} ${p}`
+						continue
+					}
+					const name = previous.replace(/\s*(?:19|20)\d\d[a-z]?(?:,\s*(?:19|20)\d\d[a-z]?)*$/, '')
+					parts.push(name ? `${name} ${p}` : p)
 					continue
 				}
+				parts.push(p)
+			}
+			// A year alone takes the name the sentence just gave: "Fitch’s (2000) model". After
+			// anything else ("…Plan for Blood Cancer (2020)") it dates a title, not a source.
+			if (/^(?:19|20)\d\d[a-z]?(?:,\s*(?:19|20)\d\d[a-z]?)*$/.test(inner)) {
+				const name = NAME_BEFORE.exec(before)?.[1]?.replace(/[’']s$/, '')
+				if (!name) continue
 				parts = [`${name} ${inner}`]
 				// The name stays in the sentence; only the bracketed year becomes the atom.
 				before = before.replace(/\s*$/, ' ')
 			}
-			const found = parts.map((p) => partKeys(p).map((k) => index.byKey.get(k) ?? null))
-			// Every part must resolve, else the printed citation stays as text.
-			if (found.length === 0 || found.some((entries) => entries.length === 0 || entries.some((e) => e === null))) {
-				index.unmatched.push(inner)
-				continue
+			// Each part resolves to entries or stays as text: an aside with no year ("0.83;
+			// Cancer Australia 2019b") is text beside the atom; an author–year the list cannot
+			// answer stays as printed and the ledger says why (decision 147): no such entry, or
+			// several for that name and year and the text names none of them.
+			type Piece = { text: string } | { entries: ReferenceEntry[] }
+			const pieces: Piece[] = []
+			const misses: string[] = []
+			for (const p of parts) {
+				const keys = partKeys(p)
+				if (keys.length === 0) {
+					pieces.push({ text: p })
+					continue
+				}
+				const entries = keys.map((k) => {
+					const entry = lookup(index, k)
+					if (entry) return entry
+					// The print's own slip in a year: the list's only entry for that author.
+					const byName = lookupByName(index, k)
+					if (byName) index.byName.push(`"${p}" → ${byName.citation.slice(0, 80)}`)
+					return byName
+				})
+				if (entries.every((e): e is ReferenceEntry => e !== null)) pieces.push({ entries })
+				else {
+					pieces.push({ text: p })
+					misses.push(explainMiss([p], index))
+				}
 			}
-			if (before) out.push({ ...node, text: before })
-			for (const entries of found)
-				for (const e of entries)
-					if (e) {
+			if (misses.length > 0) index.unmatched.push(`${inner} — ${misses.join('; ')}`)
+			if (!pieces.some((piece) => 'entries' in piece)) continue
+			// All atoms: the printed parenthesis is theirs. Mixed: the parenthesis stays around
+			// text and atoms alike.
+			const wrap = pieces.some((piece) => 'text' in piece)
+			if (before || wrap) out.push({ ...node, text: wrap ? `${before}(` : before })
+			for (const [i, piece] of pieces.entries()) {
+				if (i > 0 && wrap) out.push({ ...node, text: '; ' })
+				if ('text' in piece) out.push({ ...node, text: piece.text })
+				else
+					for (const e of piece.entries) {
 						index.matched++
 						out.push({ type: 'citation', attrs: { referenceId: e.id } })
 					}
+			}
+			if (wrap) out.push({ ...node, text: ')' })
 			last = (m.index ?? 0) + m[0].length
 		}
 		const rest = text.slice(last)
@@ -381,6 +536,30 @@ function citeInline(nodes: JsonNode[], index: CitationIndex): JsonNode[] {
 	// A space that preceded a printed "(…)" now precedes an atom; a full stop after one
 	// stays. Nothing else changes.
 	return out.filter((n) => n.type !== 'text' || (n.text ?? '') !== '')
+}
+
+/** Why a printed citation resolved to no entry: the reason the ledger records. */
+function explainMiss(parts: string[], index: CitationIndex): string {
+	const reasons: string[] = []
+	for (const part of parts) {
+		const keys = partKeys(part)
+		if (keys.length === 0) {
+			reasons.push(`"${part}" is not an author–year citation`)
+			continue
+		}
+		for (const key of keys) {
+			if (lookup(index, key)) continue
+			const name = key.replace(/\s(?:19|20)\d\d[a-z]?$/, '')
+			const year = key.slice(name.length + 1)
+			const sameName = [...index.byKey.keys()].filter((k) => k.startsWith(`${name} `))
+			const sameYear = sameName.filter((k) => k.slice(name.length + 1).startsWith(year.replace(/[a-z]$/, '')))
+			if (sameYear.length > 1 && !/[a-z]$/.test(year))
+				reasons.push(`"${part}": the list has ${sameYear.length} entries for that author in ${year} (${sameYear.map((k) => k.slice(name.length + 1)).join(', ')}) and the text names none of them`)
+			else if (sameName.length > 0) reasons.push(`"${part}": the list has that author only for ${sameName.map((k) => k.slice(name.length + 1)).join(', ')}`)
+			else reasons.push(`"${part}": no entry in the printed reference list`)
+		}
+	}
+	return reasons.join('; ')
 }
 
 function citeNodes(nodes: JsonNode[], index: CitationIndex): JsonNode[] {
@@ -472,26 +651,119 @@ function guidanceOf(body: JsonNode | null | undefined): JsonNode[] {
 
 const headingNode = (text: string, level: number): JsonNode => ({ type: 'heading', attrs: { level }, content: [{ type: 'text', text }] })
 
+/** The text of content nodes, blocks joined by newlines. */
+function textOfNodes(nodes: JsonNode[]): string {
+	const out: string[] = []
+	const visit = (list: JsonNode[], into: string[]) => {
+		for (const n of list) {
+			if (n.type === 'text') into.push(n.text ?? '')
+			else if (n.content) {
+				const inner: string[] = []
+				visit(n.content, inner)
+				const joined = inner.join('')
+				if (joined) into.push(n.type === 'paragraph' || n.type === 'heading' ? `${joined}\n` : joined)
+			}
+		}
+	}
+	visit(nodes, out)
+	return out.join('')
+}
+
+/** A bold lead-in opening the first paragraph ("Screening participation – the program …"):
+ *  the care point it names, and the nodes with the lead-in removed. */
+function leadInOf(nodes: JsonNode[]): { carePoint: string; rest: JsonNode[] } | null {
+	const first = nodes[0]
+	const lead = first?.type === 'paragraph' ? first.content?.[0] : undefined
+	if (!first || !lead || lead.type !== 'text' || !lead.marks?.some((m) => m.type === 'bold')) return null
+	const carePoint = (lead.text ?? '').replace(/\s*[–—:-]\s*$/, '').trim()
+	if (!carePoint) return null
+	const after = first.content?.slice(1) ?? []
+	const opener = after[0]
+	const trimmed = opener?.type === 'text' ? [{ ...opener, text: (opener.text ?? '').replace(/^\s*[–—:-]?\s*/, '') }, ...after.slice(1)] : after
+	const content = trimmed.filter((n) => n.type !== 'text' || (n.text ?? '') !== '')
+	return { carePoint, rest: [...(content.length > 0 ? [{ ...first, content }] : []), ...nodes.slice(1)] }
+}
+
 function bodyOf(nodes: JsonNode[]): JsonNode {
 	return { type: 'doc', content: nodes.length > 0 ? nodes : [{ type: 'paragraph' }] }
 }
 
-/** The cancer template's destinations for the sandbox record's non-step identities. */
-const NON_STEP: Record<string, { address: string; how: 'rule' | 'proposed' | 'provenance' | 'derived' } | undefined> = {
-	contents: { address: 'contents', how: 'derived' },
-	'front-matter': { address: 'optimal-care-pathway-for-people-with/x-edition', how: 'rule' },
-	'welcome-and-introduction': { address: 'optimal-care-pathway-for-people-with/preface', how: 'proposed' },
-	acknowledgement: { address: 'optimal-care-pathway-for-people-with/preface/statement-of-acknowledgement', how: 'provenance' },
-	isbn: { address: 'optimal-care-pathway-for-people-with/preface/publication-details', how: 'rule' },
-	intent: { address: 'about-optimal-care-pathways/intent-of-the-optimal-care-pathways', how: 'provenance' },
-	resources: { address: 'about-optimal-care-pathways/pathway-resources', how: 'provenance' },
-	'principles-intro': { address: 'principles-for-optimal-cancer-care', how: 'provenance' },
-	'summary-timeframes': { address: 'snapshot-of-optimal-timeframes', how: 'rule' },
-	summary: { address: 'snapshot-of-optimal-timeframes', how: 'provenance' },
-	'pathway-note': { address: 'about-this-cancer/epidemiology-and-burden-of-disease', how: 'proposed' },
-	contributors: { address: 'contributors-and-reviewers', how: 'rule' },
-	references: { address: 'references', how: 'provenance' },
+/** Where a non-step legacy chapter goes: a template section (`address`), or a new section
+ *  of its own beneath one (`under`) when the template's own slot is shared core text. */
+type NonStepRule = { address: string; how: 'rule' | 'proposed' | 'provenance' | 'derived' } | { under: string; title: string; how: 'proposed' }
+
+/** A template kind's destinations for the sandbox record's non-step identities. */
+interface NonStepTable {
+	rules: Record<string, NonStepRule | undefined>
+	/** The section under which the pathway chapter's own subsections (not steps) sit. */
+	pathwayHome: string
+	/** The root section the derived guide's introduction follows: the last before Step 1. */
+	guideAfter: string
+	/** Owned sections that take the legacy principles' text, by principle number — the
+	 *  population template's considerations for each principle; the cancer template's
+	 *  principles are shared core text and take none. */
+	principles: Record<string, string> | null
 }
+
+const CANCER_NON_STEP: NonStepTable = {
+	rules: {
+		contents: { address: 'contents', how: 'derived' },
+		'front-matter': { address: 'optimal-care-pathway-for-people-with/x-edition', how: 'rule' },
+		'welcome-and-introduction': { address: 'optimal-care-pathway-for-people-with/preface', how: 'proposed' },
+		acknowledgement: { address: 'optimal-care-pathway-for-people-with/preface/statement-of-acknowledgement', how: 'provenance' },
+		isbn: { address: 'optimal-care-pathway-for-people-with/preface/publication-details', how: 'rule' },
+		intent: { address: 'about-optimal-care-pathways/intent-of-the-optimal-care-pathways', how: 'provenance' },
+		resources: { address: 'about-optimal-care-pathways/pathway-resources', how: 'provenance' },
+		'principles-intro': { address: 'principles-for-optimal-cancer-care', how: 'provenance' },
+		scope: { address: 'about-this-optimal-care-pathway/scope', how: 'rule' },
+		'summary-timeframes': { address: 'snapshot-of-optimal-timeframes', how: 'rule' },
+		summary: { address: 'snapshot-of-optimal-timeframes', how: 'provenance' },
+		'pathway-note': { address: 'about-this-cancer/epidemiology-and-burden-of-disease', how: 'proposed' },
+		contributors: { address: 'contributors-and-reviewers', how: 'rule' },
+		references: { address: 'references', how: 'provenance' },
+	},
+	pathwayHome: 'about-this-cancer',
+	guideAfter: 'snapshot-of-optimal-timeframes',
+	principles: null,
+}
+
+const POPULATION_CONSIDERATIONS = 'principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c'
+
+const POPULATION_NON_STEP: NonStepTable = {
+	rules: {
+		contents: { address: 'contents', how: 'derived' },
+		'front-matter': { address: 'optimal-care-pathway-for-with-cancer/x-edition', how: 'rule' },
+		// The population template's preface is apparatus under its contents: the legacy
+		// welcome letter sits under the title section, where the cancer template's preface is.
+		'welcome-and-introduction': { under: 'optimal-care-pathway-for-with-cancer', title: 'Welcome and introduction', how: 'proposed' },
+		acknowledgement: { address: 'contents/preface/statement-of-acknowledgement', how: 'provenance' },
+		isbn: { address: 'contents/preface/publication-details', how: 'rule' },
+		intent: { address: 'about-optimal-care-pathways/intent-of-the-optimal-care-pathways', how: 'provenance' },
+		resources: { address: 'about-optimal-care-pathways/pathway-resources', how: 'provenance' },
+		'principles-intro': { address: 'principles-for-optimal-cancer-care', how: 'provenance' },
+		scope: { address: 'about-this-optimal-care-pathway/scope', how: 'rule' },
+		context: { address: 'about-this-population-group/overview-of-the-population', how: 'proposed' },
+		'further-considerations': { address: 'about-this-population-group/key-considerations-for-delivery-of-optimal-cancer-care', how: 'proposed' },
+		summary: { address: 'about-this-population-group', how: 'provenance' },
+		'pathway-note': { address: 'about-this-population-group/overview-of-the-population', how: 'proposed' },
+		contributors: { address: 'contributors-and-reviewers', how: 'rule' },
+		references: { address: 'references', how: 'provenance' },
+	},
+	pathwayHome: 'about-this-population-group',
+	guideAfter: 'about-this-population-group',
+	principles: {
+		'1': `${POPULATION_CONSIDERATIONS}/person-centred-care`,
+		'2': `${POPULATION_CONSIDERATIONS}/safe-and-quality-care`,
+		'3': `${POPULATION_CONSIDERATIONS}/multidisciplinary-care`,
+		'4': `${POPULATION_CONSIDERATIONS}/supportive-care`,
+		'5': `${POPULATION_CONSIDERATIONS}/navigation-and-care-coordination`,
+		'6': `${POPULATION_CONSIDERATIONS}/communication`,
+		'7': `${POPULATION_CONSIDERATIONS}/research-and-clinical-trials`,
+	},
+}
+
+const NON_STEP_TABLES: Record<string, NonStepTable | undefined> = { cancer: CANCER_NON_STEP, population: POPULATION_NON_STEP }
+
 /** Back matter with no slot of its own: a new section each under Find out more. */
 const FIND_OUT_MORE = /^(appendix-[a-z]|resource-list|glossary|abbreviations)$/
 
@@ -503,22 +775,38 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	const { model, pathway, core, id, orgId, actorId } = input
 	const slug = pathway.slug
 	const documentId = id('document', `legacy:${pathway.pathwaySlug}`)
-	const mapper = createBlockMapper(model, { figureUrl: (page, index) => legacyFigureUrl(slug, page, index) })
+	const referenceIdOf = (number: number) => id('reference', `legacy:${slug}:n${number}`)
+	const mapper = createBlockMapper(model, { figureUrl: (page, index) => legacyFigureUrl(slug, page, index), referenceId: referenceIdOf })
 	const tree = legacyTree(model, id, slug)
 	const all = flatten(tree)
+	const table = NON_STEP_TABLES[core.template.kind]
+	if (!table) throw new Error(`no legacy placement table for the ${core.template.kind} template`)
 	const ledger: Ledger = {
 		edition: editionOf(model, pathway),
-		publicationDate: publicationDateOf(model),
+		publicationDate: publicationDateOf(model, pathway),
 		placements: [],
-		citations: { matched: 0, unmatched: [] },
-		timeframes: { figureRows: 0, boxes: 0 },
+		citations: { matched: 0, unmatched: [], byName: [] },
+		timeframes: { figureRows: 0, boxes: 0, rows: [] },
 		checkItems: 0,
 	}
+	/** Every timeframe box placed from the body, for the summary table's rows to check against. */
+	const bodyTimeframes: { step: number | null; text: string }[] = []
+	const publishedAt = ledger.publicationDate ? new Date(ledger.publicationDate) : null
 
 	// ---- references --------------------------------------------------------------------
+	// A numbered list is cited by raised numbers: the reader made its entries endnotes and
+	// its markers endnote runs, which the block mapper turns into citation atoms itself.
+	const numbered = model.endnotes.length > 0
 	const referencesNode = tree.find((n) => n.l1 === 'references')
 	const entries: ReferenceEntry[] = []
-	if (referencesNode) {
+	if (numbered) {
+		for (const e of model.endnotes) {
+			const citation = plainText(e.runs).replace(/\s+/g, ' ').trim()
+			const url = e.runs.find((r) => r.link && 'url' in r.link)?.link
+			const printed = citation.match(/<\s*(https?:\/\/[^>\s]+|www\.[^>\s]+)\s*>/)?.[1] ?? null
+			entries.push({ id: referenceIdOf(e.number), citation, url: url && 'url' in url ? url.url : printed, keys: new Set(), number: e.number })
+		}
+	} else if (referencesNode) {
 		const paragraphs = flatten([referencesNode]).flatMap((n) => n.blocks.filter((b): b is Paragraph => b.kind === 'paragraph'))
 		for (const [i, p] of paragraphs.entries()) {
 			const citation = plainText(p.runs).replace(/\s+/g, ' ').trim()
@@ -533,11 +821,12 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			})
 		}
 	}
-	const citations: CitationIndex = { byKey: new Map(), matched: 0, unmatched: [] }
+	const citations: CitationIndex = { byKey: new Map(), matched: 0, unmatched: [], byName: [] }
 	for (const e of entries) for (const k of e.keys) if (!citations.byKey.has(k)) citations.byKey.set(k, e)
 
 	/** A legacy node's blocks as content nodes, cited. */
-	const nodesOf = (blocks: Block[]): JsonNode[] => citeNodes(mapper.blocks(blocks), citations)
+	const nodesOf = (blocks: Block[], options: { cite?: boolean } = {}): JsonNode[] =>
+		options.cite === false || numbered ? mapper.blocks(blocks) : citeNodes(mapper.blocks(blocks), citations)
 
 	// ---- legacy rows -----------------------------------------------------------------
 	const legacyDocument: LegacyDocumentInsert = {
@@ -550,10 +839,9 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		publicationDate: ledger.publicationDate,
 		pdfKey: `legacy-sources/${pathway.file}`,
 	}
-	const legacyBodies = new Map<string, JsonNode>()
 	const legacySections: LegacySectionInsert[] = all.map((n) => {
-		const body = bodyOf(nodesOf(n.blocks))
-		legacyBodies.set(n.key, body)
+		// The reference list's own entries are not citations of one another.
+		const body = bodyOf(nodesOf(n.blocks, { cite: n.l1 !== 'references' }))
 		return {
 			id: n.id,
 			documentId: legacyDocument.id,
@@ -604,12 +892,22 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	const childrenOf = (address: string): DraftSection[] => [...drafts.values()].filter((d) => d.row.parentId === sectionId(address))
 	const nextOrder = (address: string): number => Math.max(-1, ...childrenOf(address).map((d) => d.row.orderIndex)) + 1
 
-	/** A new owned section under a draft section, addressed by slug beneath its parent. */
-	const addSection = (parentAddress: string, title: string, options: { note: string | null; printedNumber?: string | null; pointOfCare?: boolean }): DraftSection => {
-		const parent = byAddress(parentAddress)
-		let address = `${parentAddress}/${slugify(title)}`
+	/** A new owned section under a draft section (or at the root after a named section),
+	 *  addressed by slug beneath its parent. */
+	const addSection = (
+		parentAddress: string | null,
+		title: string,
+		options: { note: string | null; printedNumber?: string | null; pointOfCare?: boolean; after?: string },
+	): DraftSection => {
+		const parent = parentAddress ? byAddress(parentAddress) : null
+		const base = parentAddress ? `${parentAddress}/${slugify(title)}` : slugify(title)
+		let address = base
 		let n = 2
-		while (drafts.has(address)) address = `${parentAddress}/${slugify(title)}-${n++}`
+		while (drafts.has(address)) address = `${base}-${n++}`
+		const rootOrder = () => {
+			const after = options.after ? byAddress(options.after) : null
+			return after ? after.row.orderIndex + 0.5 : Math.max(-1, ...[...drafts.values()].filter((d) => d.row.parentId === null).map((d) => d.row.orderIndex)) + 1
+		}
 		const draft: DraftSection = {
 			core: null,
 			contributions: [],
@@ -618,14 +916,14 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			row: {
 				id: sectionId(address),
 				documentId,
-				parentId: parent.row.id,
+				parentId: parent?.row.id ?? null,
 				address,
 				canonical: false,
 				printedNumber: options.printedNumber ?? null,
 				title,
-				headingLevel: (parent.row.headingLevel ?? 1) + 1,
-				orderIndex: nextOrder(parentAddress),
-				stepNumber: parent.row.stepNumber ?? null,
+				headingLevel: (parent?.row.headingLevel ?? 0) + 1,
+				orderIndex: parentAddress ? nextOrder(parentAddress) : rootOrder(),
+				stepNumber: parent?.row.stepNumber ?? null,
 				ownership: 'owned',
 				coreSectionId: null,
 				pointOfCare: options.pointOfCare ?? false,
@@ -656,6 +954,58 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		recordOrigin(draft, node)
 		ledger.placements.push({ legacyKey: node.key, legacyTitle: node.heading, destination: draft.row.address, how, ...(note ? { note } : {}) })
 	}
+	/** Legacy text that belongs to a SHARED template section (decision 153): version 1
+	 *  publishes it as that section's divergence; the draft starts merged back into the
+	 *  core text, the legacy text one diff away. */
+	const divergences = new Map<string, { nodes: JsonNode[]; pages: string[] }>()
+	const diverge = (draft: DraftSection, node: LegacyNode, nodes: JsonNode[], options: { heading?: string | null; note?: string } = {}) => {
+		if (draft.row.ownership !== 'shared') throw new Error(`cannot diverge the owned section '${draft.row.address}'`)
+		const entry = divergences.get(draft.row.address) ?? { nodes: [], pages: [] }
+		entry.nodes.push(...(options.heading ? [headingNode(options.heading, 3)] : []), ...nodes)
+		entry.pages.push(node.pages)
+		divergences.set(draft.row.address, entry)
+		recordOrigin(draft, node)
+		ledger.placements.push({ legacyKey: node.key, legacyTitle: node.heading, destination: draft.row.address, how: 'diverged', ...(options.note ? { note: options.note } : {}) })
+	}
+	/** Into an owned section as placed text; into a shared one as version 1's divergence. */
+	const placeOrDiverge = (draft: DraftSection, node: LegacyNode, nodes: JsonNode[], how: PlacementHow, options: { heading?: string | null; note?: string } = {}) => {
+		if (nodes.length === 0) {
+			provenance(draft, node, draft.row.ownership === 'owned' ? how : 'diverged', options.note)
+			return
+		}
+		if (draft.row.ownership === 'owned') place(draft, node, nodes, how, options)
+		else diverge(draft, node, nodes, options)
+	}
+
+	// ---- standing homes (decisions 154–156) ------------------------------------------------
+	// Headings the legacy editions repeat that the template has no section for, and where
+	// the template's own instructions put their content: research and clinical trials in
+	// 4.3.1's Clinical trials panel; communication with patients, carers and families in
+	// the step's Supportive care; the general practitioner's in the step's GP section.
+	const GP_SECTION: Record<number, string> = { 3: '3.6', 4: '4.6', 5: '5.4', 6: '6.8', 7: '7.2.4' }
+	const STANDING_HOMES: { test: RegExp; home: (step: number) => string | null; heading: (title: string, step: number) => string | null }[] = [
+		{ test: /^research and clinical trials$/i, home: () => '4.3.1', heading: (title, step) => `${title} (Step ${step})` },
+		{ test: /^communication with the (?:general practitioner|gp|person.s general practitioner)/i, home: (step) => GP_SECTION[step] ?? `${step}/supportive-care`, heading: (title) => title },
+		{ test: /^communication\b(?![^]*\b(?:general practitioner|gp)\b)/i, home: (step) => `${step}/supportive-care`, heading: (title) => title },
+		{ test: /^prehabilitation$/i, home: () => '4.2', heading: (title) => title },
+		{ test: /^rehabilitation(?: and recovery)?$/i, home: (step) => `${step}/supportive-care`, heading: (title) => title },
+		{ test: /^fertility preservation/i, home: () => '3/supportive-care', heading: (title) => title },
+		{ test: /^treatment intent$/i, home: () => '4.1', heading: (title) => title },
+		{ test: /^(?:responsibilities of individual team members|key considerations beyond treatment recommendations)$/i, home: () => '3.5.1', heading: (title) => title },
+		{ test: /^supportive therapies$/i, home: () => '4/supportive-care', heading: (title) => title },
+		{ test: /^signs and symptoms (?:of|or) (?:relapsed|recurrent|metastatic|residual|refractory|progressive)/i, home: () => '6.1', heading: (title) => title },
+		{ test: /^managing (?:relapsed|recurrent|refractory|residual|progressive|metastatic)/i, home: () => '6.4', heading: (title) => title },
+		{ test: /^treatment$/i, home: (step) => (step === 6 ? '6.4' : null), heading: () => null },
+	]
+	const standingHome = (title: string, step: number): { draft: DraftSection; heading: string | null } | null => {
+		for (const rule of STANDING_HOMES) {
+			if (!rule.test.test(title)) continue
+			const address = rule.home(step)
+			const draft = address ? drafts.get(address) : undefined
+			return draft ? { draft, heading: rule.heading(title, step) } : null
+		}
+		return null
+	}
 
 	// ---- the steps ------------------------------------------------------------------------
 	const stepCandidates = (step: number): Candidate[] =>
@@ -668,31 +1018,27 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	const placeNode = (node: LegacyNode, step: number, parentDestination: DraftSection | null, matched: CoreSectionRow | null): DraftSection | null => {
 		const title = titleOf(node.heading, node.number)
 		const own = nodesOf(node.blocks)
-		// The section above this one that can take text: its destination when owned; a
-		// shared destination (core text) takes nothing, so a flagged section opens beside it.
+		// The section above this one that can take draft text: its destination when owned.
+		// A shared destination takes the legacy text as version 1's divergence instead.
 		const host = parentDestination && parentDestination.row.ownership === 'owned' ? parentDestination : null
-		const hostOrBeside = (): DraftSection =>
-			host ??
-			addSection(parentDestination?.row.address ?? String(step), title, {
-				note: parentDestination
-					? `proposed: the template's ${parentDestination.row.printedNumber ?? parentDestination.row.title} is shared core text; the legacy edition's own text under it sits here for the author to fold in or remove`
-					: `unplaced: the ${core.template.kind} template has no section for this under Step ${step}; keep, move or remove it`,
-				printedNumber: node.number,
-			})
+		/** The step's Timeframes section, for boxes whose section above is shared core text
+		 *  (the draft needs every box for Figure 3, decision 148). */
+		const timeframesSection = (): DraftSection =>
+			drafts.get(`${step}/timeframes`) ?? addSection(String(step), 'Timeframes', { note: `proposed: timeframes of Step ${step} whose section is shared core text; move each into its section`, pointOfCare: false })
 		// A timeframe subsection: a timeframe box in the section above it, whose care
 		// point is that section (the printed summary table names the section too).
 		if (/^timeframes?\b/i.test(title) && parentDestination && own.length > 0) {
 			const carePoint = parentDestination.row.title ?? title
-			const target = hostOrBeside()
+			const target = host ?? timeframesSection()
 			ledger.timeframes.boxes++
+			bodyTimeframes.push({ step, text: textOfBlocks(node.blocks) })
 			place(target, node, [{ type: 'timeframe', content: [{ type: 'carePoint', content: [{ type: 'text', text: carePoint }] }, ...own] }], 'timeframe')
 			return target
 		}
 		// "More information": a resources box in the section above it.
 		if (/^more information$/i.test(title) && parentDestination && own.length > 0) {
-			const target = hostOrBeside()
-			place(target, node, [{ type: 'box', attrs: { kind: 'resources', icon: 'info', family: '', variant: 'soft' }, content: [{ type: 'banner', attrs: { tone: 'band' }, content: [{ type: 'text', text: 'More information' }] }, ...own] }], 'resources')
-			return target
+			placeOrDiverge(parentDestination, node, [{ type: 'box', attrs: { kind: 'resources', icon: 'info', family: '', variant: 'soft' }, content: [{ type: 'banner', attrs: { tone: 'band' }, content: [{ type: 'text', text: 'More information' }] }, ...own] }], 'resources')
+			return parentDestination
 		}
 		if (matched) {
 			const draft = byAddress(matched.address)
@@ -701,27 +1047,28 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 				else provenance(draft, node, 'title')
 				return draft
 			}
-			// A shared match: the core text stands; the legacy text goes to the owned child
-			// that best names it, else to a new section beside the core text.
-			provenance(draft, node)
-			if (own.length === 0) return draft
+			// A shared match: the legacy text goes to the owned child that best names it;
+			// else it is version 1's divergence of the shared section (decision 153).
+			if (own.length === 0) {
+				provenance(draft, node)
+				return draft
+			}
 			const children = childrenOf(matched.address).filter((d) => d.core && d.row.ownership === 'owned')
 			const child = matchTitle(title, children.map((d) => ({ row: d.core as CoreSectionRow, tokens: titleTokens(d.core?.title ?? '', pathway.subject) })), pathway.subject)
 			if (child) {
+				provenance(draft, node)
 				const target = byAddress(child.address)
 				place(target, node, own, 'title-child', { heading: title, note: `matched the shared section ${matched.printedNumber ?? matched.address}` })
 				return target
 			}
-			const beside = addSection(matched.address, title, { note: `proposed: the template's ${matched.printedNumber ?? matched.title} is shared core text; the legacy edition's own text on it sits here for the author to fold in or remove`, printedNumber: node.number })
-			place(beside, node, own, 'proposed')
-			return beside
+			diverge(draft, node, own, { note: `legacy text of the shared ${matched.printedNumber ?? matched.title}: version 1 publishes it as a divergence; the draft carries the core text` })
+			return draft
 		}
-		// No match: into the parent's destination when the parent was placed (a
-		// subsection keeps its heading inside the body), else a flagged section of its own.
-		if (host) {
-			if (own.length > 0) place(host, node, [headingNode(title, 3), ...own], 'merged')
-			else provenance(host, node, 'merged')
-			return host
+		// No match: into the parent's destination (a subsection keeps its heading inside
+		// the body) — placed when owned, diverged when shared.
+		if (parentDestination) {
+			placeOrDiverge(parentDestination, node, own.length > 0 ? [headingNode(title, 3), ...own] : [], 'merged')
+			return parentDestination
 		}
 		// A heading with nothing of its own under it ("Support and communication" over its
 		// subsections) makes no section: its children find their own places.
@@ -729,14 +1076,21 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			ledger.placements.push({ legacyKey: node.key, legacyTitle: node.heading, destination: null, how: 'unplaced', note: 'a container heading with no text of its own; its subsections were placed separately' })
 			return null
 		}
-		const under = parentDestination?.row.address ?? String(step)
-		const fresh = addSection(under, title, { note: `unplaced: the ${core.template.kind} template has no section for this under Step ${step}; keep, move or remove it`, printedNumber: node.number })
+		const fresh = addSection(String(step), title, { note: `unplaced: the ${core.template.kind} template has no section for this under Step ${step}; keep, move or remove it`, printedNumber: node.number })
 		place(fresh, node, own, 'unplaced')
 		return fresh
 	}
 
 	const visitStep = (node: LegacyNode, step: number, parentDestination: DraftSection | null) => {
 		const title = titleOf(node.heading, node.number)
+		// A standing home settles the heading before any title match.
+		const standing = standingHome(title, step)
+		if (standing) {
+			const own = nodesOf(node.blocks)
+			placeOrDiverge(standing.draft, node, own.length > 0 ? [...(standing.heading ? [headingNode(standing.heading, 3)] : []), ...own] : [], 'rule', { note: `standing home for "${title}"` })
+			for (const child of node.children) visitStep(child, step, standing.draft)
+			return
+		}
 		const matched = /^(timeframes?\b|more information$)/i.test(title) ? null : matchTitle(title, stepCandidates(step), pathway.subject)
 		const destination = placeNode(node, step, parentDestination, matched)
 		for (const child of node.children) visitStep(child, step, destination)
@@ -745,65 +1099,173 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	for (const chapter of tree) {
 		if (chapter.l1 !== 'pathway-note') continue
 		// The chapter's own intro (the seven steps box, the disease's epidemiology).
-		const rule = NON_STEP['pathway-note']
-		if (rule) {
+		const rule = table.rules['pathway-note']
+		if (rule && 'address' in rule) {
 			const intro = chapter.blocks.filter((b) => !(b.kind === 'table' && /^seven steps/i.test(textOfBlocks([b]).trim())))
 			const own = nodesOf(intro)
 			const draft = byAddress(rule.address)
-			if (own.length > 0) place(draft, chapter, own, 'proposed', { note: 'proposed: the legacy pathway’s opening text, read as the disease’s epidemiology' })
-			draft.row.migrationNote = draft.row.migrationNote ?? 'proposed: holds the legacy pathway’s opening text; check it is about epidemiology and burden of disease'
+			if (own.length > 0) place(draft, chapter, own, 'proposed', { note: `proposed: the legacy pathway’s opening text, read as ${draft.row.title}` })
+			draft.row.migrationNote = draft.row.migrationNote ?? `proposed: holds the legacy pathway’s opening text; check it is about ${(draft.row.title ?? '').toLowerCase()}`
 		}
+		for (const stepNode of chapter.children) {
+			const step = Number(STEP.exec(stepNode.heading)?.[1] ?? 0)
+			if (!step) {
+				// The chapter's own subsections before the steps ("Special considerations", the
+				// disease's subsets): a proposed section each beside the chapter's home.
+				const title = titleOf(stepNode.heading, stepNode.number)
+				const home = addSection(table.pathwayHome, title, { note: `proposed: the legacy pathway’s opening section "${title}"; check where it belongs`, printedNumber: stepNode.number })
+				const own = nodesOf(stepNode.blocks)
+				if (own.length > 0) place(home, stepNode, own, 'proposed')
+				else provenance(home, stepNode, 'proposed')
+				for (const child of flatten(stepNode.children)) {
+					const nodes = nodesOf(child.blocks)
+					if (nodes.length > 0) place(home, child, [headingNode(titleOf(child.heading, child.number), 3), ...nodes], 'merged')
+					else provenance(home, child, 'merged')
+				}
+				continue
+			}
+			// The step's own introduction: version 1's divergence of the step section; the
+			// draft starts on the core introduction (decision 157).
+			const root = byAddress(String(step))
+			placeOrDiverge(root, stepNode, nodesOf(stepNode.blocks), 'proposed', { note: `the legacy edition's own introduction to Step ${step}` })
+			for (const child of stepNode.children) visitStep(child, step, null)
+		}
+	}
+
+	// ---- the quick reference guide: point-of-care sections (decision 152) ----------------------
+	// The printed guide is a curated summary that nothing can regenerate from the body, so
+	// its content lives in the pathway as point-of-care sections: the guide's own
+	// introduction at the root, then under each step a "Quick reference guide" section
+	// holding the step's guide text, with one child per panel in the guide's order. The
+	// derived guide is every point-of-care section in reading order.
+	const pointOfCareLists = (nodes: JsonNode[]): JsonNode[] =>
+		nodes.map((n) => (n.type === 'list' && n.attrs?.kind === 'check' ? { ...n, attrs: { ...n.attrs, pointOfCare: true } } : n))
+	for (const chapter of tree) {
+		if (chapter.l1 !== 'summary') continue
+		// The guide's own introduction, and — once — the statement its pages repeat as a
+		// running side band ("Support: Assess supportive care needs at every step …"),
+		// which the reader set aside as furniture.
+		const pages = new Set(flatten([chapter]).map((n) => n.page))
+		const band = [...new Set(model.warnings.filter((w) => w.message.startsWith('furniture: ') && pages.has(w.page)).map((w) => w.message.slice('furniture: '.length)))]
+		const intro = [...nodesOf(chapter.blocks), ...band.map((text): JsonNode => ({ type: 'paragraph', content: [{ type: 'text', text, marks: [{ type: 'bold' }] }] }))]
+		if (intro.length > 0) {
+			const guide = addSection(null, 'Quick reference guide', { note: null, pointOfCare: true, after: table.guideAfter })
+			place(guide, chapter, intro, 'guide')
+		} else provenance(byAddress(table.guideAfter), chapter, 'guide')
 		for (const stepNode of chapter.children) {
 			const step = Number(STEP.exec(stepNode.heading)?.[1] ?? 0)
 			if (!step) {
 				ledger.placements.push({ legacyKey: stepNode.key, legacyTitle: stepNode.heading, destination: null, how: 'unplaced', note: 'not a step' })
 				continue
 			}
-			const root = byAddress(String(step))
-			provenance(root, stepNode)
-			const own = nodesOf(stepNode.blocks)
-			if (own.length > 0) {
-				const intro = addSection(String(step), 'Introduction', { note: `unplaced: the template's Step ${step} introduction is shared core text; this is the legacy edition's own introduction to the step` })
-				intro.row.orderIndex = -1
-				place(intro, stepNode, own, 'unplaced')
+			const guide = addSection(String(step), 'Quick reference guide', { note: null, pointOfCare: true })
+			const own = pointOfCareLists(nodesOf(stepNode.blocks))
+			if (own.length > 0) place(guide, stepNode, own, 'guide')
+			else provenance(guide, stepNode, 'guide')
+			// One section per panel; a panel repeated over the guide's pages (a second
+			// "Checklist") joins the first of its name.
+			const panels = new Map<string, DraftSection>()
+			for (const panel of flatten(stepNode.children)) {
+				const title = titleOf(panel.heading, panel.number)
+				const nodes = pointOfCareLists(nodesOf(panel.blocks))
+				ledger.checkItems += nodes.filter((n) => n.type === 'list' && n.attrs?.kind === 'check').length
+				const key = title.toLowerCase()
+				let section = panels.get(key)
+				if (!section) {
+					section = addSection(guide.row.address, title, { note: null, pointOfCare: true })
+					panels.set(key, section)
+				}
+				if (nodes.length > 0) place(section, panel, nodes, 'guide')
+				else provenance(section, panel, 'guide')
 			}
-			for (const child of stepNode.children) visitStep(child, step, null)
 		}
 	}
 
-	// ---- the quick reference guide: checklists → point-of-care items ---------------------------
-	for (const chapter of tree) {
-		if (chapter.l1 !== 'summary') continue
-		const snapshot = byAddress('snapshot-of-optimal-timeframes')
-		provenance(snapshot, chapter)
-		for (const stepNode of chapter.children) {
-			const step = Number(STEP.exec(stepNode.heading)?.[1] ?? 0)
-			if (!step) continue
-			const root = byAddress(String(step))
-			provenance(root, stepNode)
-			let checklist: DraftSection | null = null
-			for (const child of flatten(stepNode.children)) {
-				if (!/^checklist$/i.test(child.heading.trim())) {
-					provenance(root, child)
-					continue
+	// ---- the summary timeframes table, row by row (decision 148) ---------------------------------
+	const stepTitles = tree
+		.find((n) => n.l1 === 'pathway-note')
+		?.children.flatMap((s) => {
+			const step = Number(STEP.exec(s.heading)?.[1] ?? 0)
+			return step ? [{ step, tokens: titleTokens(titleOf(s.heading, s.number), pathway.subject) }] : []
+		}) ?? []
+	const wordsOf = (text: string) => new Set(text.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 3))
+	const covered = (step: number | null, statement: string): boolean => {
+		const words = wordsOf(statement)
+		if (words.size === 0) return true
+		return bodyTimeframes.some((b) => {
+			if (step !== null && b.step !== step) return false
+			const have = wordsOf(b.text)
+			let shared = 0
+			for (const w of words) if (have.has(w)) shared++
+			return shared / words.size >= 0.6
+		})
+	}
+	const placeTimeframeRows = (table: Table, chapter: LegacyNode) => {
+		let step: number | null = null
+		/** A statement cell spanning the rows beneath it: each of their care points has it. */
+		let shared: { statement: string; nodes: JsonNode[]; remaining: number } | null = null
+		for (const row of table.rows) {
+			if (row.cells.every((c) => c.header) || row.cells.length === 0) continue
+			const cells = row.cells
+			let carePoint: string
+			let statement: string
+			let statementNodes: JsonNode[]
+			if (cells.length === 1 && (cells[0]?.colSpan ?? 1) < 2) {
+				// A care point alone: the statement beside it spans down from a row above.
+				const cell = cells[0]
+				if (!cell || !shared || shared.remaining <= 0) continue
+				carePoint = textOfBlocks(cell.blocks).replace(/\s+/g, ' ').trim()
+				statement = shared.statement
+				statementNodes = shared.nodes
+				shared.remaining--
+			} else if (cells.length === 1) {
+				// A row spanning the columns ("Screening participation – the NBCSP … every 2
+				// years"): its bold lead-in is the care point; it opens the table, in Step 1.
+				const cell = cells[0]
+				const lead = cell ? leadInOf(nodesOf(cell.blocks)) : null
+				if (!lead) continue
+				step = step ?? 1
+				carePoint = lead.carePoint
+				statementNodes = lead.rest
+				statement = textOfNodes(lead.rest)
+			} else {
+				if (cells.length >= 3) {
+					const label = textOfBlocks(cells[0]?.blocks ?? []).replace(/\s+/g, ' ').trim()
+					const tokens = titleTokens(label, pathway.subject)
+					// The step the label names: the closest title ("Treatment" is Step 4, not the
+					// step whose title merely contains the word).
+					let best: { step: number; score: number } | null = null
+					for (const s of stepTitles) {
+						const { containment, jaccard } = titleScore(tokens, s.tokens)
+						if (containment >= 0.6 && (!best || jaccard > best.score)) best = { step: s.step, score: jaccard }
+					}
+					step = best?.step ?? null
 				}
-				const lists = nodesOf(child.blocks).map((n) =>
-					n.type === 'list' && n.attrs?.kind === 'check' ? { ...n, attrs: { ...n.attrs, pointOfCare: true } } : n,
-				)
-				ledger.checkItems += lists.filter((n) => n.type === 'list' && n.attrs?.kind === 'check').length
-				if (lists.length === 0) continue
-				checklist ??= addSection(String(step), 'Checklist', { note: null, pointOfCare: true })
-				place(checklist, child, checklist.contributions.length === 0 ? [{ type: 'box', attrs: { kind: 'actions', icon: 'clipboard', family: '', variant: 'soft' }, content: [{ type: 'banner', attrs: { tone: 'band' }, content: [{ type: 'text', text: 'Checklist' }] }, ...lists] }] : lists, 'checklist')
+				const carePointCell = cells[cells.length - 2]
+				const statementCell = cells[cells.length - 1]
+				if (!carePointCell || !statementCell) continue
+				carePoint = textOfBlocks(carePointCell.blocks).replace(/\s+/g, ' ').trim()
+				statement = textOfBlocks(statementCell.blocks)
+				statementNodes = nodesOf(statementCell.blocks)
+				shared = statementCell.rowSpan > 1 ? { statement, nodes: statementNodes, remaining: statementCell.rowSpan - 1 } : null
 			}
-			// Later checklist boxes of the same step join the first box.
-			if (checklist && checklist.contributions.length > 1) {
-				const [first, ...rest] = checklist.contributions
-				const box = first?.nodes[0]
-				if (first && box?.type === 'box') {
-					box.content = [...(box.content ?? []), ...rest.flatMap((c) => c.nodes)]
-					checklist.contributions = [first]
-				}
+			ledger.timeframes.figureRows++
+			if (covered(step, statement)) {
+				ledger.timeframes.rows.push({ step, carePoint, source: 'body', destination: null })
+				continue
 			}
+			// No body subsection printed this row: a box from the row, in the step section
+			// the care point names, else in a Timeframes section of the step.
+			const candidates = step ? stepCandidates(step).filter((c) => byAddress(c.row.address).row.ownership === 'owned') : []
+			const matched = step ? matchTitle(carePoint, candidates, pathway.subject) : null
+			const target = matched ? byAddress(matched.address) : step ? (drafts.get(`${step}/timeframes`) ?? addSection(String(step), 'Timeframes', { note: `proposed: rows of the printed summary table whose care point names no section of Step ${step}; move each into its section`, pointOfCare: false })) : null
+			if (!target) {
+				ledger.timeframes.rows.push({ step, carePoint, source: 'row', destination: null })
+				continue
+			}
+			ledger.timeframes.boxes++
+			place(target, chapter, [{ type: 'timeframe', content: [{ type: 'carePoint', content: [{ type: 'text', text: carePoint }] }, ...statementNodes] }], 'timeframe-row', { note: `row "${carePoint}" of the summary timeframes table` })
+			ledger.timeframes.rows.push({ step, carePoint, source: 'row', destination: target.row.address })
 		}
 	}
 
@@ -824,7 +1286,7 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			}
 			continue
 		}
-		const rule = NON_STEP[chapter.l1]
+		const rule = table.rules[chapter.l1]
 		if (!rule) {
 			const section = addSection('find-out-more', titleOf(chapter.heading, chapter.number), { note: `unplaced: the template has no slot for the legacy chapter "${chapter.heading}"; keep, move or remove it` })
 			for (const node of flatten([chapter])) {
@@ -837,15 +1299,48 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			for (const node of flatten([chapter])) ledger.placements.push({ legacyKey: node.key, legacyTitle: node.heading, destination: null, how: 'derived' })
 			continue
 		}
-		const destination = byAddress(rule.address)
+		// The population template's principles carry owned "considerations" sections, one
+		// per principle: the legacy edition's own text on each principle goes there.
+		if (chapter.l1 === 'principles-intro' && table.principles) {
+			provenance(byAddress('address' in rule ? rule.address : rule.under), chapter)
+			for (const principle of chapter.children) {
+				const number = /^principle\s+(\d)/i.exec(principle.heading)?.[1]
+				const address = number ? table.principles[number] : undefined
+				const title = titleOf(principle.heading, principle.number)
+				const target = address
+					? byAddress(address)
+					: addSection(POPULATION_CONSIDERATIONS, title, { note: `unplaced: the template has no considerations section for the legacy "${title}"; keep, move or remove it` })
+				const own = nodesOf(principle.blocks)
+				if (own.length > 0) place(target, principle, own, address ? 'proposed' : 'unplaced')
+				else provenance(target, principle, address ? 'proposed' : 'unplaced')
+				if (address) target.row.migrationNote = target.row.migrationNote ?? `proposed: holds the legacy "${title}" as this population’s considerations for the principle; check it belongs here`
+				for (const child of flatten(principle.children)) {
+					const nodes = nodesOf(child.blocks)
+					if (nodes.length > 0) place(target, child, [headingNode(titleOf(child.heading, child.number), 3), ...nodes], 'merged')
+					else provenance(target, child, 'merged')
+				}
+			}
+			continue
+		}
+		const destination = 'under' in rule ? addSection(rule.under, rule.title, { note: `proposed: holds the legacy "${chapter.heading}"; check it belongs here` }) : byAddress(rule.address)
 		if (rule.how === 'provenance' || destination.row.ownership === 'shared') {
-			for (const node of flatten([chapter])) provenance(destination, node)
+			// The reference list is derived from the citations; every other chapter whose
+			// template slot is shared core text is version 1's divergence of that slot.
+			if (chapter.l1 === 'references' || destination.row.ownership === 'owned') {
+				for (const node of flatten([chapter])) provenance(destination, node)
+				continue
+			}
+			placeOrDiverge(destination, chapter, nodesOf(chapter.blocks), 'diverged')
+			for (const child of flatten(chapter.children)) {
+				const nodes = nodesOf(child.blocks)
+				placeOrDiverge(destination, child, nodes.length > 0 ? [headingNode(titleOf(child.heading, child.number), 3), ...nodes] : [], 'diverged')
+			}
 			continue
 		}
 		if (chapter.l1 === 'contributors') {
 			// The chapter's own text, then its groups by title under the template's own groups.
 			const own = nodesOf(chapter.blocks)
-			const groups = childrenOf(rule.address).filter((d) => d.core).map((d) => ({ row: d.core as CoreSectionRow, tokens: titleTokens(d.core?.title ?? '', pathway.subject) }))
+			const groups = childrenOf(destination.row.address).filter((d) => d.core).map((d) => ({ row: d.core as CoreSectionRow, tokens: titleTokens(d.core?.title ?? '', pathway.subject) }))
 			if (own.length > 0) {
 				const first = groups[0] ? byAddress(groups[0].row.address) : null
 				if (first) place(first, chapter, own, 'rule')
@@ -854,7 +1349,7 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 				const title = titleOf(group.heading, group.number)
 				const matched = matchTitle(title, groups, pathway.subject)
 				const nodes = nodesOf(group.blocks)
-				const target = matched ? byAddress(matched.address) : addSection(rule.address, title, { note: `unplaced: the template's Contributors and reviewers has no group "${title}"; keep, move or remove it` })
+				const target = matched ? byAddress(matched.address) : addSection(destination.row.address, title, { note: `unplaced: the template's Contributors and reviewers has no group "${title}"; keep, move or remove it` })
 				if (nodes.length > 0) place(target, group, nodes, matched ? 'title' : 'unplaced')
 				else provenance(target, group, matched ? 'title' : 'unplaced')
 				for (const child of flatten(group.children)) {
@@ -865,23 +1360,58 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			continue
 		}
 		if (chapter.l1 === 'summary-timeframes') {
-			// The prose stays; the table is Figure 3, a derived view of the steps' timeframe boxes.
-			const table = chapter.blocks.find((b): b is Table => b.kind === 'table')
-			ledger.timeframes.figureRows = table ? table.rows.filter((r) => r.cells.length >= 2 && !r.cells.every((c) => c.header)).length : 0
-			const own = nodesOf(chapter.blocks.filter((b) => b.kind !== 'table' && b.kind !== 'figure'))
-			if (own.length > 0) place(destination, chapter, own, 'rule', { note: 'the printed timeframes table is derived from the steps’ timeframe boxes' })
-			else provenance(destination, chapter)
-			for (const child of flatten(chapter.children)) provenance(destination, child)
+			// The prose stays (the chapter's, and any subsection's under it); the table is
+			// Figure 3, derived from the steps' timeframe boxes — every printed row must have
+			// one (decision 148), so a row the body's own subsections did not produce makes a
+			// box of its own in the step section its care point names.
+			// The table: the one with the most rows across at least two columns (a band under
+			// the caption is a one-cell table of its own). Its caption goes with it.
+			const table = flatten([chapter])
+				.flatMap((n) => n.blocks)
+				.filter((b): b is Table => b.kind === 'table' && b.rows.some((r) => r.cells.length >= 2))
+				.sort((a, b) => b.rows.length - a.rows.length)[0]
+			const isCaption = (b: Block) => table !== undefined && b.kind === 'paragraph' && /^Figure\s+\d+\s*:/.test(plainText(b.runs).trim())
+			for (const node of flatten([chapter])) {
+				const own = nodesOf(node.blocks.filter((b) => b !== table && b.kind !== 'figure' && !isCaption(b)))
+				if (own.length > 0) place(destination, node, node === chapter ? own : [headingNode(titleOf(node.heading, node.number), 3), ...own], node === chapter ? 'rule' : 'merged', node === chapter ? { note: 'the printed timeframes table and its caption are derived from the steps’ timeframe boxes' } : {})
+				else provenance(destination, node)
+			}
+			if (table) placeTimeframeRows(table, chapter)
 			continue
 		}
-		const own = nodesOf(chapter.blocks)
+		// The edition slot takes the cover and title page as statements (decision 145): the
+		// edition as words, the publication date, who endorsed it. The title is the document's.
+		const own =
+			chapter.l1 === 'front-matter'
+				? [
+						...(ledger.edition ? [{ type: 'paragraph' as const, content: [{ type: 'text' as const, text: ledger.edition }] }] : []),
+						...(publishedAt ? [{ type: 'paragraph' as const, content: [{ type: 'text' as const, text: `Published ${publishedAt.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })}` }] }] : []),
+						...nodesOf(chapter.blocks.filter((b) => b.kind !== 'paragraph' || /^endorsed by/i.test(plainText(b.runs).trim()))),
+					]
+				: nodesOf(chapter.blocks)
 		if (own.length > 0) place(destination, chapter, own, rule.how === 'proposed' ? 'proposed' : 'rule')
 		else provenance(destination, chapter, rule.how === 'proposed' ? 'proposed' : 'rule')
 		if (rule.how === 'proposed') destination.row.migrationNote = destination.row.migrationNote ?? `proposed: holds the legacy "${chapter.heading}"; check it belongs here`
-		for (const child of flatten(chapter.children)) {
+		// Beneath a proposed home a chapter of many parts keeps its parts as sections (a
+		// population pathway's "Further considerations"); beneath a slot of the template's
+		// (the imprint, the timeframes) the parts are headings inside the body.
+		for (const child of chapter.children) {
+			const title = titleOf(child.heading, child.number)
+			const target =
+				rule.how === 'proposed'
+					? addSection(destination.row.address, title, { note: `proposed: a part of the legacy "${chapter.heading}"; check it belongs here`, printedNumber: child.number })
+					: destination
 			const nodes = nodesOf(child.blocks)
-			if (nodes.length > 0) place(destination, child, [headingNode(titleOf(child.heading, child.number), 3), ...nodes], 'merged')
-			else provenance(destination, child, 'merged')
+			if (target === destination) {
+				if (nodes.length > 0) place(target, child, [headingNode(title, 3), ...nodes], 'merged')
+				else provenance(target, child, 'merged')
+			} else if (nodes.length > 0) place(target, child, nodes, 'proposed')
+			else provenance(target, child, 'proposed')
+			for (const grandchild of flatten(child.children)) {
+				const more = nodesOf(grandchild.blocks)
+				if (more.length > 0) place(target, grandchild, [headingNode(titleOf(grandchild.heading, grandchild.number), 3), ...more], 'merged')
+				else provenance(target, grandchild, 'merged')
+			}
 		}
 	}
 
@@ -898,7 +1428,6 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 	})
 
 	// ---- versions ---------------------------------------------------------------------------
-	const publishedAt = ledger.publicationDate ? new Date(ledger.publicationDate) : null
 	const v1: VersionInsert = {
 		id: id('version', `legacy:${pathway.pathwaySlug}:1`),
 		documentId,
@@ -918,22 +1447,43 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		versionNo: 2,
 		createdBy: actorId,
 	}
-	const versionSections: VersionSectionInsert[] = all.map((n) => ({
-		versionId: v1.id,
-		sectionId: n.id,
-		parentAddress: n.parentKey,
-		address: n.key,
-		title: titleOf(n.heading, n.number),
-		printedNumber: n.number,
-		orderIndex: n.orderIndex,
-		ownership: 'owned',
-		hidden: n.l1 === 'contents',
-		pointOfCare: n.l1 === 'summary' && /^checklist$/i.test(n.heading.trim()),
-		bodyJson: legacyBodies.get(n.key) ?? null,
-		html: null,
-		markdown: null,
-		lastChangedVersionNo: 1,
-	}))
+	// Version 1 is the legacy edition in the template's structure (decision 153): the same
+	// section set as the draft, every section the pathway's own — the legacy text where
+	// it was placed, a shared section's legacy text as its divergence, and a heading alone
+	// where only the parts beneath carried legacy text (the 2026 core text was not part
+	// of the printed edition). Sections the edition never touched are hidden.
+	const addressOfId = new Map([...drafts.values()].map((d) => [d.row.id, d.row.address]))
+	const childrenById = new Map<string | null, DraftSection[]>()
+	for (const d of drafts.values()) childrenById.set(d.row.parentId ?? null, [...(childrenById.get(d.row.parentId ?? null) ?? []), d])
+	const placedNodes = (d: DraftSection): JsonNode[] => d.contributions.flatMap((c) => (c.heading ? [headingNode(c.heading, 3), ...c.nodes] : c.nodes))
+	const hasLegacyText = (d: DraftSection): boolean => divergences.has(d.row.address) || (d.row.ownership === 'owned' && d.contributions.length > 0)
+	const visibleIn1 = new Set<string>()
+	const visit = (d: DraftSection): boolean => {
+		let visible = hasLegacyText(d)
+		for (const child of childrenById.get(d.row.id) ?? []) if (visit(child)) visible = true
+		if (visible) visibleIn1.add(d.row.address)
+		return visible
+	}
+	for (const d of childrenById.get(null) ?? []) visit(d)
+	const versionSections: VersionSectionInsert[] = [...drafts.values()].map((d) => {
+		const divergence = divergences.get(d.row.address)
+		return {
+			versionId: v1.id,
+			sectionId: d.row.id,
+			parentAddress: d.row.parentId ? (addressOfId.get(d.row.parentId) ?? null) : null,
+			address: d.row.address,
+			title: d.row.title ?? null,
+			printedNumber: d.row.printedNumber ?? null,
+			orderIndex: d.row.orderIndex,
+			ownership: 'owned',
+			hidden: !visibleIn1.has(d.row.address),
+			pointOfCare: d.row.pointOfCare ?? false,
+			bodyJson: divergence ? bodyOf(divergence.nodes) : d.row.ownership === 'owned' && d.contributions.length > 0 ? bodyOf(placedNodes(d)) : bodyOf([]),
+			html: null,
+			markdown: null,
+			lastChangedVersionNo: 1,
+		}
+	})
 
 	const document: DocumentInsert = {
 		id: documentId,
@@ -945,13 +1495,16 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		subject: pathway.subject,
 		audience: pathway.audience,
 	}
-	ledger.citations = { matched: citations.matched, unmatched: citations.unmatched }
+	// Raised-number markers were resolved by the block mapper; a number the list lacks was
+	// left as printed and recorded by the reader.
+	const missingNumbers = model.warnings.filter((w) => w.message.startsWith('citation-number-missing: ')).map((w) => `p.${w.page}: raised number ${w.message.slice('citation-number-missing: '.length)} — the numbered list has no such entry`)
+	ledger.citations = { matched: citations.matched + mapper.stats.citations, unmatched: [...citations.unmatched, ...missingNumbers], byName: citations.byName }
 	return {
 		document,
 		sections,
 		versions: [v1, v2],
 		versionSections,
-		references: entries.map((e) => ({ id: e.id, documentId, citation: e.citation, url: e.url, printedNumber: null })),
+		references: entries.map((e) => ({ id: e.id, documentId, citation: e.citation, url: e.url, printedNumber: e.number ?? null })),
 		legacyDocument,
 		legacySections,
 		origins,
@@ -980,11 +1533,20 @@ function editionOf(model: ExtractedDocument, pathway: LegacyPathway): string | n
 
 const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
 
-/** "This edition published in June 2021." → 2021-06-01. */
-function publicationDateOf(model: ExtractedDocument): string | null {
+/** "This edition published in June 2021." → 2021-06-01. A print with no imprint (the
+ *  January-2020 design) is dated by its file name ("…-january-2020"). */
+function publicationDateOf(model: ExtractedDocument, pathway: LegacyPathway): string | null {
+	const fromFile = new RegExp(`-(${MONTHS.join('|')})-(\\d{4})$`).exec(pathway.slug)
+	if (fromFile?.[1] && fromFile[2]) return `${fromFile[2]}-${String(MONTHS.indexOf(fromFile[1]) + 1).padStart(2, '0')}-01`
 	for (const b of model.front) {
 		if (b.kind !== 'paragraph') continue
 		const text = plainText(b.runs)
+		// "First edition: June 2022." names the date without the word "published".
+		const dated = /^(?:first|second|third|fourth)\s+edition:?\s+([A-Z][a-z]+)\s+(\d{4})/i.exec(text.trim())
+		if (dated?.[1] && dated[2]) {
+			const month = MONTHS.indexOf(dated[1].toLowerCase())
+			if (month >= 0) return `${dated[2]}-${String(month + 1).padStart(2, '0')}-01`
+		}
 		const m = /(?:this edition |first )?published(?: in)?\s+([A-Z][a-z]+)\s+(\d{4})/i.exec(text)
 		if (!m) continue
 		// "First published in September 2015. This edition published in June 2021." — the

@@ -380,6 +380,7 @@ describe('MCP', () => {
 				'get_composed',
 				'get_document',
 				'get_document_full',
+				'get_quick_reference_guide',
 				'get_section',
 				'list_documents',
 				'list_versions',

@@ -92,9 +92,12 @@ export function modelTexts(model: ExtractedDocument): PlacedText[] {
 	const out: PlacedText[] = [{ page: 1, text: model.title }]
 	collectBlocks(model.front, out)
 	collectSections(model.sections, out)
-	// A footnote's label is printed twice (the marker and the note); the marker run keeps
-	// its text, so the note's blocks account for the second.
-	for (const f of model.footnotes) collectBlocks(f.blocks, out)
+	// A footnote's label is printed twice: the marker run keeps its text, and the note
+	// carries its label apart from its text.
+	for (const f of model.footnotes) {
+		out.push({ page: f.page, text: f.label })
+		collectBlocks(f.blocks, out)
+	}
 	for (const e of model.endnotes) out.push({ page: e.page, text: `${e.number} ${runsText(e.runs)}` })
 	return out
 }
@@ -163,8 +166,13 @@ export async function auditCoverage(doc: PDFDocumentProxy, model: ExtractedDocum
 			}
 			if (furniture.has(`${n}|${line.text}`)) continue
 			// A wrapped heading's pieces are one line to the reader; its warnings name the
-			// whole. Match a line that is the whole or a piece of a recorded heading.
-			const continuedKey = [...mergedContinued, ...headingContinued].find((k) => k.startsWith(`${n}|`) && k.slice(k.indexOf('|') + 1).includes(line.text))
+			// whole. Match a line that is the whole, or its first or last piece — never a
+			// line that merely repeats words of it (the panel heading a band names).
+			const continuedKey = [...mergedContinued, ...headingContinued].find((k) => {
+				if (!k.startsWith(`${n}|`)) return false
+				const whole = k.slice(k.indexOf('|') + 1)
+				return whole === line.text || whole.startsWith(`${line.text} `) || whole.endsWith(` ${line.text}`)
+			})
 			if (continuedKey && mergedContinued.has(continuedKey)) continue
 			const text = continuedKey ? line.text.replace(/\s*continued$/i, '') : line.text
 			const left: string[] = []

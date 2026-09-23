@@ -1,0 +1,1264 @@
+{
+	"pathway": "sarcoma-bone-soft-tissue-tumours",
+	"edition": null,
+	"publicationDate": "2020-01-01",
+	"placements": [
+		{
+			"legacyKey": "pathway-note",
+			"legacyTitle": "Optimal cancer care pathway",
+			"destination": "about-this-cancer/epidemiology-and-burden-of-disease",
+			"how": "proposed",
+			"note": "proposed: the legacy pathway’s opening text, read as Epidemiology and burden of disease"
+		},
+		{
+			"legacyKey": "pathway-note/special-considerations",
+			"legacyTitle": "Special considerations",
+			"destination": "about-this-cancer/special-considerations",
+			"how": "proposed"
+		},
+		{
+			"legacyKey": "step-1",
+			"legacyTitle": "Step 1: Prevention and early detection",
+			"destination": "1",
+			"how": "diverged",
+			"note": "the legacy edition's own introduction to Step 1"
+		},
+		{
+			"legacyKey": "step-1/prevention",
+			"legacyTitle": "1.1 Prevention",
+			"destination": "1.1",
+			"how": "diverged",
+			"note": "legacy text of the shared 1.1: version 1 publishes it as a divergence; the draft carries the core text"
+		},
+		{
+			"legacyKey": "step-1/risk-factors",
+			"legacyTitle": "1.2 Risk factors",
+			"destination": "1.1.1",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-1/early-detection",
+			"legacyTitle": "1.3 Early detection",
+			"destination": "1.2",
+			"how": "provenance"
+		},
+		{
+			"legacyKey": "step-1/early-detection/screening",
+			"legacyTitle": "1.3.1 Screening",
+			"destination": "1.2",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "step-2",
+			"legacyTitle": "Step 2: Presentation, initial investigations and referral",
+			"destination": "2",
+			"how": "diverged",
+			"note": "the legacy edition's own introduction to Step 2"
+		},
+		{
+			"legacyKey": "step-2/signs-and-symptoms",
+			"legacyTitle": "2.1 Signs and symptoms",
+			"destination": "2.1",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-2/assessments-by-the-general-or-primary-medical-practitioner",
+			"legacyTitle": "2.2 Assessments by the general or primary medical practitioner",
+			"destination": "2.2",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-2/referral",
+			"legacyTitle": "2.3 Referral",
+			"destination": "2.3",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-2/referral/timeframe-for-referral-to-a-specialist",
+			"legacyTitle": "Timeframe for referral to a specialist",
+			"destination": "2.3",
+			"how": "timeframe"
+		},
+		{
+			"legacyKey": "step-2/support-and-communication",
+			"legacyTitle": "2.4 Support and communication",
+			"destination": null,
+			"how": "unplaced",
+			"note": "a container heading with no text of its own; its subsections were placed separately"
+		},
+		{
+			"legacyKey": "step-2/support-and-communication/supportive-care",
+			"legacyTitle": "2.4.1 Supportive care",
+			"destination": "2/supportive-care",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-2/support-and-communication/communication-with-the-patient-family-and-carer",
+			"legacyTitle": "2.4.2 Communication with the patient, family and carer",
+			"destination": "2/supportive-care",
+			"how": "rule",
+			"note": "standing home for \"Communication with the patient, family and carer\""
+		},
+		{
+			"legacyKey": "step-3",
+			"legacyTitle": "Step 3: Diagnosis, assessment and treatment planning",
+			"destination": "3",
+			"how": "diverged",
+			"note": "the legacy edition's own introduction to Step 3"
+		},
+		{
+			"legacyKey": "step-3/diagnosis-and-staging",
+			"legacyTitle": "3.1 Diagnosis and staging",
+			"destination": "3.3",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-3/diagnosis-and-staging/timeframe-for-diagnosis",
+			"legacyTitle": "Timeframe for diagnosis",
+			"destination": "3.3",
+			"how": "timeframe"
+		},
+		{
+			"legacyKey": "step-3/treatment-planning",
+			"legacyTitle": "3.2 Treatment planning",
+			"destination": "3.5",
+			"how": "provenance"
+		},
+		{
+			"legacyKey": "step-3/treatment-planning/responsibilities-of-the-multidisciplinary-team",
+			"legacyTitle": "3.2.1 Responsibilities of the multidisciplinary team",
+			"destination": "3.5.1",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-3/treatment-planning/responsibilities-of-individual-team-members",
+			"legacyTitle": "3.2.2 Responsibilities of individual team members",
+			"destination": "3.5.1",
+			"how": "rule",
+			"note": "standing home for \"Responsibilities of individual team members\""
+		},
+		{
+			"legacyKey": "step-3/treatment-planning/members-of-the-multidisciplinary-team-for-sarcoma",
+			"legacyTitle": "3.2.3 Members of the multidisciplinary team for sarcoma",
+			"destination": "3.5.1",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-3/treatment-planning/the-optimal-timing-for-multidisciplinary-team-planning",
+			"legacyTitle": "3.2.4 The optimal timing for multidisciplinary team planning",
+			"destination": "3.5.1",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-3/research-and-clinical-trials",
+			"legacyTitle": "3.3 Research and clinical trials",
+			"destination": "4.3.1",
+			"how": "rule",
+			"note": "standing home for \"Research and clinical trials\""
+		},
+		{
+			"legacyKey": "step-3/prehabilitation-support-and-communication",
+			"legacyTitle": "3.4 Prehabilitation, support and communication",
+			"destination": null,
+			"how": "unplaced",
+			"note": "a container heading with no text of its own; its subsections were placed separately"
+		},
+		{
+			"legacyKey": "step-3/prehabilitation-support-and-communication/prehabilitation",
+			"legacyTitle": "3.4.1 Prehabilitation",
+			"destination": "4.2",
+			"how": "rule",
+			"note": "standing home for \"Prehabilitation\""
+		},
+		{
+			"legacyKey": "step-3/prehabilitation-support-and-communication/supportive-care",
+			"legacyTitle": "3.4.2 Supportive care",
+			"destination": "3/supportive-care",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-3/prehabilitation-support-and-communication/supportive-care/physical",
+			"legacyTitle": "Physical",
+			"destination": "3/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-3/prehabilitation-support-and-communication/supportive-care/psychological",
+			"legacyTitle": "Psychological",
+			"destination": "3/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-3/prehabilitation-support-and-communication/supportive-care/social-practical",
+			"legacyTitle": "Social/practical",
+			"destination": "3/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-3/prehabilitation-support-and-communication/supportive-care/information",
+			"legacyTitle": "Information",
+			"destination": "3/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-3/prehabilitation-support-and-communication/supportive-care/spiritual-needs",
+			"legacyTitle": "Spiritual needs",
+			"destination": "3/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-3/prehabilitation-support-and-communication/communication-with-the-patient-family-and-carer",
+			"legacyTitle": "3.4.3 Communication with the patient, family and carer",
+			"destination": "3/supportive-care",
+			"how": "rule",
+			"note": "standing home for \"Communication with the patient, family and carer\""
+		},
+		{
+			"legacyKey": "step-3/prehabilitation-support-and-communication/communication-with-the-general-practitioner",
+			"legacyTitle": "3.4.4 Communication with the general practitioner",
+			"destination": "3.6",
+			"how": "diverged",
+			"note": "standing home for \"Communication with the general practitioner\""
+		},
+		{
+			"legacyKey": "step-4",
+			"legacyTitle": "Step 4: Treatment",
+			"destination": "4",
+			"how": "proposed",
+			"note": "the legacy edition's own introduction to Step 4"
+		},
+		{
+			"legacyKey": "step-4/treatment-intent",
+			"legacyTitle": "4.1 Treatment intent",
+			"destination": "4.1",
+			"how": "diverged",
+			"note": "standing home for \"Treatment intent\""
+		},
+		{
+			"legacyKey": "step-4/treatment-options",
+			"legacyTitle": "4.2 Treatment options",
+			"destination": "4.4",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-4/treatment-options/surgery",
+			"legacyTitle": "4.2.1 Surgery",
+			"destination": "4.4.1",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-4/treatment-options/surgery/training-experience-and-treatment-centre-characteristics",
+			"legacyTitle": "Training, experience and treatment centre characteristics",
+			"destination": "4.7",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-4/treatment-options/surgery/surgical-volumes",
+			"legacyTitle": "Surgical volumes",
+			"destination": "4.4.1",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-4/treatment-options/radiation-therapy",
+			"legacyTitle": "4.2.2 Radiation therapy",
+			"destination": "4.4.2",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-4/treatment-options/radiation-therapy/training-experience-and-treatment-centre-characteristics",
+			"legacyTitle": "Training, experience and treatment centre characteristics",
+			"destination": "4.7",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-4/treatment-options/chemotherapy-or-other-drug-therapy",
+			"legacyTitle": "4.2.3 Chemotherapy or other drug therapy",
+			"destination": "4.4.3/chemotherapy",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-4/treatment-options/chemotherapy-or-other-drug-therapy/training-experience-and-treatment-centre-characteristics",
+			"legacyTitle": "Training, experience and treatment centre characteristics",
+			"destination": "4.7",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-4/treatment-options/timeframe-for-beginning-treatment",
+			"legacyTitle": "4.2.4 Timeframe for beginning treatment",
+			"destination": "4.4",
+			"how": "timeframe"
+		},
+		{
+			"legacyKey": "step-4/palliative-care",
+			"legacyTitle": "4.3 Palliative care",
+			"destination": "4.4.4",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-4/palliative-care/further-information",
+			"legacyTitle": "Further information",
+			"destination": "4.4.4",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-4/research-and-clinical-trials",
+			"legacyTitle": "4.4 Research and clinical trials",
+			"destination": "4.3.1",
+			"how": "rule",
+			"note": "standing home for \"Research and clinical trials\""
+		},
+		{
+			"legacyKey": "step-4/complementary-or-alternative-therapies",
+			"legacyTitle": "4.5 Complementary or alternative therapies",
+			"destination": "4.5.5",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-4/complementary-or-alternative-therapies/further-information",
+			"legacyTitle": "Further information",
+			"destination": "4.5.5",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-4/rehabilitation-support-and-communication",
+			"legacyTitle": "4.6 Rehabilitation, support and communication",
+			"destination": null,
+			"how": "unplaced",
+			"note": "a container heading with no text of its own; its subsections were placed separately"
+		},
+		{
+			"legacyKey": "step-4/rehabilitation-support-and-communication/supportive-care",
+			"legacyTitle": "4.6.1 Supportive care",
+			"destination": "4/supportive-care",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-4/rehabilitation-support-and-communication/supportive-care/physical-needs",
+			"legacyTitle": "Physical needs",
+			"destination": "4/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-4/rehabilitation-support-and-communication/supportive-care/psychological-needs",
+			"legacyTitle": "Psychological needs",
+			"destination": "4/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-4/rehabilitation-support-and-communication/supportive-care/social-practical-needs",
+			"legacyTitle": "Social/practical needs",
+			"destination": "4/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-4/rehabilitation-support-and-communication/supportive-care/information-needs",
+			"legacyTitle": "Information needs",
+			"destination": "4/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-4/rehabilitation-support-and-communication/supportive-care/spiritual-needs",
+			"legacyTitle": "Spiritual needs",
+			"destination": "4/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-4/rehabilitation-support-and-communication/communication-with-the-patient-family-and-carer",
+			"legacyTitle": "4.6.2 Communication with the patient, family and carer",
+			"destination": "4/supportive-care",
+			"how": "rule",
+			"note": "standing home for \"Communication with the patient, family and carer\""
+		},
+		{
+			"legacyKey": "step-4/rehabilitation-support-and-communication/communication-with-the-general-practitioner",
+			"legacyTitle": "4.6.3 Communication with the general practitioner",
+			"destination": "4.6",
+			"how": "diverged",
+			"note": "standing home for \"Communication with the general practitioner\""
+		},
+		{
+			"legacyKey": "step-5",
+			"legacyTitle": "Step 5: Care after initial treatment and recovery",
+			"destination": "5",
+			"how": "diverged",
+			"note": "the legacy edition's own introduction to Step 5"
+		},
+		{
+			"legacyKey": "step-5/survivorship",
+			"legacyTitle": "5.1 Survivorship",
+			"destination": "5/survivorship",
+			"how": "unplaced"
+		},
+		{
+			"legacyKey": "step-5/post-treatment-care-planning",
+			"legacyTitle": "5.2 Post-treatment care planning",
+			"destination": "5.1",
+			"how": "provenance"
+		},
+		{
+			"legacyKey": "step-5/post-treatment-care-planning/treatment-summary",
+			"legacyTitle": "5.2.1 Treatment summary",
+			"destination": "5.3.1",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-5/post-treatment-care-planning/follow-up-care",
+			"legacyTitle": "5.2.2 Follow-up care",
+			"destination": "5.3.2",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-5/research-and-clinical-trials",
+			"legacyTitle": "5.3 Research and clinical trials",
+			"destination": "4.3.1",
+			"how": "rule",
+			"note": "standing home for \"Research and clinical trials\""
+		},
+		{
+			"legacyKey": "step-5/support-and-communication",
+			"legacyTitle": "5.4 Support and communication",
+			"destination": null,
+			"how": "unplaced",
+			"note": "a container heading with no text of its own; its subsections were placed separately"
+		},
+		{
+			"legacyKey": "step-5/support-and-communication/supportive-care",
+			"legacyTitle": "5.4.1 Supportive care",
+			"destination": "5/supportive-care",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-5/support-and-communication/supportive-care/physical-needs",
+			"legacyTitle": "Physical needs",
+			"destination": "5/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-5/support-and-communication/supportive-care/psychological-needs",
+			"legacyTitle": "Psychological needs",
+			"destination": "5/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-5/support-and-communication/supportive-care/social-practical-needs",
+			"legacyTitle": "Social/practical needs",
+			"destination": "5/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-5/support-and-communication/supportive-care/information-needs",
+			"legacyTitle": "Information needs",
+			"destination": "5/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-5/support-and-communication/supportive-care/spiritual-needs",
+			"legacyTitle": "Spiritual needs",
+			"destination": "5/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-5/support-and-communication/rehabilitation-and-recovery",
+			"legacyTitle": "5.4.2 Rehabilitation and recovery",
+			"destination": "5/supportive-care",
+			"how": "rule",
+			"note": "standing home for \"Rehabilitation and recovery\""
+		},
+		{
+			"legacyKey": "step-5/support-and-communication/palliative-care",
+			"legacyTitle": "5.4.3 Palliative care",
+			"destination": "5/palliative-care",
+			"how": "unplaced"
+		},
+		{
+			"legacyKey": "step-5/support-and-communication/palliative-care/further-information",
+			"legacyTitle": "Further information",
+			"destination": "5/palliative-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-5/support-and-communication/communication-with-the-patient-carer-and-family",
+			"legacyTitle": "5.4.4 Communication with the patient, carer and family",
+			"destination": "5/supportive-care",
+			"how": "rule",
+			"note": "standing home for \"Communication with the patient, carer and family\""
+		},
+		{
+			"legacyKey": "step-5/support-and-communication/communication-with-the-general-practitioner",
+			"legacyTitle": "5.4.5 Communication with the general practitioner",
+			"destination": "5.4",
+			"how": "diverged",
+			"note": "standing home for \"Communication with the general practitioner\""
+		},
+		{
+			"legacyKey": "step-6",
+			"legacyTitle": "Step 6: Managing recurrent, residual or metastatic disease",
+			"destination": "6",
+			"how": "diverged",
+			"note": "the legacy edition's own introduction to Step 6"
+		},
+		{
+			"legacyKey": "step-6/signs-and-symptoms-of-recurrent-residual-or-metastatic-disease",
+			"legacyTitle": "6.1 Signs and symptoms of recurrent, residual or metastatic disease",
+			"destination": "6.1",
+			"how": "rule",
+			"note": "standing home for \"Signs and symptoms of recurrent, residual or metastatic disease\""
+		},
+		{
+			"legacyKey": "step-6/multidisciplinary-team",
+			"legacyTitle": "6.2 Multidisciplinary team",
+			"destination": "6.3.2",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-6/treatment",
+			"legacyTitle": "6.3 Treatment",
+			"destination": "6.4",
+			"how": "rule",
+			"note": "standing home for \"Treatment\""
+		},
+		{
+			"legacyKey": "step-6/treatment/local-recurrence",
+			"legacyTitle": "6.3.1 Local recurrence",
+			"destination": "6.4",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-6/treatment/metastatic-disease",
+			"legacyTitle": "6.3.2 Metastatic disease",
+			"destination": "6.1",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-6/palliative-care",
+			"legacyTitle": "6.4 Palliative care",
+			"destination": "6.6",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-6/research-and-clinical-trials",
+			"legacyTitle": "6.5 Research and clinical trials",
+			"destination": "4.3.1",
+			"how": "rule",
+			"note": "standing home for \"Research and clinical trials\""
+		},
+		{
+			"legacyKey": "step-6/support-and-communication",
+			"legacyTitle": "6.6 Support and communication",
+			"destination": null,
+			"how": "unplaced",
+			"note": "a container heading with no text of its own; its subsections were placed separately"
+		},
+		{
+			"legacyKey": "step-6/support-and-communication/supportive-care",
+			"legacyTitle": "6.6.1 Supportive care",
+			"destination": "6/supportive-care",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-6/support-and-communication/supportive-care/physical-needs",
+			"legacyTitle": "Physical needs",
+			"destination": "6/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-6/support-and-communication/supportive-care/psychological-needs",
+			"legacyTitle": "Psychological needs",
+			"destination": "6/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-6/support-and-communication/supportive-care/social-practical-needs",
+			"legacyTitle": "Social/practical needs",
+			"destination": "6/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-6/support-and-communication/supportive-care/information-needs",
+			"legacyTitle": "Information needs",
+			"destination": "6/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-6/support-and-communication/supportive-care/spiritual-needs",
+			"legacyTitle": "Spiritual needs",
+			"destination": "6/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-6/support-and-communication/rehabilitation",
+			"legacyTitle": "6.6.2 Rehabilitation",
+			"destination": "6/supportive-care",
+			"how": "rule",
+			"note": "standing home for \"Rehabilitation\""
+		},
+		{
+			"legacyKey": "step-6/support-and-communication/communication-with-the-patient-carer-and-family",
+			"legacyTitle": "6.6.3 Communication with the patient, carer and family",
+			"destination": "6/supportive-care",
+			"how": "rule",
+			"note": "standing home for \"Communication with the patient, carer and family\""
+		},
+		{
+			"legacyKey": "step-7",
+			"legacyTitle": "Step 7: End-of-life care",
+			"destination": "7",
+			"how": "diverged",
+			"note": "the legacy edition's own introduction to Step 7"
+		},
+		{
+			"legacyKey": "step-7/multidisciplinary-palliative-care",
+			"legacyTitle": "7.1 Multidisciplinary palliative care",
+			"destination": "7.1.3",
+			"how": "diverged",
+			"note": "legacy text of the shared 7.1.3: version 1 publishes it as a divergence; the draft carries the core text"
+		},
+		{
+			"legacyKey": "step-7/multidisciplinary-palliative-care/further-information",
+			"legacyTitle": "Further information",
+			"destination": "7.1.3",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "step-7/research-and-clinical-trials",
+			"legacyTitle": "7.2 Research and clinical trials",
+			"destination": "4.3.1",
+			"how": "rule",
+			"note": "standing home for \"Research and clinical trials\""
+		},
+		{
+			"legacyKey": "step-7/support-and-communication",
+			"legacyTitle": "7.3 Support and communication",
+			"destination": null,
+			"how": "unplaced",
+			"note": "a container heading with no text of its own; its subsections were placed separately"
+		},
+		{
+			"legacyKey": "step-7/support-and-communication/supportive-care",
+			"legacyTitle": "7.3.1 Supportive care",
+			"destination": "7/supportive-care",
+			"how": "title"
+		},
+		{
+			"legacyKey": "step-7/support-and-communication/supportive-care/physical-needs",
+			"legacyTitle": "Physical needs",
+			"destination": "7/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-7/support-and-communication/supportive-care/psychological-needs",
+			"legacyTitle": "Psychological needs",
+			"destination": "7/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-7/support-and-communication/supportive-care/social-practical-needs",
+			"legacyTitle": "Social/practical needs",
+			"destination": "7/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-7/support-and-communication/supportive-care/information-needs",
+			"legacyTitle": "Information needs",
+			"destination": "7/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-7/support-and-communication/supportive-care/spiritual-needs",
+			"legacyTitle": "Spiritual needs",
+			"destination": "7/supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "step-7/support-and-communication/communication-with-the-patient-carer-and-family",
+			"legacyTitle": "7.3.2 Communication with the patient, carer and family",
+			"destination": "7/supportive-care",
+			"how": "rule",
+			"note": "standing home for \"Communication with the patient, carer and family\""
+		},
+		{
+			"legacyKey": "step-7/support-and-communication/communication-with-the-general-practitioner",
+			"legacyTitle": "7.3.3 Communication with the general practitioner",
+			"destination": "7.2.4",
+			"how": "diverged",
+			"note": "standing home for \"Communication with the general practitioner\""
+		},
+		{
+			"legacyKey": "summary",
+			"legacyTitle": "Summary",
+			"destination": "quick-reference-guide",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-1",
+			"legacyTitle": "Step 1: Prevention and early detection",
+			"destination": "1/quick-reference-guide",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-1/prevention",
+			"legacyTitle": "Prevention",
+			"destination": "1/quick-reference-guide/prevention",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-1/risk-factors",
+			"legacyTitle": "Risk factors",
+			"destination": "1/quick-reference-guide/risk-factors",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-1/risk-factors-for-soft-tissue-sarcoma-include",
+			"legacyTitle": "Risk factors for soft tissue sarcoma include",
+			"destination": "1/quick-reference-guide/risk-factors-for-soft-tissue-sarcoma-include",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-2",
+			"legacyTitle": "Step 2: Presentation, initial investigations and referral",
+			"destination": "2/quick-reference-guide",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-2/signs-and-symptoms",
+			"legacyTitle": "Signs and symptoms",
+			"destination": "2/quick-reference-guide/signs-and-symptoms",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-2/general-primary-practitioner-investigations-should-include",
+			"legacyTitle": "General/primary practitioner investigations should include",
+			"destination": "2/quick-reference-guide/general-primary-practitioner-investigations-should-include",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-2/referral",
+			"legacyTitle": "Referral",
+			"destination": "2/quick-reference-guide/referral",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-2/communication",
+			"legacyTitle": "Communication",
+			"destination": "2/quick-reference-guide/communication",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-3",
+			"legacyTitle": "Step 3: Diagnosis, staging and treatment planning",
+			"destination": "3/quick-reference-guide",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-3/diagnosis-and-staging",
+			"legacyTitle": "Diagnosis and staging",
+			"destination": "3/quick-reference-guide/diagnosis-and-staging",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-3/treatment-planning",
+			"legacyTitle": "Treatment planning",
+			"destination": "3/quick-reference-guide/treatment-planning",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-3/research-and-clinical-trials",
+			"legacyTitle": "Research and clinical trials",
+			"destination": "3/quick-reference-guide/research-and-clinical-trials",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-3/communication",
+			"legacyTitle": "Communication",
+			"destination": "3/quick-reference-guide/communication",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4",
+			"legacyTitle": "Step 4: Treatment",
+			"destination": "4/quick-reference-guide",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/surgery",
+			"legacyTitle": "Surgery",
+			"destination": "4/quick-reference-guide/surgery",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/radiation-therapy",
+			"legacyTitle": "Radiation therapy",
+			"destination": "4/quick-reference-guide/radiation-therapy",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/chemotherapy-or-drug-therapy",
+			"legacyTitle": "Chemotherapy or drug therapy",
+			"destination": "4/quick-reference-guide/chemotherapy-or-drug-therapy",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/palliative-care",
+			"legacyTitle": "Palliative care",
+			"destination": "4/quick-reference-guide/palliative-care",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-4/communication",
+			"legacyTitle": "Communication",
+			"destination": "4/quick-reference-guide/communication",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-5",
+			"legacyTitle": "Step 5: Care after initial treatment and recovery",
+			"destination": "5/quick-reference-guide",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-5/communication",
+			"legacyTitle": "Communication",
+			"destination": "5/quick-reference-guide/communication",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-6",
+			"legacyTitle": "Step 6: Managing recurrent, residual and metastatic disease",
+			"destination": "6/quick-reference-guide",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-6/detection",
+			"legacyTitle": "Detection",
+			"destination": "6/quick-reference-guide/detection",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-6/treatment",
+			"legacyTitle": "Treatment",
+			"destination": "6/quick-reference-guide/treatment",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-6/palliative-care",
+			"legacyTitle": "Palliative care",
+			"destination": "6/quick-reference-guide/palliative-care",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-6/communication",
+			"legacyTitle": "Communication",
+			"destination": "6/quick-reference-guide/communication",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-7",
+			"legacyTitle": "Step 7: End-of-life care",
+			"destination": "7/quick-reference-guide",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-7/palliative-care",
+			"legacyTitle": "Palliative care",
+			"destination": "7/quick-reference-guide/palliative-care",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "summary/step-7/communication",
+			"legacyTitle": "Communication",
+			"destination": "7/quick-reference-guide/communication",
+			"how": "guide"
+		},
+		{
+			"legacyKey": "front-matter",
+			"legacyTitle": "Front matter",
+			"destination": "optimal-care-pathway-for-people-with/x-edition",
+			"how": "rule"
+		},
+		{
+			"legacyKey": "contents",
+			"legacyTitle": "Contents",
+			"destination": null,
+			"how": "derived"
+		},
+		{
+			"legacyKey": "welcome-and-introduction",
+			"legacyTitle": "Foreword",
+			"destination": "optimal-care-pathway-for-people-with/preface",
+			"how": "proposed"
+		},
+		{
+			"legacyKey": "summary-timeframes",
+			"legacyTitle": "Summary – optimal timeframes",
+			"destination": "snapshot-of-optimal-timeframes",
+			"how": "provenance"
+		},
+		{
+			"legacyKey": "summary-timeframes/optimal-timeframes",
+			"legacyTitle": "Optimal timeframes",
+			"destination": "snapshot-of-optimal-timeframes",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "summary-timeframes",
+			"legacyTitle": "Summary – optimal timeframes",
+			"destination": "3.5.1",
+			"how": "timeframe-row",
+			"note": "row \"3.2.4 Multidisciplinary team meeting\" of the summary timeframes table"
+		},
+		{
+			"legacyKey": "intent",
+			"legacyTitle": "Intent of the optimal cancer care pathway",
+			"destination": "about-optimal-care-pathways/intent-of-the-optimal-care-pathways",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "intent/patient-centred-care",
+			"legacyTitle": "Patient-centred care",
+			"destination": "about-optimal-care-pathways/intent-of-the-optimal-care-pathways",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "intent/safe-and-quality-care",
+			"legacyTitle": "Safe and quality care",
+			"destination": "about-optimal-care-pathways/intent-of-the-optimal-care-pathways",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "intent/multidisciplinary-care",
+			"legacyTitle": "Multidisciplinary care",
+			"destination": "about-optimal-care-pathways/intent-of-the-optimal-care-pathways",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "intent/supportive-care",
+			"legacyTitle": "Supportive care",
+			"destination": "about-optimal-care-pathways/intent-of-the-optimal-care-pathways",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "intent/care-coordination",
+			"legacyTitle": "Care coordination",
+			"destination": "about-optimal-care-pathways/intent-of-the-optimal-care-pathways",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "intent/communication",
+			"legacyTitle": "Communication",
+			"destination": "about-optimal-care-pathways/intent-of-the-optimal-care-pathways",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "intent/research-and-clinical-trials",
+			"legacyTitle": "Research and clinical trials",
+			"destination": "about-optimal-care-pathways/intent-of-the-optimal-care-pathways",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "appendix-a",
+			"legacyTitle": "Appendix: Supportive care",
+			"destination": "find-out-more/appendix-supportive-care",
+			"how": "proposed"
+		},
+		{
+			"legacyKey": "appendix-a/physical-needs",
+			"legacyTitle": "Physical needs",
+			"destination": "find-out-more/appendix-supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "appendix-a/psychological-needs",
+			"legacyTitle": "Psychological needs",
+			"destination": "find-out-more/appendix-supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "appendix-a/social-practical-needs",
+			"legacyTitle": "Social/practical needs",
+			"destination": "find-out-more/appendix-supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "appendix-a/information-needs",
+			"legacyTitle": "Information needs",
+			"destination": "find-out-more/appendix-supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "appendix-a/spiritual-needs",
+			"legacyTitle": "Spiritual needs",
+			"destination": "find-out-more/appendix-supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "appendix-a/populations-with-special-needs",
+			"legacyTitle": "Populations with special needs",
+			"destination": "find-out-more/appendix-supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "appendix-a/populations-with-special-needs/older-people-with-cancer-aged-70-years-or-older",
+			"legacyTitle": "Older people with cancer (aged 70 years or older)",
+			"destination": "find-out-more/appendix-supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "appendix-a/populations-with-special-needs/paediatrics",
+			"legacyTitle": "Paediatrics",
+			"destination": "find-out-more/appendix-supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "appendix-a/populations-with-special-needs/adolescents-and-young-adults",
+			"legacyTitle": "Adolescents and young adults",
+			"destination": "find-out-more/appendix-supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "appendix-a/populations-with-special-needs/aboriginal-and-torres-strait-islander-communities",
+			"legacyTitle": "Aboriginal and Torres Strait Islander communities",
+			"destination": "find-out-more/appendix-supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "appendix-a/populations-with-special-needs/culturally-and-linguistically-diverse-communities",
+			"legacyTitle": "Culturally and linguistically diverse communities",
+			"destination": "find-out-more/appendix-supportive-care",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list",
+			"legacyTitle": "Resource list",
+			"destination": "find-out-more/resource-list",
+			"how": "proposed"
+		},
+		{
+			"legacyKey": "resource-list/for-patients-families-and-carers",
+			"legacyTitle": "For patients, families and carers",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-patients-families-and-carers/australian-cancer-survivorship-centre",
+			"legacyTitle": "Australian Cancer Survivorship Centre",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-patients-families-and-carers/australasian-sarcoma-study-group",
+			"legacyTitle": "Australasian Sarcoma Study Group",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-patients-families-and-carers/beyondblue",
+			"legacyTitle": "beyondblue",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-patients-families-and-carers/cancer-australia",
+			"legacyTitle": "Cancer Australia",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-patients-families-and-carers/cancer-council",
+			"legacyTitle": "Cancer Council",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-patients-families-and-carers/canteen",
+			"legacyTitle": "CanTeen",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-patients-families-and-carers/cancer-voices-australia",
+			"legacyTitle": "Cancer Voices Australia",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-patients-families-and-carers/care-search-palliative-care-knowledge-network",
+			"legacyTitle": "Care Search: Palliative Care Knowledge Network",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-patients-families-and-carers/youth-cancer-services",
+			"legacyTitle": "Youth Cancer Services",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-health-professionals",
+			"legacyTitle": "For health professionals",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-health-professionals/australian-cancer-trials",
+			"legacyTitle": "Australian Cancer Trials",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-health-professionals/australasian-sarcoma-study-group",
+			"legacyTitle": "Australasian Sarcoma Study Group",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-health-professionals/cancer-australia",
+			"legacyTitle": "Cancer Australia",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-health-professionals/cancer-council-australia",
+			"legacyTitle": "Cancer Council Australia",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-health-professionals/eviq",
+			"legacyTitle": "eviQ",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "resource-list/for-health-professionals/national-health-and-medical-research-council",
+			"legacyTitle": "National Health and Medical Research Council",
+			"destination": "find-out-more/resource-list",
+			"how": "merged"
+		},
+		{
+			"legacyKey": "glossary",
+			"legacyTitle": "Glossary",
+			"destination": "find-out-more/glossary",
+			"how": "proposed"
+		},
+		{
+			"legacyKey": "references",
+			"legacyTitle": "References",
+			"destination": "references",
+			"how": "provenance"
+		},
+		{
+			"legacyKey": "contributors",
+			"legacyTitle": "Acknowledgements",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
+		},
+		{
+			"legacyKey": "contributors/expert-working-group",
+			"legacyTitle": "Expert working group",
+			"destination": "contributors-and-reviewers",
+			"how": "diverged"
+		}
+	],
+	"citations": {
+		"matched": 186,
+		"unmatched": [
+			"Field et al. 2013 — \"Field et al. 2013\": no entry in the printed reference list",
+			"Collins et al. 2013 — \"Collins et al. 2013\": no entry in the printed reference list",
+			"Cancer Council Australia 2012; Philip et al. 2013; Temel et al. 2010 — \"Philip et al. 2013\": no entry in the printed reference list",
+			"Field et al. 2013 — \"Field et al. 2013\": no entry in the printed reference list",
+			"Field et al. 2013 — \"Field et al. 2013\": no entry in the printed reference list",
+			"Collins et al. 2013 — \"Collins et al. 2013\": no entry in the printed reference list",
+			"Cancer Council Australia 2012; Philip et al. 2013; Temel et al. 2010 — \"Philip et al. 2013\": no entry in the printed reference list",
+			"Field et al. 2013 — \"Field et al. 2013\": no entry in the printed reference list",
+			"Field et al. 2013 — \"Field et al. 2013\": no entry in the printed reference list",
+			"Collins et al. 2013 — \"Collins et al. 2013\": no entry in the printed reference list",
+			"Cancer Council Australia 2012; Philip et al. 2013; Temel et al. 2010 — \"Philip et al. 2013\": no entry in the printed reference list",
+			"Field et al. 2013 — \"Field et al. 2013\": no entry in the printed reference list",
+			"Field et al. 2013 — \"Field et al. 2013\": no entry in the printed reference list",
+			"Collins et al. 2013 — \"Collins et al. 2013\": no entry in the printed reference list",
+			"Cancer Council Australia 2012; Philip et al. 2013; Temel et al. 2010 — \"Philip et al. 2013\": no entry in the printed reference list",
+			"Field et al. 2013 — \"Field et al. 2013\": no entry in the printed reference list"
+		],
+		"byName": [
+			"\"Cancer Council Australia 2012\" → Cancer Council Australia Sarcoma Guidelines Working Party 2014, Clinical practic",
+			"\"Cancer Council Australia 2012\" → Cancer Council Australia Sarcoma Guidelines Working Party 2014, Clinical practic",
+			"\"Hudson et al. 2015\" → Hudson P, Trauer T, Kelly B, O’Connor M, Thomas K, Zordan R, et al. 2014, ‘Reduc",
+			"\"Cancer Council Australia 2012\" → Cancer Council Australia Sarcoma Guidelines Working Party 2014, Clinical practic",
+			"\"Cancer Council Australia 2012\" → Cancer Council Australia Sarcoma Guidelines Working Party 2014, Clinical practic",
+			"\"Hudson et al. 2015\" → Hudson P, Trauer T, Kelly B, O’Connor M, Thomas K, Zordan R, et al. 2014, ‘Reduc"
+		]
+	},
+	"timeframes": {
+		"figureRows": 4,
+		"boxes": 4,
+		"rows": [
+			{
+				"step": 2,
+				"carePoint": "2.3 Referral to specialist",
+				"source": "body",
+				"destination": null
+			},
+			{
+				"step": 3,
+				"carePoint": "3.1 Diagnostic work-up",
+				"source": "body",
+				"destination": null
+			},
+			{
+				"step": 3,
+				"carePoint": "3.2.4 Multidisciplinary team meeting",
+				"source": "row",
+				"destination": "3.5.1"
+			},
+			{
+				"step": 4,
+				"carePoint": "4.2 Treatment options",
+				"source": "body",
+				"destination": null
+			}
+		]
+	},
+	"checkItems": 0,
+	"unplacedSections": [
+		{
+			"address": "optimal-care-pathway-for-people-with/preface",
+			"title": "Preface",
+			"note": "proposed: holds the legacy \"Foreword\"; check it belongs here"
+		},
+		{
+			"address": "about-this-cancer/epidemiology-and-burden-of-disease",
+			"title": "Epidemiology and burden of disease",
+			"note": "proposed: holds the legacy pathway’s opening text; check it is about epidemiology and burden of disease"
+		},
+		{
+			"address": "about-this-cancer/special-considerations",
+			"title": "Special considerations",
+			"note": "proposed: the legacy pathway’s opening section \"Special considerations\"; check where it belongs"
+		},
+		{
+			"address": "5/survivorship",
+			"title": "Survivorship",
+			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
+		},
+		{
+			"address": "5/palliative-care",
+			"title": "Palliative care",
+			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
+		},
+		{
+			"address": "find-out-more/appendix-supportive-care",
+			"title": "Appendix: Supportive care",
+			"note": "proposed: the sandbox record moves the legacy Appendix: Supportive care into Find out more; keep, move or remove it"
+		},
+		{
+			"address": "find-out-more/resource-list",
+			"title": "Resource list",
+			"note": "proposed: the sandbox record moves the legacy Resource list into Find out more; keep, move or remove it"
+		},
+		{
+			"address": "find-out-more/glossary",
+			"title": "Glossary",
+			"note": "proposed: the sandbox record moves the legacy Glossary into Find out more; keep, move or remove it"
+		}
+	]
+}

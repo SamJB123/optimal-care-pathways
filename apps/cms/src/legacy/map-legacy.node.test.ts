@@ -63,11 +63,19 @@ describe.skipIf(!existsSync(join(appDir, modelPath)))('legacy import: breast can
 		expect(to('step-6/palliative-care')).toEqual(['title:6.6'])
 		// Every step's supportive care goes to the template's per-step section.
 		for (const n of [2, 3, 4, 5, 6, 7]) expect(to(`step-${n}/support-and-communication/supportive-care`)).toEqual([`title:${n}/supportive-care`])
-		// A shared match keeps the core text and puts the legacy text beside it, flagged.
-		expect(to('step-1/prevention')).toEqual(['provenance:1.1', 'proposed:1.1/prevention'])
+		// A shared match: version 1 carries the legacy text as the section's divergence;
+		// the draft carries the core text (decision 153).
+		expect(to('step-1/prevention')).toEqual(['diverged:1.1'])
+		expect(to('step-1')).toEqual(['diverged:1'])
+		expect(result.sections.find((s) => s.address === '1.1')?.ownership).toBe('shared')
+		expect(result.sections.some((s) => s.address === '1/introduction' || s.address === '1.1/prevention')).toBe(false)
+		// Standing homes (decisions 154–156): research into 4.3.1, patient communication into
+		// the step's supportive care, the GP's into the step's GP section.
+		expect(to('step-3/research-and-clinical-trials')).toEqual(['rule:4.3.1'])
+		expect(to('step-3/support-and-communication/communication-with-patients-carers-and-families')).toEqual(['rule:3/supportive-care'])
+		expect(to('step-3/support-and-communication/communication-with-the-general-practitioner')).toEqual(['diverged:3.6'])
 		// What the template has no slot for is appended under its step and flagged.
 		const unplaced = result.sections.filter((s) => s.migrationNote?.startsWith('unplaced'))
-		expect(unplaced.map((s) => s.address)).toContain('3/research-and-clinical-trials')
 		expect(unplaced.map((s) => s.address)).toContain('1/risk-assessment-tools')
 		for (const s of unplaced) {
 			expect(s.canonical).toBe(false)
@@ -88,13 +96,33 @@ describe.skipIf(!existsSync(join(appDir, modelPath)))('legacy import: breast can
 		}
 		expect(types(body('2.1'))).toContain('timeframe')
 		expect(types(body('4.4.1'))).toContain('timeframe')
-		expect(result.ledger.timeframes.boxes).toBeGreaterThanOrEqual(7)
+		// Every printed row of the summary table has a box (decision 148).
+		expect(result.ledger.timeframes.figureRows).toBeGreaterThanOrEqual(8)
+		expect(result.ledger.timeframes.rows.every((r) => r.source === 'body' || r.destination !== null)).toBe(true)
+		// The quick reference guide lives as point-of-care sections under each step, one per
+		// panel, with its checklists as point-of-care items (decision 152).
 		for (const n of [1, 2, 3, 4, 5, 6, 7]) {
-			const checklist = result.sections.find((s) => s.address === `${n}/checklist`)
-			expect(checklist?.pointOfCare).toBe(true)
-			const lists = JSON.stringify(checklist?.bodyJson)
-			expect(lists).toContain('"pointOfCare":true')
+			const guide = result.sections.find((s) => s.address === `${n}/quick-reference-guide`)
+			expect(guide?.pointOfCare).toBe(true)
+			const panels = result.sections.filter((s) => s.parentId === guide?.id)
+			expect(panels.length).toBeGreaterThan(0)
+			for (const p of panels) expect(p.pointOfCare).toBe(true)
+			const checklist = panels.find((p) => p.title === 'Checklist')
+			expect(JSON.stringify(checklist?.bodyJson)).toContain('"pointOfCare":true')
 		}
+		expect(result.sections.find((s) => s.address === 'quick-reference-guide')?.pointOfCare).toBe(true)
+	})
+
+	it('carries the front matter as statements, nothing twice', () => {
+		const edition = result.sections.find((s) => s.address === 'optimal-care-pathway-for-people-with/x-edition')
+		const text = JSON.stringify(edition?.bodyJson)
+		expect(text).toContain('Second edition')
+		expect(text).toContain('Published June 2021')
+		expect(text).not.toMatch(/S E C O N D|SECOND EDITION/)
+		const front = result.legacySections.find((s) => s.key === 'front-matter')
+		const printed = JSON.stringify(front?.bodyJson)
+		expect(printed).not.toMatch(/S E C O N D/)
+		expect((printed.match(/Second edition/g) ?? []).length).toBe(1)
 	})
 
 	it('reads the references and resolves the author–year citations', () => {
@@ -122,8 +150,17 @@ describe.skipIf(!existsSync(join(appDir, modelPath)))('legacy import: breast can
 		expect(v1?.publishedAt?.toISOString().slice(0, 7)).toBe('2021-06')
 		expect(v2?.status).toBe('draft')
 		expect(v2?.versionNo).toBe(2)
-		expect(result.versionSections.length).toBe(result.legacySections.length)
-		expect(result.versionSections.filter((s) => s.hidden).map((s) => s.address)).toEqual(['contents'])
+		// Version 1 is the edition in the template's structure (decision 153): one row per
+		// draft section, all the pathway's own; a shared section the edition wrote its own
+		// text for is diverged, one it never touched is hidden.
+		expect(result.versionSections.length).toBe(result.sections.length)
+		const v1Of = (address: string) => result.versionSections.find((s) => s.address === address)
+		expect(v1Of('1')?.hidden).toBe(false)
+		expect(JSON.stringify(v1Of('1')?.bodyJson)).toContain('This step outlines recommendations for the prevention')
+		expect(v1Of('1.1')?.ownership).toBe('owned')
+		expect(JSON.stringify(v1Of('1.1')?.bodyJson).length).toBeGreaterThan(200)
+		expect(v1Of('3.2.3')?.hidden).toBe(true)
+		for (const s of result.versionSections) expect(s.ownership).toBe('owned')
 		expect(result.legacyDocument.edition).toBe('Second edition')
 		expect(result.document.slug).toBe('breast-cancer')
 	})

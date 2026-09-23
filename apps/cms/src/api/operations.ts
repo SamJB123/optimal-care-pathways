@@ -18,6 +18,7 @@ import {
 	type ApiContext,
 	documentUrl,
 	type FrozenSection,
+	guideOf,
 	listPublished,
 	type PublishedVersion,
 	referencesFor,
@@ -265,6 +266,51 @@ export const getDocumentFull = define({
 	},
 })
 
+const guideItem = z.object({
+	address: z.string().describe('The section the check list sits in'),
+	title: z.string().nullable(),
+	printedNumber: z.string().nullable(),
+	url: z.string(),
+	list: body.describe('The check list node, its items flagged point of care'),
+})
+
+export const getQuickReferenceGuide = define({
+	name: 'get_quick_reference_guide',
+	summary: 'Get a document’s quick reference guide',
+	description:
+		'The quick reference guide of a published document, derived from the pathway itself: every section flagged for use at point of care, in reading order and with its body as JSON, HTML and Markdown, then every point-of-care check list found in the other sections with the section it belongs to, and the references the guide cites numbered as the whole document numbers them. Also available as a page at /p/{slug}/quick-reference-guide and as a PDF.',
+	tags: ['documents'],
+	input: z.object({ slug, version }),
+	output: z.object({
+		document: documentSummary,
+		sections: z.array(section),
+		items: z.array(guideItem),
+		references: z.array(reference),
+	}),
+	rest: { method: 'GET', path: '/documents/{slug}/quick-reference-guide' },
+	handler: async ({ slug: slugValue, version: versionNo }, ctx) => {
+		const v = await versionOf(ctx.d, slugValue, versionNo)
+		const guide = await guideOf(ctx.d, v.versionId)
+		const all = await referencesFor(
+			ctx.d,
+			guide.all.map((s) => s.bodyJson ?? null),
+		)
+		const cited = new Set(Object.keys(citationNumbers([...guide.sections.map((s) => s.bodyJson ?? null), ...guide.items.map((i) => i.list)])))
+		return {
+			document: summaryOf(ctx, v),
+			sections: guide.sections.map((s) => sectionOf(ctx, v.slug, s)),
+			items: guide.items.map((i) => ({
+				address: i.section.address,
+				title: i.section.title,
+				printedNumber: i.section.printedNumber,
+				url: sectionUrl(ctx.origin, v.slug, i.section.address),
+				list: wireBody(i.list),
+			})),
+			references: all.filter((r) => cited.has(r.id)),
+		}
+	},
+})
+
 export const listVersions = define({
 	name: 'list_versions',
 	summary: 'List a document’s versions',
@@ -438,6 +484,7 @@ export const operations = [
 	getDocument,
 	getSection,
 	getDocumentFull,
+	getQuickReferenceGuide,
 	listVersions,
 	getComposed,
 	search,
