@@ -28,7 +28,10 @@ body {
 	text-rendering: optimizeLegibility;
 }
 
-:focus-visible {
+/* Every focus is marked. `:root` lifts the rule over a later class that resets a button
+   with `all: unset` (which takes the outline too); a component with its own mark sets it
+   in a focus-visible rule of its own. */
+:root :focus-visible {
 	outline: 2px solid var(--color-primary);
 	outline-offset: 2px;
 }
@@ -55,11 +58,6 @@ body {
 	cursor: pointer;
 	color: var(--color-primary);
 	border-block-end: 1px solid color-mix(in oklab, var(--color-primary) 40%, transparent);
-}
-
-.ocp-link-button:focus-visible {
-	outline: 2px solid var(--color-primary);
-	outline-offset: 2px;
 }
 
 .ocp-link-button:disabled {

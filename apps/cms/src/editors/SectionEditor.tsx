@@ -337,6 +337,8 @@ export default function SectionEditor(props: {
 				class="aic-prosekit-editor ocp-body"
 				data-guidance={guidance}
 				aria-busy={!ready() ? 'true' : undefined}
+				// In a list, Tab indents (extension.ts): the way out is told.
+				aria-description="Escape leaves the text; Tab then moves on."
 				ref={host}
 			/>
 		</Presence>

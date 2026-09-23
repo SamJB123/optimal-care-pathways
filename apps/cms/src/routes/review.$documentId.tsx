@@ -95,9 +95,20 @@ function ReviewPage() {
 	 *  otherwise hand the line to the next — until the reader moves the page themselves
 	 *  (the page's own settling as sections draw in is not the reader). */
 	let held = false
+	/** What the page holds in place while the sections around it draw in at their real
+	 *  height (content-visibility): a jump's heading, or what the keyboard moved to. Held
+	 *  until the reader moves the page themselves, as `held` is. */
+	let kept: { element: HTMLElement; top: number } | null = null
+	const keep = (element: HTMLElement) => {
+		kept = { element, top: element.getBoundingClientRect().top }
+	}
 
 	const go = (row: ReviewSectionRow) => {
-		document.getElementById(anchorOf(row.address))?.scrollIntoView({ block: 'start' })
+		const heading = document.getElementById(anchorOf(row.address))
+		if (heading) {
+			heading.scrollIntoView({ block: 'start' })
+			keep(heading)
+		}
 		held = true
 		setReading(row.id)
 	}
@@ -124,18 +135,37 @@ function ReviewPage() {
 		}
 		const release = () => {
 			held = false
+			kept = null
 		}
+		// Tab moves focus after its keydown has released the page: what it lands on is kept.
+		const keepFocus = (event: FocusEvent) => {
+			if (event.target instanceof HTMLElement && event.target.matches(':focus-visible')) keep(event.target)
+		}
+		const text = shell?.querySelector('.ocp-review-text')
+		const settling = new ResizeObserver(() => {
+			if (!kept?.element.isConnected) return
+			const moved = kept.element.getBoundingClientRect().top - kept.top
+			if (Math.abs(moved) >= 1) window.scrollBy(0, moved)
+		})
+		if (text) settling.observe(text)
 		// Arriving at #section from a link: take the reader there.
-		if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' })
+		const arriving = location.hash ? document.getElementById(location.hash.slice(1)) : null
+		if (arriving) {
+			arriving.scrollIntoView({ block: 'start' })
+			keep(arriving)
+		}
 		pick()
 		window.addEventListener('scroll', schedule, { passive: true })
 		window.addEventListener('resize', schedule)
+		shell?.addEventListener('focusin', keepFocus)
 		const moves = ['wheel', 'touchstart', 'keydown', 'mousedown']
 		for (const type of moves) window.addEventListener(type, release, { passive: true, capture: true })
 		return () => {
 			cancelAnimationFrame(frame)
+			settling.disconnect()
 			window.removeEventListener('scroll', schedule)
 			window.removeEventListener('resize', schedule)
+			shell?.removeEventListener('focusin', keepFocus)
 			for (const type of moves) window.removeEventListener(type, release, { capture: true })
 		}
 	})

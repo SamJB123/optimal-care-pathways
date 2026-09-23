@@ -157,10 +157,12 @@
 		background: none;
 		color: inherit;
 		font: inherit;
-		outline: none;
 	}
+	/* Its mark is its rule, in the accent and thickened. */
 	.ocp-tool-filter:focus-visible {
-		border-block-end-color: var(--color-primary);
+		outline: none;
+		border-block-end: 2px solid var(--color-primary);
+		padding-block-end: calc(0.45rem - 1px);
 	}
 
 	.ocp-tool-caption,

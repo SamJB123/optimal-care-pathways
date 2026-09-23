@@ -8,8 +8,8 @@ import {
 	type CollaborativeExtensionOptions,
 	createCollaborativeExtension,
 } from '@aicolab/app-kit/prosekit/extension'
-import { defineCommands, defineKeymap, definePlugin, union } from '@prosekit/core'
-import { Plugin } from '@prosekit/pm/state'
+import { defineCommands, defineKeymap, definePlugin, Priority, union, withPriority } from '@prosekit/core'
+import { type Command, Plugin, type Transaction } from '@prosekit/pm/state'
 import { Decoration, DecorationSet } from '@prosekit/pm/view'
 import {
 	defineBlockquoteCommands,
@@ -60,7 +60,7 @@ import { defineTable } from '@prosekit/extensions/table'
 import { defineTextAlignCommands, defineTextAlignKeymap } from '@prosekit/extensions/text-align'
 import { defineUnderlineCommands, defineUnderlineKeymap } from '@prosekit/extensions/underline'
 import { Fragment, Slice } from '@prosekit/pm/model'
-import { createToggleListCommand } from 'prosemirror-flat-list'
+import { createDedentListCommand, createIndentListCommand, createToggleListCommand } from 'prosemirror-flat-list'
 import type { GuidanceMode } from '#/content/blocks.tsx'
 import type { DerivedView } from '#/content/derived.ts'
 import { BLOCK_NODE_NAMES, defineContentSchema } from '#/content/schema.ts'
@@ -110,6 +110,44 @@ const definePageBreakBehaviour = () => {
 		}),
 	)
 }
+
+/** The command, taken only when it changes the document: otherwise the key is left to
+ *  the browser. */
+const whenItChanges =
+	(command: Command): Command =>
+	(state, dispatch, view) => {
+		const taken: Transaction[] = []
+		command(state, (tr) => taken.push(tr), view)
+		const tr = taken.at(-1)
+		if (!tr?.docChanged) return false
+		dispatch?.(tr)
+		return true
+	}
+
+/** The keyboard always has a way out of the text (WCAG 2.1.2). Tab and Shift+Tab indent a
+ *  list row where that changes the list, and move focus everywhere else; Escape leaves
+ *  the text, and the next Tab carries on through the page from it. (Mod-] and Mod-[ indent
+ *  as always.) Escape is the lowest binding, so an open menu's Escape closes the menu. */
+const defineKeyboardExits = () =>
+	union(
+		withPriority(
+			defineKeymap({
+				Tab: whenItChanges(createIndentListCommand()),
+				'Shift-Tab': whenItChanges(createDedentListCommand()),
+			}),
+			Priority.high,
+		),
+		withPriority(
+			defineKeymap({
+				Escape: (_state, _dispatch, view) => {
+					if (!view) return false
+					view.dom.blur()
+					return true
+				},
+			}),
+			Priority.lowest,
+		),
+	)
 
 const ALIGNABLE = ['paragraph', 'heading', 'carePoint']
 
@@ -162,6 +200,7 @@ export function defineSectionSchema(derived: () => DerivedView, guidance: Guidan
 		defineListInputRules(),
 		defineListPlugins(),
 		defineListToggles(),
+		defineKeyboardExits(),
 		defineBoldCommands(),
 		defineBoldKeymap(),
 		defineBoldInputRule(),
