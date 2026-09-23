@@ -179,7 +179,11 @@ function childKeyOf(parent: LegacyNode, section: Section): string {
 function titleOf(headingText: string, number: string | null): string {
 	const text = headingText.replace(/\s+/g, ' ').trim()
 	if (!number) return text
-	const escaped = number.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+	// The number as printed may carry a stray space after a stop ("3. 6 Support …").
+	const escaped = number
+		.split('.')
+		.map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+		.join('\\.\\s?')
 	return text.replace(new RegExp(`^${escaped}:?\\s*`, 'i'), '').trim() || text
 }
 

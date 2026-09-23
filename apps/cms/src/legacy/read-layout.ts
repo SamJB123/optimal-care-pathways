@@ -2392,7 +2392,12 @@ function lastPathTo(root: Section, test: (s: Section) => boolean): Section[] | n
 const titleOf = (headingText: string, number: string | null): string => {
 	const text = headingText.replace(/\s+/g, ' ').trim()
 	if (!number) return text
-	return text.replace(new RegExp(`^${number.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:?\\s*`, 'i'), '').trim() || text
+	// The number as printed may carry a stray space after a stop ("3. 6 Support …").
+	const escaped = number
+		.split('.')
+		.map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+		.join('\\.\\s?')
+	return text.replace(new RegExp(`^${escaped}:?\\s*`, 'i'), '').trim() || text
 }
 
 function pushSection(outline: Outline, level: HeadingLevel, heading: Line[], page: number, boldWeights: Set<Weight>, warnings: Warning[]): Section {
@@ -2411,7 +2416,10 @@ function pushSection(outline: Outline, level: HeadingLevel, heading: Line[], pag
 		const last = runs.at(-1)
 		if (last) last.text = last.text.replace(/\s*continued\s*$/i, '')
 	}
-	const numbered = NUMBERED.exec(text)
+	// A section number the print set with a stray space after its first stop ("3. 6 Support
+	// and communication") is the number it means: 3.6.
+	const spaced = /^(\d+)\.\s(\d+(?:\.\d+)*)\s+(?=\p{Lu})/u.exec(text)
+	const numbered = spaced ? ([spaced[0], `${spaced[1]}.${spaced[2]}`] as const) : NUMBERED.exec(text)
 	const step = STEP.exec(text)
 	// A continued step band may name the subsection it resumes: "Step 1: … – Screening
 	// recommendations continued".
