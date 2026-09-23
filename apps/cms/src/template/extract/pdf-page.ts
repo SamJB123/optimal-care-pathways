@@ -188,6 +188,12 @@ function mcidOf(props: unknown, pageObjId: string): string | null {
 	return null
 }
 
+/** One field of an object pdf.js hands back untyped (a font, an annotation), read as
+ *  unknown for the caller to check. */
+function field(value: unknown, key: string): unknown {
+	return typeof value === 'object' && value !== null && key in value ? Reflect.get(value, key) : undefined
+}
+
 /** An array or typed array of numbers (pdf.js uses Float32Array for path data). */
 function isNumberList(value: unknown): value is ArrayLike<number> {
 	return Array.isArray(value) || value instanceof Float32Array || value instanceof Float64Array
@@ -229,14 +235,14 @@ async function fontFace(page: PDFPageProxy, alias: string): Promise<FontFace> {
 			resolve(null)
 		}
 	})
-	const record = font && typeof font === 'object' ? (font as Record<string, unknown>) : {}
-	const name = typeof record.name === 'string' ? record.name : alias
+	const named = field(font, 'name')
+	const name = typeof named === 'string' ? named : alias
 	const lower = name.toLowerCase()
 	return {
 		alias,
 		name,
-		bold: record.bold === true || /bold|black|heavy|semibold|demibold/.test(lower),
-		italic: record.italic === true || /italic|oblique/.test(lower),
+		bold: field(font, 'bold') === true || /bold|black|heavy|semibold|demibold/.test(lower),
+		italic: field(font, 'italic') === true || /italic|oblique/.test(lower),
 	}
 }
 
@@ -366,7 +372,8 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 		}
 		spansByMcid.set(mcid, spans)
 	}
-	const showGlyphs = (glyphs: unknown[]) => {
+	const showGlyphs = (shown: unknown) => {
+		const glyphs: unknown[] = Array.isArray(shown) ? shown : []
 		let text = ''
 		const advances: number[] = []
 		const scale = textScale()
@@ -411,7 +418,8 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 	const { fnArray, argsArray } = ops
 	for (let i = 0; i < fnArray.length; i++) {
 		const fn = fnArray[i]
-		const args: unknown[] = (argsArray[i] as unknown[]) ?? []
+		const given: unknown = argsArray[i]
+		const args: unknown[] = Array.isArray(given) ? given : []
 		switch (fn) {
 			case OPS.save:
 				stateStack.push({
@@ -559,15 +567,15 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 				stroke = colourOf(args) ?? stroke
 				break
 			case OPS.showText:
-				showGlyphs(args[0] as unknown[])
+				showGlyphs(args[0])
 				break
 			case OPS.showSpacedText:
-				showGlyphs(args[0] as unknown[])
+				showGlyphs(args[0])
 				break
 			case OPS.nextLineShowText:
 				lineMatrix = Util.transform(lineMatrix, [1, 0, 0, 1, 0, -leading])
 				textMatrix = [...lineMatrix]
-				showGlyphs(args[0] as unknown[])
+				showGlyphs(args[0])
 				break
 			case OPS.constructPath: {
 				// pdf.js ≥ 5 packs a whole path: args = [paintOp, [segments…], minMax]. The
@@ -580,7 +588,7 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 				if (!minMax || minMax.length < 4) break
 				let segments = 0
 				if (isNumberList(buffers) || Array.isArray(buffers)) {
-					for (const buffer of Array.from(buffers as ArrayLike<unknown>)) {
+					for (const buffer of Array.from<unknown>(buffers)) {
 						if (!isNumberList(buffer)) continue
 						for (const code of Array.from(buffer, Number))
 							if (code === 0 || code === 1 || code === 4) segments += 1
@@ -622,15 +630,15 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 	// ---- links ------------------------------------------------------------------------
 	const links: LinkAnnotation[] = []
 	const linksById = new Map<string, LinkAnnotation>()
-	for (const annotation of annotations as Record<string, unknown>[]) {
-		if (annotation.subtype !== 'Link') continue
-		const rect = annotation.rect
+	for (const annotation of annotations) {
+		if (field(annotation, 'subtype') !== 'Link') continue
+		const rect = field(annotation, 'rect')
 		if (!Array.isArray(rect) || rect.length !== 4) continue
 		const nums = rect.map(Number)
 		const x0 = Math.min(nums[0] ?? 0, nums[2] ?? 0)
 		const y0 = Math.min(nums[1] ?? 0, nums[3] ?? 0)
 		const link: LinkAnnotation = {
-			id: String(annotation.id ?? ''),
+			id: String(field(annotation, 'id') ?? ''),
 			box: {
 				x: x0,
 				y: y0,
@@ -638,9 +646,10 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 				height: Math.abs((nums[3] ?? 0) - (nums[1] ?? 0)),
 			},
 		}
-		if (typeof annotation.url === 'string') link.url = annotation.url
-		else if (annotation.dest !== undefined && annotation.dest !== null)
-			link.dest = JSON.stringify(annotation.dest)
+		const url = field(annotation, 'url')
+		const dest = field(annotation, 'dest')
+		if (typeof url === 'string') link.url = url
+		else if (dest !== undefined && dest !== null) link.dest = JSON.stringify(dest)
 		links.push(link)
 		linksById.set(link.id, link)
 	}

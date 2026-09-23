@@ -44,7 +44,7 @@ const families: LegacyFamily[] = ['design-2021', 'design-2020', 'population']
 const targets: LegacyPathway[] =
 	which === 'all'
 		? [...LEGACY_PATHWAYS]
-		: families.includes(which as LegacyFamily)
+		: families.some((family) => family === which)
 			? LEGACY_PATHWAYS.filter((p) => p.family === which)
 			: LEGACY_PATHWAYS.filter((p) => p.slug === which)
 if (targets.length === 0) {

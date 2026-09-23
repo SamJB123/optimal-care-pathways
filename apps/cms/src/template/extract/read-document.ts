@@ -656,7 +656,7 @@ function inferSpans(rows: TableRow[], geometry: CellGeometry[][]): TableRow[] {
 	/** Where cells at this Word index sit in other rows, when this one has no geometry. */
 	const boxAtIndex = (index: number): Box | null =>
 		liveRows.flatMap((placed) =>
-			placed.filter((p) => p.index === index && p.geo.bbox).map((p) => p.geo.bbox as Box),
+			placed.flatMap((p) => (p.index === index && p.geo.bbox ? [p.geo.bbox] : [])),
 		)[0] ?? null
 	if (liveRows.length === 0) return rows
 

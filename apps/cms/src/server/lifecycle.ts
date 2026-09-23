@@ -76,7 +76,9 @@ export interface Lifecycle {
 
 export class LifecycleRefusal extends Error {}
 
-export const refuse = (message: string): never => {
+/** A declaration, not an arrow: only so does a call narrow what follows it (`if (!row)
+ *  refuse(…)` leaves `row` defined). */
+export function refuse(message: string): never {
 	throw new LifecycleRefusal(message)
 }
 
@@ -100,17 +102,17 @@ export async function requireRole(
 	what: string,
 ): Promise<Role> {
 	const role = await roleOn(lc, userId, document)
-	if (!atLeast(role, floor))
+	if (role === null || !atLeast(role, floor))
 		refuse(`Only a ${floor === 'member' ? 'drafter' : 'reviewer'} or above may ${what}.`)
-	return role as Role
+	return role
 }
 
 async function requireCentral(lc: Lifecycle, userId: string, what: string): Promise<string> {
 	const central = await lc.centralOrgId()
 	if (!central) refuse('The central organisation has not been set up yet.')
-	const membership = await lc.auth.getOrgMembershipById(userId, central as string, OCP_NAMESPACE)
+	const membership = await lc.auth.getOrgMembershipById(userId, central, OCP_NAMESPACE)
 	if (!membership) refuse(`Only members of the central organisation may ${what}.`)
-	return central as string
+	return central
 }
 
 export async function documentOf(lc: Lifecycle, documentId: string): Promise<DocumentRow> {
@@ -118,7 +120,7 @@ export async function documentOf(lc: Lifecycle, documentId: string): Promise<Doc
 		await lc.d.select().from(schema.documents).where(eq(schema.documents.id, documentId)).limit(1)
 	)[0]
 	if (!row) refuse('Document not found.')
-	return row as DocumentRow
+	return row
 }
 
 // ---------------------------------------------------------------------------
@@ -160,7 +162,7 @@ export async function ensureDraft(
 		.returning()
 	const row = inserted[0]
 	if (!row) refuse('Could not open a draft version.')
-	return row as VersionRow
+	return row
 }
 
 /** The document's published version, or null. */
@@ -528,9 +530,8 @@ export async function decideSection(
 			.limit(1)
 	)[0]
 	if (!review) refuse('Review not found.')
-	const state = review as ReviewStateRow
-	if (state.superseded !== 0) refuse('A later review request has replaced this one.')
-	const document = await documentOf(lc, state.documentId)
+	if (review.superseded !== 0) refuse('A later review request has replaced this one.')
+	const document = await documentOf(lc, review.documentId)
 	await requireRole(lc, input.userId, document, 'admin', 'decide a review')
 	const updated = await lc.d
 		.update(schema.reviewSections)
@@ -554,13 +555,14 @@ export async function decideSection(
 			.from(schema.reviewState)
 			.where(eq(schema.reviewState.reviewId, input.reviewId))
 			.limit(1)
-	)[0] as ReviewStateRow
-	if (after.decision !== null && state.decision === null) {
+	)[0]
+	if (!after) refuse('Review not found.')
+	if (after.decision !== null && review.decision === null) {
 		await record(lc, document.id, 'review.decided', input.userId, {
 			reviewId: input.reviewId,
 			decision: after.decision,
 		})
-		const requester = await lc.auth.getUserById(state.requestedBy)
+		const requester = await lc.auth.getUserById(review.requestedBy)
 		if (requester)
 			await notify(
 				lc,
@@ -1072,7 +1074,7 @@ export async function documentState(
 			: null,
 		changes,
 		structure: await structureChanges(lc, documentId),
-		role: role as Role,
+		role,
 		central: isCentral,
 	}
 }
@@ -1188,7 +1190,7 @@ export async function addComment(
 			)
 		}
 	}
-	return row as CommentRow
+	return row
 }
 
 export async function resolveComment(
@@ -1203,18 +1205,21 @@ export async function resolveComment(
 			.limit(1)
 	)[0]
 	if (!comment) refuse('Comment not found.')
-	const document = await documentOf(lc, (comment as CommentRow).documentId)
+	const document = await documentOf(lc, comment.documentId)
 	await requireRole(lc, input.userId, document, 'member', 'resolve a comment')
-	const updated = await lc.d
-		.update(schema.comments)
-		.set(
-			input.resolved
-				? { resolvedAt: new Date(), resolvedBy: input.userId }
-				: { resolvedAt: null, resolvedBy: null },
-		)
-		.where(eq(schema.comments.id, input.commentId))
-		.returning()
-	return updated[0] as CommentRow
+	const updated = (
+		await lc.d
+			.update(schema.comments)
+			.set(
+				input.resolved
+					? { resolvedAt: new Date(), resolvedBy: input.userId }
+					: { resolvedAt: null, resolvedBy: null },
+			)
+			.where(eq(schema.comments.id, input.commentId))
+			.returning()
+	)[0]
+	if (!updated) refuse('Comment not found.')
+	return updated
 }
 
 /** A section as mail names it: its number and title. */
@@ -1365,15 +1370,14 @@ export async function suggestionsForCore(lc: Lifecycle, coreDocumentId: string, 
 /** A pathway takes a shared section as its own: the core body — as the pathway currently
  *  renders it — becomes the section's starting draft, citations intact. Revertable. */
 export async function divergeSection(lc: Lifecycle, input: { sectionId: string; userId: string }) {
-	const section = (
+	const row = (
 		await lc.d
 			.select()
 			.from(schema.sections)
 			.where(eq(schema.sections.id, input.sectionId))
 			.limit(1)
 	)[0]
-	if (!section) refuse('Section not found.')
-	const row = section as SectionRow
+	if (!row) refuse('Section not found.')
 	const document = await documentOf(lc, row.documentId)
 	await requireRole(lc, input.userId, document, 'member', 'diverge a section')
 	if (row.ownership !== 'shared' || !row.coreSectionId)
@@ -1400,15 +1404,14 @@ export async function divergeSection(lc: Lifecycle, input: { sectionId: string; 
 
 /** Back to the core's version: the pathway's own body is dropped. */
 export async function revertSection(lc: Lifecycle, input: { sectionId: string; userId: string }) {
-	const section = (
+	const row = (
 		await lc.d
 			.select()
 			.from(schema.sections)
 			.where(eq(schema.sections.id, input.sectionId))
 			.limit(1)
 	)[0]
-	if (!section) refuse('Section not found.')
-	const row = section as SectionRow
+	if (!row) refuse('Section not found.')
 	const document = await documentOf(lc, row.documentId)
 	await requireRole(lc, input.userId, document, 'member', 'revert a section')
 	const coreSectionId = row.coreSectionId

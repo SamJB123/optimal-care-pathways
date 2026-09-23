@@ -31,7 +31,7 @@ import { UndoManager } from '@y/y'
 import { createSignal, onSettled, Show, untrack } from 'solid-js'
 import type { GuidanceMode } from '#/content/blocks.tsx'
 import type { DerivedView } from '#/content/derived.ts'
-import type { JsonNode } from '#/content/schema.ts'
+import { type JsonNode, jsonOf } from '#/content/schema.ts'
 import type { EditorControl } from '#/lifecycle/workspace.ts'
 import { createSectionExtension } from './extension.ts'
 
@@ -197,7 +197,7 @@ export default function SectionEditor(props: {
 		undo: () => undoManager.undo(),
 		redo: () => undoManager.redo(),
 		focus: () => editor.focus(),
-		body: () => editor.view.state.doc.toJSON(),
+		body: () => jsonOf(editor.view.state.doc),
 		setGuidanceDone(index, done, by) {
 			const { state } = editor.view
 			const notes: { node: PmNode; pos: number }[] = []

@@ -12,7 +12,7 @@
 
 import { pmnodeToDelta, ynodeToPmnode } from '@y/prosemirror'
 import type { Node as YNode } from '@y/y'
-import { contentSchema, type JsonNode, parseBody } from './schema.ts'
+import { contentSchema, type JsonNode, jsonOf, parseBody } from './schema.ts'
 
 /** Write `body` into an (empty) yjs root. */
 export function hydrateRoot(root: YNode, body: JsonNode): void {
@@ -29,18 +29,7 @@ export function replaceRoot(root: YNode, body: JsonNode): void {
 /** Read the yjs root as a body. Read without an attribution renderer, so the result
  *  is content, not history. */
 export function bodyFromRoot(root: YNode): JsonNode {
-	const json: unknown = ynodeToPmnode(root, contentSchema).toJSON()
-	return asJsonNode(json)
-}
-
-function asJsonNode(value: unknown): JsonNode {
-	if (
-		typeof value !== 'object' ||
-		value === null ||
-		!('type' in value) ||
-		typeof value.type !== 'string'
-	) {
-		throw new Error('[content] the body is not a node')
-	}
-	return parseBody(value).toJSON() as JsonNode
+	// Through the parser, which checks the body against the schema and joins adjacent text
+	// of the same marks, so the stored JSON (and its hash) is the canonical form.
+	return jsonOf(parseBody(jsonOf(ynodeToPmnode(root, contentSchema))))
 }

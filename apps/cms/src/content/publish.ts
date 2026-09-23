@@ -17,7 +17,7 @@
 import { Fragment } from '@prosekit/pm/model'
 import { walkNodes } from './derived.ts'
 import { bodyHash } from './diff.ts'
-import { contentSchema, emptyBody, type JsonNode } from './schema.ts'
+import { contentSchema, emptyBody, type JsonNode, jsonOf } from './schema.ts'
 
 /** Who a body is published for: a pathway's readers, or the template's own page. */
 export type PublishAs = 'pathway' | 'template'
@@ -133,7 +133,7 @@ export function publishBody(
 		// stripped content, fill one that is part of a structure.
 		if (DROPPED_WHEN_EMPTY.has(node.type) && content.every((c) => c.type === 'banner')) return []
 		const filled = type.createAndFill(node.attrs ?? null, fragment)
-		return filled ? [filled.toJSON() as JsonNode] : []
+		return filled ? [jsonOf(filled)] : []
 	}
 	const [doc] = fill(body)
 	if (!doc) return null

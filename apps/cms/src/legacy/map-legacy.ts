@@ -1200,7 +1200,7 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 				return draft
 			}
 			const children = childrenOf(matched.address).filter((d) => d.core && d.row.ownership === 'owned')
-			const child = matchTitle(title, children.map((d) => ({ row: d.core as CoreSectionRow, tokens: titleTokens(d.core?.title ?? '', pathway.subject) })), pathway.subject)
+			const child = matchTitle(title, children.flatMap((d) => (d.core ? [{ row: d.core, tokens: titleTokens(d.core.title ?? '', pathway.subject) }] : [])), pathway.subject)
 			if (child) {
 				provenance(draft, node)
 				const target = byAddress(child.address)
@@ -1516,7 +1516,7 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 		if (chapter.l1 === 'contributors') {
 			// The chapter's own text, then its groups by title under the template's own groups.
 			const own = nodesOf(chapter.blocks)
-			const groups = childrenOf(destination.row.address).filter((d) => d.core).map((d) => ({ row: d.core as CoreSectionRow, tokens: titleTokens(d.core?.title ?? '', pathway.subject) }))
+			const groups = childrenOf(destination.row.address).flatMap((d) => (d.core ? [{ row: d.core, tokens: titleTokens(d.core.title ?? '', pathway.subject) }] : []))
 			if (own.length > 0) {
 				const first = groups[0] ? byAddress(groups[0].row.address) : null
 				if (first) place(first, chapter, own, 'rule')

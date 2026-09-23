@@ -20,7 +20,7 @@ import { createSyncedDoc } from '@aicolab/room-service/doc-sync/client'
 import { RpcStub, RpcTarget } from 'capnweb-experimental-hibernation'
 import { eq } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { type JsonNode, parseBody } from '#/content/schema.ts'
+import { type JsonNode, jsonOf, parseBody } from '#/content/schema.ts'
 import { bodyFromRoot, hydrateRoot } from '#/content/yjs.ts'
 import { db, schema } from '#/db/index.ts'
 import { type DocumentRoom, documentRoomName } from './document-room.ts'
@@ -283,7 +283,7 @@ describe('DocumentRoom (workerd, real DO over D1)', () => {
 			const client = makeClientSink()
 			const subscription = await subscribeBody(facet, client)
 			await sleep(800)
-			const live = plain(parseBody(await instance.foldSection(OWNED_ID)).toJSON() as JsonNode)
+			const live = plain(jsonOf(parseBody(await instance.foldSection(OWNED_ID))))
 			expect(live).toContain('Reseeded by the test')
 			expect(live).not.toContain('Appended by the test')
 			const storedAfter = await storedBody(OWNED_ID)

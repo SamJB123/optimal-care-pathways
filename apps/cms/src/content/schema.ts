@@ -783,13 +783,16 @@ export const contentSchema: Schema = buildSchema()
  *  attribute's default) and written back. Seeds store this form, so a section's first open
  *  in its room finds the row already equal to the live doc and writes nothing. */
 export function normalBody(body: JsonNode): JsonNode {
-	const json: JsonNode = parseBody(body).toJSON()
-	return json
+	return jsonOf(parseBody(body))
 }
+
+/** An attribute's value as JSON: the schema's own are scalars; a table cell's column
+ *  widths are a list. */
+export type JsonAttr = string | number | boolean | null | JsonAttr[]
 
 export interface JsonNode {
 	type: NodeName
-	attrs?: Record<string, string | number | boolean | null>
+	attrs?: Record<string, JsonAttr>
 	content?: JsonNode[]
 	text?: string
 	marks?: JsonMark[]
@@ -797,7 +800,50 @@ export interface JsonNode {
 
 export interface JsonMark {
 	type: MarkName
-	attrs?: Record<string, string | number | boolean | null>
+	attrs?: Record<string, JsonAttr>
+}
+
+const isNodeName = (name: string): name is NodeName => name in contentSchema.nodes
+const isMarkName = (name: string): name is MarkName => name in contentSchema.marks
+
+function jsonAttr(value: unknown, where: string): JsonAttr {
+	if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value
+	if (Array.isArray(value)) return value.map((v) => jsonAttr(v, where))
+	throw new Error(`[content] ${where} holds an attribute that is not JSON: ${String(value)}`)
+}
+
+function jsonAttrs(attrs: Readonly<Record<string, unknown>>, where: string): Record<string, JsonAttr> | undefined {
+	const entries = Object.entries(attrs)
+	return entries.length === 0 ? undefined : Object.fromEntries(entries.map(([k, v]) => [k, jsonAttr(v, where)]))
+}
+
+/**
+ * A node as JSON, typed: ProseMirror's own `toJSON` returns `any`. Built key for key as
+ * ProseMirror writes it — type, attrs, content, marks, text, and attrs in the schema's
+ * order — so a body written through here hashes as it always has.
+ */
+export function jsonOf(node: PmNode): JsonNode {
+	const name = node.type.name
+	if (!isNodeName(name)) throw new Error(`[content] "${name}" is not a node of the content schema`)
+	const json: JsonNode = { type: name }
+	const attrs = jsonAttrs(node.attrs, name)
+	if (attrs) json.attrs = attrs
+	if (node.content.size > 0) {
+		const content: JsonNode[] = []
+		node.content.forEach((child) => {
+			content.push(jsonOf(child))
+		})
+		json.content = content
+	}
+	if (node.marks.length > 0)
+		json.marks = node.marks.map((mark): JsonMark => {
+			const markName = mark.type.name
+			if (!isMarkName(markName)) throw new Error(`[content] "${markName}" is not a mark of the content schema`)
+			const markAttrs = jsonAttrs(mark.attrs, markName)
+			return markAttrs ? { type: markName, attrs: markAttrs } : { type: markName }
+		})
+	if (node.isText && node.text !== undefined) json.text = node.text
+	return json
 }
 
 /** Parses stored JSON into a node and checks it against the schema; throws if malformed. */

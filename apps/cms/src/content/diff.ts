@@ -13,7 +13,7 @@
 import { Slice } from '@prosekit/pm/model'
 import { ReplaceStep, Transform } from '@prosekit/pm/transform'
 import { ChangeSet, simplifyChanges } from 'prosemirror-changeset'
-import { contentSchema, emptyBody, type JsonNode, parseBody } from './schema.ts'
+import { contentSchema, emptyBody, type JsonNode, jsonOf, parseBody } from './schema.ts'
 
 export interface AnnotatedBody {
 	body: JsonNode
@@ -23,14 +23,12 @@ export interface AnnotatedBody {
 	changed: boolean
 }
 
-const asJson = (node: { toJSON(): unknown }): JsonNode => node.toJSON() as JsonNode
-
 /** The draft body with its changes against `published` marked. A body never published
  *  is wholly an insertion. */
 export function annotateChanges(published: JsonNode | null, draft: JsonNode | null): AnnotatedBody {
 	const oldDoc = parseBody(published ?? emptyBody())
 	const newDoc = parseBody(draft ?? emptyBody())
-	if (oldDoc.eq(newDoc)) return { body: asJson(newDoc), inserted: 0, deleted: 0, changed: false }
+	if (oldDoc.eq(newDoc)) return { body: jsonOf(newDoc), inserted: 0, deleted: 0, changed: false }
 
 	const step = new ReplaceStep(0, oldDoc.content.size, new Slice(newDoc.content, 0, 0))
 	const changes = simplifyChanges(
@@ -59,7 +57,7 @@ export function annotateChanges(published: JsonNode | null, draft: JsonNode | nu
 			if (paragraph) tr.insert(change.fromB, paragraph)
 		}
 	}
-	return { body: asJson(tr.doc), inserted, deleted, changed: true }
+	return { body: jsonOf(tr.doc), inserted, deleted, changed: true }
 }
 
 /** A stable hash of a body's JSON, for pinning what a review saw (decision 119). */
