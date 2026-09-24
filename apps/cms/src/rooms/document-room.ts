@@ -255,8 +255,13 @@ export class DocumentRoom extends DocRoom {
 		}, 1500)
 	}
 
+	/** Who has the document open: the roster rows with a place. A row without one is a
+	 *  member whose session outlives the page they left (the client is page-lifetime), and
+	 *  that is not "open now" — the place is presence, as in the hive. */
 	async #announcePresence(): Promise<void> {
-		const ids = this.collections.online.toArray.map((row) => row.userId)
+		const ids = this.collections.online.toArray
+			.filter((row) => row.place !== null)
+			.map((row) => row.userId)
 		const people = await this.env.AUTH.getUsersByIds(ids)
 		const present = ids.map((id) => ({ id, name: people[id]?.name ?? '' }))
 		const updated = await db(this.env.DB)

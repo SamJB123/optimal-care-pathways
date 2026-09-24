@@ -380,17 +380,23 @@ describe('step page over the production client (real workerd)', () => {
 		// opened the document.
 		await eventually(async () => expect(await present()).toEqual([]), 6_000)
 
-		// And it follows the ordinary paths too: a join names the member, a leave clears it.
+		// And it follows the ordinary paths too. "Open now" is the PLACE, as in the hive: a
+		// session alone (the client is page-lifetime, so it outlives the page) is not
+		// presence; arriving on the page sets a place, leaving it sets none.
 		const client = pathwayClientFor(doc.documentId)
 		const mounted = doc.owned.map((s) => mountLikeThePage(client, s.id))
 		await Promise.all(mounted.map((m) => m.ready()))
+		await sleep(2_000)
+		expect(await present()).toEqual([])
+		client.room.setPlace({ sectionId: null })
 		await eventually(
 			async () => expect(await present()).toEqual([{ id: MEMBER, name: MEMBER }]),
 			6_000,
 		)
 		for (const m of mounted) m.leave()
-		sharedSocket.close()
+		client.room.setPlace(null)
 		await eventually(async () => expect(await present()).toEqual([]), 6_000)
+		expect((await serverView(doc)).members).toBe(1)
 		expect(fatal).toEqual([])
 	}, 30_000)
 })

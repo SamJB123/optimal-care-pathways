@@ -137,18 +137,19 @@ function DocumentShell() {
 			}
 			update()
 			const subscription = next.sections.subscribeChanges(update)
+			// Who is ON THE PAGE: a row whose place is set. A member whose session is still
+			// open but who has left the page (place null) is not here.
 			const readRoster = () =>
 				setOnline(
-					next.room.online.get().map((row) => {
+					next.room.online.get().flatMap((row) => {
 						const place = row.place
-						const sectionId =
-							place &&
-							typeof place === 'object' &&
-							!Array.isArray(place) &&
-							typeof place.sectionId === 'string'
-								? place.sectionId
-								: null
-						return { userId: row.userId, sectionId }
+						if (!place || typeof place !== 'object' || Array.isArray(place)) return []
+						return [
+							{
+								userId: row.userId,
+								sectionId: typeof place.sectionId === 'string' ? place.sectionId : null,
+							},
+						]
 					}),
 				)
 			readRoster()
@@ -192,11 +193,16 @@ function DocumentShell() {
 			})),
 	)
 
-	// Tell the room where this reader is, so others see it in their spine.
+	// Tell the room where this reader is: on the page (a place, with the section they are
+	// in when they are in one), so others see it in their spine and the atlas marks the
+	// document open — and, when this page is left, nowhere (null). The room session outlives
+	// the page (the client is page-lifetime), so the place is what says "here", as the
+	// hive's does; a session alone is not presence.
 	createEffect(
 		() => ({ sectionId: focused(), room: client()?.room ?? null }),
 		({ sectionId, room }) => {
-			room?.setPlace(sectionId ? { sectionId } : null)
+			room?.setPlace({ sectionId })
+			return () => room?.setPlace(null)
 		},
 	)
 
