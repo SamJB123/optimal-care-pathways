@@ -74,13 +74,26 @@ export const emptyDerived = (): DerivedView => ({
 	map: null,
 })
 
-/** Open items in a body (decision 24, 74): guidance not ticked done, placeholders left. */
+/** Open items in a body (decision 24, 74): guidance not ticked done, placeholders left,
+ *  and alternatives the template offered that no one has chosen between. */
 export function openItemsIn(body: JsonNode | null): number {
 	if (!body) return 0
 	let count = 0
 	walkNodes(body, (n) => {
 		if (n.type === 'guidance' && n.attrs?.done !== true) count++
 		else if (n.type === 'text' && n.marks?.some((m) => m.type === 'placeholder')) count++
+		else if (n.type === 'variants') count++
+	})
+	return count
+}
+
+/** Choices still to make: each `variants` group is a set of alternatives ("Or" rows) of
+ *  which the author keeps one; while the group stands, the choice is open. */
+export function openChoicesIn(body: JsonNode | null): number {
+	if (!body) return 0
+	let count = 0
+	walkNodes(body, (n) => {
+		if (n.type === 'variants') count++
 	})
 	return count
 }

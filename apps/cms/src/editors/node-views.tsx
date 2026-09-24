@@ -14,6 +14,7 @@ import {
 	type SolidNodeViewProps,
 } from '@aicolab/ui-solid/prosekit-solid'
 import { union } from '@prosekit/core'
+import type { EditorView } from '@prosekit/pm/view'
 import type { JSX } from '@solidjs/web'
 import type { Component } from 'solid-js'
 import {
@@ -90,6 +91,23 @@ function viewOf<Attrs extends object>(
 
 const none = () => ({})
 
+/** Keep one alternative of a `variants` group: its blocks take the place of the whole
+ *  group, in one transaction (so one undo brings the others back). */
+export function keepVariant(view: EditorView, getPos: () => number | undefined): void {
+	// A viewer's editor is read-only: the button is hidden (section.css), and a call that
+	// gets through does nothing.
+	if (!view.editable) return
+	const pos = getPos()
+	if (pos === undefined) return
+	const variant = view.state.doc.nodeAt(pos)
+	const $pos = view.state.doc.resolve(pos)
+	if (!variant || variant.type.name !== 'variant' || $pos.parent.type.name !== 'variants') return
+	view.dispatch(
+		view.state.tr.replaceWith($pos.before(), $pos.after(), variant.content).scrollIntoView(),
+	)
+	view.focus()
+}
+
 const asAttrs =
 	<T,>(read: (attrs: Record<string, unknown>) => T) =>
 	(node: { attrs: Record<string, unknown> }) =>
@@ -147,7 +165,17 @@ export function defineTemplateNodeViews(derived: () => DerivedView, guidance: Gu
 			name: 'variant',
 			hasContent: true,
 			readAttrs: none,
-			component: provide(viewOf(VariantBlock)),
+			component: provide((props) => (
+				<VariantBlock
+					attrs={props.attrs}
+					edit={{
+						setAttrs: (patch) => props.setAttrs(patch),
+						keep: () => keepVariant(props.view, props.getPos),
+					}}
+				>
+					{props.content}
+				</VariantBlock>
+			)),
 			contentAs: contentElement('div'),
 		}),
 		defineSolidNodeView<Record<string, never>>({

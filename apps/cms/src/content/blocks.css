@@ -322,7 +322,8 @@
 	color: var(--color-base-content-muted);
 }
 
-/* ── Alternatives: the template's "Or" rows; the author keeps one ── */
+/* ── Alternatives: the template's "Or" rows; the author keeps one. In the template
+      they read as printed: a dotted rule down the group, "or" in the instruction green ── */
 .ocp-body div[data-ocp="variants"] {
 	margin: 0.6em 0;
 	border-left: 3px dotted var(--color-border-strong);
@@ -337,6 +338,78 @@
 	font-weight: 600;
 	color: var(--color-success);
 	margin: 0.4em 0;
+}
+
+/* In a pathway the group is a choice the team makes in the text it is writing: the
+   alternatives read as they would publish, parted by a quiet rule and a small "or", each
+   with its Keep button, and the box's band says "Choose one" while the group stands. */
+.ocp-body[data-guidance="margin"] div[data-ocp="variants"],
+[data-guidance="margin"] .ocp-body div[data-ocp="variants"] {
+	border-left: 0;
+	padding-left: 0;
+}
+
+.ocp-body[data-guidance="margin"] div[data-ocp="variant"] + div[data-ocp="variant"]::before,
+.ocp-body[data-guidance="margin"]
+	:has(> div[data-ocp="variant"])
+	+ :has(> div[data-ocp="variant"])::before,
+[data-guidance="margin"] .ocp-body div[data-ocp="variant"] + div[data-ocp="variant"]::before,
+[data-guidance="margin"]
+	.ocp-body
+	:has(> div[data-ocp="variant"])
+	+ :has(> div[data-ocp="variant"])::before {
+	font-style: normal;
+	font-size: 0.75em;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-base-content-muted);
+	border-top: 1px solid var(--color-border);
+	padding-top: 0.6em;
+	margin: 0.8em 0 0.6em;
+}
+
+.ocp-body .ocp-variant-keep {
+	display: flex;
+	justify-content: flex-end;
+	margin: 0.3em 0 0.2em;
+	font-size: 0.85em;
+}
+
+/* The chip sits on the box's FIRST band (or a timeframe's care point) — the first such
+   line among the box's children, whatever precedes it (a guidance anchor does, often).
+   In the editor each line sits inside its node-view wrapper; in a read-only view it is
+   the box body's own child. */
+[data-guidance="margin"]
+	:is(.ocp-box, .ocp-timeframe):has(div[data-ocp="variants"])
+	:is(.ui-callout-body, .ocp-node-content)
+	> p:is([data-ocp="banner"], [data-ocp="carePoint"]):not(
+		:is(
+				p[data-ocp="banner"],
+				p[data-ocp="carePoint"],
+				[data-solid-block="banner"],
+				[data-solid-block="carePoint"]
+			)
+			~ *
+	)::after,
+[data-guidance="margin"]
+	:is(.ocp-box, .ocp-timeframe):has(div[data-ocp="variants"])
+	.ocp-node-content
+	> :is([data-solid-block="banner"], [data-solid-block="carePoint"]):not(
+		:is([data-solid-block="banner"], [data-solid-block="carePoint"]) ~ *
+	)
+	> p:is([data-ocp="banner"], [data-ocp="carePoint"])::after {
+	content: "Choose one";
+	float: inline-end;
+	margin-inline-start: 0.8em;
+	padding: 0.1em 0.6em;
+	border-radius: 999px;
+	font-size: 0.7em;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	line-height: 1.7;
+	background: var(--color-warning);
+	color: var(--color-warning-content);
 }
 
 /* ── Find out more / See also entries: a RichList of titled links ── */

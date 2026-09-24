@@ -16,9 +16,9 @@
 import { env } from 'cloudflare:test'
 import { eq } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { referencesFor, sectionsOf } from '#/api/published.ts'
 import type { JsonNode } from '#/content/schema.ts'
 import { db, schema } from '#/db/index.ts'
-import { referencesFor, sectionsOf } from '#/api/published.ts'
 import { sentMail } from '../../test/worker-runtime-entry.ts'
 import * as lc from './lifecycle.ts'
 
@@ -396,6 +396,34 @@ describe('the pathway', () => {
 		expect(readiness.items.find((i) => i.key === 'placeholders')?.level).toBe('ok')
 		// The guidance itself is still the drafter's to tick done: a warning, not a block.
 		expect(readiness.items.find((i) => i.key === 'guidance')?.level).toBe('warn')
+	})
+
+	it('warns while the template’s alternatives ("Or" rows) stand unchosen', async () => {
+		const d = db(env.DB)
+		await d
+			.update(schema.sections)
+			.set({
+				bodyJson: doc({
+					type: 'variants',
+					content: [
+						{ type: 'variant', content: [paragraph(text('Screening is offered from age 50.'))] },
+						{ type: 'variant', content: [paragraph(text('Screening is not recommended.'))] },
+					],
+				}),
+			})
+			.where(eq(schema.sections.id, P_OWNED))
+		const row = (await d.select().from(schema.sections).where(eq(schema.sections.id, P_OWNED)))[0]
+		const readiness = await lc.publishReadiness(lifecycle(), PATHWAY_ID, `owner@${CENTRAL}`)
+		const choices = readiness.items.find((i) => i.key === 'choices')
+		expect(choices?.level).toBe('warn')
+		expect(choices?.sections).toEqual([row?.address])
+		// One alternative kept: the choice is made.
+		await d
+			.update(schema.sections)
+			.set({ bodyJson: doc(paragraph(text('Screening is not recommended.'))) })
+			.where(eq(schema.sections.id, P_OWNED))
+		const after = await lc.publishReadiness(lifecycle(), PATHWAY_ID, `owner@${CENTRAL}`)
+		expect(after.items.find((i) => i.key === 'choices')?.level).toBe('ok')
 	})
 
 	it('publishes once reviewed by its own reviewer, freezing the core body and the core version', async () => {

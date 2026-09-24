@@ -19,19 +19,21 @@
  */
 
 import { and, desc, eq, inArray } from 'drizzle-orm'
-import { type AnnotatedBody, annotateChanges, bodyHash } from '#/content/diff.ts'
+import { cacheTagFor, PUBLISHED_CACHE_TAG } from '#/api/published.ts'
 import {
 	citationNumbers,
 	citedBody,
 	type DerivedView,
+	openChoicesIn,
 	openItemsIn,
 	timeframeRows,
 } from '#/content/derived.ts'
+import { type AnnotatedBody, annotateChanges, bodyHash } from '#/content/diff.ts'
 import { bodyToMarkdown } from '#/content/markdown.ts'
 import {
 	blockingPlaceholders,
-	publishableHash,
 	publishAsFor,
+	publishableHash,
 	publishBody,
 } from '#/content/publish.ts'
 import type { JsonNode } from '#/content/schema.ts'
@@ -41,7 +43,6 @@ import type { ReviewChange } from '#/db/schema.ts'
 import { publishDocumentRows, publishSectionRows } from '#/lib/live-publish.ts'
 import { outlineOrder } from '#/lib/outline.ts'
 import { OCP_NAMESPACE, ROLE_LADDER, type Role } from '#/lib/roles.ts'
-import { cacheTagFor, PUBLISHED_CACHE_TAG } from '#/api/published.ts'
 import { documentRoomName } from '#/rooms/document-room.ts'
 import { documentRole, type MembershipAuth } from './access.ts'
 import { indexPublishedVersion } from './search-index.ts'
@@ -672,6 +673,24 @@ export async function publishReadiness(
 			: { key: 'guidance', level: 'ok', message: 'All drafting guidance is ticked done.' },
 	)
 
+	// Alternatives the template offered ("Or" rows) of which the team keeps one: while a
+	// group stands, readers would be published both.
+	const choices = resolved.filter((s) => asWritten(s) && openChoicesIn(s.body) > 0)
+	items.push(
+		choices.length > 0
+			? {
+					key: 'choices',
+					level: 'warn',
+					message: `${choices.length} section${choices.length === 1 ? ' still offers' : 's still offer'} alternatives to choose between.`,
+					sections: choices.map((s) => s.row.address),
+				}
+			: {
+					key: 'choices',
+					level: 'ok',
+					message: 'Every alternative the template offered has been chosen.',
+				},
+	)
+
 	if (changes === 0)
 		items.push({
 			key: 'changes',
@@ -845,15 +864,13 @@ export async function publish(
 		),
 		// The published snapshot is drawn from the timeframe boxes being published.
 		timeframes: timeframeRows(
-			publishedResolved
-				.filter(live)
-				.map((s) => ({
-					stepNumber: s.row.stepNumber,
-					address: s.row.address,
-					printedNumber: s.row.printedNumber,
-					title: s.row.title,
-					body: s.body,
-				})),
+			publishedResolved.filter(live).map((s) => ({
+				stepNumber: s.row.stepNumber,
+				address: s.row.address,
+				printedNumber: s.row.printedNumber,
+				title: s.row.title,
+				body: s.body,
+			})),
 		),
 		map: null,
 	}

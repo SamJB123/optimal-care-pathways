@@ -276,6 +276,13 @@ sup[data-ocp="citation"]::before {
 	overflow: visible;
 }
 
+/* "Keep this" on an alternative is an edit: a read-only editor (a viewer's, or one whose
+   role was just taken down) offers none. ProseMirror keeps contenteditable in step with
+   the editable flag, so the CSS follows a live role change. */
+.ocp-section-editor .aic-prosekit-editor:not([contenteditable="true"]) .ocp-variant-keep {
+	display: none;
+}
+
 /* While the live body is still syncing, the resting body stands in the editor's place
    (SectionEditor.tsx) and the editor itself takes no room. */
 .ocp-section-editor .aic-prosekit-editor[data-binding] {

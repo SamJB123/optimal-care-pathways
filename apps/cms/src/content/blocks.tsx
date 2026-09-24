@@ -61,6 +61,8 @@ export const textAlignOf = (value: unknown): TextAlign | null =>
 /** The editor's hooks into a block; absent in read-only rendering. */
 export interface BlockEdit<Attrs> {
 	setAttrs(patch: Partial<Attrs>): void
+	/** For one alternative of a `variants` group: keep it, in place of the whole group. */
+	keep?(): void
 }
 
 export interface BlockProps<Attrs> {
@@ -80,20 +82,28 @@ const BOX_ICONS: Record<string, string> = {
 }
 
 export function BoxBlock(props: BlockProps<BoxAttrs>) {
+	const mode = useContext(GuidanceModeContext)
+	// A developer box (the template's green pen box) is, in a pathway, the box the team is
+	// writing: painted as it will publish — a plain banded box, no green, no pen. In the
+	// template itself it is the template's own green box, as printed.
+	const paint = () =>
+		mode === 'margin' && props.attrs.kind === 'developer'
+			? { family: boxFamily({ kind: 'plain', family: props.attrs.family }), glyph: '' }
+			: { family: boxFamily(props.attrs), glyph: BOX_ICONS[props.attrs.icon] ?? '' }
 	return (
 		<Show
 			when={props.attrs.kind === 'callout'}
 			fallback={
 				<Callout
 					as="section"
-					colorBase={boxFamily(props.attrs)}
+					colorBase={paint().family}
 					variant="outline"
 					class="ocp-box"
 					data-ocp="box"
 					data-kind={props.attrs.kind}
 					data-icon={props.attrs.icon}
-					data-glyph={BOX_ICONS[props.attrs.icon] ?? ''}
-					style={{ '--ocp-glyph': JSON.stringify(BOX_ICONS[props.attrs.icon] ?? '') }}
+					data-glyph={paint().glyph}
+					style={{ '--ocp-glyph': JSON.stringify(paint().glyph) }}
 				>
 					{props.children}
 				</Callout>
@@ -226,12 +236,38 @@ export function CarePointBlock(props: BlockProps<{ textAlign: TextAlign | null }
 	)
 }
 
+/** The template's "Or" rows: alternatives of which an author keeps one. In a pathway's
+ *  editor each alternative offers "Keep this", which puts its blocks in the group's place
+ *  (one undoable edit); the box's band carries "Choose one" while the group stands
+ *  (blocks.css). In the template itself the rows are the template's own, kept as printed. */
 export function VariantsBlock(props: BlockProps<Record<string, never>>) {
 	return <div data-ocp="variants">{props.children}</div>
 }
 
 export function VariantBlock(props: BlockProps<Record<string, never>>) {
-	return <div data-ocp="variant">{props.children}</div>
+	const mode = useContext(GuidanceModeContext)
+	return (
+		<div data-ocp="variant">
+			{props.children}
+			<Show when={mode === 'margin' ? props.edit?.keep : undefined}>
+				{(keep) => (
+					<div class="ocp-variant-keep" contenteditable="false">
+						<Button
+							type="button"
+							variant="outline"
+							title="Keep this alternative; the others are removed from the draft"
+							onClick={(event) => {
+								event.preventDefault()
+								keep()()
+							}}
+						>
+							Keep this
+						</Button>
+					</div>
+				)}
+			</Show>
+		</div>
+	)
 }
 
 export function ColumnsBlock(props: BlockProps<Record<string, never>>) {
