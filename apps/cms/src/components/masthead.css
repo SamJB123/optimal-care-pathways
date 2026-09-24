@@ -50,28 +50,34 @@
 		white-space: nowrap;
 		overflow: hidden;
 	}
+	/* When the line is short of room, the LAST crumb (the document's name, the long one)
+	   gives way first and ends in an ellipsis; the crumbs before it keep their words. A
+	   crumb never draws past its own box, so nothing overlaps at any width. */
 	.ocp-mast-crumbs li {
 		display: inline-flex;
 		align-items: baseline;
 		gap: 0.5rem;
+		flex: 0 0 auto;
 		min-inline-size: 0;
+		overflow: hidden;
 		color: var(--color-base-content-muted);
 	}
 	.ocp-mast-crumbs li + li::before {
 		content: "/";
+		flex: none;
 		color: var(--hair-strong);
 	}
 	.ocp-mast-crumbs li[data-family] {
 		color: var(--family-ink);
 		font-weight: 600;
 	}
-	.ocp-mast-crumbs li[data-last] {
+	.ocp-mast-crumbs li > * {
+		min-inline-size: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
-	.ocp-mast-crumbs li[data-last] > * {
-		overflow: hidden;
-		text-overflow: ellipsis;
+	.ocp-mast-crumbs li[data-last] {
+		flex: 0 1 auto;
 	}
 	.ocp-mast-crumbs a {
 		color: inherit;
