@@ -1648,32 +1648,101 @@ function stripLeadingDingbat(block: Block | undefined): void {
 
 const paragraphOf = (lines: Line[], ctx: PageContext, strip?: RegExp): Paragraph => ({
 	kind: 'paragraph',
-	runs: extendLinks(runsOfLines(lines, ctx.boldWeights, strip)),
+	runs: fitLinksToPrintedAddresses(
+		runsOfLines(lines, ctx.boldWeights, strip),
+		ctx.page.links.flatMap((l) => (l.url ? [l.url] : [])),
+	),
 	page: ctx.pageNumber,
 	background: null,
 	align: 'left',
 })
 
+/** A web address as the print shows it to the reader. */
+const PRINTED_ADDRESS = /(?:https?:\/\/|www\.)[^\s<>]+/gi
+
+/** The address without what a print or a target may vary: scheme, "www.", a final "/". */
+const addressKey = (address: string): string =>
+	address
+		.toLowerCase()
+		.replace(/^https?:\/\//, '')
+		.replace(/^www\./, '')
+		.replace(/\/+$/, '')
+
+/** Whether a link target is the address the print shows (one may print a shorter form). */
+const sameAddress = (target: string, printed: string): boolean => {
+	const t = addressKey(target)
+	const p = addressKey(printed)
+	return t === p || t.startsWith(p) || p.startsWith(t)
+}
+
 /**
- * A link annotation covers one printed line; a <URL> that wraps carries its link over
- * the runs that follow until the closing ">" — the whole address is the link.
+ * Links fitted to the addresses the print shows. A link annotation in these PDFs covers
+ * its whole printed line, so read glyph by glyph "Visit the website <www.x.org> to see…"
+ * is one link; and an address that wraps is covered on one of its lines only. Where a
+ * linked span holds a printed address, the address alone is the link — each address to
+ * the annotation on the page whose target names it, so two addresses on one line keep
+ * their own targets. Where a linked span is part of a printed address, the whole address
+ * is the link. A named link with no address printed ("the Look Good, Feel Better
+ * program") is left as the click area drew it: there is nothing to fit it to.
  */
-function extendLinks(runs: TextRun[]): TextRun[] {
-	let carried: TextRun['link'] = null
-	return runs.map((r) => {
-		if (r.link) {
-			const opens = r.text.lastIndexOf('<')
-			carried = opens >= 0 && r.text.indexOf('>', opens) < 0 ? r.link : null
-			return r
-		}
-		if (!carried) return r
-		const closes = r.text.indexOf('>')
-		if (closes < 0) return { ...r, link: carried }
-		const link = carried
-		carried = null
-		// The run ends the address: only the part up to ">" is linked.
-		return { ...r, link, text: r.text }
+export function fitLinksToPrintedAddresses(runs: TextRun[], targets: string[]): TextRun[] {
+	const text = runs.map((r) => r.text).join('')
+	const addresses = [...text.matchAll(PRINTED_ADDRESS)].map((m) => {
+		const printed = m[0].replace(/[.,;:)]+$/, '')
+		return { start: m.index, end: m.index + printed.length, printed }
 	})
+	if (addresses.length === 0) return runs
+	// The link over each character, as read; then as fitted.
+	const read: TextRun['link'][] = []
+	for (const r of runs) for (let i = 0; i < r.text.length; i++) read.push(r.link)
+	const fitted = [...read]
+	const spans: { start: number; end: number; url: string }[] = []
+	for (let i = 0; i < read.length; i++) {
+		const link = read[i]
+		if (!link || !('url' in link)) continue
+		const last = spans.at(-1)
+		if (last && last.end === i && last.url === link.url) last.end = i + 1
+		else spans.push({ start: i, end: i + 1, url: link.url })
+	}
+	for (const span of spans) {
+		const inside = addresses.filter((a) => a.start >= span.start && a.end <= span.end)
+		const overlapping = addresses.filter((a) => a.start < span.end && a.end > span.start)
+		if (inside.length === 0 && overlapping.length === 0) continue
+		for (let i = span.start; i < span.end; i++) fitted[i] = null
+		if (inside.length > 0) {
+			for (const a of inside) {
+				// The span's own target when it names this address; otherwise the annotation
+				// on the page that does (a second address on the same line).
+				const url = sameAddress(span.url, a.printed)
+					? span.url
+					: (targets.find((t) => sameAddress(t, a.printed)) ?? span.url)
+				for (let i = a.start; i < a.end; i++) fitted[i] = { url }
+			}
+			continue
+		}
+		// Part of a wrapped address: the whole address is this link.
+		for (const a of overlapping) for (let i = a.start; i < a.end; i++) fitted[i] = { url: span.url }
+	}
+	const same = (a: TextRun['link'], b: TextRun['link']) => JSON.stringify(a) === JSON.stringify(b)
+	const out: TextRun[] = []
+	let pos = 0
+	for (const r of runs) {
+		if (r.text.length === 0) {
+			out.push(r)
+			continue
+		}
+		let from = 0
+		for (let i = 1; i <= r.text.length; i++) {
+			if (i < r.text.length && same(fitted[pos + i], fitted[pos + from])) continue
+			const piece: TextRun = { ...r, text: r.text.slice(from, i), link: fitted[pos + from] ?? null }
+			const previous = out.at(-1)
+			if (previous && sameStyle(previous, piece)) previous.text += piece.text
+			else out.push(piece)
+			from = i
+		}
+		pos += r.text.length
+	}
+	return out
 }
 
 // ---------------------------------------------------------------------------
