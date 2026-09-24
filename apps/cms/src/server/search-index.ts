@@ -69,3 +69,49 @@ export async function reindex(d: Db, sections: readonly IndexedSection[]): Promi
 export async function unindex(d: Db, sectionIds: readonly string[]): Promise<void> {
 	for (const id of sectionIds) await d.run(sql`DELETE FROM section_search WHERE section_id = ${id}`)
 }
+
+// ---------------------------------------------------------------------------
+// The published index (`published_search`, see its migration): what the public API's
+// search ranks. One row per section of a published version with a body of its own;
+// a shared section's words are found through the core section that holds them.
+// ---------------------------------------------------------------------------
+
+export interface PublishedIndexedSection {
+	sectionId: string
+	title: string | null
+	printedNumber: string | null
+	bodyJson: JsonNode | null | undefined
+	hidden: boolean
+}
+
+/** Make the published index hold exactly this version of the document: the document's
+ *  rows from any earlier version go, the version's visible sections with bodies come in. */
+export async function indexPublishedVersion(
+	d: Db,
+	documentId: string,
+	versionId: string,
+	sections: readonly PublishedIndexedSection[],
+): Promise<void> {
+	const statements = [
+		d.run(sql`DELETE FROM published_search WHERE document_id = ${documentId}`),
+		...sections
+			.filter((s) => !s.hidden && s.bodyJson)
+			.map((s) =>
+				d.run(
+					sql`INSERT INTO published_search (version_id, section_id, document_id, title, body) VALUES (${versionId}, ${s.sectionId}, ${documentId}, ${[s.printedNumber, s.title].filter(Boolean).join(' ')}, ${searchText(s.bodyJson)})`,
+				),
+			),
+	]
+	for (let i = 0; i < statements.length; i += 50) {
+		const [first, ...rest] = statements.slice(i, i + 50)
+		if (first) await d.batch([first, ...rest])
+	}
+}
+
+/** The versions the published index holds rows for. */
+export async function indexedPublishedVersions(d: Db): Promise<Set<string>> {
+	const rows = await d.all<{ version_id: string }>(
+		sql`SELECT DISTINCT version_id FROM published_search`,
+	)
+	return new Set(rows.map((r) => r.version_id))
+}

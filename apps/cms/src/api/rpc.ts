@@ -14,6 +14,7 @@ import {
 	getComposed,
 	getDocument,
 	getDocumentFull,
+	getQuickReferenceGuide,
 	getSection,
 	listDocuments,
 	listVersions,
@@ -45,6 +46,10 @@ export class PublishedApi extends RpcTarget {
 
 	get_document_full(input: In<typeof getDocumentFull>) {
 		return callOperation(getDocumentFull, input, this.#ctx)
+	}
+
+	get_quick_reference_guide(input: In<typeof getQuickReferenceGuide>) {
+		return callOperation(getQuickReferenceGuide, input, this.#ctx)
 	}
 
 	list_versions(input: In<typeof listVersions>) {

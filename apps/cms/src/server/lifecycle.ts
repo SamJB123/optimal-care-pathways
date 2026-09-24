@@ -44,6 +44,7 @@ import { OCP_NAMESPACE, ROLE_LADDER, type Role } from '#/lib/roles.ts'
 import { cacheTagFor, PUBLISHED_CACHE_TAG } from '#/api/published.ts'
 import { documentRoomName } from '#/rooms/document-room.ts'
 import { documentRole, type MembershipAuth } from './access.ts'
+import { indexPublishedVersion } from './search-index.ts'
 
 type DocumentRow = typeof schema.documents.$inferSelect
 type SectionRow = typeof schema.sections.$inferSelect
@@ -919,6 +920,8 @@ export async function publish(
 		versionNo: draft.versionNo,
 		label: input.label,
 	})
+	// The public search index holds this edition now, the document's earlier one gone.
+	await indexPublishedVersion(lc.d, document.id, draft.id, rows)
 	// A core document's published bodies are what the pathways' shared sections render:
 	// their draft hashes move with it.
 	if (document.kind === 'core')

@@ -23,6 +23,7 @@ import { schema } from '#/db/index.ts'
 import { OCP_NAMESPACE, organisationNameOf } from '#/lib/roles.ts'
 import { documentRoleOf, isCentralMember } from './access.ts'
 import { envOf, requireUser } from './env.ts'
+import { indexedPublishedVersions, indexPublishedVersion } from './search-index.ts'
 import { outlineOrder } from '#/lib/outline.ts'
 
 export interface LegacyOrigin {
@@ -294,12 +295,41 @@ export const finaliseLegacyImports = createServerFn({ method: 'POST' }).handler(
 				rendered += group.length
 			}
 		}
+		// Published editions the public search index does not hold yet (a seed writes no
+		// index rows): indexed now, whether or not they needed rendering.
+		const indexed = await indexedPublishedVersions(d)
+		const published = await d
+			.select({ documentId: schema.versions.documentId, versionId: schema.versions.id })
+			.from(schema.versions)
+			.where(eq(schema.versions.status, 'published'))
+		let indexedNow = 0
+		for (const v of published) {
+			if (indexed.has(v.versionId)) continue
+			const rows = await d
+				.select({
+					sectionId: schema.versionSections.sectionId,
+					title: schema.versionSections.title,
+					printedNumber: schema.versionSections.printedNumber,
+					bodyJson: schema.versionSections.bodyJson,
+					hidden: schema.versionSections.hidden,
+				})
+				.from(schema.versionSections)
+				.where(eq(schema.versionSections.versionId, v.versionId))
+			await indexPublishedVersion(d, v.documentId, v.versionId, rows)
+			indexedNow++
+		}
 		// Documents whose organisation now exists but whose published version was rendered
 		// earlier are reported too, so the caller sees the whole state.
 		const stillPending = await d
 			.select({ slug: schema.documents.slug })
 			.from(schema.documents)
 			.where(like(schema.documents.orgId, PENDING))
-		return { finalised, rendered, errors, stillPending: stillPending.map((r) => r.slug) }
+		return {
+			finalised,
+			rendered,
+			indexed: indexedNow,
+			errors,
+			stillPending: stillPending.map((r) => r.slug),
+		}
 	},
 )

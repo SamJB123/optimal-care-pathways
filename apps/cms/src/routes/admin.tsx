@@ -81,7 +81,7 @@ function AdminPage() {
 	const finalise = () =>
 		run(async () => {
 			const result = await finaliseLegacyImports()
-			const made = `${result.finalised.length} organisation${result.finalised.length === 1 ? '' : 's'} created, ${result.rendered} published sections rendered.`
+			const made = `${result.finalised.length} organisation${result.finalised.length === 1 ? '' : 's'} created, ${result.rendered} published sections rendered, ${result.indexed} edition${result.indexed === 1 ? '' : 's'} added to the public search index.`
 			if (result.errors.length > 0)
 				throw new Error(`${made} Not finalised: ${result.errors.join('; ')}.`)
 			return made

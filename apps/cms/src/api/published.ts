@@ -18,8 +18,15 @@ import { NotFound } from '@aicolab/app-kit/api'
 export const PUBLIC_CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalidate=3600'
 export const PUBLISHED_CACHE_TAG = 'published'
 export const cacheTagFor = (slug: string): string => `document-${slug}`
-import { and, desc, eq, inArray, like, or, sql } from 'drizzle-orm'
-import { citationNumbers, citedBody, inlineText, walkNodes } from '#/content/derived.ts'
+
+import { and, desc, eq, inArray, or, sql } from 'drizzle-orm'
+import {
+	citationNumbers,
+	citedBody,
+	inlineText,
+	stepNumberOfAddress,
+	walkNodes,
+} from '#/content/derived.ts'
 import type { JsonNode } from '#/content/schema.ts'
 import type { Db } from '#/db/index.ts'
 import { inGroups, schema } from '#/db/index.ts'
@@ -72,6 +79,108 @@ export async function listPublished(d: Db): Promise<PublishedVersion[]> {
 	}))
 }
 
+// ---------------------------------------------------------------------------
+// An unknown slug: the nearest published documents, as suggestions only
+// ---------------------------------------------------------------------------
+
+/** Words people use for a cancer or a group that the documents name differently. Each
+ *  entry adds the documents' own words to a query that uses the common one. */
+const COMMON_NAMES: [RegExp, string[]][] = [
+	[/\bbowel\b/, ['colorectal']],
+	[/\bcolon\b|\brectal\b|\brectum\b/, ['colorectal']],
+	[/\bskin\b/, ['keratinocyte', 'melanoma']],
+	[/\bbcc\b|\bscc\b|\bbasal\b|\bsquamous\b/, ['keratinocyte']],
+	[/\bwomb\b|\buterine\b|\buterus\b/, ['endometrial']],
+	[/\bbrain\b/, ['glioma']],
+	[/\bliver\b/, ['hepatocellular']],
+	[/\bbone\b|\bsoft tissue\b/, ['sarcoma']],
+	[/\bblood\b/, ['leukaemia', 'lymphoma', 'myeloma']],
+	[/\bleukemia\b/, ['leukaemia']],
+	[/\bplasma\b/, ['myeloma']],
+	[/\bmarrow\b/, ['myelodysplastic', 'myeloproliferative']],
+	[/\bthroat\b|\bmouth\b|\boral\b|\blarynx\b/, ['head and neck']],
+	[/\bcup\b|\bunknown\b/, ['unknown primary']],
+	[/\bteen\w*\b|\byoung\b|\baya\b|\badolescen\w*\b/, ['adolescents and young adults']],
+	[/\belderly\b|\baged\b|\bgeriatric\b|\bsenior\w*\b/, ['older people']],
+	[/\bindigenous\b|\bfirst nations\b|\bkoori\b/, ['aboriginal and torres strait islander']],
+	[/\bnet\b|\bnets\b|\bcarcinoid\b/, ['neuroendocrine']],
+	[/\bhodgkin\w*\b|\bdlbcl\b/, ['lymphoma']],
+	[/\bcml\b|\bcll\b|\baml\b|\ball\b/, ['leukaemia']],
+]
+
+const words = (s: string): string[] =>
+	s
+		.toLowerCase()
+		.split(/[^a-z0-9]+/)
+		.filter((w) => w.length > 1)
+
+/** Levenshtein distance, for a word typed nearly right. */
+function distance(a: string, b: string): number {
+	const rows: number[] = Array.from({ length: b.length + 1 }, (_, i) => i)
+	for (let i = 1; i <= a.length; i++) {
+		let previous = rows[0] ?? 0
+		rows[0] = i
+		for (let j = 1; j <= b.length; j++) {
+			const current = rows[j] ?? 0
+			rows[j] = Math.min(
+				current + 1,
+				(rows[j - 1] ?? 0) + 1,
+				previous + (a[i - 1] === b[j - 1] ? 0 : 1),
+			)
+			previous = current
+		}
+	}
+	return rows[b.length] ?? 0
+}
+
+/** The published documents nearest to a slug or name someone asked for that names
+ *  nothing: by the words they share with the document's slugs, title and subject, common
+ *  names translated, spelling slips forgiven. Suggestions only, never a substitute. */
+export async function nearestDocuments(
+	d: Db,
+	asked: string,
+	limit = 3,
+): Promise<PublishedVersion[]> {
+	const lower = asked.toLowerCase()
+	const query = new Set(words(asked))
+	for (const [common, own] of COMMON_NAMES)
+		if (common.test(lower)) for (const o of own) for (const w of words(o)) query.add(w)
+	if (query.size === 0) return []
+	const scored = (await listPublished(d)).map((v) => {
+		const own = new Set([
+			...words(v.slug),
+			...words(v.title),
+			...words(v.subject),
+			...(v.kind === 'core' ? ['core', 'template'] : []),
+		])
+		let score = 0
+		for (const q of query) {
+			if (own.has(q)) score += 1
+			else if ([...own].some((o) => o.length > 3 && q.length > 3 && distance(q, o) <= 1))
+				score += 0.75
+			else if ([...own].some((o) => o.length > 4 && (o.startsWith(q) || q.startsWith(o))))
+				score += 0.5
+		}
+		return { v, score }
+	})
+	return scored
+		.filter((s) => s.score > 0)
+		.sort((a, b) => b.score - a.score || a.v.title.localeCompare(b.v.title))
+		.slice(0, limit)
+		.map((s) => s.v)
+}
+
+/** The "no such document" refusal, naming the nearest published documents when any come
+ *  close. The same text on every door: REST's 404, MCP's tool error, capnweb's rejection. */
+export async function noSuchDocument(d: Db, slug: string): Promise<NotFound> {
+	const nearest = await nearestDocuments(d, slug)
+	const hint =
+		nearest.length > 0
+			? ` Did you mean ${nearest.map((v) => `"${v.slug}" (${v.title})`).join(', ')}? list_documents gives every slug.`
+			: ' list_documents gives every slug.'
+	return new NotFound(`No document is published at "${slug}".${hint}`)
+}
+
 /** The document a slug names (partner slug first), with its published version — or, when
  *  a version number is given, that published-or-archived version. */
 export async function versionOf(
@@ -87,7 +196,7 @@ export async function versionOf(
 			.orderBy(sql`case when ${schema.documents.partnerSlug} = ${slug} then 0 else 1 end`)
 			.limit(1)
 	)[0]
-	if (!document) throw new NotFound(`No document is published at "${slug}".`)
+	if (!document) throw await noSuchDocument(d, slug)
 	const version = (
 		await d
 			.select()
@@ -228,59 +337,114 @@ export async function referencesFor(
 		}))
 }
 
+// ---------------------------------------------------------------------------
+// Parts of a document: front matter, the seven steps, back matter
+// ---------------------------------------------------------------------------
+
+export const PARTS = ['front', '1', '2', '3', '4', '5', '6', '7', 'back'] as const
+export type Part = (typeof PARTS)[number]
+
+/** Which part each section of a version belongs to, by reading order: everything before
+ *  the first step is front matter, a step's sections are the step's (their addresses open
+ *  with its number), everything after the last step is back matter. */
+export function partsOf(sections: readonly FrozenSection[]): Map<string, Part> {
+	const out = new Map<string, Part>()
+	let seenStep = false
+	for (const s of sections) {
+		const n = stepNumberOfAddress(s.address)
+		const step = n === null ? undefined : PARTS.find((p) => p === String(n))
+		if (step) seenStep = true
+		out.set(s.sectionId, step ?? (seenStep ? 'back' : 'front'))
+	}
+	return out
+}
+
+/** The sections of one part, in reading order; every section when no part is asked for. */
+export function sectionsInPart(
+	sections: readonly FrozenSection[],
+	part: Part | undefined,
+): FrozenSection[] {
+	if (part === undefined) return [...sections]
+	const parts = partsOf(sections)
+	return sections.filter((s) => parts.get(s.sectionId) === part)
+}
+
+// ---------------------------------------------------------------------------
+// Search
+// ---------------------------------------------------------------------------
+
 export interface SearchHit {
 	slug: string
 	address: string
 	title: string
 	documentTitle: string
+	/** The words around the match, the matched words marked **like this**. */
 	snippet: string
 	url: string
 }
 
-/** Published sections whose text contains the query (case-insensitive), current versions only. */
+/** The reader's words as an FTS5 query: each word quoted (the syntax is ours, not
+ *  theirs), joined so that every word must appear, or any word when `any`. */
+function matchQuery(query: string, any: boolean): string | null {
+	const terms = query
+		.split(/\s+/)
+		.map((w) => w.replace(/["*^():]/g, '').trim())
+		.filter((w) => w.length > 0)
+		.slice(0, 12)
+	return terms.length === 0 ? null : terms.map((w) => `"${w}"`).join(any ? ' OR ' : ' ')
+}
+
+interface SearchRow {
+	document_id: string
+	slug: string
+	partner_slug: string | null
+	document_title: string
+	address: string
+	title: string | null
+	printed_number: string | null
+	snip: string
+}
+
+/**
+ * Published sections that match the query, ranked (bm25, the title weighted over the
+ * body; the stemmer finds "screening" for "screen"), current editions only. Every word
+ * must appear; when nothing has them all, any of them. So that one long pathway does not
+ * fill the list, at most three hits per document come before any document's fourth.
+ */
 export async function searchPublished(
 	ctx: ApiContext,
 	query: string,
 	limit: number,
 ): Promise<SearchHit[]> {
-	const needle = query.trim().toLowerCase()
-	if (needle.length === 0) return []
-	const rows = await ctx.d
-		.select({
-			slug: schema.publishedVersions.slug,
-			partnerSlug: schema.publishedVersions.partnerSlug,
-			documentTitle: schema.publishedVersions.title,
-			address: schema.publishedSections.address,
-			title: schema.publishedSections.title,
-			printedNumber: schema.publishedSections.printedNumber,
-			markdown: schema.publishedSections.markdown,
-		})
-		.from(schema.publishedSections)
-		.innerJoin(
-			schema.publishedVersions,
-			eq(schema.publishedVersions.versionId, schema.publishedSections.versionId),
+	const run = async (match: string): Promise<SearchRow[]> =>
+		ctx.d.all<SearchRow>(
+			sql`SELECT published_search.document_id, published_versions.slug, published_versions.partner_slug, published_versions.title AS document_title, version_sections.address, version_sections.title, version_sections.printed_number, snippet(published_search, 4, '**', '**', '…', 24) AS snip FROM published_search JOIN published_versions ON published_versions.version_id = published_search.version_id JOIN version_sections ON version_sections.version_id = published_search.version_id AND version_sections.section_id = published_search.section_id WHERE published_search MATCH ${match} ORDER BY bm25(published_search, 0, 0, 0, 3.0, 1.0) LIMIT ${limit * 4}`,
 		)
-		.where(
-			or(
-				like(sql`lower(${schema.publishedSections.markdown})`, `%${needle}%`),
-				like(sql`lower(${schema.publishedSections.title})`, `%${needle}%`),
-			),
-		)
-		.limit(limit)
-	return rows.map((r) => {
-		const slug = r.partnerSlug ?? r.slug
-		const text = r.markdown ?? ''
-		const at = text.toLowerCase().indexOf(needle)
-		const start = Math.max(0, at - 80)
-		const snippet = (at < 0 ? text.slice(0, 200) : text.slice(start, at + needle.length + 120))
-			.replace(/\s+/g, ' ')
-			.trim()
+	const all = matchQuery(query, false)
+	if (!all) return []
+	let rows = await run(all)
+	if (rows.length === 0) {
+		const any = matchQuery(query, true)
+		if (any && any !== all) rows = await run(any)
+	}
+	// Three per document first, in rank order; then the rest, in rank order.
+	const perDocument = new Map<string, number>()
+	const first: SearchRow[] = []
+	const rest: SearchRow[] = []
+	for (const r of rows) {
+		const n = perDocument.get(r.document_id) ?? 0
+		perDocument.set(r.document_id, n + 1)
+		if (n < 3) first.push(r)
+		else rest.push(r)
+	}
+	return [...first, ...rest].slice(0, limit).map((r) => {
+		const slug = r.partner_slug ?? r.slug
 		return {
 			slug,
 			address: r.address,
-			title: [r.printedNumber, r.title].filter(Boolean).join(' ') || r.address,
-			documentTitle: r.documentTitle,
-			snippet,
+			title: [r.printed_number, r.title].filter(Boolean).join(' ') || r.address,
+			documentTitle: r.document_title,
+			snippet: r.snip.replace(/\s+/g, ' ').trim(),
 			url: sectionUrl(ctx.origin, slug, r.address),
 		}
 	})

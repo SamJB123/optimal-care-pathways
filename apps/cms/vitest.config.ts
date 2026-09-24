@@ -39,6 +39,14 @@ export default defineConfig({
 						miniflare: { bindings: { TEST_MIGRATIONS: migrations } },
 					}),
 				],
+				// The published-HTML renderer is Solid JSX, which this pool does not compile
+				// (the node project proves it); here it is the stub in test/, plain text in a
+				// div, wherever the worker's own modules import it.
+				resolve: {
+					alias: {
+						'#/content/render-html.tsx': path.join(import.meta.dirname, 'test/render-html-stub.ts'),
+					},
+				},
 				test: {
 					name: 'workerd',
 					include: ['src/**/*.test.ts'],

@@ -101,7 +101,7 @@ export function createApiApp(): Hono<Bindings> {
 				title: API_TITLE,
 				version: '1',
 				description:
-					'Read the published versions of the Optimal Care Pathways and their core content: documents, outlines, sections as JSON, HTML and Markdown, numbered references, versions, a composed cancer-plus-population view and search. The same operations are available as MCP tools at /mcp.',
+					'Read the published versions of the Optimal Care Pathways and their core content: documents, outlines, sections in one form per call (Markdown by default; HTML or content-schema JSON on request), whole documents or one part at a time, numbered references, versions, a composed cancer-plus-population view and ranked full-text search. The same operations are available as MCP tools at /mcp.',
 			},
 		},
 	})

@@ -21,7 +21,8 @@ export const publishedGuide = createServerFn({ method: 'GET' })
 	.handler(async ({ data }) => {
 		const { env } = await envOf()
 		const ctx = apiContext(env)
-		const guide = await getQuickReferenceGuide.handler(data, ctx)
+		// The page renders typed nodes: the json form, checked against the content schema.
+		const guide = await getQuickReferenceGuide.handler({ ...data, format: 'json' }, ctx)
 		const row = await ctx.d
 			.select({ accent: schema.documents.accent })
 			.from(schema.documents)
@@ -29,8 +30,11 @@ export const publishedGuide = createServerFn({ method: 'GET' })
 			.limit(1)
 		return {
 			...guide,
-			sections: guide.sections.map((section) => ({ ...section, body: contentNode(section.body) })),
-			items: guide.items.map((item) => ({ ...item, list: contentNode(item.list) })),
+			sections: guide.sections.map(({ content, ...section }) => ({
+				...section,
+				body: contentNode(content),
+			})),
+			items: guide.items.map(({ content, ...item }) => ({ ...item, list: contentNode(content) })),
 			accent: row[0]?.accent ?? null,
 		}
 	})
@@ -45,7 +49,7 @@ export const publishedDocumentFull = createServerFn({ method: 'GET' })
 	.handler(async ({ data }) => {
 		const { env } = await envOf()
 		const ctx = apiContext(env)
-		const full = await getDocumentFull.handler(data, ctx)
+		const full = await getDocumentFull.handler({ ...data, format: 'json' }, ctx)
 		const [versions, row] = await Promise.all([
 			listVersions.handler({ slug: full.document.slug }, ctx),
 			ctx.d
@@ -56,7 +60,10 @@ export const publishedDocumentFull = createServerFn({ method: 'GET' })
 		])
 		return {
 			...full,
-			sections: full.sections.map((section) => ({ ...section, body: contentNode(section.body) })),
+			sections: full.sections.map(({ content, ...section }) => ({
+				...section,
+				body: contentNode(content),
+			})),
 			accent: row[0]?.accent ?? null,
 			editions: versions.versions.filter((v) => v.status !== 'draft'),
 		}

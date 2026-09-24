@@ -8,6 +8,7 @@
 
 // biome-ignore lint/correctness/noUnresolvedImports: provided by the vitest workers pool
 import { env } from 'cloudflare:test'
+import { callOperation } from '@aicolab/app-kit/api'
 import { eq } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
@@ -251,22 +252,62 @@ describe('the operation table', () => {
 		])
 	})
 
-	it('gets a section with its body in three forms and only its own references', async () => {
-		const shared = await getSection.handler({ slug: PARTNER_SLUG, address: '1' }, ctx())
-		expect(plain(shared.section.body)).toBe('Multidisciplinary care improves outcomes.')
-		expect(shared.section.markdown).toContain('[^1]')
-		expect(shared.section.html).toContain('Multidisciplinary')
+	it('gets a section in one form per call, Markdown unless asked, with only its own references', async () => {
+		// The door's own validation fills the default: Markdown.
+		const shared = await callOperation(getSection, { slug: PARTNER_SLUG, address: '1' }, ctx())
+		expect(shared.format).toBe('markdown')
+		expect(shared.section.content).toContain('[^1]')
 		expect(shared.references.map((r) => r.number)).toEqual([1])
-		const own = await getSection.handler({ slug: PARTNER_SLUG, address: '2' }, ctx())
+		const html = await callOperation(
+			getSection,
+			{ slug: PARTNER_SLUG, address: '1', format: 'html' },
+			ctx(),
+		)
+		expect(html.section.content).toContain('Multidisciplinary')
+		expect(html.section.content).toContain('<')
+		const json = await callOperation(
+			getSection,
+			{ slug: PARTNER_SLUG, address: '1', format: 'json' },
+			ctx(),
+		)
+		expect(plain(json.section.content)).toBe('Multidisciplinary care improves outcomes.')
+		const own = await callOperation(getSection, { slug: PARTNER_SLUG, address: '2' }, ctx())
 		expect(own.references).toEqual([])
-		await expect(getSection.handler({ slug: PARTNER_SLUG, address: '9' }, ctx())).rejects.toThrow(
-			/no section/,
+		await expect(
+			callOperation(getSection, { slug: PARTNER_SLUG, address: '9' }, ctx()),
+		).rejects.toThrow(/no section/)
+	})
+
+	it('names the nearest published documents when a slug names nothing, on every door', async () => {
+		// "older people" is the population pathway's title; the slug carries the run suffix.
+		await expect(callOperation(getDocument, { slug: 'older-people' }, ctx())).rejects.toThrow(
+			new RegExp(`Did you mean .*"${POPULATION_SLUG}" \\(Older people\\)`),
+		)
+		// A common name for a cancer the documents call something else.
+		await expect(callOperation(getDocument, { slug: 'brest' }, ctx())).rejects.toThrow(
+			new RegExp(`Did you mean .*"${PARTNER_SLUG}" \\(Breast cancer\\)`),
+		)
+		await expect(callOperation(getDocument, { slug: 'zzzz-qqqq' }, ctx())).rejects.toThrow(
+			/No document is published at "zzzz-qqqq"\. list_documents/,
 		)
 	})
 
-	it('returns the whole document, lists versions and reads an archived version by number', async () => {
-		const full = await getDocumentFull.handler({ slug: PARTNER_SLUG }, ctx())
+	it('returns the whole document, or one part of it, lists versions and reads an archived version by number', async () => {
+		const full = await callOperation(getDocumentFull, { slug: PARTNER_SLUG }, ctx())
 		expect(full.sections.map((s) => s.address)).toEqual(['1', '2'])
+		expect(full.part).toBeNull()
+		expect(full.format).toBe('markdown')
+		expect(typeof full.sections[0]?.content).toBe('string')
+		// The test document's sections are Step 1 and Step 2: a part takes one of them, with
+		// only the references that part cites, numbered as the whole document numbers them.
+		const step2 = await callOperation(getDocumentFull, { slug: PARTNER_SLUG, part: '2' }, ctx())
+		expect(step2.sections.map((s) => s.address)).toEqual(['2'])
+		expect(step2.references).toEqual([])
+		const step1 = await callOperation(getDocumentFull, { slug: PARTNER_SLUG, part: '1' }, ctx())
+		expect(step1.sections.map((s) => s.address)).toEqual(['1'])
+		expect(step1.references.map((r) => r.number)).toEqual([1])
+		const front = await callOperation(getDocumentFull, { slug: PARTNER_SLUG, part: 'front' }, ctx())
+		expect(front.sections).toEqual([])
 		const versions = await listVersions.handler({ slug: PARTNER_SLUG }, ctx())
 		expect(versions.versions.map((v) => [v.version, v.status])).toEqual([
 			[2, 'draft'],
@@ -280,7 +321,8 @@ describe('the operation table', () => {
 	})
 
 	it('composes a cancer pathway with a population pathway, shared content once', async () => {
-		const composed = await getComposed.handler(
+		const composed = await callOperation(
+			getComposed,
 			{ cancer: PARTNER_SLUG, population: POPULATION_SLUG },
 			ctx(),
 		)
@@ -290,12 +332,31 @@ describe('the operation table', () => {
 			['2', 'population'],
 		])
 		expect(composed.references.map((r) => r.number)).toEqual([1])
+		expect(composed.format).toBe('markdown')
+		const step2 = await callOperation(
+			getComposed,
+			{ cancer: PARTNER_SLUG, population: POPULATION_SLUG, part: '2', format: 'json' },
+			ctx(),
+		)
+		expect(step2.sections.map((s) => [s.address, s.source])).toEqual([
+			['2', 'cancer'],
+			['2', 'population'],
+		])
+		expect(plain(step2.sections[1]?.content)).toContain('frailty')
+		expect(step2.references).toEqual([])
 	})
 
-	it('searches published text and fetches an item by id', async () => {
+	it('searches published text (stemmed, ranked, marked) and fetches an item by id', async () => {
 		const hits = await search.handler({ query: 'frailty', limit: 10 }, ctx())
 		expect(hits.results.map((h) => h.id)).toEqual([`${POPULATION_SLUG}#2`])
 		expect(hits.results[0]?.url).toBe(`${ORIGIN}/p/${POPULATION_SLUG}#2`)
+		expect(hits.results[0]?.snippet).toContain('**frailty**')
+		// A stem finds its inflections; a word from the title ranks its section first.
+		const stemmed = await search.handler({ query: 'referring older', limit: 10 }, ctx())
+		expect(stemmed.results.map((h) => h.id)).toEqual([`${POPULATION_SLUG}#2`])
+		// Nothing has every word: any word will do.
+		const any = await search.handler({ query: 'frailty nonexistentword', limit: 10 }, ctx())
+		expect(any.results.map((h) => h.id)).toEqual([`${POPULATION_SLUG}#2`])
 		const item = await fetchItem.handler({ id: `${POPULATION_SLUG}#2` }, ctx())
 		expect(item.text).toContain('frailty')
 		expect(item.metadata?.version).toBe('1')
@@ -317,9 +378,28 @@ describe('REST through chanfana', () => {
 		const section = await call(`/api/v1/documents/${PARTNER_SLUG}/sections/1`)
 		expect(section.status).toBe(200)
 		expect(
-			z.object({ section: z.object({ markdown: z.string() }) }).parse(await section.json()).section
-				.markdown,
-		).toContain('[^1]')
+			z
+				.object({ format: z.string(), section: z.object({ content: z.string() }) })
+				.parse(await section.json()),
+		).toMatchObject({ format: 'markdown' })
+		const asHtml = await call(`/api/v1/documents/${PARTNER_SLUG}/sections/1?format=html`)
+		expect(
+			z.object({ section: z.object({ content: z.string() }) }).parse(await asHtml.json()).section
+				.content,
+		).toContain('<')
+		const part = await call(`/api/v1/documents/${PARTNER_SLUG}/full?part=2`)
+		expect(
+			z
+				.object({ part: z.string(), sections: z.array(z.object({ address: z.string() })) })
+				.parse(await part.json()),
+		).toEqual({ part: '2', sections: [{ address: '2' }] })
+		const nowhereNear = await call('/api/v1/documents/older-people')
+		expect(nowhereNear.status).toBe(404)
+		expect(
+			z
+				.object({ errors: z.array(z.object({ message: z.string() })) })
+				.parse(await nowhereNear.json()).errors[0]?.message,
+		).toContain(`"${POPULATION_SLUG}" (Older people)`)
 		const missing = await call(`/api/v1/documents/${PARTNER_SLUG}/sections/9`)
 		expect(missing.status).toBe(404)
 		const nowhere = await call('/api/v1/documents/no-such-document')
@@ -446,6 +526,35 @@ describe('MCP', () => {
 			.parse(payload.result)
 		expect(result.structuredContent.section.address).toBe('1')
 		expect(result.content[0]?.text).toContain('"address":"1"')
+		// Markdown by default here too: one form, the same on every door.
+		expect(result.content[0]?.text).toContain('"format":"markdown"')
+		expect(result.content[0]?.text).not.toContain('"html":')
+	})
+
+	it('answers an unknown slug with the nearest documents, as a tool error', async () => {
+		const handler = mcpHandler(env)
+		const response = await handler.fetch(
+			new Request(`${ORIGIN}/mcp`, {
+				method: 'POST',
+				headers: {
+					'content-type': 'application/json',
+					accept: 'application/json, text/event-stream',
+					'mcp-protocol-version': '2025-06-18',
+				},
+				body: JSON.stringify({
+					jsonrpc: '2.0',
+					id: 3,
+					method: 'tools/call',
+					params: { name: 'get_document', arguments: { slug: 'older-people' } },
+				}),
+			}),
+		)
+		const payload = await responseJson(response)
+		const result = z
+			.object({ isError: z.boolean(), content: z.array(z.object({ text: z.string() })) })
+			.parse(payload.result)
+		expect(result.isError).toBe(true)
+		expect(result.content[0]?.text).toContain(`"${POPULATION_SLUG}" (Older people)`)
 	})
 })
 
