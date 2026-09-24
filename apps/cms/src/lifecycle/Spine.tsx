@@ -18,7 +18,7 @@ import {
 import { useLocation, useNavigate, useParams } from '@tanstack/solid-router'
 import { createMemo, createSignal, For, Show, useContext } from 'solid-js'
 import { documentName, numberLabel } from '#/lib/labels.ts'
-import { fidelityHref, partHref, previewHref, publishedHref, sectionAnchor } from '#/lib/links.ts'
+import { fidelityLink, partLink, previewLink, publishedLink, sectionAnchor } from '#/lib/links.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { moveSection } from '#/server/structure-fns.ts'
 import {
@@ -190,7 +190,7 @@ export function Spine(props: { onRequestReview: () => void }) {
 								current={current() === part.key}
 								muted={part.root.hidden}
 								class={{ 'ocp-spine-hidden-part': part.root.hidden }}
-								onSelect={() => void navigate({ href: partHref(workspace.documentId, part.key) })}
+								onSelect={() => void navigate(partLink(workspace.documentId, part.key))}
 							/>
 							{/* The part being read opens in place, beneath its own entry. */}
 							<Show when={current() === part.key}>
@@ -268,13 +268,13 @@ export function Spine(props: { onRequestReview: () => void }) {
 				<WorkspaceNavigationItem
 					label="Preview the draft"
 					mark="◫"
-					onSelect={() => void navigate({ href: previewHref(workspace.documentId) })}
+					onSelect={() => void navigate(previewLink(workspace.documentId))}
 				/>
 				<Show when={state().published}>
 					<WorkspaceNavigationItem
 						label="The published page"
 						mark="↗"
-						onSelect={() => window.location.assign(publishedHref(workspace.document.slug))}
+						onSelect={() => void navigate(publishedLink(workspace.document.slug))}
 					/>
 				</Show>
 				<Show when={workspace.document.kind === 'core' && state().central}>
@@ -292,7 +292,7 @@ export function Spine(props: { onRequestReview: () => void }) {
 					<WorkspaceNavigationItem
 						label="Against the template PDF"
 						mark="⧉"
-						onSelect={() => void navigate({ href: fidelityHref(workspace.documentId) })}
+						onSelect={() => void navigate(fidelityLink(workspace.documentId))}
 					/>
 				</Show>
 			</WorkspaceNavigationGroup>

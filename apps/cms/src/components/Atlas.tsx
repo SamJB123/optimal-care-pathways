@@ -17,16 +17,17 @@
  */
 
 import { Button, withScopedViewTransition } from '@aicolab/ui-solid'
+import { Link } from '@tanstack/solid-router'
 import { createEffect, createMemo, createSignal, For, onSettled, Show } from 'solid-js'
 import { familyStyle } from '#/lib/family.ts'
 import { ago, monthDate } from '#/lib/labels.ts'
 import {
-	guideHref,
-	partHref,
+	guideLink,
+	partLink,
 	pdfHref,
-	publishedHref,
-	sectionHref,
-	workspaceHref,
+	publishedLink,
+	sectionLink,
+	workspaceLink,
 } from '#/lib/links.ts'
 import { documentsClient } from '#/lib/ocp-client.ts'
 import { bandFrom, bandLabel, type SpineBand } from '#/lib/outline.ts'
@@ -422,13 +423,13 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 											}}
 										>
 											<span role="rowheader" class="ocp-atlas-name">
-												<a
-													href={workspaceHref(row.id)}
+												<Link
+													{...workspaceLink(row.id)}
 													title={row.title}
 													style={{ 'view-transition-name': `ocp-name-${row.slug}` }}
 												>
 													{row.name}
-												</a>
+												</Link>
 												<Show when={presentOf(row).length > 0}>
 													<span
 														class="ocp-atlas-here"
@@ -447,10 +448,10 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 															when={band.ticks.length > 0}
 															fallback={<span class="ocp-atlas-band-none" />}
 														>
-															<a
-																href={
-																	band.part ? partHref(row.id, band.part) : workspaceHref(row.id)
-																}
+															<Link
+																{...(band.part
+																	? partLink(row.id, band.part)
+																	: workspaceLink(row.id))}
 																data-row={row.id}
 																data-band={String(band.band)}
 																interestfor={CARD_ID}
@@ -462,7 +463,7 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 															>
 																<Ticks ticks={band.ticks} />
 																<TickRuns ticks={band.ticks} />
-															</a>
+															</Link>
 														</Show>
 													</span>
 												)}
@@ -488,9 +489,9 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 											</span>
 											<span role="cell" class="ocp-atlas-links">
 												<Show when={row.published}>
-													<a href={publishedHref(row.slug)}>Read</a>
+													<Link {...publishedLink(row.slug)}>Read</Link>
 													<Show when={row.kind === 'pathway'}>
-														<a href={guideHref(row.slug)}>Guide</a>
+														<Link {...guideLink(row.slug)}>Guide</Link>
 													</Show>
 													<a href={pdfHref(row.slug)}>PDF</a>
 												</Show>
@@ -533,7 +534,7 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 											{(s) => (
 												<li data-s={s.state}>
 													<Ticks ticks={[s.state]} />
-													<a href={sectionHref(at().row.id, s.part, s.address)}>{s.label}</a>
+													<Link {...sectionLink(at().row.id, s.part, s.address)}>{s.label}</Link>
 													<span class="ocp-muted ocp-figure">
 														{s.updatedAt ? ago(s.updatedAt, clock()) : ''}
 														{s.by ? ` · ${s.by}` : ''}

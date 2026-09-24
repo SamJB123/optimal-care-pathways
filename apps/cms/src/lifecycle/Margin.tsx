@@ -28,6 +28,7 @@ import {
 	ToolPanelSection,
 } from '@aicolab/ui-solid'
 import type { JSX } from '@solidjs/web'
+import { Link } from '@tanstack/solid-router'
 import {
 	createMemo,
 	createSignal,
@@ -42,8 +43,9 @@ import { RenderedBody } from '#/content/render.tsx'
 import type { JsonNode } from '#/content/schema.ts'
 import { forgetBody, restingBody } from '#/editors/SectionView.tsx'
 import { ago, shortDate } from '#/lib/labels.ts'
-import { sectionAnchor } from '#/lib/links.ts'
+import { legacyLink, sectionAnchor, workspaceLink } from '#/lib/links.ts'
 import { legacyOriginsOf } from '#/server/legacy-fns.ts'
+import type { SectionChange } from '#/server/lifecycle.ts'
 import {
 	addComment,
 	decideSection,
@@ -58,7 +60,6 @@ import {
 	setPointOfCare,
 	setSectionHidden,
 } from '#/server/structure-fns.ts'
-import type { SectionChange } from '#/server/lifecycle.ts'
 import { divergedFrom, instructionsFor } from '#/server/workspace-fns.ts'
 import { type MarginNote, marginNotesOf } from './guidance.ts'
 import { CommentThread, Composer, SuggestionCard } from './Thread.tsx'
@@ -480,7 +481,7 @@ function SectionMargin(props: { sectionId: string }) {
 											<For each={list()}>
 												{(p) => (
 													<li>
-														<a href={`/d/${p.documentId}`}>{p.name}</a>
+														<Link {...workspaceLink(p.documentId)}>{p.name}</Link>
 													</li>
 												)}
 											</For>
@@ -523,7 +524,7 @@ function SectionMargin(props: { sectionId: string }) {
 										<p class="ocp-muted">
 											From{' '}
 											<Show when={found().legacySlug} fallback={found().legacyTitle}>
-												{(slug) => <a href={`/legacy/${slug()}`}>{found().legacyTitle}</a>}
+												{(slug) => <Link {...legacyLink(slug())}>{found().legacyTitle}</Link>}
 											</Show>
 											, as printed.
 										</p>

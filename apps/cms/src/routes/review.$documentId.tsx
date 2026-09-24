@@ -29,13 +29,14 @@ import {
 } from '@aicolab/ui-solid'
 import { createFileRoute } from '@tanstack/solid-router'
 import { createEffect, createMemo, createSignal, For, onSettled, Show } from 'solid-js'
+import { Masthead } from '#/components/Masthead.tsx'
 import { CitationInline, DerivedContext } from '#/content/blocks.tsx'
 import { RenderedBody } from '#/content/render.tsx'
 import { PdfPages, pageRange } from '#/editors/PdfPages.tsx'
 import { familyStyle } from '#/lib/family.ts'
 import { numberLabel } from '#/lib/labels.ts'
+import { homeLink, workspaceLink } from '#/lib/links.ts'
 import { bandLabel, spineOf } from '#/lib/outline.ts'
-import { Masthead } from '#/components/Masthead.tsx'
 import { type ReviewSectionRow, reviewSnapshot } from '#/server/documents.ts'
 import './review.css'
 
@@ -203,8 +204,8 @@ function ReviewPage() {
 		<>
 			<Masthead
 				crumbs={[
-					{ label: 'Pathways', href: '/' },
-					{ label: data().document.title, href: `/d/${data().document.id}` },
+					{ label: 'Pathways', link: homeLink() },
+					{ label: data().document.title, link: workspaceLink(data().document.id) },
 					{ label: 'Against the template' },
 				]}
 				central

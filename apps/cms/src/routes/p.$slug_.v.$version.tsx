@@ -9,7 +9,7 @@ import { createFileRoute } from '@tanstack/solid-router'
 import { Show } from 'solid-js'
 import { publishedDocumentFull } from '#/api/server-fns.ts'
 import { Masthead } from '#/components/Masthead.tsx'
-import { publishedHref } from '#/lib/links.ts'
+import { libraryLink, publishedLink } from '#/lib/links.ts'
 import { PublishedEdition } from '#/published/PublishedEdition.tsx'
 
 export const Route = createFileRoute('/p/$slug_/v/$version')({
@@ -36,10 +36,10 @@ function EditionPage() {
 		<>
 			<Masthead
 				crumbs={[
-					{ label: 'Published library', href: '/library' },
+					{ label: 'Published library', link: libraryLink() },
 					{
 						label: data().document?.document.title ?? 'Not found',
-						href: publishedHref(params().slug),
+						link: publishedLink(params().slug),
 						accent: data().document?.accent ?? null,
 					},
 					{ label: `Edition ${params().version}` },

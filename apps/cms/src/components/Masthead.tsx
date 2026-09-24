@@ -10,17 +10,19 @@
 
 import { AccountMenu, accountMenuItemClass } from '@aicolab/better-auth/solid/account-menu'
 import { setThemeMode, storedThemeMode, type ThemeMode } from '@aicolab/ui-solid'
-import { useRouter } from '@tanstack/solid-router'
 import type { JSX } from '@solidjs/web'
+import { Link, useRouter } from '@tanstack/solid-router'
 import { children, createSignal, For, onSettled, Show } from 'solid-js'
 import { useAuthSession } from '#/lib/auth-client.ts'
 import { familyStyle } from '#/lib/family.ts'
+import { type AppLink, adminLink, homeLink } from '#/lib/links.ts'
 import { Jump, type JumpContribution } from './Jump.tsx'
 import './masthead.css'
 
 export interface Crumb {
 	label: string
-	href?: string
+	/** Where the crumb goes (a typed destination, lib/links.ts); none for the page itself. */
+	link?: AppLink
 	/** A document's family colour: the crumb reads in it. */
 	accent?: string | null
 }
@@ -28,7 +30,7 @@ export interface Crumb {
 export interface MastheadProps extends JumpContribution {
 	crumbs?: readonly Crumb[]
 	/** Links at the masthead's end: the published view, the draft preview. */
-	links?: readonly { label: string; href: string; title?: string }[]
+	links?: readonly { label: string; link: AppLink; title?: string }[]
 	/** Who else is here (the document's presence). */
 	presence?: JSX.Element
 	/** Central members get the administration door in their account menu. */
@@ -67,10 +69,10 @@ export function Masthead(props: MastheadProps) {
 	}
 	return (
 		<header class="ocp-mast">
-			<a class="ocp-mast-mark" href="/" aria-label="Optimal Care Pathways, home">
+			<Link class="ocp-mast-mark" {...homeLink()} aria-label="Optimal Care Pathways, home">
 				<SpineGlyph />
 				<span class="ocp-mast-word">Optimal Care Pathways</span>
-			</a>
+			</Link>
 			<Show when={(props.crumbs?.length ?? 0) > 0}>
 				<nav class="ocp-mast-crumbs" aria-label="Where you are">
 					<ol>
@@ -81,8 +83,8 @@ export function Masthead(props: MastheadProps) {
 									data-family={crumb.accent ? '' : undefined}
 									data-last={i() === (props.crumbs?.length ?? 0) - 1 ? '' : undefined}
 								>
-									<Show when={crumb.href} fallback={<span aria-current="page">{crumb.label}</span>}>
-										{(href) => <a href={href()}>{crumb.label}</a>}
+									<Show when={crumb.link} fallback={<span aria-current="page">{crumb.label}</span>}>
+										{(link) => <Link {...link()}>{crumb.label}</Link>}
 									</Show>
 								</li>
 							)}
@@ -93,9 +95,9 @@ export function Masthead(props: MastheadProps) {
 			<div class="ocp-mast-end">
 				<For each={props.links ?? []}>
 					{(link) => (
-						<a class="ocp-mast-link" href={link.href} title={link.title}>
+						<Link class="ocp-mast-link" {...link.link} title={link.title}>
 							{link.label}
-						</a>
+						</Link>
 					)}
 				</For>
 				<Show when={presence()}>
@@ -125,9 +127,9 @@ export function Masthead(props: MastheadProps) {
 						</For>
 					</div>
 					<Show when={props.central}>
-						<a class={accountMenuItemClass} role="menuitem" href="/admin">
+						<Link class={accountMenuItemClass} role="menuitem" {...adminLink()}>
 							Administration
-						</a>
+						</Link>
 					</Show>
 				</AccountMenu>
 			</div>

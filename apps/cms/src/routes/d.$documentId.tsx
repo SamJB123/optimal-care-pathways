@@ -20,14 +20,15 @@ import {
 	BottomNavigation,
 	BottomNavigationCentreContent,
 	openCommandPalette,
+	RaisedSheet,
 	ResponsiveInspector,
 	WorkspaceShell,
 	WorkspaceStage,
 } from '@aicolab/ui-solid'
 import { createFileRoute, Outlet, useNavigate, useParams } from '@tanstack/solid-router'
-import { JUMP_ID } from '#/components/Jump.tsx'
 import { createEffect, createMemo, createSignal, onSettled, Show } from 'solid-js'
 import type { JumpTarget } from '#/components/Jump.tsx'
+import { JUMP_ID } from '#/components/Jump.tsx'
 import { Masthead } from '#/components/Masthead.tsx'
 import { useAuthSession } from '#/lib/auth-client.ts'
 import { familyStyle } from '#/lib/family.ts'
@@ -35,14 +36,18 @@ import { documentName, numberLabel } from '#/lib/labels.ts'
 import {
 	draftDocxHref,
 	draftPdfHref,
+	homeLink,
 	partHref,
+	partLink,
 	previewHref,
-	publishedHref,
+	publishedLink,
 	sectionAnchor,
 	teamHref,
+	workspaceLink,
 } from '#/lib/links.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { type PathwayClient, pathwayClientFor } from '#/lib/ocp-client.ts'
+import { spineOf } from '#/lib/outline.ts'
 import { Margin } from '#/lifecycle/Margin.tsx'
 import { ProofSheet } from '#/lifecycle/ProofSheet.tsx'
 import { RequestReviewSheet } from '#/lifecycle/RequestReview.tsx'
@@ -59,13 +64,11 @@ import {
 	type ReviewScope,
 	type WorkspaceMode,
 } from '#/lifecycle/workspace.ts'
-import { spineOf } from '#/lib/outline.ts'
 import { sectionsSnapshot } from '#/server/documents.ts'
-import { type CommentWire, documentState, listComments } from '#/server/lifecycle-fns.ts'
 import type { DocumentState } from '#/server/lifecycle.ts'
+import { type CommentWire, documentState, listComments } from '#/server/lifecycle-fns.ts'
 import { searchSections } from '#/server/search.ts'
 import { namesIn } from '#/server/workspace-fns.ts'
-import { RaisedSheet } from '@aicolab/ui-solid'
 import './document.css'
 
 export {
@@ -265,8 +268,7 @@ function DocumentShell() {
 	}
 	const goTo = (entry: ChangeEntry) => {
 		setPinned(entry.section.id)
-		if (partOnStage() !== entry.part)
-			void navigate({ href: partHref(params().documentId, entry.part) })
+		if (partOnStage() !== entry.part) void navigate(partLink(params().documentId, entry.part))
 		arrive(sectionAnchor(entry.section.address))
 	}
 	const goToChange = (direction: 1 | -1): boolean => {
@@ -511,10 +513,10 @@ function DocumentShell() {
 			>
 				<Masthead
 					crumbs={[
-						{ label: 'Pathways', href: '/' },
+						{ label: 'Pathways', link: homeLink() },
 						{
 							label: documentName(data().document),
-							href: `/d/${params().documentId}`,
+							link: workspaceLink(params().documentId),
 							accent: data().document.accent,
 						},
 					]}
@@ -524,7 +526,7 @@ function DocumentShell() {
 							? [
 									{
 										label: `Published edition ${state().published?.versionNo}`,
-										href: publishedHref(data().document.slug),
+										link: publishedLink(data().document.slug),
 									},
 								]
 							: []

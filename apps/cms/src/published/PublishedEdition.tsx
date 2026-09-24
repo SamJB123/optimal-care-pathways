@@ -6,11 +6,12 @@
  * listed, the one being read marked. An earlier edition says so and links the current.
  */
 
+import { Link } from '@tanstack/solid-router'
 import { For, Show } from 'solid-js'
 import type { NumberedReference } from '#/api/published.ts'
 import type { JsonNode } from '#/content/schema.ts'
 import { imprintDate } from '#/lib/labels.ts'
-import { editionHref, guideHref, guidePdfHref, pdfHref, publishedHref } from '#/lib/links.ts'
+import { editionLink, guideLink, guidePdfHref, pdfHref, publishedLink } from '#/lib/links.ts'
 import { ReadingDocument } from './ReadingDocument.tsx'
 import { CopyLink } from './ReadingFrame.tsx'
 
@@ -84,7 +85,7 @@ export function PublishedEdition(props: { data: PublishedEditionData }) {
 			links={
 				<>
 					<Show when={doc().kind === 'pathway' && !earlier()}>
-						<a href={guideHref(doc().slug)}>Quick reference guide</a>
+						<Link {...guideLink(doc().slug)}>Quick reference guide</Link>
 					</Show>
 					<Show when={!earlier()}>
 						<a href={pdfHref(doc().slug)}>PDF</a>
@@ -101,7 +102,7 @@ export function PublishedEdition(props: { data: PublishedEditionData }) {
 						{(now) => (
 							<p class="ocp-imprint-note" role="note">
 								An earlier edition. The current one is{' '}
-								<a href={publishedHref(doc().slug)}>{editionName(now())}</a>
+								<Link {...publishedLink(doc().slug)}>{editionName(now())}</Link>
 								{now().publishedAt ? `, ${dated(now().publishedAt)}` : ''}.
 							</p>
 						)}
@@ -115,15 +116,13 @@ export function PublishedEdition(props: { data: PublishedEditionData }) {
 											when={e.version !== doc().version}
 											fallback={<span>{editionName(e)}</span>}
 										>
-											<a
-												href={
-													e.status === 'published'
-														? publishedHref(doc().slug)
-														: editionHref(doc().slug, e.version)
-												}
+											<Link
+												{...(e.status === 'published'
+													? publishedLink(doc().slug)
+													: editionLink(doc().slug, e.version))}
 											>
 												{editionName(e)}
-											</a>
+											</Link>
 										</Show>
 										{e.publishedAt ? ` · ${dated(e.publishedAt)}` : ''}
 										{e.status === 'published' ? ' · current' : ''}

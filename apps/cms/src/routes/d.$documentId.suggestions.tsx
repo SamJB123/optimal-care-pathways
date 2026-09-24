@@ -8,12 +8,12 @@
  */
 
 import { EmptyState } from '@aicolab/ui-solid'
-import { createFileRoute, useRouter } from '@tanstack/solid-router'
+import { createFileRoute, Link, useRouter } from '@tanstack/solid-router'
 import { createMemo, For, Show, useContext } from 'solid-js'
-import { partHref, sectionAnchor } from '#/lib/links.ts'
+import { sectionLink } from '#/lib/links.ts'
+import { outlineOrder } from '#/lib/outline.ts'
 import { SuggestionCard } from '#/lifecycle/Thread.tsx'
 import { DocumentContext, sectionLabel } from '#/lifecycle/workspace.ts'
-import { outlineOrder } from '#/lib/outline.ts'
 import type { SuggestionWire } from '#/server/lifecycle.ts'
 import { suggestionsForCore } from '#/server/lifecycle-fns.ts'
 import './suggestions.css'
@@ -75,12 +75,12 @@ function SuggestionsPage() {
 								<h2>{sectionLabel(group.section)}</h2>
 								<Show when={group.part}>
 									{(part) => (
-										<a
+										<Link
 											class="ocp-link-button"
-											href={`${partHref(workspace.documentId, part())}#${sectionAnchor(group.section.address)}`}
+											{...sectionLink(workspace.documentId, part(), group.section.address)}
 										>
 											Open beside the text
-										</a>
+										</Link>
 									)}
 								</Show>
 							</header>

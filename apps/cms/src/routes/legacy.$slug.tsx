@@ -7,12 +7,12 @@
  */
 
 import { type DocsNavItem, Notice } from '@aicolab/ui-solid'
-import { createFileRoute } from '@tanstack/solid-router'
+import { createFileRoute, Link } from '@tanstack/solid-router'
 import { createMemo, For, Show } from 'solid-js'
 import { Masthead } from '#/components/Masthead.tsx'
 import { citationNumbers, type DerivedView } from '#/content/derived.ts'
 import { RenderedBody } from '#/content/render.tsx'
-import { publishedHref } from '#/lib/links.ts'
+import { libraryLink, publishedLink } from '#/lib/links.ts'
 import { CopyLink, ReadingFrame } from '#/published/ReadingFrame.tsx'
 import { legacyDocumentBySlug } from '#/server/legacy-fns.ts'
 
@@ -38,7 +38,7 @@ function LegacyPage() {
 		<>
 			<Masthead
 				crumbs={[
-					{ label: 'Published library', href: '/library' },
+					{ label: 'Published library', link: libraryLink() },
 					{
 						label: data().legacy?.document.title ?? 'Not found',
 						accent: data().legacy?.pathway?.accent ?? null,
@@ -104,7 +104,7 @@ function LegacyReading(props: { legacy: Legacy }) {
 				<>
 					<Show when={doc().pdfUrl}>{(url) => <a href={url()}>The PDF as printed</a>}</Show>
 					<Show when={props.legacy.pathway?.published ? props.legacy.pathway : null}>
-						{(pathway) => <a href={publishedHref(pathway().slug)}>The current pathway</a>}
+						{(pathway) => <Link {...publishedLink(pathway().slug)}>The current pathway</Link>}
 					</Show>
 					<CopyLink />
 				</>

@@ -7,12 +7,12 @@
  */
 
 import { Notice } from '@aicolab/ui-solid'
-import { createFileRoute } from '@tanstack/solid-router'
+import { createFileRoute, Link } from '@tanstack/solid-router'
 import { Show } from 'solid-js'
 import { z } from 'zod'
 import { Masthead } from '#/components/Masthead.tsx'
 import { imprintDate } from '#/lib/labels.ts'
-import { draftDocxHref, draftPdfHref, workspaceHref } from '#/lib/links.ts'
+import { draftDocxHref, draftPdfHref, homeLink, workspaceLink } from '#/lib/links.ts'
 import { kickerOf } from '#/published/PublishedEdition.tsx'
 import { ReadingDocument } from '#/published/ReadingDocument.tsx'
 import { draftReading } from '#/server/preview-fns.ts'
@@ -47,10 +47,10 @@ function PreviewPage() {
 			<Show when={!printing()}>
 				<Masthead
 					crumbs={[
-						{ label: 'Pathways', href: '/' },
+						{ label: 'Pathways', link: homeLink() },
 						{
 							label: data().draft?.document.name ?? 'Draft',
-							href: workspaceHref(params().documentId),
+							link: workspaceLink(params().documentId),
 							accent: data().draft?.document.accent ?? null,
 						},
 						{ label: 'Preview' },
@@ -84,7 +84,7 @@ function PreviewPage() {
 								<p class="ocp-draft-banner" role="note">
 									<span>Not published. This is the draft as publishing it now would give it.</span>
 									<span class="ocp-draft-banner-links">
-										<a href={workspaceHref(params().documentId)}>Back to the draft</a>
+										<Link {...workspaceLink(params().documentId)}>Back to the draft</Link>
 										<a href={draftPdfHref(params().documentId)}>PDF</a>
 										<a href={draftDocxHref(params().documentId)}>Word</a>
 									</span>

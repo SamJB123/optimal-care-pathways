@@ -11,12 +11,12 @@
  */
 
 import { Notice } from '@aicolab/ui-solid'
-import { createFileRoute } from '@tanstack/solid-router'
+import { createFileRoute, Link } from '@tanstack/solid-router'
 import { createMemo, For, onSettled, Show, useContext } from 'solid-js'
 import { MapContext } from '#/content/blocks.tsx'
 import { SectionView } from '#/editors/SectionView.tsx'
 import { StageToolbar } from '#/editors/tools/Toolbar.tsx'
-import { partHref } from '#/lib/links.ts'
+import { partLink } from '#/lib/links.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { ReviewBar } from '#/lifecycle/ReviewBar.tsx'
 import { atLeast, DocumentContext, partsOf } from '#/lifecycle/workspace.ts'
@@ -151,9 +151,9 @@ function PartPage() {
 								<p>Nothing in this part has changed since the published edition.</p>
 								<Show when={nextChangedPart()}>
 									{(part) => (
-										<a class="ocp-link-button" href={partHref(workspace.documentId, part())}>
+										<Link class="ocp-link-button" {...partLink(workspace.documentId, part())}>
 											To the next part with changes
-										</a>
+										</Link>
 									)}
 								</Show>
 							</div>

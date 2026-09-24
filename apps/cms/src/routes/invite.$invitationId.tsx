@@ -11,7 +11,7 @@ import { createFileRoute, useNavigate, useRouter } from '@tanstack/solid-router'
 import { createSignal, Show } from 'solid-js'
 import { Masthead } from '#/components/Masthead.tsx'
 import { useAuthSession } from '#/lib/auth-client.ts'
-import { teamHref } from '#/lib/links.ts'
+import { homeLink, teamLink } from '#/lib/links.ts'
 import { acceptTeamInvitation } from '#/server/team-fns.ts'
 import './join.css'
 
@@ -32,7 +32,7 @@ function InvitationPage() {
 		setError(null)
 		void acceptTeamInvitation({ data: { invitationId: params().invitationId } })
 			.then((joined) => {
-				if (joined.documentId) void navigate({ href: teamHref(joined.documentId) })
+				if (joined.documentId) void navigate(teamLink(joined.documentId))
 				else void navigate({ to: '/admin' })
 			})
 			.catch((err: unknown) => {
@@ -43,7 +43,7 @@ function InvitationPage() {
 
 	return (
 		<>
-			<Masthead crumbs={[{ label: 'Pathways', href: '/' }, { label: 'Invitation' }]} />
+			<Masthead crumbs={[{ label: 'Pathways', link: homeLink() }, { label: 'Invitation' }]} />
 			<main class="ocp-join">
 				<p class="ocp-join-kicker">Invitation</p>
 				<h1>You have been invited to a team</h1>

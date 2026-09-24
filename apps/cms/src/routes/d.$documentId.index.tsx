@@ -9,13 +9,13 @@
  */
 
 import { ActivityFeed, Button, EmptyState } from '@aicolab/ui-solid'
-import { createFileRoute, useRouter } from '@tanstack/solid-router'
-import { AccentEditor } from '#/components/AccentEditor.tsx'
+import { createFileRoute, Link, useRouter } from '@tanstack/solid-router'
 import { createMemo, For, Loading, Show, useContext } from 'solid-js'
+import { AccentEditor } from '#/components/AccentEditor.tsx'
 import { PathwayMap } from '#/content/blocks.tsx'
 import { RenderedBody } from '#/content/render.tsx'
 import { ago, imprintDate } from '#/lib/labels.ts'
-import { legacyHref, partHref, publishedHref, sectionAnchor } from '#/lib/links.ts'
+import { legacyLink, publishedLink, sectionLink } from '#/lib/links.ts'
 import { atLeast, type ChangeEntry, DocumentContext, sectionLabel } from '#/lifecycle/workspace.ts'
 import { type ActivityRow, hubSnapshot } from '#/server/documents.ts'
 import { instructionsFor } from '#/server/workspace-fns.ts'
@@ -151,8 +151,7 @@ function OverviewPage() {
 	const notCovered = createMemo(() =>
 		state().review ? workspace.changeOrder().filter((e) => e.change.decision === null).length : 0,
 	)
-	const hrefOf = (e: ChangeEntry) =>
-		`${partHref(workspace.documentId, e.part)}#${sectionAnchor(e.section.address)}`
+	const linkOf = (e: ChangeEntry) => sectionLink(workspace.documentId, e.part, e.section.address)
 
 	return (
 		<div class="ocp-overview">
@@ -172,9 +171,9 @@ function OverviewPage() {
 							<Show when={state().published} fallback="Not yet published">
 								{(p) => (
 									<>
-										<a href={publishedHref(workspace.document.slug)}>
+										<Link {...publishedLink(workspace.document.slug)}>
 											{p().label ?? `Edition ${p().versionNo}`}
-										</a>
+										</Link>
 										{p().publishedAt ? `, ${imprintDate(p().publishedAt ?? 0)}` : ''}
 									</>
 								)}
@@ -228,9 +227,9 @@ function OverviewPage() {
 					{(legacy) => (
 						<p class="ocp-imprint-notes">
 							Drafted from the{' '}
-							<a
-								href={legacyHref(legacy().slug)}
-							>{`${legacy().edition?.toLowerCase() ?? 'previous edition'}, as printed`}</a>
+							<Link
+								{...legacyLink(legacy().slug)}
+							>{`${legacy().edition?.toLowerCase() ?? 'previous edition'}, as printed`}</Link>
 							.
 						</p>
 					)}
@@ -285,9 +284,9 @@ function OverviewPage() {
 								<For each={sentBack()}>
 									{(e) => (
 										<li>
-											<a href={hrefOf(e)} onClick={() => workspace.setMode('review')}>
+											<Link {...linkOf(e)} onClick={() => workspace.setMode('review')}>
 												{sectionLabel(e.section)}
-											</a>
+											</Link>
 											<Show when={e.change.decision?.note}>
 												{(note) => <span class="ocp-muted"> {note()}</span>}
 											</Show>
@@ -346,11 +345,9 @@ function OverviewPage() {
 								<For each={state().structure.hidden}>
 									{(s) => (
 										<li>
-											<a
-												href={`${partHref(workspace.documentId, partOf(s.address))}#${sectionAnchor(s.address)}`}
-											>
+											<Link {...sectionLink(workspace.documentId, partOf(s.address), s.address)}>
 												{s.title ?? s.address}
-											</a>
+											</Link>
 										</li>
 									)}
 								</For>
@@ -362,11 +359,9 @@ function OverviewPage() {
 								<For each={state().structure.added}>
 									{(s) => (
 										<li>
-											<a
-												href={`${partHref(workspace.documentId, partOf(s.address))}#${sectionAnchor(s.address)}`}
-											>
+											<Link {...sectionLink(workspace.documentId, partOf(s.address), s.address)}>
 												{s.title ?? s.address}
-											</a>
+											</Link>
 										</li>
 									)}
 								</For>

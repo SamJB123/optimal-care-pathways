@@ -8,7 +8,7 @@
  */
 
 import { type DocsNavItem, Notice } from '@aicolab/ui-solid'
-import { createFileRoute } from '@tanstack/solid-router'
+import { createFileRoute, Link } from '@tanstack/solid-router'
 import { createMemo, For, Show } from 'solid-js'
 import { publishedGuide } from '#/api/server-fns.ts'
 import { Masthead } from '#/components/Masthead.tsx'
@@ -16,7 +16,7 @@ import type { DerivedView } from '#/content/derived.ts'
 import { ReferenceList } from '#/content/references.tsx'
 import { RenderedBody } from '#/content/render.tsx'
 import { imprintDate, numberLabel } from '#/lib/labels.ts'
-import { guidePdfHref, publishedHref } from '#/lib/links.ts'
+import { guidePdfHref, libraryLink, publishedLink } from '#/lib/links.ts'
 import { CopyLink, ReadingFrame } from '#/published/ReadingFrame.tsx'
 
 export const Route = createFileRoute('/p/$slug_/quick-reference-guide')({
@@ -41,10 +41,10 @@ function GuidePage() {
 		<>
 			<Masthead
 				crumbs={[
-					{ label: 'Published library', href: '/library' },
+					{ label: 'Published library', link: libraryLink() },
 					{
 						label: data().guide?.document.title ?? 'Not found',
-						href: data().guide ? publishedHref(data().guide?.document.slug ?? '') : undefined,
+						link: data().guide ? publishedLink(data().guide?.document.slug ?? '') : undefined,
 						accent: data().guide?.accent ?? null,
 					},
 					{ label: 'Quick reference guide' },
@@ -125,7 +125,7 @@ function GuideReading(props: { guide: Guide }) {
 			note="The pathway at the point of care: the sections for use with a patient, step by step, and the check lists from the rest of the pathway."
 			links={
 				<>
-					<a href={publishedHref(doc().slug)}>The full pathway</a>
+					<Link {...publishedLink(doc().slug)}>The full pathway</Link>
 					<a href={guidePdfHref(doc().slug)}>Guide PDF</a>
 					<CopyLink />
 				</>

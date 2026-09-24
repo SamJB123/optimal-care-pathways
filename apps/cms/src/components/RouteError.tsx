@@ -6,6 +6,8 @@
  */
 
 import { Notice, Panel } from '@aicolab/ui-solid'
+import { Link } from '@tanstack/solid-router'
+import { homeLink } from '#/lib/links.ts'
 
 export function RouteError(props: { error: unknown }) {
 	console.error('[route]', props.error)
@@ -17,7 +19,7 @@ export function RouteError(props: { error: unknown }) {
 					{message()}
 				</Notice>
 				<p>
-					<a href="/">Back to the pathways</a>
+					<Link {...homeLink()}>Back to the pathways</Link>
 				</p>
 			</Panel>
 		</main>

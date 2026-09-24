@@ -12,6 +12,7 @@ import { createFileRoute } from '@tanstack/solid-router'
 import { Show } from 'solid-js'
 import { publishedDocumentFull } from '#/api/server-fns.ts'
 import { Masthead } from '#/components/Masthead.tsx'
+import { libraryLink } from '#/lib/links.ts'
 import { PublishedEdition } from '#/published/PublishedEdition.tsx'
 
 export const Route = createFileRoute('/p/$slug')({
@@ -31,7 +32,7 @@ function PublishedPage() {
 		<>
 			<Masthead
 				crumbs={[
-					{ label: 'Published library', href: '/library' },
+					{ label: 'Published library', link: libraryLink() },
 					{
 						label: data().document?.document.title ?? 'Not found',
 						accent: data().document?.accent ?? null,

@@ -6,10 +6,11 @@
  * are listed with the first line of what changed.
  */
 
+import { Link } from '@tanstack/solid-router'
 import { createMemo, createSignal, For, Show } from 'solid-js'
 import { familyStyle } from '#/lib/family.ts'
 import { monthDate, shortDate } from '#/lib/labels.ts'
-import { guideHref, guidePdfHref, pdfHref, publishedHref } from '#/lib/links.ts'
+import { guideLink, guidePdfHref, pdfHref, publishedLink } from '#/lib/links.ts'
 import type { LibraryEntry } from '#/server/atlas.ts'
 import { SpineGlyph } from './Masthead.tsx'
 import './library.css'
@@ -27,7 +28,7 @@ function EntryLinks(props: { entry: LibraryEntry }) {
 	return (
 		<span class="ocp-library-links">
 			<Show when={props.entry.guide}>
-				<a href={guideHref(props.entry.slug)}>Quick reference guide</a>
+				<Link {...guideLink(props.entry.slug)}>Quick reference guide</Link>
 			</Show>
 			<a href={pdfHref(props.entry.slug)}>PDF</a>
 			<Show when={props.entry.guide}>
@@ -76,7 +77,7 @@ export function Library(props: { entries: readonly LibraryEntry[] }) {
 							The foundation for every pathway
 						</p>
 						<h2>
-							<a href={publishedHref(p().slug)}>{p().name}</a>
+							<Link {...publishedLink(p().slug)}>{p().name}</Link>
 						</h2>
 						<p class="ocp-muted">{editionLine(p())}</p>
 					</section>
@@ -107,9 +108,9 @@ export function Library(props: { entries: readonly LibraryEntry[] }) {
 											<For each={pathways().filter((e) => e.audience === group.key)}>
 												{(entry) => (
 													<li style={familyStyle(entry.accent)}>
-														<a class="ocp-library-name" href={publishedHref(entry.slug)}>
+														<Link class="ocp-library-name" {...publishedLink(entry.slug)}>
 															{entry.name}
-														</a>
+														</Link>
 														<span class="ocp-library-edition ocp-muted">{editionLine(entry)}</span>
 														<EntryLinks entry={entry} />
 													</li>
@@ -133,7 +134,7 @@ export function Library(props: { entries: readonly LibraryEntry[] }) {
 								<For each={recent()}>
 									{(entry) => (
 										<li style={familyStyle(entry.accent)}>
-											<a href={publishedHref(entry.slug)}>{entry.name}</a>
+											<Link {...publishedLink(entry.slug)}>{entry.name}</Link>
 											<span class="ocp-muted ocp-figure">
 												{entry.label ?? `Edition ${entry.versionNo}`} ·{' '}
 												{shortDate(entry.publishedAt ?? 0)}

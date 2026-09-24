@@ -6,13 +6,19 @@
  */
 
 import { Button } from '@aicolab/ui-solid'
-import { createFileRoute, useRouter } from '@tanstack/solid-router'
+import { createFileRoute, Link, useRouter } from '@tanstack/solid-router'
 import { createMemo, createSignal, For, Show } from 'solid-js'
 import { AccentEditor } from '#/components/AccentEditor.tsx'
 import { Masthead } from '#/components/Masthead.tsx'
 import { TeamPanel } from '#/components/TeamPanel.tsx'
 import { familyStyle } from '#/lib/family.ts'
-import { fidelityHref, publishedHref, workspaceHref } from '#/lib/links.ts'
+import {
+	fidelityLink,
+	homeLink,
+	publishedLink,
+	suggestionsLink,
+	workspaceLink,
+} from '#/lib/links.ts'
 import { adminSnapshot } from '#/server/admin.ts'
 import { bootstrapCentral } from '#/server/documents.ts'
 import { finaliseLegacyImports } from '#/server/legacy-fns.ts'
@@ -90,7 +96,7 @@ function AdminPage() {
 	return (
 		<>
 			<Masthead
-				crumbs={[{ label: 'Pathways', href: '/' }, { label: 'Administration' }]}
+				crumbs={[{ label: 'Pathways', link: homeLink() }, { label: 'Administration' }]}
 				central={data().admin.central}
 			/>
 			<main class="ocp-admin">
@@ -186,20 +192,18 @@ function AdminPage() {
 							<For each={cores()}>
 								{(core) => (
 									<li style={familyStyle(core.accent)}>
-										<a class="ocp-admin-core-name" href={workspaceHref(core.id)}>
+										<Link class="ocp-admin-core-name" {...workspaceLink(core.id)}>
 											{core.name}
-										</a>
+										</Link>
 										<span class="ocp-admin-core-links">
 											<Show
 												when={core.published}
 												fallback={<span class="ocp-muted">Not yet published</span>}
 											>
-												<a href={publishedHref(core.slug)}>The published page</a>
+												<Link {...publishedLink(core.slug)}>The published page</Link>
 											</Show>
-											<a href={`${workspaceHref(core.id)}/suggestions`}>
-												Suggestions from pathways
-											</a>
-											<a href={fidelityHref(core.id)}>Against the template PDF</a>
+											<Link {...suggestionsLink(core.id)}>Suggestions from pathways</Link>
+											<Link {...fidelityLink(core.id)}>Against the template PDF</Link>
 										</span>
 									</li>
 								)}
@@ -222,13 +226,13 @@ function AdminPage() {
 										<For each={group.documents}>
 											{(doc) => (
 												<li>
-													<a
+													<Link
 														class="ocp-admin-colour-name"
-														href={workspaceHref(doc.id)}
+														{...workspaceLink(doc.id)}
 														style={familyStyle(doc.accent)}
 													>
 														{doc.name}
-													</a>
+													</Link>
 													<AccentEditor
 														documentId={doc.id}
 														name={doc.name}

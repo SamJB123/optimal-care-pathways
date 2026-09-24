@@ -11,12 +11,12 @@
  */
 
 import { Chip, EmptyState, Field, Notice, Segmented, SelectControl } from '@aicolab/ui-solid'
-import { createFileRoute, useNavigate } from '@tanstack/solid-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/solid-router'
 import { createMemo, createSignal, Errored, For, Loading, Show, useContext } from 'solid-js'
 import { z } from 'zod'
 import { RenderedBody } from '#/content/render.tsx'
 import { changeSize, imprintDate } from '#/lib/labels.ts'
-import { compareHref, editionHref, pdfHref, sectionHref } from '#/lib/links.ts'
+import { compareHref, editionLink, pdfHref, sectionLink } from '#/lib/links.ts'
 import { type DiffView, DocumentContext, sectionLabel } from '#/lifecycle/workspace.ts'
 import type {
 	CompareEntry,
@@ -172,7 +172,7 @@ function EditionsPage() {
 										: `${plural(edition.changed, 'section')} changed`}
 								</p>
 								<p class="ocp-editions-links">
-									<a href={editionHref(workspace.document.slug, edition.versionNo)}>Read</a>
+									<Link {...editionLink(workspace.document.slug, edition.versionNo)}>Read</Link>
 									<Show when={edition.status === 'published'}>
 										<a href={pdfHref(workspace.document.slug)}>PDF</a>
 									</Show>
@@ -380,12 +380,12 @@ function CompareItem(props: { entry: CompareEntry; to: string; clean: boolean })
 					fallback={<span class="ocp-compare-title">{sectionLabel(props.entry)}</span>}
 				>
 					{(part) => (
-						<a
+						<Link
 							class="ocp-compare-title"
-							href={sectionHref(workspace.documentId, part(), props.entry.address)}
+							{...sectionLink(workspace.documentId, part(), props.entry.address)}
 						>
 							{sectionLabel(props.entry)}
-						</a>
+						</Link>
 					)}
 				</Show>
 				<span class="ocp-compare-tags">

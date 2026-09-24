@@ -8,9 +8,10 @@
  */
 
 import { Button, Field, TextArea, ToolPanelActions } from '@aicolab/ui-solid'
+import { Link } from '@tanstack/solid-router'
 import { createMemo, createSignal, createUniqueId, For, onSettled, Show, untrack } from 'solid-js'
 import { shortDate } from '#/lib/labels.ts'
-import { workspaceHref } from '#/lib/links.ts'
+import { workspaceLink } from '#/lib/links.ts'
 import type { SuggestionWire } from '#/server/lifecycle.ts'
 import {
 	addComment,
@@ -365,7 +366,7 @@ export function SuggestionCard(props: {
 				<strong>{s().authorName}</strong>
 				<span class="ocp-muted">
 					{' '}
-					· <a href={workspaceHref(s().pathway.documentId)}>{s().pathway.title}</a> ·{' '}
+					· <Link {...workspaceLink(s().pathway.documentId)}>{s().pathway.title}</Link> ·{' '}
 					{shortDate(s().createdAt)}
 				</span>
 				<Show when={s().resolvedAt}>

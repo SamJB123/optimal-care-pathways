@@ -9,22 +9,22 @@
  */
 
 import { Button, Checkbox, Field, TextArea, TextInput } from '@aicolab/ui-solid'
+import { Link } from '@tanstack/solid-router'
 import { createMemo, createSignal, For, Loading, Show, useContext } from 'solid-js'
 import { RenderedBody } from '#/content/render.tsx'
 import { changeSize, imprintDate } from '#/lib/labels.ts'
 import {
 	draftDocxHref,
 	draftPdfHref,
-	guideHref,
-	partHref,
+	guideLink,
 	pdfHref,
-	previewHref,
-	publishedHref,
-	sectionAnchor,
+	previewLink,
+	publishedLink,
+	sectionLink,
 } from '#/lib/links.ts'
 import { bandLabel, type SpineBand, spineOf } from '#/lib/outline.ts'
-import { publishDocument, publishReadiness } from '#/server/lifecycle-fns.ts'
 import type { GateItem } from '#/server/lifecycle.ts'
+import { publishDocument, publishReadiness } from '#/server/lifecycle-fns.ts'
 import { type ChangeEntry, DocumentContext, sectionLabel } from './workspace.ts'
 import './proof.css'
 
@@ -107,7 +107,7 @@ export function ProofSheet(props: { onClose: () => void }) {
 							through, then sign it off.
 						</p>
 						<p class="ocp-proof-links">
-							<a href={previewHref(workspace.documentId)}>Open the preview</a>
+							<Link {...previewLink(workspace.documentId)}>Open the preview</Link>
 							<a href={draftPdfHref(workspace.documentId)}>Download as PDF</a>
 							<a href={draftDocxHref(workspace.documentId)}>Download as Word</a>
 						</p>
@@ -247,9 +247,9 @@ export function ProofSheet(props: { onClose: () => void }) {
 							open for the next changes.
 						</p>
 						<p class="ocp-proof-links">
-							<a href={publishedHref(workspace.document.slug)}>The published page</a>
+							<Link {...publishedLink(workspace.document.slug)}>The published page</Link>
 							<Show when={workspace.document.kind === 'pathway'}>
-								<a href={guideHref(workspace.document.slug)}>The quick reference guide</a>
+								<Link {...guideLink(workspace.document.slug)}>The quick reference guide</Link>
 							</Show>
 							<a href={pdfHref(workspace.document.slug)}>The PDF</a>
 						</p>
@@ -281,15 +281,15 @@ function SectionLink(props: { address: string; onFollow: () => void }) {
 			root = parent
 		return {
 			label: sectionLabel(s),
-			href: `${partHref(workspace.documentId, root.address)}#${sectionAnchor(s.address)}`,
+			to: sectionLink(workspace.documentId, root.address, s.address),
 		}
 	})
 	return (
 		<Show when={found()} fallback={<span>{props.address}</span>}>
 			{(link) => (
-				<a href={link().href} onClick={() => props.onFollow()}>
+				<Link {...link().to} onClick={() => props.onFollow()}>
 					{link().label}
-				</a>
+				</Link>
 			)}
 		</Show>
 	)

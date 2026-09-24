@@ -10,7 +10,7 @@ import { createFileRoute, useNavigate, useRouter } from '@tanstack/solid-router'
 import { createMemo, createSignal, Show } from 'solid-js'
 import { Masthead } from '#/components/Masthead.tsx'
 import { useAuthSession } from '#/lib/auth-client.ts'
-import { teamHref } from '#/lib/links.ts'
+import { homeLink, teamLink } from '#/lib/links.ts'
 import { roleWord } from '#/lib/team-labels.ts'
 import { inviteLinkInfo, redeemInviteLink } from '#/server/team-fns.ts'
 import './join.css'
@@ -39,7 +39,7 @@ function JoinPage() {
 		setError(null)
 		void redeemInviteLink({ data: { token: params().token } })
 			.then((joined) => {
-				if (joined.documentId) void navigate({ href: teamHref(joined.documentId) })
+				if (joined.documentId) void navigate(teamLink(joined.documentId))
 				else void navigate({ to: '/admin' })
 			})
 			.catch((err: unknown) => {
@@ -50,7 +50,7 @@ function JoinPage() {
 
 	return (
 		<>
-			<Masthead crumbs={[{ label: 'Pathways', href: '/' }, { label: 'Invitation' }]} />
+			<Masthead crumbs={[{ label: 'Pathways', link: homeLink() }, { label: 'Invitation' }]} />
 			<main class="ocp-join">
 				<Show
 					when={live()}

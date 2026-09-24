@@ -5,13 +5,14 @@
  * on first paint.
  */
 
-import { createFileRoute } from '@tanstack/solid-router'
+import { createFileRoute, Link } from '@tanstack/solid-router'
 import { createSignal, Show } from 'solid-js'
 import { Atlas } from '#/components/Atlas.tsx'
 import { Library } from '#/components/Library.tsx'
 import { Masthead } from '#/components/Masthead.tsx'
 import { NewPathwaySheet } from '#/components/NewPathway.tsx'
 import { useAuthSession } from '#/lib/auth-client.ts'
+import { adminLink, libraryLink } from '#/lib/links.ts'
 import { atlasSnapshot, publicLibrary } from '#/server/atlas.ts'
 import './index.css'
 
@@ -44,7 +45,7 @@ function Home() {
 					<Masthead
 						crumbs={[{ label: 'Pathways' }]}
 						central={snapshot().central}
-						links={[{ label: 'Published library', href: '/library' }]}
+						links={[{ label: 'Published library', link: libraryLink() }]}
 					/>
 					<main>
 						<Show when={snapshot().setUp || (snapshot().central && snapshot().pending > 0)}>
@@ -52,7 +53,7 @@ function Home() {
 								{snapshot().setUp
 									? 'This deployment has no central organisation yet, so the core templates have no owner.'
 									: `${snapshot().pending} imported ${snapshot().pending === 1 ? 'pathway is' : 'pathways are'} waiting for ${snapshot().pending === 1 ? 'its organisation' : 'their organisations'}.`}{' '}
-								<a href="/admin">Administration</a>
+								<Link {...adminLink()}>Administration</Link>
 							</p>
 						</Show>
 						<Show
@@ -65,7 +66,7 @@ function Home() {
 										which they can use to add you, is in the account menu at the top right.
 									</p>
 									<p>
-										<a href="/library">Read the published pathways</a>
+										<Link {...libraryLink()}>Read the published pathways</Link>
 									</p>
 								</section>
 							}
