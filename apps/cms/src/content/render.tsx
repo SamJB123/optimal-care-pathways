@@ -328,6 +328,13 @@ function Marked(props: { marks: JsonMark[]; index: number; text: string }) {
 							href={str(m().attrs?.href)}
 							target={str(m().attrs?.target) || undefined}
 							rel={str(m().attrs?.rel) || undefined}
+							// Words that are the address itself (a legacy import prints the URL): on
+							// paper the address is not written a second time after them (print.css).
+							data-url-text={
+								props.text.trim().replace(/\/$/, '') === str(m().attrs?.href).replace(/\/$/, '')
+									? ''
+									: undefined
+							}
 						>
 							{inner()}
 						</a>

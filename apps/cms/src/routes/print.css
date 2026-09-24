@@ -117,14 +117,38 @@
 		break-after: avoid-page;
 	}
 
+	/* A link's address follows its words on paper — unless its words ARE its address
+	   (the renderer marks those), or it is a reference's own link. */
 	a[href^="http"]::after {
 		content: " (" attr(href) ")";
 		font-size: 0.85em;
 		color: var(--color-base-content-muted);
 	}
 
-	.ocp-published-references a[href^="http"]::after {
+	.ocp-published-references a[href^="http"]::after,
+	a[href^="http"][data-url-text]::after {
 		content: none;
+	}
+
+	/* The list bullet is a masked square on screen (prosemirror-flat-list); the PDF
+	   engine prints the square, not the mask, so on paper the bullet is a character. */
+	.prosemirror-flat-list[data-list-kind="bullet"] > .list-marker {
+		mask: none;
+		background: none;
+	}
+
+	.prosemirror-flat-list[data-list-kind="bullet"] > .list-marker::before {
+		content: "•";
+	}
+
+	/* A figure and the caption written before it stay together on one page; a figure
+	   never splits. */
+	.ocp-body img {
+		break-inside: avoid;
+	}
+
+	.ocp-body p:has(+ img) {
+		break-after: avoid-page;
 	}
 
 	.ocp-watermark {

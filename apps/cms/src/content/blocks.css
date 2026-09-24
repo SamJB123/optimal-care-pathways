@@ -230,6 +230,18 @@
 	border-radius: 0;
 }
 
+/* A band that is also the box's LAST child (a box that is only its band, as a legacy
+   import prints a statement) closes the box too: no empty strip of padding under it. */
+.ocp-body .ocp-box .ui-callout-body > p[data-ocp="banner"]:last-child,
+.ocp-body
+	.ocp-box
+	.ui-callout-body
+	> .ocp-node-content
+	> [data-solid-block="banner"]:last-child
+	> p[data-ocp="banner"] {
+	margin-bottom: calc(-1 * var(--_ui-callout-pad, 0.8rem));
+}
+
 /* "First" ignores a guidance ANCHOR before it (a pathway's note that lives in the margin
    and takes no room here): the band is still the first thing the eye meets. In the
    template the same note is an inline accordion, so the band rightly sits below it. */
