@@ -131,8 +131,10 @@ export function BannerBlock(props: BlockProps<BannerAttrs>) {
 
 /** Where drafting guidance shows (decision: guidance in a pathway lives in the margin).
  *  In a core template the guidance IS the template's text, written and read in place;
- *  in a pathway it is the template talking to the drafter, so the text column carries
- *  only a mark in its gutter where the note belongs, and the margin carries the note. */
+ *  in a pathway it is the template talking to the drafter: the text shows nothing where
+ *  the note stands (the anchor keeps its place, sized to nothing) and the margin carries
+ *  the note. A note under the reader's eye in the margin lights the block it stands
+ *  beside (blocks.css), so the link from note to place survives without a mark. */
 export type GuidanceMode = 'inline' | 'margin'
 export const GuidanceModeContext = createContext<GuidanceMode>('inline')
 
@@ -147,7 +149,6 @@ export function GuidanceBlock(props: BlockProps<GuidanceAttrs>) {
 				contenteditable="false"
 				aria-hidden="true"
 			>
-				<span class="ocp-guidance-mark" />
 				<div class="ocp-guidance-hidden">{props.children}</div>
 			</aside>
 		</Show>
