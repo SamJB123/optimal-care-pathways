@@ -88,11 +88,21 @@ function edition(row: AtlasRow): string {
 	return `${p.label ?? `Edition ${p.versionNo}`}${p.publishedAt ? ` · ${monthDate(p.publishedAt)}` : ''}`
 }
 
+/** The densest run in each of the nine spine bands: what sizes its column. */
+const bandRuns = (rows: readonly AtlasRow[]): number[] =>
+	Array.from({ length: 9 }, (_, i) =>
+		Math.max(4, ...rows.map((r) => r.bands[i]?.ticks.length ?? 0)),
+	)
+
+/** The fixed columns, in rem: the name, the standing, the last change. */
+const FIXED_COLUMNS_REM = 10 + 10 + 6.5
+/** The register's column gap, in rem (atlas.css), between its thirteen columns. */
+const COLUMN_GAP_REM = 0.9
+
 /** The register's columns: each spine band as wide as its densest run needs (two pixels a
  *  tick), shared out in proportion, so the steps keep the shape the documents have. */
 function columnsFor(rows: readonly AtlasRow[]): string {
-	const most = (i: number) => Math.max(4, ...rows.map((r) => r.bands[i]?.ticks.length ?? 0))
-	const bands = Array.from({ length: 9 }, (_, i) => `minmax(${most(i) * 2 + 6}px, ${most(i)}fr)`)
+	const bands = bandRuns(rows).map((most) => `minmax(${most * 2 + 6}px, ${most}fr)`)
 	return [
 		'[name] minmax(10rem, 150fr)',
 		...bands,
@@ -100,6 +110,13 @@ function columnsFor(rows: readonly AtlasRow[]): string {
 		'[last] minmax(6.5rem, 90fr)',
 		'[links] max-content',
 	].join(' ')
+}
+
+/** The least width the register can take, in pixels, as `columnsFor` sizes it: the
+ *  fixed columns, the bands, the links column as measured, and the gaps between. */
+function registerNeeds(rows: readonly AtlasRow[], rem: number, links: number): number {
+	const bands = bandRuns(rows).reduce((sum, most) => sum + most * 2 + 6, 0)
+	return FIXED_COLUMNS_REM * rem + bands + links + 12 * COLUMN_GAP_REM * rem
 }
 
 /** A view-transition name for a row: stable, and a valid identifier. */
@@ -120,6 +137,38 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 	})
 	// Relative times read against the server's clock until the page is live.
 	const clock = () => now() || props.snapshot.now
+
+	// The register, or the strip: whichever the section has room for. The register's least
+	// width follows from the data (its columns' minimums); the section is measured as it
+	// resizes, and the strip is marked on it when the register would overflow. Phone
+	// widths take the strip from CSS alone (atlas.css), so the first paint is right there;
+	// this covers everything between a phone and the width the register needs.
+	let section: HTMLElement | undefined
+	const [layout, setLayout] = createSignal<'register' | 'strip'>('register')
+	onSettled(() => {
+		if (!section) return
+		const host = section
+		// The links column is `max-content`: its width is measured while the register is
+		// showing and remembered; before any measurement, the strip's own guess.
+		let links: number | null = null
+		const measure = () => {
+			const style = getComputedStyle(host)
+			const rem = Number.parseFloat(style.fontSize)
+			const room =
+				host.clientWidth -
+				Number.parseFloat(style.paddingInlineStart) -
+				Number.parseFloat(style.paddingInlineEnd)
+			if (layout() === 'register') {
+				const cell = host.querySelector<HTMLElement>('.ocp-atlas-links')
+				if (cell) links = cell.offsetWidth
+			}
+			const needs = registerNeeds(props.snapshot.rows, rem, links ?? 6 * rem)
+			setLayout(needs > room ? 'strip' : 'register')
+		}
+		const observer = new ResizeObserver(measure)
+		observer.observe(host)
+		return () => observer.disconnect()
+	})
 
 	// Who has a document open follows the documents topic live: a room announces its
 	// roster on it as people come and go. The rest of a row is the loader's, as of the
@@ -221,7 +270,12 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 	}
 
 	return (
-		<section class="ocp-atlas" aria-labelledby="ocp-atlas-title">
+		<section
+			class="ocp-atlas"
+			aria-labelledby="ocp-atlas-title"
+			ref={section}
+			data-layout={layout()}
+		>
 			<header class="ocp-atlas-head">
 				<div class="ocp-atlas-heading">
 					<h1 id="ocp-atlas-title">Pathways</h1>

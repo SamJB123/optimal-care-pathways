@@ -352,8 +352,24 @@
 		white-space: nowrap;
 	}
 
-	/* ── Narrow: each row becomes a block; the nine bands run as one strip ── */
+	/* ── Narrow: each row becomes a block; the nine bands run as one strip ──
+	   Two roads in, one flag: a phone-width viewport (pure CSS, so the first paint is
+	   right), or the measured case — the register's columns need more room than the section
+	   has, which Atlas.tsx works out from the columns' own minimums and marks on the
+	   section. The rules below read the flag; a browser without style queries keeps the
+	   full register, as before. */
+	:scope {
+		--atlas-layout: register;
+	}
 	@media (width < 52rem) {
+		:scope {
+			--atlas-layout: strip;
+		}
+	}
+	:scope[data-layout="strip"] {
+		--atlas-layout: strip;
+	}
+	@container style(--atlas-layout: strip) {
 		.ocp-atlas-head {
 			grid-template-columns: 1fr;
 		}
