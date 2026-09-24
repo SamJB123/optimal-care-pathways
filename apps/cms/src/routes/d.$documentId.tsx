@@ -33,7 +33,6 @@ import { Masthead } from '#/components/Masthead.tsx'
 import { useAuthSession } from '#/lib/auth-client.ts'
 import { familyStyle } from '#/lib/family.ts'
 import { documentName, numberLabel } from '#/lib/labels.ts'
-import { knownNames, learnNames, nameOf } from '#/lib/people.ts'
 import {
 	draftDocxHref,
 	draftPdfHref,
@@ -51,6 +50,8 @@ import {
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { type PathwayClient, pathwayClientFor } from '#/lib/ocp-client.ts'
 import { spineOf } from '#/lib/outline.ts'
+import { knownNames, learnNames, nameOf } from '#/lib/people.ts'
+import { createRestingBodies } from '#/lifecycle/bodies.ts'
 import { Margin } from '#/lifecycle/Margin.tsx'
 import { ProofSheet } from '#/lifecycle/ProofSheet.tsx'
 import { RequestReviewSheet } from '#/lifecycle/RequestReview.tsx'
@@ -117,6 +118,8 @@ function DocumentShell() {
 		ownedWrite: true,
 	})
 	const [online, setOnline] = createSignal<{ userId: string; sectionId: string | null }[]>([])
+	// One per shell (per request on the server): the part on stage primes it.
+	const bodies = createRestingBodies()
 	const [contents, setContents] = createSignal(false)
 	const [raise, setRaise] = createSignal(0)
 	const [reviewScope, setReviewScope] = createSignal<ReviewScope>('changed')
@@ -313,6 +316,7 @@ function DocumentShell() {
 		},
 		sections,
 		client,
+		bodies,
 		state,
 		refreshState,
 		comments,

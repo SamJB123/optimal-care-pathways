@@ -28,12 +28,13 @@ import {
 	sectionWireRow,
 } from '#/lib/live-topics.ts'
 import { outlineOrder } from '#/lib/outline.ts'
-import { OCP_NAMESPACE, ROLE_LADDER, type Role, organisationNameOf, roles } from '#/lib/roles.ts'
+import { OCP_NAMESPACE, organisationNameOf, ROLE_LADDER, type Role, roles } from '#/lib/roles.ts'
 import { TEMPLATES } from '#/template/templates.ts'
 import * as access from './access.ts'
-import { reindex } from './search-index.ts'
 import { CENTRAL_ORG_NAME, CENTRAL_ORG_SLUG } from './access.ts'
+import { partSections, type RestingBody, restingBodiesOf } from './bodies.ts'
 import { envOf, requireUser } from './env.ts'
+import { reindex } from './search-index.ts'
 import { claimCentralLead } from './team.ts'
 import { teamOfEnv } from './team-env.ts'
 
@@ -312,68 +313,56 @@ export const sectionsSnapshot = createServerFn({ method: 'GET' })
 		},
 	)
 
-/** The resting body of a section the caller may read: its own, or, for a shared
- *  section, the core section's body as PUBLISHED (its draft while the core has never
- *  published — decision 98). */
+/** The resting body of a section the caller may read (server/bodies.ts): its own, or,
+ *  for a shared section, the core section's body as PUBLISHED (its draft while the core
+ *  has never published — decision 98). */
 export const sectionBody = createServerFn({ method: 'GET' })
 	.inputValidator(z.object({ sectionId: z.string().min(1).max(64) }))
-	.handler(
-		async ({
-			data,
-			context,
-		}): Promise<{
-			body: JsonNode | null
-			resolvedFrom: string
-			coreSource: 'published' | 'draft' | null
-		}> => {
-			const userId = requireUser(context.userId)
-			const { d } = await envOf()
-			const section = (
-				await d
-					.select()
-					.from(schema.sections)
-					.where(eq(schema.sections.id, data.sectionId))
-					.limit(1)
-			)[0]
-			if (!section) throw new Error('Section not found.')
-			const document = (
-				await d
-					.select()
-					.from(schema.documents)
-					.where(eq(schema.documents.id, section.documentId))
-					.limit(1)
-			)[0]
-			if (!document || !(await roleOn(userId, document.orgId)))
-				throw new Error('You are not a member of this document.')
-			if (section.ownership === 'owned' || !section.coreSectionId)
-				return { body: section.bodyJson ?? null, resolvedFrom: section.id, coreSource: null }
-			const published = (
-				await d
-					.select({ bodyJson: schema.publishedSections.bodyJson })
-					.from(schema.publishedSections)
-					.where(eq(schema.publishedSections.sectionId, section.coreSectionId))
-					.limit(1)
-			)[0]
-			if (published)
-				return {
-					body: published.bodyJson ?? null,
-					resolvedFrom: section.coreSectionId,
-					coreSource: 'published',
-				}
-			const core = (
-				await d
-					.select()
-					.from(schema.sections)
-					.where(eq(schema.sections.id, section.coreSectionId))
-					.limit(1)
-			)[0]
-			return {
-				body: core?.bodyJson ?? null,
-				resolvedFrom: section.coreSectionId,
-				coreSource: 'draft',
-			}
-		},
+	.handler(async ({ data, context }): Promise<RestingBody> => {
+		const userId = requireUser(context.userId)
+		const { d } = await envOf()
+		const section = (
+			await d.select().from(schema.sections).where(eq(schema.sections.id, data.sectionId)).limit(1)
+		)[0]
+		if (!section) throw new Error('Section not found.')
+		const document = (
+			await d
+				.select({ orgId: schema.documents.orgId })
+				.from(schema.documents)
+				.where(eq(schema.documents.id, section.documentId))
+				.limit(1)
+		)[0]
+		if (!document || !(await roleOn(userId, document.orgId)))
+			throw new Error('You are not a member of this document.')
+		const found = (await restingBodiesOf(d, [section]))[section.id]
+		return found ?? { body: null, coreSource: null }
+	})
+
+/** The resting bodies of every section in one part of a document, by section id — the
+ *  part page's loader, so the page is laid out whole at first paint and a link into a
+ *  section lands where the section is. Empty for a part the document does not have. */
+export const partBodies = createServerFn({ method: 'GET' })
+	.inputValidator(
+		z.object({ documentId: z.string().min(1).max(64), part: z.string().min(1).max(64) }),
 	)
+	.handler(async ({ data, context }): Promise<Record<string, RestingBody>> => {
+		const userId = requireUser(context.userId)
+		const { d } = await envOf()
+		const document = (
+			await d
+				.select({ orgId: schema.documents.orgId })
+				.from(schema.documents)
+				.where(eq(schema.documents.id, data.documentId))
+				.limit(1)
+		)[0]
+		if (!document || !(await roleOn(userId, document.orgId)))
+			throw new Error('You are not a member of this document.')
+		const rows = await d
+			.select()
+			.from(schema.sections)
+			.where(eq(schema.sections.documentId, data.documentId))
+		return restingBodiesOf(d, partSections(rows, data.part))
+	})
 
 /** A section as the review page shows it: the outline row with its resting body. */
 export type ReviewSectionRow = SectionWireRow & { body: JsonNode | null }

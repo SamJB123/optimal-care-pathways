@@ -20,8 +20,19 @@ import { partLink } from '#/lib/links.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { ReviewBar } from '#/lifecycle/ReviewBar.tsx'
 import { atLeast, DocumentContext, partsOf } from '#/lifecycle/workspace.ts'
+import { partBodies } from '#/server/documents.ts'
 
-export const Route = createFileRoute('/d/$documentId/$part')({ component: PartPage })
+export const Route = createFileRoute('/d/$documentId/$part')({
+	// Every resting body of the part, in one request, before the page renders: the page is
+	// laid out whole at first paint, so a link into a section lands on the section instead
+	// of where a page of headings put it before the bodies arrived.
+	loader: ({ params }) =>
+		partBodies({ data: { documentId: params.documentId, part: params.part } }),
+	// Another part is another page: the component mounts afresh, primes the workspace with
+	// its loader's bodies, and takes the reader to the hash it was opened at.
+	remountDeps: ({ params }) => params,
+	component: PartPage,
+})
 
 /** The subtree under `root`, depth-first in reading order. A hidden section is left out
  *  unless `shown` says otherwise (hidden sections on request; a removal under review). */
@@ -52,6 +63,8 @@ function subtree(
 function PartPage() {
 	const params = Route.useParams()
 	const workspace = useContext(DocumentContext)
+	// Before any section view reads: the loader's bodies are what the sections rest on.
+	workspace.bodies.prime(Route.useLoaderData()())
 	const root = createMemo(
 		() =>
 			workspace.sections().find((s) => s.parentId === null && s.address === params().part) ?? null,

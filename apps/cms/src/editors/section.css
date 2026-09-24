@@ -276,6 +276,12 @@ sup[data-ocp="citation"]::before {
 	overflow: visible;
 }
 
+/* While the live body is still syncing, the resting body stands in the editor's place
+   (SectionEditor.tsx) and the editor itself takes no room. */
+.ocp-section-editor .aic-prosekit-editor[data-binding] {
+	display: none;
+}
+
 .ocp-section-editor .aic-prosekit-editor.ProseMirror {
 	min-block-size: 1.6em;
 	padding: 0;

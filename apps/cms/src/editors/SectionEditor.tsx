@@ -31,6 +31,7 @@ import { UndoManager } from '@y/y'
 import { createSignal, onSettled, Show, untrack } from 'solid-js'
 import type { GuidanceMode } from '#/content/blocks.tsx'
 import type { DerivedView } from '#/content/derived.ts'
+import { RenderedBody } from '#/content/render.tsx'
 import { type JsonNode, jsonOf } from '#/content/schema.ts'
 import type { EditorControl } from '#/lifecycle/workspace.ts'
 import { createSectionExtension } from './extension.ts'
@@ -66,6 +67,9 @@ export default function SectionEditor(props: {
 	room: DocRoomClient
 	handle: DocHandle
 	sectionId: string
+	/** The section's resting body, shown in the editor's place until the live body is
+	 *  bound, so the page keeps its shape while the room syncs. Null when unknown. */
+	resting: JsonNode | null
 	/** The page's derived view (citation numbers, timeframes) the block views read. */
 	derived: DerivedView
 	guidance: GuidanceMode
@@ -80,11 +84,12 @@ export default function SectionEditor(props: {
 	// The slot upstream is keyed by (section, handle, room): a different section is a
 	// different mount, so these are constants of this instance, read once and untracked
 	// (a tracked top-level prop read is the STRICT_READ_UNTRACKED warning).
-	const { room, handle, sectionId, guidance } = untrack(() => ({
+	const { room, handle, sectionId, guidance, resting } = untrack(() => ({
 		room: props.room,
 		handle: props.handle,
 		sectionId: props.sectionId,
 		guidance: props.guidance,
+		resting: props.resting,
 	}))
 	const docKey = `doc:${sectionId}`
 	const open = handle.openBody()
@@ -416,9 +421,15 @@ export default function SectionEditor(props: {
 					Read only: your role on this document is viewer.
 				</Notice>
 			</Show>
+			{/* Until the live body is bound the resting body stands in its place and the editor
+			    (mounted, syncing) is kept out of the layout: the section keeps its height. */}
+			<Show when={!ready() && resting}>
+				{(body) => <RenderedBody body={body()} derived={props.derived} guidance={guidance} />}
+			</Show>
 			<div
 				class="aic-prosekit-editor ocp-body"
 				data-guidance={guidance}
+				data-binding={!ready() ? '' : undefined}
 				aria-busy={!ready() ? 'true' : undefined}
 				// In a list, Tab indents (extension.ts): the way out is told.
 				aria-description="Escape leaves the text; Tab then moves on."

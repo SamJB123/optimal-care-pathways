@@ -41,7 +41,6 @@ import {
 } from 'solid-js'
 import { RenderedBody } from '#/content/render.tsx'
 import type { JsonNode } from '#/content/schema.ts'
-import { forgetBody, restingBody } from '#/editors/SectionView.tsx'
 import { ago, shortDate } from '#/lib/labels.ts'
 import { legacyLink, sectionAnchor, workspaceLink } from '#/lib/links.ts'
 import { legacyOriginsOf } from '#/server/legacy-fns.ts'
@@ -198,7 +197,7 @@ function SectionMargin(props: { sectionId: string }) {
 			setBody(control.body())
 			return
 		}
-		void restingBody(props.sectionId).then((r) => setBody(r.body))
+		void workspace.bodies.load(props.sectionId).then((r) => setBody(r.body))
 	}
 	onSettled(() => {
 		readBody()
@@ -438,7 +437,7 @@ function SectionMargin(props: { sectionId: string }) {
 								onGo={() =>
 									run(async () => {
 										await divergeSection({ data: { sectionId: row().id } })
-										forgetBody(row().id)
+										workspace.bodies.forget(row().id)
 										await workspace.refreshState()
 									})
 								}
@@ -464,7 +463,7 @@ function SectionMargin(props: { sectionId: string }) {
 								onGo={() =>
 									run(async () => {
 										await revertSection({ data: { sectionId: row().id } })
-										forgetBody(row().id)
+										workspace.bodies.forget(row().id)
 										await workspace.refreshState()
 									})
 								}

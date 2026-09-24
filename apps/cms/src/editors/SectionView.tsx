@@ -29,30 +29,9 @@ import { sectionAnchor } from '#/lib/links.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
 import { pathwayClientFor } from '#/lib/ocp-client.ts'
 import { atLeast, DocumentContext, MARK_GLYPH, MARK_WORDS, markOf } from '#/lifecycle/workspace.ts'
-import { sectionBody } from '#/server/documents.ts'
 import type { SectionChange } from '#/server/lifecycle.ts'
 import { setSectionHidden } from '#/server/structure-fns.ts'
 import SectionEditor from './SectionEditor.tsx'
-
-/** Resting bodies fetched this page, by section: the margin reads the same ones. */
-const bodies = new Map<
-	string,
-	Promise<{ body: JsonNode | null; coreSource: 'published' | 'draft' | null }>
->()
-export function restingBody(sectionId: string) {
-	let found = bodies.get(sectionId)
-	if (!found) {
-		found = sectionBody({ data: { sectionId } }).then((r) => ({
-			body: r.body,
-			coreSource: r.coreSource,
-		}))
-		bodies.set(sectionId, found)
-		found.catch(() => bodies.delete(sectionId))
-	}
-	return found
-}
-/** A section's resting body moved (a revert, a diverge): read it afresh next time. */
-export const forgetBody = (sectionId: string) => bodies.delete(sectionId)
 
 export function SectionView(props: { section: SectionWireRow; depth: number }) {
 	const workspace = useContext(DocumentContext)
@@ -263,6 +242,7 @@ function OwnedBody(props: { sectionId: string }) {
 					room={room}
 					handle={handle}
 					sectionId={id}
+					resting={workspace.bodies.get(id)?.body ?? null}
 					derived={workspace.derived}
 					guidance={workspace.guidance}
 					register={workspace.editors.register}
@@ -281,13 +261,21 @@ function StaticBody(props: {
 	onSource?: (source: 'published' | 'draft' | null) => void
 }) {
 	const workspace = useContext(DocumentContext)
-	const [body, setBody] = createSignal<JsonNode | null | undefined>(undefined)
-	// Fetched once per mount: a resting body is static by definition, and the view is
-	// keyed by section id upstream, so a different section is a different mount.
+	// Known already (the part's loader primed it): rendered in the first paint, so the
+	// page is laid out whole. Otherwise read once per mount — a resting body is static by
+	// definition, and the view is keyed by section id upstream, so a different section is
+	// a different mount.
+	const known = untrack(() => workspace.bodies.get(props.sectionId))
+	const [body, setBody] = createSignal<JsonNode | null | undefined>(known?.body)
 	onSettled(() => {
-		let cancelled = false
 		const onSource = untrack(() => props.onSource)
-		void restingBody(untrack(() => props.sectionId))
+		if (known) {
+			onSource?.(known.coreSource)
+			return
+		}
+		let cancelled = false
+		void workspace.bodies
+			.load(untrack(() => props.sectionId))
 			.then((result) => {
 				if (cancelled) return
 				setBody(result.body)

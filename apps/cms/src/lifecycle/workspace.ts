@@ -15,8 +15,9 @@ import type { DocumentWireRow, SectionWireRow } from '#/lib/live-topics.ts'
 import type { PathwayClient } from '#/lib/ocp-client.ts'
 import { spineOf } from '#/lib/outline.ts'
 import { ROLE_LADDER, type Role } from '#/lib/roles.ts'
-import type { CommentWire } from '#/server/lifecycle-fns.ts'
 import type { DocumentState, SectionChange } from '#/server/lifecycle.ts'
+import type { CommentWire } from '#/server/lifecycle-fns.ts'
+import type { RestingBodies } from './bodies.ts'
 
 export type WorkspaceMode = 'edit' | 'review'
 export type DiffView = 'marks' | 'clean'
@@ -84,6 +85,9 @@ export interface DocumentWorkspace {
 	role: Role
 	sections: () => SectionWireRow[]
 	client: () => PathwayClient | null
+	/** The resting bodies this page knows (lifecycle/bodies.ts): primed by the part on
+	 *  stage, read by every section view and the margin. */
+	bodies: RestingBodies
 	/** Citation numbers and the timeframe snapshot, as of the page load (decision 15, 50). */
 	derived: DerivedView
 	state: () => DocumentState
