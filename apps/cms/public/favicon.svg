@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- The masthead's spine glyph (components/Masthead.tsx SpineGlyph): seven rules, the
+       fourth (treatment) the tallest, as the steps run — on a navy tile so it reads at
+       16 px on any tab bar. -->
+  <rect width="32" height="32" rx="7" fill="#244a8f"/>
+  <g fill="#ffffff" transform="translate(3 9)">
+    <rect x="0.6" y="7" width="1.4" height="7" rx="0.5"/>
+    <rect x="4.3" y="5" width="1.4" height="9" rx="0.5"/>
+    <rect x="8" y="3" width="1.4" height="11" rx="0.5"/>
+    <rect x="11.7" y="1" width="1.4" height="13" rx="0.5"/>
+    <rect x="15.4" y="3" width="1.4" height="11" rx="0.5"/>
+    <rect x="19.1" y="5" width="1.4" height="9" rx="0.5"/>
+    <rect x="22.8" y="7" width="1.4" height="7" rx="0.5"/>
+  </g>
+</svg>

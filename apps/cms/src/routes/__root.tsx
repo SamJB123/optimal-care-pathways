@@ -8,7 +8,7 @@ import {
 	type AuthSession,
 	resolveAuthSession,
 } from '@aicolab/better-auth/cloudflare/shared/auth-session'
-import { themeBootScript, ToastHost } from '@aicolab/ui-solid'
+import { ToastHost, themeBootScript } from '@aicolab/ui-solid'
 import { Loading } from '@solidjs/web'
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/solid-router'
 import { createIsomorphicFn } from '@tanstack/solid-start'
@@ -50,6 +50,11 @@ function RootDocument(props: ParentProps) {
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
 				<meta name="color-scheme" content="light dark" />
 				<title>Optimal Care Pathways</title>
+				{/* The masthead's spine glyph as the tab icon: the SVG where it is understood,
+				    a 32 px PNG elsewhere, and the touch icon for a home screen. */}
+				<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+				<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+				<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 				{/* The reader's ground (paper, night) before first paint: no flash. */}
 				<script innerHTML={themeBootScript()} />
 				<link rel="stylesheet" href={appCss} />

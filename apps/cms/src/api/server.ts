@@ -11,8 +11,8 @@
 import { registerMcpTools, registerRest } from '@aicolab/app-kit/api'
 import {
 	createMcpHandler,
-	McpServer,
 	type McpHttpHandler,
+	McpServer,
 	ResourceTemplate,
 } from '@modelcontextprotocol/server'
 import { Hono } from 'hono'
@@ -72,6 +72,10 @@ export function createApiApp(): Hono<Bindings> {
 			url: guide
 				? `${documentUrl(ctx.origin, v.slug)}/quick-reference-guide`
 				: documentUrl(ctx.origin, v.slug),
+			// Printed as PRINT media: the page's print rules (routes/print.css) leave the
+			// app's chrome — the masthead, the rails — off the paper. Rendered as screen
+			// media, the PDF carried the masthead on its first page.
+			emulateMediaType: 'print',
 			pdfOptions: {
 				format: 'a4',
 				printBackground: true,

@@ -151,3 +151,12 @@
 		}
 	}
 }
+
+/* On paper there is no masthead: the PDF of a published page is printed as print media.
+   The class is doubled to outweigh the scoped `:scope { display: flex }` above, which
+   has the same specificity as routes/print.css's rule and is loaded after it. */
+@media print {
+	.ocp-mast.ocp-mast {
+		display: none;
+	}
+}

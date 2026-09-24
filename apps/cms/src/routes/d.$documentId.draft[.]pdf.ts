@@ -8,8 +8,8 @@
 
 import { createFileRoute } from '@tanstack/solid-router'
 import { previewHref } from '#/lib/links.ts'
-import { lifecycleOf } from '#/server/lifecycle-env.ts'
 import { documentOf, LifecycleRefusal, roleOn } from '#/server/lifecycle.ts'
+import { lifecycleOf } from '#/server/lifecycle-env.ts'
 
 const plain = (status: number, text: string) =>
 	new Response(text, {
@@ -57,6 +57,8 @@ const serve = async ({
 		rendered = await env.BROWSER.quickAction('pdf', {
 			url: `${origin}${previewHref(document.id)}?print=true`,
 			cookies: cookiesFor(cookie, origin),
+			// Print media, as the published PDF is printed: the print rules apply.
+			emulateMediaType: 'print',
 			pdfOptions: {
 				format: 'a4',
 				printBackground: true,
