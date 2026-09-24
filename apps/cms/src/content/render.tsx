@@ -113,6 +113,11 @@ function Block(props: { node: JsonNode }) {
 			</Match>
 			<Match when={props.node.type === 'table'}>
 				<table>
+					<colgroup>
+						<For each={columnWidths(props.node)}>
+							{(width) => <col style={width ? { width: `${width}px` } : undefined} />}
+						</For>
+					</colgroup>
 					<tbody>
 						<For each={children()}>
 							{(row) => (
@@ -222,6 +227,22 @@ function ListBlock(props: { node: JsonNode }) {
 			</div>
 		</div>
 	)
+}
+
+/** The widths a table's columns were dragged to in the editor (prosemirror-tables'
+ *  `colwidth`, in px, on the first row's cells), or null for a column that keeps its
+ *  share of the table. */
+export function columnWidths(table: JsonNode): (number | null)[] {
+	const out: (number | null)[] = []
+	for (const cell of table.content?.[0]?.content ?? []) {
+		const span = num(cell.attrs?.colspan) ?? 1
+		const widths = cell.attrs?.colwidth
+		for (let i = 0; i < span; i++) {
+			const width = Array.isArray(widths) ? widths[i] : null
+			out.push(typeof width === 'number' && width > 0 ? width : null)
+		}
+	}
+	return out
 }
 
 function Cell(props: { node: JsonNode }) {

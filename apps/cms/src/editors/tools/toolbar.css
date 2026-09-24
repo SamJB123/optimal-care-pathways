@@ -189,6 +189,13 @@
 		font-weight: 600;
 	}
 
+	.ocp-tool-check {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.9em;
+	}
+
 	.ocp-tool-form {
 		display: grid;
 		gap: 0.6rem;

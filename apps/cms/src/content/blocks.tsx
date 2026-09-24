@@ -448,6 +448,14 @@ export function TimeframeSnapshotBlock() {
 			{...colorTreatmentData({ colorBase: 'error', variant: 'outline' })}
 		>
 			<table class="ocp-snapshot">
+				{/* The step and care-point columns keep a width of their own (blocks.css); the
+				    statements take the rest. Under automatic layout the long statements squeezed
+				    the first two columns to a word's width. */}
+				<colgroup>
+					<col class="ocp-snapshot-step" />
+					<col class="ocp-snapshot-point" />
+					<col />
+				</colgroup>
 				<caption>
 					{rows().length > 0
 						? 'Snapshot of optimal timeframes — generated from the timeframe boxes of this document.'

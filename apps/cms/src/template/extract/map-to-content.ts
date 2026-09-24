@@ -25,6 +25,7 @@
 
 import type { ColorFamily, JsonMark, JsonNode } from '#/content/schema.ts'
 import type { Ownership } from '#/db/schema.ts'
+import { addressSegment } from '../../lib/outline.ts'
 import type { DocumentRow, ReferenceRow, SectionRow, SeedResult, TemplateRow } from '../rows.ts'
 import { figureUrl, type TemplateInfo } from '../templates.ts'
 import {
@@ -45,7 +46,6 @@ import type {
 	TableRow,
 	TextRun,
 } from './model.ts'
-import { addressSegment } from '../../lib/outline.ts'
 import { plainText } from './model.ts'
 
 export interface MapInput {
@@ -838,6 +838,11 @@ function tableNode(rows: ClassifiedRow[], g: Grammar, mode: 'box' | 'real' = 'bo
 				)
 				const header = cell.header && cell.background !== null && luminance(cell.background) < 0.97
 				const background = cell.background ? familyOf(cell.background) : null
+				// A cell that holds only the template's prompt (a key table's right-hand cell)
+				// gets a line to write on after it: in a pathway the prompt leaves for the
+				// margin, and without the line the cell has no place for the caret and no
+				// height of its own.
+				const promptOnly = blocks.length > 0 && blocks.every((b) => b.type === 'guidance')
 				return {
 					type: header ? 'tableHeaderCell' : 'tableCell',
 					attrs: {
@@ -845,7 +850,7 @@ function tableNode(rows: ClassifiedRow[], g: Grammar, mode: 'box' | 'real' = 'bo
 						rowspan: cell.rowSpan,
 						...(background ? { background } : {}),
 					},
-					content: blocks.length > 0 ? blocks : [{ type: 'paragraph' }],
+					content: blocks.length === 0 || promptOnly ? [...blocks, { type: 'paragraph' }] : blocks,
 				}
 			}),
 		})),

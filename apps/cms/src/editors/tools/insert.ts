@@ -63,16 +63,24 @@ export const twoColumns = (): JsonNode[] => [
 	},
 ]
 
-/** A table of `columns` columns: a header row, then `rows` body rows. */
-export const table = (rows = 2, columns = 3): JsonNode[] => {
+/** A table of `columns` columns: a header row (unless asked without), then `rows` body
+ *  rows. Rows and columns are clamped to something a page can hold. */
+export const table = (rows = 2, columns = 3, header = true): JsonNode[] => {
+	const count = (n: number, max: number) => Math.min(max, Math.max(1, Math.floor(n) || 1))
 	const row = (cell: 'tableHeaderCell' | 'tableCell'): JsonNode => ({
 		type: 'tableRow',
-		content: Array.from({ length: columns }, () => ({ type: cell, content: [paragraph()] })),
+		content: Array.from({ length: count(columns, 12) }, () => ({
+			type: cell,
+			content: [paragraph()],
+		})),
 	})
 	return [
 		{
 			type: 'table',
-			content: [row('tableHeaderCell'), ...Array.from({ length: rows }, () => row('tableCell'))],
+			content: [
+				...(header ? [row('tableHeaderCell')] : []),
+				...Array.from({ length: count(rows, 50) }, () => row('tableCell')),
+			],
 		},
 	]
 }

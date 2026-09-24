@@ -13,9 +13,9 @@ import './toolbar.css'
 
 import { EditorToolbar } from '@aicolab/ui-solid/prosekit-solid'
 import type { JSX } from '@solidjs/web'
-import { createMemo, createSignal, onSettled, Show, useContext } from 'solid-js'
+import { createMemo, createSignal, For, onSettled, Show, useContext } from 'solid-js'
 import { setSlashOpener } from '#/editors/SectionView.tsx'
-import { DocumentContext, sectionLabel } from '#/lifecycle/workspace.ts'
+import { DocumentContext, sectionLabel, type TableAction } from '#/lifecycle/workspace.ts'
 import { CitePopover } from './CitePopover.tsx'
 import { InsertMenu } from './InsertMenu.tsx'
 import { LinkPopover, type LinkTab } from './LinkPopover.tsx'
@@ -45,6 +45,21 @@ export function StageToolbar() {
 		c.canUndo()
 		return c.inCheckList() ? { pointOfCare: c.checkListPointOfCare() } : null
 	})
+	const inTable = createMemo(() => {
+		const c = control()
+		if (!c) return false
+		c.canUndo()
+		return c.inTable()
+	})
+	const tableTools: readonly { action: TableAction; label: string; title: string }[] = [
+		{ action: 'rowAbove', label: 'Row above', title: 'Add a row above the caret’s' },
+		{ action: 'rowBelow', label: 'Row below', title: 'Add a row below the caret’s' },
+		{ action: 'columnBefore', label: 'Column before', title: 'Add a column before the caret’s' },
+		{ action: 'columnAfter', label: 'Column after', title: 'Add a column after the caret’s' },
+		{ action: 'deleteRow', label: 'Remove row', title: 'Remove the caret’s row' },
+		{ action: 'deleteColumn', label: 'Remove column', title: 'Remove the caret’s column' },
+		{ action: 'deleteTable', label: 'Remove table', title: 'Remove the whole table' },
+	]
 
 	const insert = createToolPopover()
 	const cite = createToolPopover()
@@ -148,6 +163,21 @@ export function StageToolbar() {
 							/>
 						</>
 					)}
+				</Show>
+				{/* With the caret in a table: rows and columns come and go from here. Columns are
+				    resized by dragging their edges in the table itself (section.css). */}
+				<Show when={inTable()}>
+					<span class="aic-prosekit-toolbar-separator" aria-hidden="true" />
+					<For each={tableTools}>
+						{(tool) => (
+							<ToolButton
+								label={tool.label}
+								title={tool.title}
+								disabled={!canEdit()}
+								onPress={() => control()?.tableAction(tool.action)}
+							/>
+						)}
+					</For>
 				</Show>
 				<span class="aic-prosekit-toolbar-separator" aria-hidden="true" />
 				<ToolButton

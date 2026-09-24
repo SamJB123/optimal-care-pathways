@@ -357,6 +357,20 @@ export default function SectionEditor(props: {
 			const { from, to } = editor.view.state.selection
 			return editor.view.state.doc.textBetween(from, to, ' ')
 		},
+		inTable: () => editor.nodes.table.isActive(),
+		tableAction(action) {
+			const run = {
+				rowAbove: editor.commands.addTableRowAbove,
+				rowBelow: editor.commands.addTableRowBelow,
+				columnBefore: editor.commands.addTableColumnBefore,
+				columnAfter: editor.commands.addTableColumnAfter,
+				deleteRow: editor.commands.deleteTableRow,
+				deleteColumn: editor.commands.deleteTableColumn,
+				deleteTable: editor.commands.deleteTable,
+			}[action]
+			run()
+			editor.focus()
+		},
 	}
 
 	let host!: HTMLDivElement

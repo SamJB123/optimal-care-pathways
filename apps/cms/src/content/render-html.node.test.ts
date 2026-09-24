@@ -52,6 +52,28 @@ describe('renderBodyHtml', () => {
 		expect(html).toContain('data-list-kind="check"')
 		expect(html).toContain('Signs and symptoms')
 	})
+
+	it('carries a table’s dragged column widths as a colgroup', () => {
+		const cell = (text: string, colwidth: number[] | null): JsonNode => ({
+			type: 'tableCell',
+			attrs: { colspan: 1, rowspan: 1, colwidth },
+			content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
+		})
+		const table: JsonNode = {
+			type: 'doc',
+			content: [
+				{
+					type: 'table',
+					content: [
+						{ type: 'tableRow', content: [cell('Label', [160]), cell('Value', null)] },
+						{ type: 'tableRow', content: [cell('A', null), cell('B', null)] },
+					],
+				},
+			],
+		}
+		const html = renderBodyHtml(table, derived)
+		expect(html).toMatch(/<colgroup><col style="width:\s*160px"><col[^>]*><\/colgroup>/)
+	})
 })
 
 describe('bodyToMarkdown', () => {

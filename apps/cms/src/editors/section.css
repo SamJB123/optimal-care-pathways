@@ -147,19 +147,54 @@ sup[data-ocp="citation"]::before {
 	border-radius: 0.3em;
 }
 
+/* Fixed layout: a column's width is its share of the table, or the width it was dragged
+   to (prosemirror-tables' colwidth, carried as a colgroup in the editor and in the
+   read-only view), never what its longest word demands. The editor wraps a table in a
+   scrolling box for a table wider than the column. */
+.ocp-body .tableWrapper {
+	overflow-x: auto;
+}
+
 .ocp-body table {
 	border-collapse: collapse;
 	width: 100%;
+	table-layout: fixed;
 	margin: 0.8em 0;
 	font-size: 0.95em;
 }
 
 .ocp-body th,
 .ocp-body td {
+	position: relative;
 	border: 1px solid var(--color-border-strong);
 	padding: 0.35em 0.6em;
 	vertical-align: top;
 	text-align: left;
+}
+
+/* Column resizing, which ProseKit's table extension switches on: the handle on a column's
+   edge while the pointer rests there, the cursor while it drags; and cells selected across
+   (shift-click, a drag across cells) washed in the document's colour. */
+.ocp-section-editor .column-resize-handle {
+	position: absolute;
+	inset-block: 0;
+	inset-inline-end: -2px;
+	inline-size: 4px;
+	background: var(--family, var(--color-primary));
+	pointer-events: none;
+	z-index: 2;
+}
+
+.ocp-section-editor .aic-prosekit-editor.resize-cursor {
+	cursor: col-resize;
+}
+
+.ocp-section-editor .selectedCell::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: color-mix(in oklab, var(--family, var(--color-primary)) 15%, transparent);
+	pointer-events: none;
 }
 
 .ocp-body th {

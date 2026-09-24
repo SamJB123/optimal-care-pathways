@@ -49,6 +49,18 @@ describe('insert builders', () => {
 		expect(tableNode?.lastChild?.firstChild?.type.name).toBe('tableCell')
 	})
 
+	it('builds a table without a header row when asked, and clamps a wild size', () => {
+		const [plain] = insert.table(4, 2, false)
+		const parsed = parseBody(asBody([plain ?? { type: 'paragraph' }]))
+		expect(parsed.firstChild?.childCount).toBe(4)
+		expect(parsed.firstChild?.firstChild?.firstChild?.type.name).toBe('tableCell')
+		expect(parsed.firstChild?.firstChild?.childCount).toBe(2)
+		const [huge] = insert.table(999, 0)
+		const clamped = parseBody(asBody([huge ?? { type: 'paragraph' }]))
+		expect(clamped.firstChild?.childCount).toBe(51)
+		expect(clamped.firstChild?.firstChild?.childCount).toBe(1)
+	})
+
 	it('makes a check item that is not yet marked for the guide', () => {
 		const parsed = parseBody(asBody(insert.checkItem()))
 		expect(parsed.firstChild?.attrs.kind).toBe('check')

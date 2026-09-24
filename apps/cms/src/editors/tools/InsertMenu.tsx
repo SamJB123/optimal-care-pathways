@@ -27,6 +27,7 @@ type Action =
 	| { kind: 'nodes'; nodes: () => JsonNode[] }
 	| { kind: 'footnote' }
 	| { kind: 'image' }
+	| { kind: 'table' }
 	| { kind: 'crossReference' }
 
 interface InsertItem {
@@ -84,9 +85,9 @@ const ITEMS: readonly InsertItem[] = [
 	{
 		id: 'table',
 		label: 'Table',
-		description: 'Three columns under a header row.',
-		keywords: 'grid rows cells',
-		action: { kind: 'nodes', nodes: () => build.table() },
+		description: 'As many rows and columns as you ask for, with or without a header row.',
+		keywords: 'grid rows cells columns',
+		action: { kind: 'table' },
 	},
 	{
 		id: 'quote',
@@ -153,7 +154,7 @@ export function InsertMenu(props: {
 	onCrossReference: () => void
 }) {
 	const listId = `ocp-insert-${createUniqueId()}`
-	const [view, setView] = createSignal<'list' | 'footnote' | 'image'>('list')
+	const [view, setView] = createSignal<'list' | 'footnote' | 'image' | 'table'>('list')
 	const [query, setQuery] = createSignal('')
 	const [cursor, setCursor] = createSignal(0)
 	const matches = createMemo(() => filtered(query()))
@@ -254,8 +255,68 @@ export function InsertMenu(props: {
 						onBack={() => setView('list')}
 					/>
 				</Match>
+				<Match when={view() === 'table'}>
+					<TableForm
+						onInsert={(rows, columns, header) => put(build.table(rows, columns, header))}
+						onBack={() => setView('list')}
+					/>
+				</Match>
 			</Switch>
 		</div>
+	)
+}
+
+function TableForm(props: {
+	onInsert: (rows: number, columns: number, header: boolean) => void
+	onBack: () => void
+}) {
+	const [rows, setRows] = createSignal(2)
+	const [columns, setColumns] = createSignal(3)
+	const [header, setHeader] = createSignal(true)
+	const submit = (event: SubmitEvent) => {
+		event.preventDefault()
+		props.onInsert(rows(), columns(), header())
+	}
+	return (
+		<form class="ocp-tool-form" onSubmit={submit}>
+			<p class="ocp-tool-heading">Table</p>
+			<Field
+				label="Rows"
+				hint="Body rows, not counting the header row. Rows and columns can be added and removed later from the toolbar."
+			>
+				<TextInput
+					type="number"
+					min={1}
+					max={50}
+					value={String(rows())}
+					ref={focusSoon}
+					onInput={(event) => setRows(Number(event.currentTarget.value))}
+				/>
+			</Field>
+			<Field label="Columns" hint="Up to twelve; drag a column’s edge in the table to resize it.">
+				<TextInput
+					type="number"
+					min={1}
+					max={12}
+					value={String(columns())}
+					onInput={(event) => setColumns(Number(event.currentTarget.value))}
+				/>
+			</Field>
+			<label class="ocp-tool-check">
+				<input
+					type="checkbox"
+					checked={header()}
+					onChange={(event) => setHeader(event.currentTarget.checked)}
+				/>{' '}
+				With a header row
+			</label>
+			<div class="ocp-tool-actions">
+				<Button type="button" variant="ghost" colorBase="neutral" onClick={() => props.onBack()}>
+					Back
+				</Button>
+				<Button type="submit">Insert table</Button>
+			</div>
+		</form>
 	)
 }
 

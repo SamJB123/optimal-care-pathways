@@ -329,6 +329,18 @@
 	font-size: 0.95em;
 }
 
+.ocp-body table.ocp-snapshot {
+	table-layout: fixed;
+}
+
+.ocp-body table.ocp-snapshot col.ocp-snapshot-step {
+	width: 6.5em;
+}
+
+.ocp-body table.ocp-snapshot col.ocp-snapshot-point {
+	width: 12em;
+}
+
 .ocp-body table.ocp-snapshot caption {
 	caption-side: top;
 	text-align: left;

@@ -24,6 +24,16 @@ export type DiffView = 'marks' | 'clean'
 /** Review mode reads the changed sections only, or the whole text with them marked. */
 export type ReviewScope = 'changed' | 'everything'
 
+/** What the toolbar can do to the table the caret is in. */
+export type TableAction =
+	| 'rowAbove'
+	| 'rowBelow'
+	| 'columnBefore'
+	| 'columnAfter'
+	| 'deleteRow'
+	| 'deleteColumn'
+	| 'deleteTable'
+
 /** One live section editor, as the page's single toolbar and the margin drive it. */
 export interface EditorControl {
 	sectionId: string
@@ -48,6 +58,9 @@ export interface EditorControl {
 	toggleCheckListPointOfCare(): void
 	/** The selected text, for a link's default wording. */
 	selectedText(): string
+	/** Whether the caret sits in a table, and the table edits the toolbar offers there. */
+	inTable(): boolean
+	tableAction(action: TableAction): void
 }
 
 /** One change since the published version, placed in the document. */
