@@ -194,19 +194,34 @@ function defineCellFloor() {
 				if (!transactions.some((tr) => tr.docChanged)) return null
 				const paragraph = state.schema.nodes.paragraph
 				if (!paragraph) return null
-				const ends: number[] = []
+				// Two drafts of the same old cell, each given its line at once, merge into a cell
+				// with two blank lines: a cell whose own lines are all blank keeps exactly one,
+				// so every copy settles on the same shape.
+				const inserts: number[] = []
+				const removals: { from: number; to: number }[] = []
 				state.doc.descendants((node, pos) => {
 					if (node.type.name !== 'tableCell' && node.type.name !== 'tableHeaderCell') return true
-					let writable = false
-					node.forEach((child) => {
-						if (child.type.name !== 'guidance') writable = true
+					const own: { from: number; to: number; blank: boolean }[] = []
+					node.forEach((child, offset) => {
+						if (child.type.name === 'guidance') return
+						const from = pos + 1 + offset
+						own.push({
+							from,
+							to: from + child.nodeSize,
+							blank: child.type === paragraph && child.content.size === 0,
+						})
 					})
-					if (!writable) ends.push(pos + node.nodeSize - 1)
+					if (own.length === 0) inserts.push(pos + node.nodeSize - 1)
+					else if (own.length > 1 && own.every((line) => line.blank)) removals.push(...own.slice(1))
 					return false
 				})
-				if (ends.length === 0) return null
+				if (inserts.length === 0 && removals.length === 0) return null
 				const tr = state.tr
-				for (const end of ends.reverse()) tr.insert(end, paragraph.create())
+				const edits = [
+					...inserts.map((at) => ({ at, run: () => tr.insert(at, paragraph.create()) })),
+					...removals.map((r) => ({ at: r.from, run: () => tr.delete(r.from, r.to) })),
+				].sort((a, b) => b.at - a.at)
+				for (const edit of edits) edit.run()
 				return tr
 			},
 		}),
