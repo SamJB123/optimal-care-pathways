@@ -185,8 +185,7 @@ function defineJoinedCitations() {
 /** A table cell always has a line to write on. A cell whose blocks are all guidance (the
  *  template's prompt for that cell, which a pathway shows in the margin and not in the
  *  text) has no place for a caret: a click in it lands nowhere. An empty paragraph goes
- *  after the guidance — what the template seed writes now, applied here to every draft
- *  written before it did, the moment the draft loads. */
+ *  after the guidance — what the seed writes; this covers a draft written before it did. */
 function defineCellFloor() {
 	return definePlugin(
 		new Plugin({
@@ -194,34 +193,19 @@ function defineCellFloor() {
 				if (!transactions.some((tr) => tr.docChanged)) return null
 				const paragraph = state.schema.nodes.paragraph
 				if (!paragraph) return null
-				// Two drafts of the same old cell, each given its line at once, merge into a cell
-				// with two blank lines: a cell whose own lines are all blank keeps exactly one,
-				// so every copy settles on the same shape.
-				const inserts: number[] = []
-				const removals: { from: number; to: number }[] = []
+				const ends: number[] = []
 				state.doc.descendants((node, pos) => {
 					if (node.type.name !== 'tableCell' && node.type.name !== 'tableHeaderCell') return true
-					const own: { from: number; to: number; blank: boolean }[] = []
-					node.forEach((child, offset) => {
-						if (child.type.name === 'guidance') return
-						const from = pos + 1 + offset
-						own.push({
-							from,
-							to: from + child.nodeSize,
-							blank: child.type === paragraph && child.content.size === 0,
-						})
+					let writable = false
+					node.forEach((child) => {
+						if (child.type.name !== 'guidance') writable = true
 					})
-					if (own.length === 0) inserts.push(pos + node.nodeSize - 1)
-					else if (own.length > 1 && own.every((line) => line.blank)) removals.push(...own.slice(1))
+					if (!writable) ends.push(pos + node.nodeSize - 1)
 					return false
 				})
-				if (inserts.length === 0 && removals.length === 0) return null
+				if (ends.length === 0) return null
 				const tr = state.tr
-				const edits = [
-					...inserts.map((at) => ({ at, run: () => tr.insert(at, paragraph.create()) })),
-					...removals.map((r) => ({ at: r.from, run: () => tr.delete(r.from, r.to) })),
-				].sort((a, b) => b.at - a.at)
-				for (const edit of edits) edit.run()
+				for (const end of ends.reverse()) tr.insert(end, paragraph.create())
 				return tr
 			},
 		}),
