@@ -17,7 +17,7 @@
  */
 
 import { Button, withScopedViewTransition } from '@aicolab/ui-solid'
-import { createMemo, createSignal, For, onSettled, Show } from 'solid-js'
+import { createEffect, createMemo, createSignal, For, onSettled, Show } from 'solid-js'
 import { familyStyle } from '#/lib/family.ts'
 import { ago, monthDate } from '#/lib/labels.ts'
 import {
@@ -28,6 +28,7 @@ import {
 	sectionHref,
 	workspaceHref,
 } from '#/lib/links.ts'
+import { documentsClient } from '#/lib/ocp-client.ts'
 import { bandFrom, bandLabel, type SpineBand } from '#/lib/outline.ts'
 import {
 	type AtlasCellSection,
@@ -119,6 +120,27 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 	})
 	// Relative times read against the server's clock until the page is live.
 	const clock = () => now() || props.snapshot.now
+
+	// Who has a document open follows the documents topic live: a room announces its
+	// roster on it as people come and go. The rest of a row is the loader's, as of the
+	// page load. Client-only by construction (effects never run during SSR); the documents
+	// client is a page-lifetime singleton, so this only subscribes and unsubscribes.
+	const [livePresent, setLivePresent] = createSignal<Map<string, AtlasRow['present']> | null>(null)
+	createEffect(
+		() => props.snapshot,
+		() => {
+			const client = documentsClient()
+			const read = () => {
+				if (!client.ready()) return
+				setLivePresent(new Map([...client.documents.values()].map((r) => [r.id, r.present])))
+			}
+			read()
+			const subscription = client.documents.subscribeChanges(read)
+			return () => subscription.unsubscribe()
+		},
+	)
+	const presentOf = (row: AtlasRow): AtlasRow['present'] =>
+		livePresent()?.get(row.id) ?? row.present
 
 	const visible = createMemo(() => {
 		const q = query().trim().toLowerCase()
@@ -353,12 +375,14 @@ export function Atlas(props: { snapshot: AtlasSnapshot; onNew?: () => void }) {
 												>
 													{row.name}
 												</a>
-												<Show when={row.present.length > 0}>
+												<Show when={presentOf(row).length > 0}>
 													<span
 														class="ocp-atlas-here"
 														role="img"
-														title={`Open now: ${row.present.map((p) => p.name || 'someone').join(', ')}`}
-														aria-label={`${row.present.length} ${row.present.length === 1 ? 'person has' : 'people have'} it open`}
+														title={`Open now: ${presentOf(row)
+															.map((p) => p.name || 'someone')
+															.join(', ')}`}
+														aria-label={`${presentOf(row).length} ${presentOf(row).length === 1 ? 'person has' : 'people have'} it open`}
 													/>
 												</Show>
 											</span>

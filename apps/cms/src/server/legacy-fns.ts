@@ -20,6 +20,7 @@ import { bodyToMarkdown } from '#/content/markdown.ts'
 import { renderBodyHtml } from '#/content/render-html.tsx'
 import type { JsonNode } from '#/content/schema.ts'
 import { schema } from '#/db/index.ts'
+import { publishDocumentRows } from '#/lib/live-publish.ts'
 import { OCP_NAMESPACE, organisationNameOf } from '#/lib/roles.ts'
 import { documentRoleOf, isCentralMember } from './access.ts'
 import { envOf, requireUser } from './env.ts'
@@ -318,6 +319,9 @@ export const finaliseLegacyImports = createServerFn({ method: 'POST' }).handler(
 			await indexPublishedVersion(d, v.documentId, v.versionId, rows)
 			indexedNow++
 		}
+		// A seed rewrites document rows behind the live topics (a reseed clears each room's
+		// announced roster, for one): every open atlas takes the rows as they now stand.
+		void publishDocumentRows(await d.select().from(schema.documents))
 		// Documents whose organisation now exists but whose published version was rendered
 		// earlier are reported too, so the caller sees the whole state.
 		const stillPending = await d
