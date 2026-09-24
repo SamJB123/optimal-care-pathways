@@ -188,6 +188,16 @@ function mcidOf(props: unknown, pageObjId: string): string | null {
 	return null
 }
 
+/** A link annotation's address as a page can follow it. Some prints link to "www.…" with
+ *  no scheme, which a browser reads as a path on the site showing it: they are web
+ *  addresses, so they take https. Anything with a scheme (https, mailto) is kept. */
+export function absoluteUrl(url: string): string {
+	const trimmed = url.trim()
+	if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return trimmed
+	if (/^(www\.|[a-z0-9-]+(\.[a-z0-9-]+)+(\/|$))/i.test(trimmed)) return `https://${trimmed}`
+	return trimmed
+}
+
 /** One field of an object pdf.js hands back untyped (a font, an annotation), read as
  *  unknown for the caller to check. */
 function field(value: unknown, key: string): unknown {
@@ -671,7 +681,7 @@ export async function readPage(doc: PDFDocumentProxy, pageNumber: number): Promi
 		}
 		const url = field(annotation, 'url')
 		const dest = field(annotation, 'dest')
-		if (typeof url === 'string') link.url = url
+		if (typeof url === 'string') link.url = absoluteUrl(url)
 		else if (dest !== undefined && dest !== null) link.dest = JSON.stringify(dest)
 		links.push(link)
 		linksById.set(link.id, link)

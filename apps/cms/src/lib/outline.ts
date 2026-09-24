@@ -5,6 +5,15 @@
  * published page's step index all draw. Pure; server and client alike.
  */
 
+/** An address segment ("appendix-e-members-of-the-…") held to 64 characters, cut at the
+ *  last whole word ("…-for-older-people", never "…-for-older-peopl"). The templates' and
+ *  the imports' addresses both end this way; each makes its own segment first. */
+export function addressSegment(slug: string): string {
+	if (slug.length <= 64) return slug || 'section'
+	const lastBreak = slug.slice(0, 65).lastIndexOf('-')
+	return (lastBreak > 0 ? slug.slice(0, lastBreak) : slug.slice(0, 64)) || 'section'
+}
+
 export interface OutlineRow {
 	id: string
 	parentId: string | null

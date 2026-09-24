@@ -37,8 +37,9 @@ applies here unchanged; this ledger records only what is specific to Attachment 
   boxes, "Population-based actions" checklists, and Find out more boxes whose entries are
   `<Optional>` guidance (`structure`, resolved: banner-first boxes, guidance-only boxes,
   Find out more boxes with guidance rows). The address of the parent section is the slug
-  cap of "Population-based considerations for the Principles for Optimal Cancer Care"
-  (`principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c`);
+  cap of "Population-based considerations for the Principles for Optimal Cancer Care", cut
+  at its last whole word within 64 characters
+  (`principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal`);
   the printed heading is kept whole in `title` (`semantics`, accepted).
 - **p.14 → Steps of the Optimal Care Pathway**: the schematic figure is replaced by the
   `pathwayMap` node (decision 63); the map is drawn from the document's steps at render.
@@ -47,8 +48,9 @@ applies here unchanged; this ledger records only what is specific to Attachment 
 - **Steps 1–7 (pp.17–66)**: per-step "Supportive care" sections (`<step>/supportive-care`)
   carry the considerations / checklist / communication boxes; timeframe rows (8) read as
   `timeframe` nodes with a `carePoint`. Numbering gap 4.7 → 4.10 is printed (4.8 and 4.9
-  do not exist in this template) and kept as printed (decision 45: recorded, not
-  renumbered, since cross-references elsewhere use the printed numbers).
+  do not exist in this template) and kept as printed. Decision 45 asks for obvious printed
+  errors to be normalised and recorded; this gap is left alone because the template's own
+  cross-references use the printed numbers, and that exception is recorded here.
 - **p.80 → Find out more, Palliative care**: a resource description broken over a page
   ("… one set for specialist services and one for all health" / "professionals and aged
   care services <hyperlink to …>") is one entry again: plain paragraphs continue the

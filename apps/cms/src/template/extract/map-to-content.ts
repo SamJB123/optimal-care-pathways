@@ -45,6 +45,7 @@ import type {
 	TableRow,
 	TextRun,
 } from './model.ts'
+import { addressSegment } from '../../lib/outline.ts'
 import { plainText } from './model.ts'
 
 export interface MapInput {
@@ -1666,13 +1667,17 @@ function tileColumns(rows: TableRow[], g: Grammar): JsonNode[] | null {
 // Sections
 // ---------------------------------------------------------------------------
 
-const slugify = (value: string): string =>
-	value
-		.toLowerCase()
-		.replace(/\[[^\]]*\]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 64) || 'section'
+/** A template heading as the address segment the template gives it. Exported so a rule
+ *  that names a template section (the legacy import's tables) makes the address the same
+ *  way, never types a copy of it. */
+export const templateAddressSegment = (value: string): string =>
+	addressSegment(
+		value
+			.toLowerCase()
+			.replace(/\[[^\]]*\]/g, '')
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, ''),
+	)
 
 /** The template's family colour: the commonest non-white colour its top two heading levels
  *  are printed in (every 2026 template sets them in Cancer Australia's navy). */
@@ -1732,7 +1737,7 @@ function placeSections(model: ExtractedDocument): Placed[] {
 			let canonical = false
 			let stepNumber: number | null = parent?.stepNumber ?? null
 			if (step && parent === null) {
-				address = step[1] ?? slugify(section.headingText)
+				address = step[1] ?? templateAddressSegment(section.headingText)
 				canonical = true
 				stepNumber = Number(step[1])
 			} else if (numbered && rootIsStep) {
@@ -1740,7 +1745,7 @@ function placeSections(model: ExtractedDocument): Placed[] {
 				canonical = true
 				stepNumber = Number(numbered.split('.')[0])
 			} else {
-				const slug = slugify(
+				const slug = templateAddressSegment(
 					section.headingText.replace(
 						/^Step \d+:?\s*/i,
 						(m) => `${m.trim().replace(/:$/, '').toLowerCase()} `,

@@ -3,7 +3,7 @@
  * partner site can take either. The template's blocks become the nearest Markdown
  * structure a reader would write by hand: a banner is a bold line, a box a blockquote
  * headed by its banner, a timeframe a blockquote headed by its care point, resources a
- * list of links, check items task-list items, citations footnote references numbered
+ * list of links, check items list items marked ✓ (✗ for what not to do), citations footnote references numbered
  * as the published document numbers them. Drafting guidance is not published and does
  * not appear.
  */
@@ -149,9 +149,11 @@ function listItem(node: JsonNode, derived: DerivedView): string {
 		kind === 'ordered'
 			? `${typeof node.attrs?.order === 'number' ? node.attrs.order : 1}.`
 			: kind === 'check'
-				? node.attrs?.negated === true
-					? '- [ ] ✗'
-					: '- [x]'
+				? // The template's action rows, printed with a tick (or a cross: what not to do).
+					// Not a task list: "- [x]" would read as done, "- [ ]" as still to do.
+					node.attrs?.negated === true
+					? '- ✗'
+					: '- ✓'
 				: '-'
 	const head = first ? block(first, derived) : ''
 	const tail = rest.map((child) => indent(block(child, derived), '  ')).join('\n')

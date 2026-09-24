@@ -59,7 +59,9 @@ describe('bodyToMarkdown', () => {
 		const md = bodyToMarkdown(body, derived)
 		expect(md).toContain('**Signs and symptoms**')
 		expect(md).toContain('Refer people with **breast cancer** promptly.[^1]')
-		expect(md).toContain('- [x] Screen for distress')
+		// An action row, not a task: never "[x]" (done) or "[ ]" (to do).
+		expect(md).toContain('- ✓ Screen for distress')
+		expect(md).not.toMatch(/- \[[ x]\]/)
 		expect(md).toContain('[eviQ](https://www.eviq.org.au) — Protocols.')
 	})
 })
