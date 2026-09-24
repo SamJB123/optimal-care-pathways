@@ -209,7 +209,7 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-3/treatment-planning/members-of-the-multidisciplinary-team-for-oesophagogastric-cance",
+			"legacyKey": "step-3/treatment-planning/members-of-the-multidisciplinary-team-for-oesophagogastric",
 			"legacyTitle": "3.4.4 Members of the multidisciplinary team for oesophagogastric cancer",
 			"destination": "3.5.1",
 			"how": "title"
@@ -1135,7 +1135,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide",
 			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1233,7 +1233,7 @@
 		{
 			"legacyKey": "appendix-e",
 			"legacyTitle": "Appendix E: Members of the multidisciplinary team for oesophagogastric cancer",
-			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-oesophagoga",
+			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for",
 			"how": "proposed"
 		},
 		{
@@ -1453,7 +1453,7 @@
 		]
 	},
 	"checkItems": 40,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1495,7 +1495,7 @@
 			"note": "proposed: the sandbox record moves the legacy Appendix D: Complementary therapies into Find out more; keep, move or remove it"
 		},
 		{
-			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-oesophagoga",
+			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for",
 			"title": "Appendix E: Members of the multidisciplinary team for oesophagogastric cancer",
 			"note": "proposed: the sandbox record moves the legacy Appendix E: Members of the multidisciplinary team for oesophagogastric cancer into Find out more; keep, move or remove it"
 		},

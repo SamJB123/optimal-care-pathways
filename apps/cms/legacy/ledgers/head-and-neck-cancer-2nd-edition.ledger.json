@@ -1112,7 +1112,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide",
 			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1210,7 +1210,7 @@
 		{
 			"legacyKey": "appendix-e",
 			"legacyTitle": "Appendix E: Members of the multidisciplinary team for head and neck cancer",
-			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-head-and-ne",
+			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-head-and",
 			"how": "proposed"
 		},
 		{
@@ -1430,7 +1430,7 @@
 		]
 	},
 	"checkItems": 39,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1472,7 +1472,7 @@
 			"note": "proposed: the sandbox record moves the legacy Appendix D: Complementary therapies into Find out more; keep, move or remove it"
 		},
 		{
-			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-head-and-ne",
+			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-head-and",
 			"title": "Appendix E: Members of the multidisciplinary team for head and neck cancer",
 			"note": "proposed: the sandbox record moves the legacy Appendix E: Members of the multidisciplinary team for head and neck cancer into Find out more; keep, move or remove it"
 		},

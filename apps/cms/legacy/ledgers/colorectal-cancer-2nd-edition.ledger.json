@@ -44,25 +44,25 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-1/risk-factors/summary-of-recommendations-for-risk-and-screening-based-on-famil",
+			"legacyKey": "step-1/risk-factors/summary-of-recommendations-for-risk-and-screening-based-on",
 			"legacyTitle": "Summary of recommendations for risk and screening based on family history",
 			"destination": "1.2.1",
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-1/risk-factors/summary-of-recommendations-for-risk-and-screening-based-on-famil/category-1-near-average-risk",
+			"legacyKey": "step-1/risk-factors/summary-of-recommendations-for-risk-and-screening-based-on/category-1-near-average-risk",
 			"legacyTitle": "Category 1: Near average risk*",
 			"destination": "1.2.1",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-1/risk-factors/summary-of-recommendations-for-risk-and-screening-based-on-famil/category-2-moderately-increased-risk",
+			"legacyKey": "step-1/risk-factors/summary-of-recommendations-for-risk-and-screening-based-on/category-2-moderately-increased-risk",
 			"legacyTitle": "Category 2: Moderately increased risk*",
 			"destination": "1.2.1",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-1/risk-factors/summary-of-recommendations-for-risk-and-screening-based-on-famil/category-3-high-risk",
+			"legacyKey": "step-1/risk-factors/summary-of-recommendations-for-risk-and-screening-based-on/category-3-high-risk",
 			"legacyTitle": "Category 3: High risk*",
 			"destination": "1.2.1",
 			"how": "merged"
@@ -1148,7 +1148,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide",
 			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1246,7 +1246,7 @@
 		{
 			"legacyKey": "appendix-e",
 			"legacyTitle": "Appendix E: Members of the multidisciplinary team for colorectal cancer",
-			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-colorectal-",
+			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-colorectal",
 			"how": "proposed"
 		},
 		{
@@ -1495,7 +1495,7 @@
 		]
 	},
 	"checkItems": 40,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1542,7 +1542,7 @@
 			"note": "proposed: the sandbox record moves the legacy Appendix D: Complementary therapies into Find out more; keep, move or remove it"
 		},
 		{
-			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-colorectal-",
+			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-colorectal",
 			"title": "Appendix E: Members of the multidisciplinary team for colorectal cancer",
 			"note": "proposed: the sandbox record moves the legacy Appendix E: Members of the multidisciplinary team for colorectal cancer into Find out more; keep, move or remove it"
 		},

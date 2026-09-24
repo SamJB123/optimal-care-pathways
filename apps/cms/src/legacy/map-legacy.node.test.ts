@@ -15,8 +15,9 @@ import { type JsonNode, parseBody } from '../content/schema.ts'
 import { mapTemplate } from '../template/extract/map-to-content.ts'
 import type { ExtractedDocument } from '../template/extract/model.ts'
 import { templateByKey } from '../template/templates.ts'
-import { legacyBySlug } from './catalogue.ts'
+import { LEGACY_PATHWAYS, legacyBySlug } from './catalogue.ts'
 import { type LegacyImport, mapLegacy } from './map-legacy.ts'
+import { LEGACY_PLACEMENTS, placementFor, requirePlacement } from './placements.ts'
 
 const appDir = join(import.meta.dirname, '..', '..')
 const read = (path: string): ExtractedDocument =>
@@ -111,13 +112,61 @@ describe.skipIf(!existsSync(join(appDir, modelPath)))(
 			expect(
 				to('step-3/support-and-communication/communication-with-the-general-practitioner'),
 			).toEqual(['diverged:3.6'])
-			// What the template has no slot for is appended under its step and flagged.
+			// What the template has no numbered place for goes where the placements table says:
+			// an unnumbered subsection under a template section (the template's rule: added
+			// headings are non-numbered and sit within a section), flagged for the reviewer.
+			expect(to('step-1/risk-assessment-tools')).toEqual(['table:1.1.1/risk-assessment-tools'])
+			const tools = result.sections.find((s) => s.address === '1.1.1/risk-assessment-tools')
+			expect(tools?.printedNumber).toBeNull()
+			expect(tools?.parentId).toBe(result.sections.find((s) => s.address === '1.1.1')?.id)
+			expect(tools?.migrationNote).toMatch(
+				/^unplaced: printed as 1\.4 under Step 1; placed under 1\.1\.1/,
+			)
 			const unplaced = result.sections.filter((s) => s.migrationNote?.startsWith('unplaced'))
-			expect(unplaced.map((s) => s.address)).toContain('1/risk-assessment-tools')
+			expect(unplaced.map((s) => s.address)).toEqual(['1.1.1/risk-assessment-tools'])
 			for (const s of unplaced) {
 				expect(s.canonical).toBe(false)
 				expect(s.ownership).toBe('owned')
+				expect(s.printedNumber).toBeNull()
 			}
+			// Nothing an added section carries reads as a template number.
+			for (const s of result.sections)
+				if (!s.canonical && s.coreSectionId === null) expect(s.printedNumber).toBeNull()
+		})
+
+		it('refuses an unplaced section the placements table does not know, by name', () => {
+			expect(() => requirePlacement('breast-cancer', '9.9', 'No such heading', 9)).toThrow(
+				/no placement for the legacy section "9\.9 No such heading" of breast-cancer \(Step 9\)/,
+			)
+			expect(placementFor('breast-cancer', '1.4', ' risk  assessment tools ')?.home).toBe('1.1.1')
+		})
+
+		it('names a template section of the right audience in every placements row', () => {
+			const population = mapTemplate({
+				model: read('template/2026/extracted/population-template.model.json'),
+				template: templateByKey('population-template'),
+				orgId: 'central',
+				id: deterministicId,
+			})
+			const addresses = {
+				cancer: new Set(core.sections.map((s) => s.address)),
+				population: new Set(population.sections.map((s) => s.address)),
+			}
+			for (const row of LEGACY_PLACEMENTS) {
+				const entry = LEGACY_PATHWAYS.find((p) => p.pathwaySlug === row.pathway)
+				expect(entry, `${row.pathway} is not a catalogued pathway`).toBeDefined()
+				if (!entry) continue
+				expect(
+					addresses[entry.audience].has(row.home),
+					`${row.pathway}: "${row.title}" → ${row.home} is not a ${entry.audience} template section`,
+				).toBe(true)
+				expect(row.why.length).toBeGreaterThan(20)
+			}
+			// One row per section: no two rows claim the same legacy heading.
+			const keys = LEGACY_PLACEMENTS.map(
+				(r) => `${r.pathway}|${r.printed}|${r.title.toLowerCase()}`,
+			)
+			expect(new Set(keys).size).toBe(keys.length)
 		})
 
 		it('turns timeframe subsections into timeframe boxes and checklists into point-of-care items', () => {

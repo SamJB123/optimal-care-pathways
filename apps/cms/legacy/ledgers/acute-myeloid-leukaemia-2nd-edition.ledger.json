@@ -155,8 +155,9 @@
 		{
 			"legacyKey": "step-3/other-pre-treatment-investigations",
 			"legacyTitle": "3.2 Other pre-treatment investigations",
-			"destination": "3/other-pre-treatment-investigations",
-			"how": "unplaced"
+			"destination": "3.1.2",
+			"how": "table",
+			"note": "printed as 3.2 under Step 3; its text is this section's — Organ function and fitness investigations beyond the diagnostic minimum: the template’s Additional tests."
 		},
 		{
 			"legacyKey": "step-3/performance-status",
@@ -191,7 +192,7 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-3/treatment-planning/members-of-the-multidisciplinary-team-for-acute-myeloid-leukaemi",
+			"legacyKey": "step-3/treatment-planning/members-of-the-multidisciplinary-team-for-acute-myeloid",
 			"legacyTitle": "3.4.4 Members of the multidisciplinary team for acute myeloid leukaemia",
 			"destination": "3.5.1",
 			"how": "title"
@@ -1099,7 +1100,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide",
 			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1203,7 +1204,7 @@
 		{
 			"legacyKey": "appendix-e",
 			"legacyTitle": "Appendix E: Members of the multidisciplinary team for acute myeloid leukaemia",
-			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-acute-myelo",
+			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-acute",
 			"how": "proposed"
 		},
 		{
@@ -1444,7 +1445,7 @@
 		]
 	},
 	"checkItems": 40,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1459,11 +1460,6 @@
 			"address": "3/timeframes",
 			"title": "Timeframes",
 			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
-		},
-		{
-			"address": "3/other-pre-treatment-investigations",
-			"title": "Other pre-treatment investigations",
-			"note": "unplaced: the cancer template has no section for this under Step 3; keep, move or remove it"
 		},
 		{
 			"address": "find-out-more/appendix-a-supportive-care-domains",
@@ -1486,7 +1482,7 @@
 			"note": "proposed: the sandbox record moves the legacy Appendix D: Complementary therapies into Find out more; keep, move or remove it"
 		},
 		{
-			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-acute-myelo",
+			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-acute",
 			"title": "Appendix E: Members of the multidisciplinary team for acute myeloid leukaemia",
 			"note": "proposed: the sandbox record moves the legacy Appendix E: Members of the multidisciplinary team for acute myeloid leukaemia into Find out more; keep, move or remove it"
 		},

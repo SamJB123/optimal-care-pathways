@@ -17,9 +17,9 @@
 	"publicationDate": "2021-10-01",
 	"placements": [
 		{
-			"legacyKey": "pathway-note/scope-of-the-optimal-care-pathway-for-people-with-low-grade-lymp",
+			"legacyKey": "pathway-note/scope-of-the-optimal-care-pathway-for-people-with-low-grade",
 			"legacyTitle": "Scope of the optimal care pathway for people with low-grade lymphomas",
-			"destination": "about-this-cancer/scope-of-the-optimal-care-pathway-for-people-with-low-grade-lymp",
+			"destination": "about-this-cancer/scope-of-the-optimal-care-pathway-for-people-with-low-grade",
 			"how": "proposed"
 		},
 		{
@@ -1165,7 +1165,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-peak-organisations-and-government-representativ",
+			"legacyKey": "contributors/medical-colleges-peak-organisations-and-government",
 			"legacyTitle": "Medical colleges, peak organisations and government representatives",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1263,7 +1263,7 @@
 		{
 			"legacyKey": "appendix-e",
 			"legacyTitle": "Appendix E: Members of the multidisciplinary team for low-grade lymphomas",
-			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-low-grade-l",
+			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-low-grade",
 			"how": "proposed"
 		},
 		{
@@ -1500,7 +1500,7 @@
 		]
 	},
 	"checkItems": 32,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1512,7 +1512,7 @@
 			"note": "proposed: holds the legacy pathway’s opening text; check it is about epidemiology and burden of disease"
 		},
 		{
-			"address": "about-this-cancer/scope-of-the-optimal-care-pathway-for-people-with-low-grade-lymp",
+			"address": "about-this-cancer/scope-of-the-optimal-care-pathway-for-people-with-low-grade",
 			"title": "Scope of the optimal care pathway for people with low-grade lymphomas",
 			"note": "proposed: the legacy pathway’s opening section \"Scope of the optimal care pathway for people with low-grade lymphomas\"; check where it belongs"
 		},
@@ -1562,7 +1562,7 @@
 			"note": "proposed: the sandbox record moves the legacy Appendix D: Complementary therapies into Find out more; keep, move or remove it"
 		},
 		{
-			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-low-grade-l",
+			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-low-grade",
 			"title": "Appendix E: Members of the multidisciplinary team for low-grade lymphomas",
 			"note": "proposed: the sandbox record moves the legacy Appendix E: Members of the multidisciplinary team for low-grade lymphomas into Find out more; keep, move or remove it"
 		},

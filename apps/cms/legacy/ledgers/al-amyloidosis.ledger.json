@@ -452,8 +452,9 @@
 		{
 			"legacyKey": "step-5/transition-from-initial-treatment-from-al-amyloidosis",
 			"legacyTitle": "5.1 Transition from initial treatment from AL amyloidosis",
-			"destination": "5/transition-from-initial-treatment-from-al-amyloidosis",
-			"how": "unplaced"
+			"destination": "5.1",
+			"how": "diverged",
+			"note": "printed as 5.1 under Step 5; its text is this section's — The transition to shared follow-up care: the template’s Transitioning to post-treatment care under an older name."
 		},
 		{
 			"legacyKey": "step-5/follow-up-care",
@@ -1183,7 +1184,7 @@
 		{
 			"legacyKey": "appendix-e",
 			"legacyTitle": "Appendix E: Members of the multidisciplinary team for AL amyloidosis",
-			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-al-amyloido",
+			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-al",
 			"how": "proposed"
 		},
 		{
@@ -1453,7 +1454,7 @@
 		]
 	},
 	"checkItems": 30,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1480,11 +1481,6 @@
 			"note": "proposed: timeframes of Step 4 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "5/transition-from-initial-treatment-from-al-amyloidosis",
-			"title": "Transition from initial treatment from AL amyloidosis",
-			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
-		},
-		{
 			"address": "find-out-more/appendix-a-supportive-care-domains",
 			"title": "Appendix A: Supportive care domains",
 			"note": "proposed: the sandbox record moves the legacy Appendix A: Supportive care domains into Find out more; keep, move or remove it"
@@ -1505,7 +1501,7 @@
 			"note": "proposed: the sandbox record moves the legacy Appendix D: Complementary therapies into Find out more; keep, move or remove it"
 		},
 		{
-			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-al-amyloido",
+			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-al",
 			"title": "Appendix E: Members of the multidisciplinary team for AL amyloidosis",
 			"note": "proposed: the sandbox record moves the legacy Appendix E: Members of the multidisciplinary team for AL amyloidosis into Find out more; keep, move or remove it"
 		},

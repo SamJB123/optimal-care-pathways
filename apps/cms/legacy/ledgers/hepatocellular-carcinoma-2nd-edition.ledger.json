@@ -1132,7 +1132,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide",
 			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1465,7 +1465,7 @@
 		]
 	},
 	"checkItems": 39,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",

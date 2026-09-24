@@ -180,8 +180,9 @@
 		{
 			"legacyKey": "step-3/staging-prognostic-assessment-and-risk-stratification",
 			"legacyTitle": "3.2 Staging, prognostic assessment and risk stratification",
-			"destination": "3/staging-prognostic-assessment-and-risk-stratification",
-			"how": "unplaced"
+			"destination": "3.3",
+			"how": "table",
+			"note": "printed as 3.2 under Step 3; its text is this section's — The stages of WM and their prognostic scoring: the pathway’s text for the template’s Staging."
 		},
 		{
 			"legacyKey": "step-3/performance-status",
@@ -516,8 +517,9 @@
 		{
 			"legacyKey": "step-5/transition-from-active-treatment",
 			"legacyTitle": "5.1 Transition from active treatment",
-			"destination": "5/transition-from-active-treatment",
-			"how": "unplaced"
+			"destination": "5.1",
+			"how": "diverged",
+			"note": "printed as 5.1 under Step 5; its text is this section's — The transition to shared follow-up care: the template’s Transitioning to post-treatment care under an older name."
 		},
 		{
 			"legacyKey": "step-5/follow-up-care",
@@ -1545,7 +1547,7 @@
 		]
 	},
 	"checkItems": 30,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1560,16 +1562,6 @@
 			"address": "3/timeframes",
 			"title": "Timeframes",
 			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
-		},
-		{
-			"address": "3/staging-prognostic-assessment-and-risk-stratification",
-			"title": "Staging, prognostic assessment and risk stratification",
-			"note": "unplaced: the cancer template has no section for this under Step 3; keep, move or remove it"
-		},
-		{
-			"address": "5/transition-from-active-treatment",
-			"title": "Transition from active treatment",
-			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
 		},
 		{
 			"address": "2/timeframes",

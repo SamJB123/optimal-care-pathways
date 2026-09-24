@@ -479,8 +479,9 @@
 		{
 			"legacyKey": "step-5/transitioning-from-initial-treatment-of-active-mm",
 			"legacyTitle": "5.1 Transitioning from initial treatment of active MM",
-			"destination": "5/transitioning-from-initial-treatment-of-active-mm",
-			"how": "unplaced"
+			"destination": "5.1",
+			"how": "diverged",
+			"note": "printed as 5.1 under Step 5; its text is this section's — The transition to shared follow-up care: the template’s Transitioning to post-treatment care under an older name."
 		},
 		{
 			"legacyKey": "step-5/follow-up-care",
@@ -1123,7 +1124,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-peak-organisations-and-government-representativ",
+			"legacyKey": "contributors/medical-colleges-peak-organisations-and-government",
 			"legacyTitle": "Medical colleges, peak organisations and government representatives",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1221,7 +1222,7 @@
 		{
 			"legacyKey": "appendix-e",
 			"legacyTitle": "Appendix E: Members of the multidisciplinary team for multiple myeloma",
-			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-multiple-my",
+			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-multiple",
 			"how": "proposed"
 		},
 		{
@@ -1453,7 +1454,7 @@
 		]
 	},
 	"checkItems": 32,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1473,11 +1474,6 @@
 			"address": "4/timeframes",
 			"title": "Timeframes",
 			"note": "proposed: timeframes of Step 4 whose section is shared core text; move each into its section"
-		},
-		{
-			"address": "5/transitioning-from-initial-treatment-of-active-mm",
-			"title": "Transitioning from initial treatment of active MM",
-			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
 		},
 		{
 			"address": "find-out-more/appendix-a-supportive-care-domains",
@@ -1500,7 +1496,7 @@
 			"note": "proposed: the sandbox record moves the legacy Appendix D: Complementary therapies into Find out more; keep, move or remove it"
 		},
 		{
-			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-multiple-my",
+			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-multiple",
 			"title": "Appendix E: Members of the multidisciplinary team for multiple myeloma",
 			"note": "proposed: the sandbox record moves the legacy Appendix E: Members of the multidisciplinary team for multiple myeloma into Find out more; keep, move or remove it"
 		},

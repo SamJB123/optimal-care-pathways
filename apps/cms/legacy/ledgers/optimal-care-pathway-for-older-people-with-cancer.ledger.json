@@ -252,7 +252,7 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-3/treatment-planning/members-of-the-multidisciplinary-team-for-older-people-with-canc",
+			"legacyKey": "step-3/treatment-planning/members-of-the-multidisciplinary-team-for-older-people-with",
 			"legacyTitle": "3.4.4 Members of the multidisciplinary team for older people with cancer",
 			"destination": "3.5.1",
 			"how": "title"
@@ -265,7 +265,7 @@
 			"note": "standing home for \"Responsibilities of individual team members\""
 		},
 		{
-			"legacyKey": "step-3/treatment-planning/role-of-a-multidisciplinary-team-meeting-specific-for-older-peop",
+			"legacyKey": "step-3/treatment-planning/role-of-a-multidisciplinary-team-meeting-specific-for-older",
 			"legacyTitle": "3.4.6 Role of a multidisciplinary team meeting specific for older people with cancer",
 			"destination": "3.5.1",
 			"how": "title"
@@ -327,8 +327,8 @@
 		{
 			"legacyKey": "step-4/personalised-treatment-plans",
 			"legacyTitle": "Personalised treatment plans",
-			"destination": "4/personalised-treatment-plans",
-			"how": "unplaced"
+			"destination": "4.1/personalised-treatment-plans",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/optimising-health-functioning-and-supports-for-older-people",
@@ -340,50 +340,50 @@
 		{
 			"legacyKey": "step-4/optimising-health-functioning-and-supports-for-older-people/cognition",
 			"legacyTitle": "Cognition",
-			"destination": "4/cognition",
-			"how": "unplaced"
+			"destination": "4.2/cognition",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/optimising-health-functioning-and-supports-for-older-people/comorbid-chronic-disease",
 			"legacyTitle": "Comorbid chronic disease",
-			"destination": "4/comorbid-chronic-disease",
-			"how": "unplaced"
+			"destination": "4.2/comorbid-chronic-disease",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/optimising-health-functioning-and-supports-for-older-people/medication-usage",
 			"legacyTitle": "Medication usage",
-			"destination": "4/medication-usage",
-			"how": "unplaced"
+			"destination": "4.2/medication-usage",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/optimising-health-functioning-and-supports-for-older-people/mental-health",
 			"legacyTitle": "Mental health",
-			"destination": "4/mental-health",
-			"how": "unplaced"
+			"destination": "4.2/mental-health",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/optimising-health-functioning-and-supports-for-older-people/nutrition",
 			"legacyTitle": "Nutrition",
-			"destination": "4/nutrition",
-			"how": "unplaced"
+			"destination": "4.2/nutrition",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/optimising-health-functioning-and-supports-for-older-people/physical-function",
 			"legacyTitle": "Physical function",
-			"destination": "4/physical-function",
-			"how": "unplaced"
+			"destination": "4.2/physical-function",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/optimising-health-functioning-and-supports-for-older-people/sensory-function",
 			"legacyTitle": "Sensory function",
-			"destination": "4/sensory-function",
-			"how": "unplaced"
+			"destination": "4.2/sensory-function",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/optimising-health-functioning-and-supports-for-older-people/social-support",
 			"legacyTitle": "Social support",
-			"destination": "4/social-support",
-			"how": "unplaced"
+			"destination": "4.2/social-support",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/treatment-intent",
@@ -508,13 +508,13 @@
 		{
 			"legacyKey": "step-4/geriatric-medicine-and-aged-care",
 			"legacyTitle": "4.6 Geriatric medicine and aged care",
-			"destination": "4/geriatric-medicine-and-aged-care",
-			"how": "unplaced"
+			"destination": "4.10/geriatric-medicine-and-aged-care",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/geriatric-medicine-and-aged-care/more-information",
 			"legacyTitle": "More information",
-			"destination": "4/geriatric-medicine-and-aged-care",
+			"destination": "4.10/geriatric-medicine-and-aged-care",
 			"how": "resources"
 		},
 		{
@@ -577,7 +577,7 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-5/support-and-communication/communication-with-older-people-with-cancer-and-their-families-a",
+			"legacyKey": "step-5/support-and-communication/communication-with-older-people-with-cancer-and-their-families",
 			"legacyTitle": "5.4.2 Communication with older people with cancer and their families and carers",
 			"destination": "5/supportive-care",
 			"how": "rule",
@@ -599,8 +599,8 @@
 		{
 			"legacyKey": "step-5/support-and-communication/carer-needs",
 			"legacyTitle": "5.4.4 Carer needs",
-			"destination": "5/carer-needs",
-			"how": "unplaced"
+			"destination": "5/supportive-care/carer-needs",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-6",
@@ -703,13 +703,13 @@
 		{
 			"legacyKey": "step-6/geriatric-medicine-and-aged-care",
 			"legacyTitle": "6.9 Geriatric medicine and aged care",
-			"destination": "6/geriatric-medicine-and-aged-care",
-			"how": "unplaced"
+			"destination": "6.5/geriatric-medicine-and-aged-care",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-6/geriatric-medicine-and-aged-care/more-information",
 			"legacyTitle": "More information",
-			"destination": "6/geriatric-medicine-and-aged-care",
+			"destination": "6.5/geriatric-medicine-and-aged-care",
 			"how": "resources"
 		},
 		{
@@ -1147,181 +1147,181 @@
 		{
 			"legacyKey": "principle-1",
 			"legacyTitle": "Principle 1: Patient-centred care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-1/definition-of-older-people",
 			"legacyTitle": "Definition of ‘older’ people",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-1/patient-centred-care",
 			"legacyTitle": "Patient-centred care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-1/family-and-carer-inclusive-care",
 			"legacyTitle": "Family and carer-inclusive care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-1/age-friendly-care",
 			"legacyTitle": "Age-friendly care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-1/shared-care",
 			"legacyTitle": "Shared care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-1/informed-choice-and-consent",
 			"legacyTitle": "Informed choice and consent",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-1/referral-choices-and-informed-financial-consent",
 			"legacyTitle": "Referral choices and informed financial consent",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-2",
 			"legacyTitle": "Principle 2: Safe and quality care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-2/professional-development-in-cancer-care-for-older-people",
 			"legacyTitle": "Professional development in cancer care for older people",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-2/data-driven-quality-care",
 			"legacyTitle": "Data-driven quality care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-2/patient-reported-experience-and-outcome-measures",
 			"legacyTitle": "Patient-reported experience and outcome measures",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-3",
 			"legacyTitle": "Principle 3: Multidisciplinary care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/multidisciplinary-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/multidisciplinary-care",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-4",
 			"legacyTitle": "Principle 4: Supportive care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-4/supportive-care-needs-of-family-and-carers",
 			"legacyTitle": "Supportive care needs of family and carers",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-4/the-role-of-health-professionals-in-supportive-care",
 			"legacyTitle": "The role of health professionals in supportive care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-4/geriatric-screening-and-assessment-in-supportive-care",
 			"legacyTitle": "Geriatric screening and assessment in supportive care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-4/health-services",
 			"legacyTitle": "Health services",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-4/key-review-points",
 			"legacyTitle": "Key review points",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-5",
 			"legacyTitle": "Principle 5: Care coordination",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/navigation-and-care-coordination",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/navigation-and-care-coordination",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-5/care-coordination-for-older-people-with-cancer",
 			"legacyTitle": "Care coordination for older people with cancer",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/navigation-and-care-coordination",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/navigation-and-care-coordination",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-6",
 			"legacyTitle": "Principle 6: Communication",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/communication",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/communication",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-6/age-inclusive-language",
 			"legacyTitle": "Age-inclusive language",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/communication",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/communication",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-6/enhancing-communication",
 			"legacyTitle": "Enhancing communication",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/communication",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/communication",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-6/families-and-carers",
 			"legacyTitle": "Families and carers",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/communication",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/communication",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-6/substitute-decision-makers",
 			"legacyTitle": "Substitute decision-makers",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/communication",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/communication",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-6/communication-skills-training",
 			"legacyTitle": "Communication skills training",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/communication",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/communication",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-6/telehealth",
 			"legacyTitle": "Telehealth",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/communication",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/communication",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-7",
 			"legacyTitle": "Principle 7: Research and clinical trials",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/research-and-clinical-trials",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/research-and-clinical-trials",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-7/education-and-training",
 			"legacyTitle": "Education and training",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/research-and-clinical-trials",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/research-and-clinical-trials",
 			"how": "merged"
 		},
 		{
@@ -1439,55 +1439,55 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide",
 			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/primary-health-networks",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide/primary-health-networks",
 			"legacyTitle": "Primary Health Networks",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/health-services-systems-state-level",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide/health-services-systems-state-level",
 			"legacyTitle": "Health services/systems (state level)",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/aboriginal-and-torres-strait-islander-organisations",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide/aboriginal-and-torres-strait-islander-organisations",
 			"legacyTitle": "Aboriginal and Torres Strait Islander organisations",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/professional-colleges-and-societies",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide/professional-colleges-and-societies",
 			"legacyTitle": "Professional colleges and societies",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/cancer-cooperative-trials-groups",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide/cancer-cooperative-trials-groups",
 			"legacyTitle": "Cancer Cooperative Trials Groups",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/aged-care-service-providers",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide/aged-care-service-providers",
 			"legacyTitle": "Aged care service providers",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/consumer-representatives-and-organisations",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide/consumer-representatives-and-organisations",
 			"legacyTitle": "Consumer representatives and organisations",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb/advocacy-groups",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide/advocacy-groups",
 			"legacyTitle": "Advocacy groups",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1555,7 +1555,7 @@
 		{
 			"legacyKey": "appendix-e",
 			"legacyTitle": "Appendix E: Members of the multidisciplinary team for older people with cancer",
-			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-older-peopl",
+			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-older",
 			"how": "proposed"
 		},
 		{
@@ -1828,39 +1828,39 @@
 		"rows": []
 	},
 	"checkItems": 44,
-	"unplacedSections": [
+	"notedSections": [
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"title": "Person-centred care",
 			"note": "proposed: holds the legacy \"Principle 1: Patient-centred care\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"title": "Safe and quality care",
 			"note": "proposed: holds the legacy \"Principle 2: Safe and quality care\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/multidisciplinary-care",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/multidisciplinary-care",
 			"title": "Multidisciplinary care",
 			"note": "proposed: holds the legacy \"Principle 3: Multidisciplinary care\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"title": "Supportive care",
 			"note": "proposed: holds the legacy \"Principle 4: Supportive care\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/navigation-and-care-coordination",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/navigation-and-care-coordination",
 			"title": "Navigation and care coordination",
 			"note": "proposed: holds the legacy \"Principle 5: Care coordination\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/communication",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/communication",
 			"title": "Communication",
 			"note": "proposed: holds the legacy \"Principle 6: Communication\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/research-and-clinical-trials",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/research-and-clinical-trials",
 			"title": "Research and clinical trials",
 			"note": "proposed: holds the legacy \"Principle 7: Research and clinical trials\" as this population’s considerations for the principle; check it belongs here"
 		},
@@ -1880,64 +1880,64 @@
 			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "4/personalised-treatment-plans",
+			"address": "4.1/personalised-treatment-plans",
 			"title": "Personalised treatment plans",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: unnumbered under Step 4; placed under 4.1 — Fitness, frailty and treatment tolerance shaping the treatment decision: a subsection of Treatment decision making."
 		},
 		{
-			"address": "4/cognition",
+			"address": "4.2/cognition",
 			"title": "Cognition",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: unnumbered under Step 4; placed under 4.2 — A geriatric assessment domain (the print’s \"Optimising health, functioning and supports for older people\"): screening cognition before treatment is optimising the person for treatment, the template’s 4.2, so a subsection there."
 		},
 		{
-			"address": "4/comorbid-chronic-disease",
+			"address": "4.2/comorbid-chronic-disease",
 			"title": "Comorbid chronic disease",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: unnumbered under Step 4; placed under 4.2 — A geriatric assessment domain (the print’s \"Optimising health, functioning and supports for older people\"): managing comorbidities before and through treatment is optimising the person for treatment, the template’s 4.2, so a subsection there."
 		},
 		{
-			"address": "4/medication-usage",
+			"address": "4.2/medication-usage",
 			"title": "Medication usage",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: unnumbered under Step 4; placed under 4.2 — A geriatric assessment domain (the print’s \"Optimising health, functioning and supports for older people\"): reviewing polypharmacy before treatment is optimising the person for treatment, the template’s 4.2, so a subsection there."
 		},
 		{
-			"address": "4/mental-health",
+			"address": "4.2/mental-health",
 			"title": "Mental health",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: unnumbered under Step 4; placed under 4.2 — A geriatric assessment domain (the print’s \"Optimising health, functioning and supports for older people\"): screening and treating distress and depression alongside cancer treatment is optimising the person for treatment, the template’s 4.2, so a subsection there."
 		},
 		{
-			"address": "4/nutrition",
+			"address": "4.2/nutrition",
 			"title": "Nutrition",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: unnumbered under Step 4; placed under 4.2 — A geriatric assessment domain (the print’s \"Optimising health, functioning and supports for older people\"): dietitian referral for malnutrition before and through treatment is optimising the person for treatment, the template’s 4.2, so a subsection there."
 		},
 		{
-			"address": "4/physical-function",
+			"address": "4.2/physical-function",
 			"title": "Physical function",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: unnumbered under Step 4; placed under 4.2 — A geriatric assessment domain (the print’s \"Optimising health, functioning and supports for older people\"): assessing mobility and daily function before treatment is optimising the person for treatment, the template’s 4.2, so a subsection there."
 		},
 		{
-			"address": "4/sensory-function",
+			"address": "4.2/sensory-function",
 			"title": "Sensory function",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: unnumbered under Step 4; placed under 4.2 — A geriatric assessment domain (the print’s \"Optimising health, functioning and supports for older people\"): recognising hearing and visual impairment so treatment and its communication work is optimising the person for treatment, the template’s 4.2, so a subsection there."
 		},
 		{
-			"address": "4/social-support",
+			"address": "4.2/social-support",
 			"title": "Social support",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: unnumbered under Step 4; placed under 4.2 — A geriatric assessment domain (the print’s \"Optimising health, functioning and supports for older people\"): assessing social support before prescribing treatment is optimising the person for treatment, the template’s 4.2, so a subsection there."
 		},
 		{
-			"address": "4/geriatric-medicine-and-aged-care",
+			"address": "4.10/geriatric-medicine-and-aged-care",
 			"title": "Geriatric medicine and aged care",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: printed as 4.6 under Step 4; placed under 4.10 — Referral to geriatric medicine and aged care services is a health service characteristic for this population (the template’s 4.10), and a topic of its own, so a subsection there."
 		},
 		{
-			"address": "5/carer-needs",
+			"address": "5/supportive-care/carer-needs",
 			"title": "Carer needs",
-			"note": "unplaced: the population template has no section for this under Step 5; keep, move or remove it"
+			"note": "unplaced: printed as 5.4.4 under Step 5; placed under Supportive care — The needs of carers, who are often older themselves: supportive care after treatment, a topic of its own, so a subsection there."
 		},
 		{
-			"address": "6/geriatric-medicine-and-aged-care",
+			"address": "6.5/geriatric-medicine-and-aged-care",
 			"title": "Geriatric medicine and aged care",
-			"note": "unplaced: the population template has no section for this under Step 6; keep, move or remove it"
+			"note": "unplaced: printed as 6.9 under Step 6; placed under 6.5 — Geriatric and aged care services for people with advanced disease: a subsection of Supporting health and wellbeing for people with advanced disease."
 		},
 		{
 			"address": "optimal-care-pathway-for-with-cancer/welcome-and-introduction",
@@ -2020,7 +2020,7 @@
 			"note": "proposed: the sandbox record moves the legacy Appendix D: Complementary therapies into Find out more; keep, move or remove it"
 		},
 		{
-			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-older-peopl",
+			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-older",
 			"title": "Appendix E: Members of the multidisciplinary team for older people with cancer",
 			"note": "proposed: the sandbox record moves the legacy Appendix E: Members of the multidisciplinary team for older people with cancer into Find out more; keep, move or remove it"
 		},

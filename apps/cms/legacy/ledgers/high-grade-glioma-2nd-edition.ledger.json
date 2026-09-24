@@ -155,13 +155,14 @@
 		{
 			"legacyKey": "step-3/grading",
 			"legacyTitle": "3.2 Grading",
-			"destination": "3/grading",
-			"how": "unplaced"
+			"destination": "3.3",
+			"how": "table",
+			"note": "printed as 3.2 under Step 3; its text is this section's — Grading is this disease’s staging (its molecular markers included), so the pathway’s text for the template’s Staging."
 		},
 		{
 			"legacyKey": "step-3/grading/more-information",
 			"legacyTitle": "More information",
-			"destination": "3/grading",
+			"destination": "3.3",
 			"how": "resources"
 		},
 		{
@@ -1093,7 +1094,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide",
 			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1191,7 +1192,7 @@
 		{
 			"legacyKey": "appendix-e",
 			"legacyTitle": "Appendix E: Members of the multidisciplinary team for high-grade glioma",
-			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-high-grade-",
+			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-high-grade",
 			"how": "proposed"
 		},
 		{
@@ -1438,7 +1439,7 @@
 		]
 	},
 	"checkItems": 39,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1453,11 +1454,6 @@
 			"address": "3/timeframes",
 			"title": "Timeframes",
 			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
-		},
-		{
-			"address": "3/grading",
-			"title": "Grading",
-			"note": "unplaced: the cancer template has no section for this under Step 3; keep, move or remove it"
 		},
 		{
 			"address": "4/timeframes",
@@ -1485,7 +1481,7 @@
 			"note": "proposed: the sandbox record moves the legacy Appendix D: Complementary therapies into Find out more; keep, move or remove it"
 		},
 		{
-			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-high-grade-",
+			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-high-grade",
 			"title": "Appendix E: Members of the multidisciplinary team for high-grade glioma",
 			"note": "proposed: the sandbox record moves the legacy Appendix E: Members of the multidisciplinary team for high-grade glioma into Find out more; keep, move or remove it"
 		},

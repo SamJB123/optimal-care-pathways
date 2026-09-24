@@ -101,13 +101,14 @@
 		{
 			"legacyKey": "step-2/referral-for-emergency-assessment",
 			"legacyTitle": "2.3 Referral for emergency assessment",
-			"destination": "2/referral-for-emergency-assessment",
-			"how": "unplaced"
+			"destination": "2.3",
+			"how": "table",
+			"note": "printed as 2.3 under Step 2; its text is this section's — The general practitioner’s referral to a specialist: the template’s Initial referral under an older name."
 		},
 		{
 			"legacyKey": "step-2/referral-for-emergency-assessment/timeframe-for-referring-to-a-specialist",
 			"legacyTitle": "2.3.1 Timeframe for referring to a specialist",
-			"destination": "2/referral-for-emergency-assessment",
+			"destination": "2.3",
 			"how": "timeframe"
 		},
 		{
@@ -190,13 +191,14 @@
 		{
 			"legacyKey": "step-3/prognostic-assessment-and-risk-stratification",
 			"legacyTitle": "3.2 Prognostic assessment and risk stratification",
-			"destination": "3/prognostic-assessment-and-risk-stratification",
-			"how": "unplaced"
+			"destination": "3.3",
+			"how": "table",
+			"note": "printed as 3.2 under Step 3; its text is this section's — Classification and risk stratification are this disease’s staging, so the pathway’s text for the template’s Staging."
 		},
 		{
 			"legacyKey": "step-3/prognostic-assessment-and-risk-stratification/genetic-abnormalities",
 			"legacyTitle": "Genetic abnormalities",
-			"destination": "3/prognostic-assessment-and-risk-stratification",
+			"destination": "3.3",
 			"how": "merged"
 		},
 		{
@@ -515,8 +517,9 @@
 		{
 			"legacyKey": "step-5/transition-to-shared-care-models-of-treatment",
 			"legacyTitle": "5.1 Transition to shared care models of treatment",
-			"destination": "5/transition-to-shared-care-models-of-treatment",
-			"how": "unplaced"
+			"destination": "5.1",
+			"how": "diverged",
+			"note": "printed as 5.1 under Step 5; its text is this section's — The transition from active treatment to shared follow-up care: the template’s Transitioning to post-treatment care under an older name."
 		},
 		{
 			"legacyKey": "step-5/follow-up-care",
@@ -1529,7 +1532,7 @@
 		]
 	},
 	"checkItems": 30,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1541,29 +1544,14 @@
 			"note": "proposed: holds the legacy pathway’s opening text; check it is about epidemiology and burden of disease"
 		},
 		{
-			"address": "2/referral-for-emergency-assessment",
-			"title": "Referral for emergency assessment",
-			"note": "unplaced: the cancer template has no section for this under Step 2; keep, move or remove it"
-		},
-		{
 			"address": "3/timeframes",
 			"title": "Timeframes",
 			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "3/prognostic-assessment-and-risk-stratification",
-			"title": "Prognostic assessment and risk stratification",
-			"note": "unplaced: the cancer template has no section for this under Step 3; keep, move or remove it"
-		},
-		{
 			"address": "4/timeframes",
 			"title": "Timeframes",
 			"note": "proposed: timeframes of Step 4 whose section is shared core text; move each into its section"
-		},
-		{
-			"address": "5/transition-to-shared-care-models-of-treatment",
-			"title": "Transition to shared care models of treatment",
-			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
 		},
 		{
 			"address": "find-out-more/appendix-a-supportive-care-domains",

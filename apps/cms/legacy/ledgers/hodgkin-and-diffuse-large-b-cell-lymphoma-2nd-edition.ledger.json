@@ -214,7 +214,7 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-3/treatment-planning/members-of-the-multidisciplinary-team-for-hodgkin-lymphoma-and-d",
+			"legacyKey": "step-3/treatment-planning/members-of-the-multidisciplinary-team-for-hodgkin-lymphoma-and",
 			"legacyTitle": "3.4.4 Members of the multidisciplinary team for Hodgkin lymphoma and DLBCL",
 			"destination": "3.5.1",
 			"how": "title"
@@ -402,8 +402,8 @@
 		{
 			"legacyKey": "step-4/support-and-communication/optimising-physical-activity-and-rehabilitation",
 			"legacyTitle": "4.5.2 Optimising physical activity and rehabilitation",
-			"destination": "4/optimising-physical-activity-and-rehabilitation",
-			"how": "unplaced"
+			"destination": "4.2/optimising-physical-activity-and-rehabilitation",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/support-and-communication/communication-with-patients-carers-and-families",
@@ -452,7 +452,7 @@
 			"how": "resources"
 		},
 		{
-			"legacyKey": "step-5/follow-up-care/optimising-wellbeing-and-preventing-subsequent-cancer-developmen",
+			"legacyKey": "step-5/follow-up-care/optimising-wellbeing-and-preventing-subsequent-cancer",
 			"legacyTitle": "5.2.1 Optimising wellbeing and preventing subsequent cancer development",
 			"destination": "5.3.2",
 			"how": "merged"
@@ -1091,7 +1091,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide",
 			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1195,7 +1195,7 @@
 		{
 			"legacyKey": "appendix-e",
 			"legacyTitle": "Appendix E: Members of the multidisciplinary team for Hodgkin lymphoma and DLBCL",
-			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-hodgkin-lym",
+			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-hodgkin",
 			"how": "proposed"
 		},
 		{
@@ -1450,7 +1450,7 @@
 		]
 	},
 	"checkItems": 39,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1472,9 +1472,9 @@
 			"note": "proposed: timeframes of Step 4 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "4/optimising-physical-activity-and-rehabilitation",
+			"address": "4.2/optimising-physical-activity-and-rehabilitation",
 			"title": "Optimising physical activity and rehabilitation",
-			"note": "unplaced: the cancer template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: printed as 4.5.2 under Step 4; placed under 4.2 — Rehabilitation and physical activity through treatment: the template’s 4.2 is prehabilitation and optimising treatment; this widens it, so a subsection there."
 		},
 		{
 			"address": "find-out-more/appendix-a-supportive-care-domains",
@@ -1497,7 +1497,7 @@
 			"note": "proposed: the sandbox record moves the legacy Appendix D: Complementary therapies into Find out more; keep, move or remove it"
 		},
 		{
-			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-hodgkin-lym",
+			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-hodgkin",
 			"title": "Appendix E: Members of the multidisciplinary team for Hodgkin lymphoma and DLBCL",
 			"note": "proposed: the sandbox record moves the legacy Appendix E: Members of the multidisciplinary team for Hodgkin lymphoma and DLBCL into Find out more; keep, move or remove it"
 		},

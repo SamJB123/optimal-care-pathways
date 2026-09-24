@@ -1075,7 +1075,7 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "summary-timeframes/cases-that-require-prompt-referral-to-a-specialist-within-72-hou",
+			"legacyKey": "summary-timeframes/cases-that-require-prompt-referral-to-a-specialist-within-72",
 			"legacyTitle": "Cases that require prompt referral to a specialist within 72 hours are:",
 			"destination": "snapshot-of-optimal-timeframes",
 			"how": "merged"
@@ -1106,7 +1106,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-peak-organisations-and-government-representativ",
+			"legacyKey": "contributors/medical-colleges-peak-organisations-and-government",
 			"legacyTitle": "Medical colleges, peak organisations and government representatives",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1436,7 +1436,7 @@
 		]
 	},
 	"checkItems": 30,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",

@@ -45,8 +45,9 @@
 		{
 			"legacyKey": "step-1/surveillance-for-patients-with-hereditary-nets",
 			"legacyTitle": "1.3 Surveillance for patients with hereditary NETs",
-			"destination": "1/surveillance-for-patients-with-hereditary-nets",
-			"how": "unplaced"
+			"destination": "1.2.2",
+			"how": "table",
+			"note": "printed as 1.3 under Step 1; its text is this section's — Annual surveillance of people with MEN and other hereditary syndromes: the template’s Surveillance recommendations."
 		},
 		{
 			"legacyKey": "step-1/early-detection",
@@ -650,20 +651,20 @@
 		{
 			"legacyKey": "step-6/associated-conditions/carcinoid-syndrome",
 			"legacyTitle": "Carcinoid syndrome",
-			"destination": "6/carcinoid-syndrome",
-			"how": "unplaced"
+			"destination": "6.4/carcinoid-syndrome",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-6/associated-conditions/carcinoid-crisis",
 			"legacyTitle": "Carcinoid crisis",
-			"destination": "6/carcinoid-crisis",
-			"how": "unplaced"
+			"destination": "6.4/carcinoid-crisis",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-6/associated-conditions/carcinoid-heart-disease",
 			"legacyTitle": "Carcinoid heart disease",
-			"destination": "6/carcinoid-heart-disease",
-			"how": "unplaced"
+			"destination": "6.4/carcinoid-heart-disease",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-6/advance-care-planning",
@@ -1236,7 +1237,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide",
 			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1334,13 +1335,13 @@
 		{
 			"legacyKey": "appendix-e",
 			"legacyTitle": "Appendix E: Members of the multidisciplinary team for neuroendocrine tumours",
-			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-neuroendocr",
+			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "appendix-e/comprehensive-neuroendocrine-multidisciplinary-teams",
 			"legacyTitle": "Comprehensive neuroendocrine multidisciplinary teams",
-			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-neuroendocr",
+			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for",
 			"how": "merged"
 		},
 		{
@@ -1582,7 +1583,7 @@
 		]
 	},
 	"checkItems": 40,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1594,29 +1595,24 @@
 			"note": "proposed: holds the legacy pathway’s opening text; check it is about epidemiology and burden of disease"
 		},
 		{
-			"address": "1/surveillance-for-patients-with-hereditary-nets",
-			"title": "Surveillance for patients with hereditary NETs",
-			"note": "unplaced: the cancer template has no section for this under Step 1; keep, move or remove it"
-		},
-		{
 			"address": "3/timeframes",
 			"title": "Timeframes",
 			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "6/carcinoid-syndrome",
+			"address": "6.4/carcinoid-syndrome",
 			"title": "Carcinoid syndrome",
-			"note": "unplaced: the cancer template has no section for this under Step 6; keep, move or remove it"
+			"note": "unplaced: unnumbered under Step 6; placed under 6.4 — The print grouped the carcinoid conditions as \"Associated conditions\" of metastatic disease; the template has no such section. They are recognised and treated as part of treating metastatic disease, so subsections of 6.4."
 		},
 		{
-			"address": "6/carcinoid-crisis",
+			"address": "6.4/carcinoid-crisis",
 			"title": "Carcinoid crisis",
-			"note": "unplaced: the cancer template has no section for this under Step 6; keep, move or remove it"
+			"note": "unplaced: unnumbered under Step 6; placed under 6.4 — A complication of metastatic NETs the print filed under \"Associated conditions\", which the template lacks; recognised and prevented as part of treating metastatic disease, so a subsection of 6.4 beside Carcinoid syndrome."
 		},
 		{
-			"address": "6/carcinoid-heart-disease",
+			"address": "6.4/carcinoid-heart-disease",
 			"title": "Carcinoid heart disease",
-			"note": "unplaced: the cancer template has no section for this under Step 6; keep, move or remove it"
+			"note": "unplaced: unnumbered under Step 6; placed under 6.4 — A complication of metastatic NETs the print filed under \"Associated conditions\", which the template lacks; treated (SSAs, valve surgery) as part of treating metastatic disease, so a subsection of 6.4 beside Carcinoid syndrome."
 		},
 		{
 			"address": "find-out-more/appendix-a-supportive-care-domains",
@@ -1639,7 +1635,7 @@
 			"note": "proposed: the sandbox record moves the legacy Appendix D: Complementary therapies into Find out more; keep, move or remove it"
 		},
 		{
-			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-neuroendocr",
+			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for",
 			"title": "Appendix E: Members of the multidisciplinary team for neuroendocrine tumours",
 			"note": "proposed: the sandbox record moves the legacy Appendix E: Members of the multidisciplinary team for neuroendocrine tumours into Find out more; keep, move or remove it"
 		},

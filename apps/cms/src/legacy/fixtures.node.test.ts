@@ -25,6 +25,7 @@ import { TEMPLATES } from '../template/templates.ts'
 import { auditCoverage } from './audit.ts'
 import { LEGACY_PATHWAYS } from './catalogue.ts'
 import { mapLegacy } from './map-legacy.ts'
+import { LEGACY_PLACEMENTS } from './placements.ts'
 
 const appDir = join(import.meta.dirname, '..', '..')
 const read = (path: string): ExtractedDocument =>
@@ -134,6 +135,24 @@ for (const pathway of LEGACY_PATHWAYS) {
 				report.missingLines.map((l) => `p.${l.page} ${l.missing.join(' ')} ← ${l.text}`),
 			).toEqual([])
 			expect(report.extras.map((e) => `${e.word}×${e.count}`)).toEqual([])
+			// Every placements row for this pathway placed its section where it says (the
+			// import has already refused any unplaced section without a row); no row is stale.
+			const untitled = (heading: string) =>
+				heading
+					.replace(/^(?:\d+(?:\.\s?\d+)*:?\s*)+/, '')
+					.replace(/\s+/g, ' ')
+					.trim()
+					.toLowerCase()
+			for (const row of LEGACY_PLACEMENTS.filter((r) => r.pathway === pathway.pathwaySlug)) {
+				const hits = result.ledger.placements.filter(
+					(p) =>
+						untitled(p.legacyTitle) === row.title.toLowerCase() &&
+						(row.kind === 'into'
+							? p.destination === row.home
+							: p.destination?.startsWith(`${row.home}/`)),
+				)
+				expect(hits.length, `${pathway.pathwaySlug}: "${row.title}" → ${row.home}`).toBe(1)
+			}
 			// Every Figure 3 row is a timeframe box: the body's own, or one made from the row.
 			expect(
 				result.ledger.timeframes.rows.filter((r) => r.source === 'row' && r.destination === null),

@@ -37,9 +37,11 @@ import type {
 	Section,
 	Table,
 } from '../template/extract/model.ts'
+import { addressSegment } from '../lib/outline.ts'
 import { plainText } from '../template/extract/model.ts'
-import { createBlockMapper } from '../template/extract/map-to-content.ts'
+import { createBlockMapper, templateAddressSegment } from '../template/extract/map-to-content.ts'
 import { type LegacyPathway, legacyFigureUrl } from './catalogue.ts'
+import { requirePlacement } from './placements.ts'
 
 export type DocumentInsert = typeof schema.documents.$inferInsert
 export type SectionInsert = typeof schema.sections.$inferInsert
@@ -77,6 +79,10 @@ export type PlacementHow =
 	| 'derived'
 	| 'proposed'
 	| 'unplaced'
+	/** A section the template has no numbered place for, placed where the placements
+	 *  table (src/legacy/placements.ts) says: into a template section, or as an unnumbered
+	 *  subsection under one. */
+	| 'table'
 	/** Legacy text of a shared template section: version 1 carries it as a divergence of
 	 *  that section; the draft carries the core text (decisions 153, 157). */
 	| 'diverged'
@@ -147,12 +153,13 @@ interface LegacyNode {
 }
 
 const slugify = (value: string): string =>
-	value
-		.toLowerCase()
-		.replace(/[’']/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 64) || 'section'
+	addressSegment(
+		value
+			.toLowerCase()
+			.replace(/[’']/g, '')
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, ''),
+	)
 
 const STEP = /^Step\s+(\d)\b/i
 
@@ -198,12 +205,13 @@ function childKeyOf(parent: LegacyNode, section: Section): string {
 function titleOf(headingText: string, number: string | null): string {
 	const text = headingText.replace(/\s+/g, ' ').trim()
 	if (!number) return text
-	// The number as printed may carry a stray space after a stop ("3. 6 Support …").
+	// The number as printed may carry a stray space after a stop ("3. 6 Support …"), or
+	// be printed twice ("6.4 6.4 Pain management").
 	const escaped = number
 		.split('.')
 		.map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
 		.join('\\.\\s?')
-	return text.replace(new RegExp(`^${escaped}:?\\s*`, 'i'), '').trim() || text
+	return text.replace(new RegExp(`^(?:${escaped}:?\\s*)+`, 'i'), '').trim() || text
 }
 
 function pagesOf(section: { page: number; blocks: Block[] }): string {
@@ -1015,8 +1023,12 @@ const CANCER_NON_STEP: NonStepTable = {
 	principles: null,
 }
 
-const POPULATION_CONSIDERATIONS =
-	'principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c'
+/** The population template's own section for the Principles' population considerations,
+ *  addressed as the template addresses it: made from its printed heading by the same
+ *  rule, never a typed copy that drifts when that rule changes. */
+const POPULATION_CONSIDERATIONS = `principles-for-optimal-cancer-care/${templateAddressSegment(
+	'Population-based considerations for the Principles for Optimal Cancer Care',
+)}`
 
 const POPULATION_NON_STEP: NonStepTable = {
 	rules: {
@@ -1652,11 +1664,25 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			})
 			return null
 		}
-		const fresh = addSection(String(step), title, {
-			note: `unplaced: the ${core.template.kind} template has no section for this under Step ${step}; keep, move or remove it`,
-			printedNumber: node.number,
+		// A section the template has no numbered place for. The template's rule: numbered
+		// headings cannot be added or changed; a pathway's own headings are unnumbered and
+		// sit within a section. The placements table says which section, and whether the
+		// text IS that section's (into) or a subsection of it (under); a section the table
+		// does not know fails the import by name.
+		const placement = requirePlacement(pathway.pathwaySlug, node.number, title, step)
+		const home = byAddress(placement.home)
+		const printed = node.number ? `printed as ${node.number} ` : 'unnumbered '
+		if (placement.kind === 'into') {
+			placeOrDiverge(home, node, [headingNode(title, 3), ...own], 'table', {
+				note: `${printed}under Step ${step}; its text is this section's — ${placement.why}`,
+			})
+			return home
+		}
+		const fresh = addSection(placement.home, title, {
+			note: `unplaced: ${printed}under Step ${step}; placed under ${home.row.printedNumber ?? home.row.title} — ${placement.why}`,
+			printedNumber: null,
 		})
-		place(fresh, node, own, 'unplaced')
+		place(fresh, node, own, 'table')
 		return fresh
 	}
 
@@ -1709,9 +1735,10 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 				// The chapter's own subsections before the steps ("Special considerations", the
 				// disease's subsets): a proposed section each beside the chapter's home.
 				const title = titleOf(stepNode.heading, stepNode.number)
+				// No number of its own (as an unplaced section): the note keeps the print's.
 				const home = addSection(table.pathwayHome, title, {
-					note: `proposed: the legacy pathway’s opening section "${title}"; check where it belongs`,
-					printedNumber: stepNode.number,
+					note: `proposed: the legacy pathway’s opening section "${title}"; check where it belongs${stepNode.number ? ` (printed as ${stepNode.number})` : ''}`,
+					printedNumber: null,
 				})
 				const own = nodesOf(stepNode.blocks)
 				if (own.length > 0) place(home, stepNode, own, 'proposed')
@@ -2225,8 +2252,8 @@ export function mapLegacy(input: LegacyImportInput): LegacyImport {
 			const target =
 				rule.how === 'proposed'
 					? addSection(destination.row.address, title, {
-							note: `proposed: a part of the legacy "${chapter.heading}"; check it belongs here`,
-							printedNumber: child.number,
+							note: `proposed: a part of the legacy "${chapter.heading}"; check it belongs here${child.number ? ` (printed as ${child.number})` : ''}`,
+							printedNumber: null,
 						})
 					: destination
 			const nodes = nodesOf(child.blocks)

@@ -307,8 +307,9 @@
 		{
 			"legacyKey": "step-4/screening-for-lynch-syndrome",
 			"legacyTitle": "4.2 Screening for Lynch syndrome",
-			"destination": "4/screening-for-lynch-syndrome",
-			"how": "unplaced"
+			"destination": "3.2.1",
+			"how": "table",
+			"note": "printed as 4.2 under Step 4; its text is this section's — Immunohistochemistry and referral for germline testing: the template’s Germline testing (inherited risk). The print had it in Step 4; the template puts genetic testing in Step 3."
 		},
 		{
 			"legacyKey": "step-4/treatment-options",
@@ -501,8 +502,8 @@
 		{
 			"legacyKey": "step-5/special-considerations",
 			"legacyTitle": "5.3 Special considerations",
-			"destination": "5/special-considerations",
-			"how": "unplaced"
+			"destination": "5.2/special-considerations",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-5/research-and-clinical-trials",
@@ -1157,7 +1158,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide",
 			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1487,7 +1488,7 @@
 		]
 	},
 	"checkItems": 38,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1504,19 +1505,14 @@
 			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "4/screening-for-lynch-syndrome",
-			"title": "Screening for Lynch syndrome",
-			"note": "unplaced: the cancer template has no section for this under Step 4; keep, move or remove it"
-		},
-		{
 			"address": "4/timeframes",
 			"title": "Timeframes",
 			"note": "proposed: timeframes of Step 4 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "5/special-considerations",
+			"address": "5.2/special-considerations",
 			"title": "Special considerations",
-			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
+			"note": "unplaced: printed as 5.3 under Step 5; placed under 5.2 — Loss of hormonal function after treatment: long-term health after treatment, so a subsection of Supporting long-term health and wellbeing."
 		},
 		{
 			"address": "find-out-more/appendix-a-supportive-care-domains",

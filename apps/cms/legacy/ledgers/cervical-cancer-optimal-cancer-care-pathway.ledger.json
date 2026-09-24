@@ -39,8 +39,8 @@
 		{
 			"legacyKey": "step-1/immunisation-and-screening/immunisation",
 			"legacyTitle": "1.1.1 Immunisation",
-			"destination": "1/immunisation",
-			"how": "unplaced"
+			"destination": "1.1.2/immunisation",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-1/immunisation-and-screening/screening",
@@ -64,8 +64,8 @@
 		{
 			"legacyKey": "step-1/special-considerations",
 			"legacyTitle": "1.4 Special considerations",
-			"destination": "1/special-considerations",
-			"how": "unplaced"
+			"destination": "1.2.1/special-considerations",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-2",
@@ -89,13 +89,14 @@
 		{
 			"legacyKey": "step-2/referral-to-a-specialist",
 			"legacyTitle": "2.2 Referral to a specialist",
-			"destination": "2/referral-to-a-specialist",
-			"how": "unplaced"
+			"destination": "2.3",
+			"how": "table",
+			"note": "printed as 2.2 under Step 2; its text is this section's — Referral to a gynaecological oncologist: the template’s Initial referral under an older name."
 		},
 		{
-			"legacyKey": "step-2/referral-to-a-specialist/timeframes-for-completing-investigations-and-referral-to-a-speci",
+			"legacyKey": "step-2/referral-to-a-specialist/timeframes-for-completing-investigations-and-referral-to-a",
 			"legacyTitle": "2.2.1 Timeframes for completing investigations and referral to a specialist",
-			"destination": "2/referral-to-a-specialist",
+			"destination": "2.3",
 			"how": "timeframe"
 		},
 		{
@@ -170,7 +171,7 @@
 			"note": "standing home for \"Responsibilities of individual team members\""
 		},
 		{
-			"legacyKey": "step-3/treatment-planning/members-of-the-gynaecological-multidisciplinary-team-for-cervica",
+			"legacyKey": "step-3/treatment-planning/members-of-the-gynaecological-multidisciplinary-team-for",
 			"legacyTitle": "3.3.4 Members of the gynaecological multidisciplinary team for cervical cancer",
 			"destination": "3.5.1",
 			"how": "title"
@@ -185,8 +186,8 @@
 		{
 			"legacyKey": "step-3/special-considerations",
 			"legacyTitle": "3.5 Special considerations",
-			"destination": "3/special-considerations",
-			"how": "unplaced"
+			"destination": "3.5/special-considerations",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-3/prehabilitation-support-and-communication",
@@ -269,8 +270,8 @@
 		{
 			"legacyKey": "step-4/special-considerations",
 			"legacyTitle": "4.3 Special considerations",
-			"destination": "4/special-considerations",
-			"how": "unplaced"
+			"destination": "4.4/special-considerations",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/palliative-care",
@@ -377,8 +378,8 @@
 		{
 			"legacyKey": "step-5/special-considerations",
 			"legacyTitle": "5.4 Special considerations",
-			"destination": "5/special-considerations",
-			"how": "unplaced"
+			"destination": "5.2/special-considerations",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-5/support-and-communication",
@@ -403,13 +404,13 @@
 		{
 			"legacyKey": "step-5/support-and-communication/palliative-care",
 			"legacyTitle": "5.5.3 Palliative care",
-			"destination": "5/palliative-care",
-			"how": "unplaced"
+			"destination": "5/supportive-care/palliative-care",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-5/support-and-communication/palliative-care/further-information",
 			"legacyTitle": "Further information",
-			"destination": "5/palliative-care",
+			"destination": "5/supportive-care/palliative-care",
 			"how": "resources"
 		},
 		{
@@ -1072,7 +1073,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide",
 			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1135,7 +1136,7 @@
 		]
 	},
 	"checkItems": 0,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1147,19 +1148,14 @@
 			"note": "proposed: holds the legacy pathway’s opening text; check it is about epidemiology and burden of disease"
 		},
 		{
-			"address": "1/immunisation",
+			"address": "1.1.2/immunisation",
 			"title": "Immunisation",
-			"note": "unplaced: the cancer template has no section for this under Step 1; keep, move or remove it"
+			"note": "unplaced: printed as 1.1.1 under Step 1; placed under 1.1.2 — HPV vaccination is a risk reduction strategy, and a topic of its own, so a subsection of Risk reduction strategies."
 		},
 		{
-			"address": "1/special-considerations",
+			"address": "1.2.1/special-considerations",
 			"title": "Special considerations",
-			"note": "unplaced: the cancer template has no section for this under Step 1; keep, move or remove it"
-		},
-		{
-			"address": "2/referral-to-a-specialist",
-			"title": "Referral to a specialist",
-			"note": "unplaced: the cancer template has no section for this under Step 2; keep, move or remove it"
+			"note": "unplaced: printed as 1.4 under Step 1; placed under 1.2.1 — Under-screening of women with disabilities and survivors of sexual abuse: a consideration for population-based screening, so a subsection of it."
 		},
 		{
 			"address": "3/timeframes",
@@ -1167,24 +1163,24 @@
 			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "3/special-considerations",
+			"address": "3.5/special-considerations",
 			"title": "Special considerations",
-			"note": "unplaced: the cancer template has no section for this under Step 3; keep, move or remove it"
+			"note": "unplaced: printed as 3.5 under Step 3; placed under 3.5 — Fertility, early menopause and sexual function to be addressed when planning treatment: a subsection of Treatment planning."
 		},
 		{
-			"address": "4/special-considerations",
+			"address": "4.4/special-considerations",
 			"title": "Special considerations",
-			"note": "unplaced: the cancer template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: printed as 4.3 under Step 4; placed under 4.4 — Fertility-sparing surgery and ovarian preservation before radiotherapy span the treatment modalities, so a subsection of Treatment options rather than of one modality."
 		},
 		{
-			"address": "5/special-considerations",
+			"address": "5.2/special-considerations",
 			"title": "Special considerations",
-			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
+			"note": "unplaced: printed as 5.4 under Step 5; placed under 5.2 — Treatment-related menopause and pregnancy after fertility-sparing treatment: long-term health after treatment, so a subsection of Supporting long-term health and wellbeing."
 		},
 		{
-			"address": "5/palliative-care",
+			"address": "5/supportive-care/palliative-care",
 			"title": "Palliative care",
-			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
+			"note": "unplaced: printed as 5.5.3 under Step 5; placed under Supportive care — The template has palliative care in Step 4 (a treatment option) and Step 6, not in Step 5; the print’s Step 5 palliative care is supportive care after initial treatment, so a subsection there."
 		},
 		{
 			"address": "find-out-more/appendix-supportive-care",

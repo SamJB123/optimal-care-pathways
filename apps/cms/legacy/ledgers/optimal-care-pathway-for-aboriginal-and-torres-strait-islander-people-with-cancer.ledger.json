@@ -161,8 +161,9 @@
 		{
 			"legacyKey": "step-2/support-and-communication",
 			"legacyTitle": "2.4 Support and communication",
-			"destination": "2/support-and-communication",
-			"how": "unplaced"
+			"destination": "2/supportive-care",
+			"how": "table",
+			"note": "printed as 2.4 under Step 2; its text is this section's — The same topic as the step’s Supportive care section (needs identified at diagnosis, culturally tailored access), so its text belongs in that section rather than as a subsection beside it."
 		},
 		{
 			"legacyKey": "step-2/support-and-communication/supportive-care",
@@ -332,8 +333,8 @@
 		{
 			"legacyKey": "step-4/pain-management",
 			"legacyTitle": "4.4 Pain management",
-			"destination": "4/pain-management",
-			"how": "unplaced"
+			"destination": "4/supportive-care/pain-management",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/palliative-care",
@@ -351,25 +352,25 @@
 		{
 			"legacyKey": "step-4/place-of-care",
 			"legacyTitle": "4.7 Place of care",
-			"destination": "4/place-of-care",
-			"how": "unplaced"
+			"destination": "4.10/place-of-care",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/place-of-care/further-information",
 			"legacyTitle": "Further information",
-			"destination": "4/place-of-care",
+			"destination": "4.10/place-of-care",
 			"how": "resources"
 		},
 		{
 			"legacyKey": "step-4/traditional-healing",
 			"legacyTitle": "4.8 Traditional healing",
-			"destination": "4/traditional-healing",
-			"how": "unplaced"
+			"destination": "4.5/traditional-healing",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/traditional-healing/further-information",
 			"legacyTitle": "Further information",
-			"destination": "4/traditional-healing",
+			"destination": "4.5/traditional-healing",
 			"how": "resources"
 		},
 		{
@@ -506,10 +507,10 @@
 			"note": "standing home for \"Treatment\""
 		},
 		{
-			"legacyKey": "step-6/6-4-pain-management",
+			"legacyKey": "step-6/pain-management",
 			"legacyTitle": "6.4 6.4 Pain management",
-			"destination": "6/6-4-pain-management",
-			"how": "unplaced"
+			"destination": "6/supportive-care/pain-management",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-6/advance-care-planning",
@@ -944,139 +945,139 @@
 		{
 			"legacyKey": "principle-1",
 			"legacyTitle": "Principle 1: Patient-centred care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-1/cultural-safety",
 			"legacyTitle": "Cultural safety",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-1/family-carer-and-community-inclusive",
 			"legacyTitle": "Family, carer and community inclusive",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-1/place-based-care-approach",
 			"legacyTitle": "Place-based care approach",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-1/place-based-care-approach/further-information",
 			"legacyTitle": "Further information",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-2",
 			"legacyTitle": "Principle 2: Safe and quality care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-2/culturally-safe-and-responsive-practice",
 			"legacyTitle": "Culturally safe and responsive practice",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-2/culturally-safe-and-responsive-practice/further-information",
 			"legacyTitle": "Further information",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-2/trauma-aware-healing-informed",
 			"legacyTitle": "Trauma-aware, healing-informed",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-2/trauma-aware-healing-informed/further-information",
 			"legacyTitle": "Further information",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-2/data-driven-quality-care",
 			"legacyTitle": "Data-driven quality care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-3",
 			"legacyTitle": "Principle 3: Multidisciplinary care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/multidisciplinary-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/multidisciplinary-care",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-3/further-information",
 			"legacyTitle": "Further information",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/multidisciplinary-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/multidisciplinary-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-4",
 			"legacyTitle": "Principle 4: Supportive care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-4/supportive-care-for-family-and-carers",
 			"legacyTitle": "Supportive care for family and carers",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-4/key-review-points",
 			"legacyTitle": "Key review points",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-4/key-review-points/further-information",
 			"legacyTitle": "Further Information",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-5",
 			"legacyTitle": "Principle 5: Care coordination",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/navigation-and-care-coordination",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/navigation-and-care-coordination",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-5/further-information",
 			"legacyTitle": "Further information",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/navigation-and-care-coordination",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/navigation-and-care-coordination",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-6",
 			"legacyTitle": "Principle 6: Communication",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/communication",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/communication",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-6/further-information",
 			"legacyTitle": "Further information",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/communication",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/communication",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-7",
 			"legacyTitle": "Principle 7: Research and clinical trials",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/research-and-clinical-trials",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/research-and-clinical-trials",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-7/further-information",
 			"legacyTitle": "Further information",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/research-and-clinical-trials",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/research-and-clinical-trials",
 			"how": "merged"
 		},
 		{
@@ -1158,7 +1159,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/cancer-australias-leadership-group-on-aboriginal-and-torres-stra",
+			"legacyKey": "contributors/cancer-australias-leadership-group-on-aboriginal-and-torres",
 			"legacyTitle": "Cancer Australia’s Leadership Group on Aboriginal and Torres strait Islander Cancer Control (this edition)",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1176,7 +1177,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/cancer-australias-leadership-group-on-aboriginal-and-torres-stra",
+			"legacyKey": "contributors/cancer-australias-leadership-group-on-aboriginal-and-torres",
 			"legacyTitle": "Cancer Australia’s Leadership Group on Aboriginal and Torres Strait Islander Cancer Control",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1428,13 +1429,13 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "resource-list/for-health-providers/consumers-perspective-of-the-quality-of-care-survey-protocol-201",
+			"legacyKey": "resource-list/for-health-providers/consumers-perspective-of-the-quality-of-care-survey-protocol",
 			"legacyTitle": "Consumer’s Perspective of the Quality of Care Survey Protocol (2015)",
 			"destination": "find-out-more/resource-list",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "resource-list/for-health-providers/culturally-safe-communication-skills-tips-for-non-indigenous-hea",
+			"legacyKey": "resource-list/for-health-providers/culturally-safe-communication-skills-tips-for-non-indigenous",
 			"legacyTitle": "Culturally safe communication skills – tips for non-Indigenous health professionals",
 			"destination": "find-out-more/resource-list",
 			"how": "merged"
@@ -1452,13 +1453,13 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "resource-list/for-health-providers/national-best-practice-guidelines-for-collecting-indigenous-stat",
+			"legacyKey": "resource-list/for-health-providers/national-best-practice-guidelines-for-collecting-indigenous",
 			"legacyTitle": "National best practice guidelines for collecting Indigenous status in health data sets",
 			"destination": "find-out-more/resource-list",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "resource-list/for-health-providers/new-south-wales-department-of-community-services-resource-workin",
+			"legacyKey": "resource-list/for-health-providers/new-south-wales-department-of-community-services-resource",
 			"legacyTitle": "New South Wales Department of Community Services resource: Working with Aboriginal people and communities – a practice resource",
 			"destination": "find-out-more/resource-list",
 			"how": "merged"
@@ -1513,39 +1514,39 @@
 		"rows": []
 	},
 	"checkItems": 0,
-	"unplacedSections": [
+	"notedSections": [
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"title": "Person-centred care",
 			"note": "proposed: holds the legacy \"Principle 1: Patient-centred care\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"title": "Safe and quality care",
 			"note": "proposed: holds the legacy \"Principle 2: Safe and quality care\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/multidisciplinary-care",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/multidisciplinary-care",
 			"title": "Multidisciplinary care",
 			"note": "proposed: holds the legacy \"Principle 3: Multidisciplinary care\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"title": "Supportive care",
 			"note": "proposed: holds the legacy \"Principle 4: Supportive care\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/navigation-and-care-coordination",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/navigation-and-care-coordination",
 			"title": "Navigation and care coordination",
 			"note": "proposed: holds the legacy \"Principle 5: Care coordination\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/communication",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/communication",
 			"title": "Communication",
 			"note": "proposed: holds the legacy \"Principle 6: Communication\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/research-and-clinical-trials",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/research-and-clinical-trials",
 			"title": "Research and clinical trials",
 			"note": "proposed: holds the legacy \"Principle 7: Research and clinical trials\" as this population’s considerations for the principle; check it belongs here"
 		},
@@ -1565,11 +1566,6 @@
 			"note": "proposed: timeframes of Step 2 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "2/support-and-communication",
-			"title": "Support and communication",
-			"note": "unplaced: the population template has no section for this under Step 2; keep, move or remove it"
-		},
-		{
 			"address": "3/timeframes",
 			"title": "Timeframes",
 			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
@@ -1580,24 +1576,24 @@
 			"note": "proposed: timeframes of Step 4 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "4/pain-management",
+			"address": "4/supportive-care/pain-management",
 			"title": "Pain management",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: printed as 4.4 under Step 4; placed under Supportive care — Cultural perspectives on reporting pain during treatment: supportive care, but a topic of its own the template’s section does not cover, so a subsection of it."
 		},
 		{
-			"address": "4/place-of-care",
+			"address": "4.10/place-of-care",
 			"title": "Place of care",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: printed as 4.7 under Step 4; placed under 4.10 — Outreach, ACCHS-based and telehealth care for regional and remote people is a health service characteristic for this population (the template’s 4.10); the template has no place-of-care section, so a subsection there."
 		},
 		{
-			"address": "4/traditional-healing",
+			"address": "4.5/traditional-healing",
 			"title": "Traditional healing",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
+			"note": "unplaced: printed as 4.8 under Step 4; placed under 4.5 — A treatment option outside the numbered modalities (the cancer template lists complementary therapies under 4.5; the population template has no such subsection), so a subsection of Other treatment options."
 		},
 		{
-			"address": "6/6-4-pain-management",
-			"title": "6.4 Pain management",
-			"note": "unplaced: the population template has no section for this under Step 6; keep, move or remove it"
+			"address": "6/supportive-care/pain-management",
+			"title": "Pain management",
+			"note": "unplaced: printed as 6.4 under Step 6; placed under Supportive care — Cultural perspectives on reporting pain with advanced disease: supportive care, but a topic of its own the template’s section does not cover, so a subsection of it."
 		},
 		{
 			"address": "optimal-care-pathway-for-with-cancer/welcome-and-introduction",

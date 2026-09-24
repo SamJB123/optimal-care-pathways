@@ -275,8 +275,8 @@
 		{
 			"legacyKey": "step-4/place-of-care",
 			"legacyTitle": "4.4 Place of care",
-			"destination": "4/place-of-care",
-			"how": "unplaced"
+			"destination": "4.10/place-of-care",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-4/palliative-care",
@@ -317,7 +317,7 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-5/follow-up-care/optimising-wellbeing-and-preventing-subsequent-cancer-developmen",
+			"legacyKey": "step-5/follow-up-care/optimising-wellbeing-and-preventing-subsequent-cancer",
 			"legacyTitle": "5.2.3 Optimising wellbeing and preventing subsequent cancer development",
 			"destination": "5.3.2",
 			"how": "merged"
@@ -366,8 +366,9 @@
 		{
 			"legacyKey": "step-6/signs-and-symptoms",
 			"legacyTitle": "6.1 Signs and symptoms",
-			"destination": "6/signs-and-symptoms",
-			"how": "unplaced"
+			"destination": "6.1",
+			"how": "table",
+			"note": "printed as 6.1 under Step 6; its text is this section's — How recurrence presents: the template’s Detecting residual, recurrent or metastatic disease."
 		},
 		{
 			"legacyKey": "step-6/multidisciplinary-team",
@@ -808,115 +809,115 @@
 		{
 			"legacyKey": "principle-1",
 			"legacyTitle": "Principle 1: Patient-centred and family-inclusive care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-1/referral-choices-and-informed-financial-consent",
 			"legacyTitle": "Referral choices and informed financial consent",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-1/shared-care",
 			"legacyTitle": "Shared care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-2",
 			"legacyTitle": "Principle 2: Safe and quality care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-2/professional-development-in-aya-care",
 			"legacyTitle": "Professional development in AYA care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-2/data-driven-quality-care",
 			"legacyTitle": "Data-driven quality care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-2/patient-reported-experience-and-outcome-measures",
 			"legacyTitle": "Patient-reported experience and outcome measures",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-3",
 			"legacyTitle": "Principle 3: Multidisciplinary care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/multidisciplinary-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/multidisciplinary-care",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-4",
 			"legacyTitle": "Principle 4: Supportive care",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-4/key-review-points",
 			"legacyTitle": "Key review points",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-4/assessment-tools",
 			"legacyTitle": "Assessment tools",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-4/educational-and-vocational-needs",
 			"legacyTitle": "Educational and vocational needs",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-4/exercise-and-nutritional-needs",
 			"legacyTitle": "Exercise and nutritional needs",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-4/informational-needs",
 			"legacyTitle": "Informational needs",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-4/psychological-needs",
 			"legacyTitle": "Psychological needs",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-4/practical-needs",
 			"legacyTitle": "Practical needs",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"how": "merged"
 		},
 		{
 			"legacyKey": "principle-5",
 			"legacyTitle": "Principle 5: Care coordination",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/navigation-and-care-coordination",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/navigation-and-care-coordination",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-6",
 			"legacyTitle": "Principle 6: Communication",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/communication",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/communication",
 			"how": "proposed"
 		},
 		{
 			"legacyKey": "principle-7",
 			"legacyTitle": "Principle 7: Research and clinical trials",
-			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/research-and-clinical-trials",
+			"destination": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/research-and-clinical-trials",
 			"how": "proposed"
 		},
 		{
@@ -1064,7 +1065,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide",
 			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1327,39 +1328,39 @@
 		"rows": []
 	},
 	"checkItems": 39,
-	"unplacedSections": [
+	"notedSections": [
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/person-centred-care",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/person-centred-care",
 			"title": "Person-centred care",
 			"note": "proposed: holds the legacy \"Principle 1: Patient-centred and family-inclusive care\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/safe-and-quality-care",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/safe-and-quality-care",
 			"title": "Safe and quality care",
 			"note": "proposed: holds the legacy \"Principle 2: Safe and quality care\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/multidisciplinary-care",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/multidisciplinary-care",
 			"title": "Multidisciplinary care",
 			"note": "proposed: holds the legacy \"Principle 3: Multidisciplinary care\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/supportive-care",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/supportive-care",
 			"title": "Supportive care",
 			"note": "proposed: holds the legacy \"Principle 4: Supportive care\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/navigation-and-care-coordination",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/navigation-and-care-coordination",
 			"title": "Navigation and care coordination",
 			"note": "proposed: holds the legacy \"Principle 5: Care coordination\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/communication",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/communication",
 			"title": "Communication",
 			"note": "proposed: holds the legacy \"Principle 6: Communication\" as this population’s considerations for the principle; check it belongs here"
 		},
 		{
-			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal-c/research-and-clinical-trials",
+			"address": "principles-for-optimal-cancer-care/population-based-considerations-for-the-principles-for-optimal/research-and-clinical-trials",
 			"title": "Research and clinical trials",
 			"note": "proposed: holds the legacy \"Principle 7: Research and clinical trials\" as this population’s considerations for the principle; check it belongs here"
 		},
@@ -1379,14 +1380,9 @@
 			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "4/place-of-care",
+			"address": "4.10/place-of-care",
 			"title": "Place of care",
-			"note": "unplaced: the population template has no section for this under Step 4; keep, move or remove it"
-		},
-		{
-			"address": "6/signs-and-symptoms",
-			"title": "Signs and symptoms",
-			"note": "unplaced: the population template has no section for this under Step 6; keep, move or remove it"
+			"note": "unplaced: printed as 4.4 under Step 4; placed under 4.10 — Care directed by a specialist AYA centre is a health service characteristic for this population (the template’s 4.10); no place-of-care section exists, so a subsection there."
 		},
 		{
 			"address": "optimal-care-pathway-for-with-cancer/welcome-and-introduction",

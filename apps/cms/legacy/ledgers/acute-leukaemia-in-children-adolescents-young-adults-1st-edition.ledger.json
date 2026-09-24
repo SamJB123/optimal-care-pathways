@@ -153,14 +153,14 @@
 		{
 			"legacyKey": "step-3/urgent-pathway",
 			"legacyTitle": "Urgent pathway",
-			"destination": "3/urgent-pathway",
-			"how": "unplaced"
+			"destination": "3.1/urgent-pathway",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-3/standard-pathway",
 			"legacyTitle": "Standard pathway",
-			"destination": "3/standard-pathway",
-			"how": "unplaced"
+			"destination": "3.1/standard-pathway",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-3/specialist-diagnostic-work-up",
@@ -233,8 +233,9 @@
 		{
 			"legacyKey": "step-3/staging-prognostic-assessment-and-risk-stratification",
 			"legacyTitle": "3.2 Staging, prognostic assessment and risk stratification",
-			"destination": "3/staging-prognostic-assessment-and-risk-stratification",
-			"how": "unplaced"
+			"destination": "3.3",
+			"how": "table",
+			"note": "printed as 3.2 under Step 3; its text is this section's — Risk stratification is this disease’s staging (the text says so: staging is not relevant beyond CNS and testicular disease; prognostic assessment takes its place), so it is the pathway’s text for the template’s Staging."
 		},
 		{
 			"legacyKey": "step-3/performance-status",
@@ -381,7 +382,7 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/treatment-options-newly-diagnosed-acute-lymphoblastic-leukaemia-",
+			"legacyKey": "step-4/treatment-options/treatment-options-newly-diagnosed-acute-lymphoblastic-leukaemia",
 			"legacyTitle": "Treatment options – newly diagnosed acute lymphoblastic leukaemia (ALL)",
 			"destination": "4.4",
 			"how": "title"
@@ -1328,7 +1329,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-peak-organisations-and-government-representativ",
+			"legacyKey": "contributors/medical-colleges-peak-organisations-and-government",
 			"legacyTitle": "Medical colleges, peak organisations and government representatives",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1426,7 +1427,7 @@
 		{
 			"legacyKey": "appendix-e",
 			"legacyTitle": "Appendix E: Members of the multidisciplinary team for CAYA acute leukaemia",
-			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-caya-acute-",
+			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-caya-acute",
 			"how": "proposed"
 		},
 		{
@@ -1622,13 +1623,13 @@
 			"how": "merged"
 		},
 		{
-			"legacyKey": "resource-list/for-health-providers/national-consensus-statement-essential-elements-for-safe-and-hig",
+			"legacyKey": "resource-list/for-health-providers/national-consensus-statement-essential-elements-for-safe-and",
 			"legacyTitle": "National consensus statement: essential elements for safe and high- quality paediatric end-of-life care",
 			"destination": "find-out-more/resource-list",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "resource-list/for-health-providers/optimal-care-pathway-for-adolescents-and-young-adults-with-cance",
+			"legacyKey": "resource-list/for-health-providers/optimal-care-pathway-for-adolescents-and-young-adults-with",
 			"legacyTitle": "Optimal care pathway for adolescents and young adults with cancer",
 			"destination": "find-out-more/resource-list",
 			"how": "merged"
@@ -1715,7 +1716,7 @@
 		]
 	},
 	"checkItems": 29,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1727,24 +1728,19 @@
 			"note": "proposed: holds the legacy pathway’s opening text; check it is about epidemiology and burden of disease"
 		},
 		{
-			"address": "3/urgent-pathway",
+			"address": "3.1/urgent-pathway",
 			"title": "Urgent pathway",
-			"note": "unplaced: the cancer template has no section for this under Step 3; keep, move or remove it"
+			"note": "unplaced: unnumbered under Step 3; placed under 3.1 — The emergency work-up (hyperleucocytosis, tumour lysis, sepsis): the pair of the Standard pathway, beside it under Specialist diagnostic work-up."
 		},
 		{
-			"address": "3/standard-pathway",
+			"address": "3.1/standard-pathway",
 			"title": "Standard pathway",
-			"note": "unplaced: the cancer template has no section for this under Step 3; keep, move or remove it"
+			"note": "unplaced: unnumbered under Step 3; placed under 3.1 — How quickly the diagnostic work-up happens for a stable patient: specific to this disease and not in the shared work-up text, so a subsection of Specialist diagnostic work-up."
 		},
 		{
 			"address": "3/timeframes",
 			"title": "Timeframes",
 			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
-		},
-		{
-			"address": "3/staging-prognostic-assessment-and-risk-stratification",
-			"title": "Staging, prognostic assessment and risk stratification",
-			"note": "unplaced: the cancer template has no section for this under Step 3; keep, move or remove it"
 		},
 		{
 			"address": "find-out-more/appendix-a-supportive-care-domains",
@@ -1767,7 +1763,7 @@
 			"note": "proposed: the sandbox record moves the legacy Appendix D: Complementary therapies into Find out more; keep, move or remove it"
 		},
 		{
-			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-caya-acute-",
+			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-caya-acute",
 			"title": "Appendix E: Members of the multidisciplinary team for CAYA acute leukaemia",
 			"note": "proposed: the sandbox record moves the legacy Appendix E: Members of the multidisciplinary team for CAYA acute leukaemia into Find out more; keep, move or remove it"
 		},

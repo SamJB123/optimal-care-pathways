@@ -160,8 +160,9 @@
 		{
 			"legacyKey": "step-3/phases-of-disease-and-prognostic-assessment",
 			"legacyTitle": "3.2 Phases of disease and prognostic assessment",
-			"destination": "3/phases-of-disease-and-prognostic-assessment",
-			"how": "unplaced"
+			"destination": "3.3",
+			"how": "table",
+			"note": "printed as 3.2 under Step 3; its text is this section's — The phase of CML (chronic, accelerated, blast) is this disease’s staging."
 		},
 		{
 			"legacyKey": "step-3/treatment-planning",
@@ -283,7 +284,7 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/initial-cytoreductive-therapy-hydroxyurea-hydroxycarbamide-treat",
+			"legacyKey": "step-4/treatment-options/initial-cytoreductive-therapy-hydroxyurea-hydroxycarbamide",
 			"legacyTitle": "4.2.1 Initial cytoreductive therapy – hydroxyurea/hydroxycarbamide treatment",
 			"destination": "4.4",
 			"how": "merged"
@@ -407,13 +408,13 @@
 		{
 			"legacyKey": "step-5/managing-patients-taking-tki-therapy",
 			"legacyTitle": "5.1 Managing patients taking TKI therapy",
-			"destination": "5/managing-patients-taking-tki-therapy",
-			"how": "unplaced"
+			"destination": "5.3.2/managing-patients-taking-tki-therapy",
+			"how": "table"
 		},
 		{
-			"legacyKey": "step-5/managing-patients-taking-tki-therapy/transitioning-from-active-treatment-in-patients-receiving-intens",
+			"legacyKey": "step-5/managing-patients-taking-tki-therapy/transitioning-from-active-treatment-in-patients-receiving",
 			"legacyTitle": "5.1.1 Transitioning from active treatment in patients receiving intensive therapy for blast phase CML",
-			"destination": "5/managing-patients-taking-tki-therapy",
+			"destination": "5.3.2/managing-patients-taking-tki-therapy",
 			"how": "merged"
 		},
 		{
@@ -492,8 +493,9 @@
 		{
 			"legacyKey": "step-6/managing-patients-not-responding-optimally",
 			"legacyTitle": "6.2 Managing patients not responding optimally",
-			"destination": "6/managing-patients-not-responding-optimally",
-			"how": "unplaced"
+			"destination": "6.2",
+			"how": "table",
+			"note": "printed as 6.2 under Step 6; its text is this section's — Bone marrow examination and mutational analysis on treatment failure: the template’s Investigating residual, recurrent or metastatic disease."
 		},
 		{
 			"legacyKey": "step-6/multidisciplinary-team",
@@ -1083,7 +1085,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-peak-organisations-and-government-representativ",
+			"legacyKey": "contributors/medical-colleges-peak-organisations-and-government",
 			"legacyTitle": "Medical colleges, peak organisations and government representatives",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1412,7 +1414,7 @@
 		]
 	},
 	"checkItems": 31,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1429,24 +1431,14 @@
 			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "3/phases-of-disease-and-prognostic-assessment",
-			"title": "Phases of disease and prognostic assessment",
-			"note": "unplaced: the cancer template has no section for this under Step 3; keep, move or remove it"
-		},
-		{
 			"address": "4/timeframes",
 			"title": "Timeframes",
 			"note": "proposed: timeframes of Step 4 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "5/managing-patients-taking-tki-therapy",
+			"address": "5.3.2/managing-patients-taking-tki-therapy",
 			"title": "Managing patients taking TKI therapy",
-			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
-		},
-		{
-			"address": "6/managing-patients-not-responding-optimally",
-			"title": "Managing patients not responding optimally",
-			"note": "unplaced: the cancer template has no section for this under Step 6; keep, move or remove it"
+			"note": "unplaced: printed as 5.1 under Step 5; placed under 5.3.2 — The monitoring schedule for ongoing TKI therapy is this disease’s follow-up care plan; a topic of its own, so a subsection of Follow-up care plan."
 		},
 		{
 			"address": "2/timeframes",

@@ -306,67 +306,67 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate",
 			"legacyTitle": "4.2.1 Care and treatment of localised or locally advanced prostate cancer",
 			"destination": "4.4",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/watchful-waiting",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate/watchful-waiting",
 			"legacyTitle": "Watchful waiting",
 			"destination": "4.4",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/active-surveillance",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate/active-surveillance",
 			"legacyTitle": "Active surveillance",
 			"destination": "4.5.4",
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/surgery-radical-prostatectomy",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate/surgery-radical-prostatectomy",
 			"legacyTitle": "Surgery (radical prostatectomy)",
 			"destination": "4.4.1",
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/surgery-radical-prostatectomy/timeframe-for-starting-treatment",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate/surgery-radical-prostatectomy/timeframe-for-starting-treatment",
 			"legacyTitle": "Timeframe for starting treatment",
 			"destination": "4.4.1",
 			"how": "timeframe"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/surgery-radical-prostatectomy/training-and-experience-required-of-the-surgeon",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate/surgery-radical-prostatectomy/training-and-experience-required-of-the-surgeon",
 			"legacyTitle": "Training and experience required of the surgeon",
 			"destination": "4.4.1",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/surgery-radical-prostatectomy/health-service-characteristics",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate/surgery-radical-prostatectomy/health-service-characteristics",
 			"legacyTitle": "Health service characteristics",
 			"destination": "4.8",
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/radiation-therapy-by-external-beam-radiation-therapy-and-or-brac",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate/radiation-therapy-by-external-beam-radiation-therapy-and-or",
 			"legacyTitle": "Radiation therapy (by external beam radiation therapy and/or brachytherapy)",
 			"destination": "4.4.2",
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/radiation-therapy-by-external-beam-radiation-therapy-and-or-brac/timeframe-for-starting-treatment",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate/radiation-therapy-by-external-beam-radiation-therapy-and-or/timeframe-for-starting-treatment",
 			"legacyTitle": "Timeframe for starting treatment",
 			"destination": "4.4.2",
 			"how": "timeframe"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/radiation-therapy-by-external-beam-radiation-therapy-and-or-brac/training-and-experience-required-of-the-appropriate-specialists",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate/radiation-therapy-by-external-beam-radiation-therapy-and-or/training-and-experience-required-of-the-appropriate-specialists",
 			"legacyTitle": "Training and experience required of the appropriate specialists",
 			"destination": "4.4.2",
 			"how": "merged"
 		},
 		{
-			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate-can/radiation-therapy-by-external-beam-radiation-therapy-and-or-brac/health-service-unit-characteristics",
+			"legacyKey": "step-4/treatment-options/care-and-treatment-of-localised-or-locally-advanced-prostate/radiation-therapy-by-external-beam-radiation-therapy-and-or/health-service-unit-characteristics",
 			"legacyTitle": "Health service unit characteristics",
 			"destination": "4.8",
 			"how": "title"
@@ -849,9 +849,9 @@
 			"how": "guide"
 		},
 		{
-			"legacyKey": "summary/step-4/care-and-treatment-of-localised-or-locally-advanced-prostate-can",
+			"legacyKey": "summary/step-4/care-and-treatment-of-localised-or-locally-advanced-prostate",
 			"legacyTitle": "Care and treatment of localised or locally advanced prostate cancer",
-			"destination": "4/quick-reference-guide/care-and-treatment-of-localised-or-locally-advanced-prostate-can",
+			"destination": "4/quick-reference-guide/care-and-treatment-of-localised-or-locally-advanced-prostate",
 			"how": "guide"
 		},
 		{
@@ -1133,7 +1133,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide",
 			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1231,7 +1231,7 @@
 		{
 			"legacyKey": "appendix-e",
 			"legacyTitle": "Appendix E: Members of the multidisciplinary team for prostate cancer",
-			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-prostate-ca",
+			"destination": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-prostate",
 			"how": "proposed"
 		},
 		{
@@ -1493,7 +1493,7 @@
 		]
 	},
 	"checkItems": 39,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1530,7 +1530,7 @@
 			"note": "proposed: the sandbox record moves the legacy Appendix D: Complementary therapies into Find out more; keep, move or remove it"
 		},
 		{
-			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-prostate-ca",
+			"address": "find-out-more/appendix-e-members-of-the-multidisciplinary-team-for-prostate",
 			"title": "Appendix E: Members of the multidisciplinary team for prostate cancer",
 			"note": "proposed: the sandbox record moves the legacy Appendix E: Members of the multidisciplinary team for prostate cancer into Find out more; keep, move or remove it"
 		},

@@ -188,7 +188,7 @@
 			"note": "standing home for \"Responsibilities of individual team members\""
 		},
 		{
-			"legacyKey": "step-3/treatment-planning/members-of-the-multidisciplinary-team-for-cancer-of-unknown-prim",
+			"legacyKey": "step-3/treatment-planning/members-of-the-multidisciplinary-team-for-cancer-of-unknown",
 			"legacyTitle": "3.3.3 Members of the multidisciplinary team for cancer of unknown primary",
 			"destination": "3.5.1",
 			"how": "title"
@@ -322,7 +322,7 @@
 			"how": "title"
 		},
 		{
-			"legacyKey": "step-4/research-and-clinical-trials/hospital-or-treatment-unit-characteristics-for-providing-safe-an",
+			"legacyKey": "step-4/research-and-clinical-trials/hospital-or-treatment-unit-characteristics-for-providing-safe",
 			"legacyTitle": "4.3.2 Hospital or treatment unit characteristics for providing safe and quality care",
 			"destination": "4.3.1",
 			"how": "merged"
@@ -492,13 +492,13 @@
 		{
 			"legacyKey": "step-5/support-and-communication/palliative-care",
 			"legacyTitle": "5.3.3 Palliative care",
-			"destination": "5/palliative-care",
-			"how": "unplaced"
+			"destination": "5/supportive-care/palliative-care",
+			"how": "table"
 		},
 		{
 			"legacyKey": "step-5/support-and-communication/palliative-care/further-information",
 			"legacyTitle": "Further information",
-			"destination": "5/palliative-care",
+			"destination": "5/supportive-care/palliative-care",
 			"how": "resources"
 		},
 		{
@@ -1089,7 +1089,7 @@
 			"how": "diverged"
 		},
 		{
-			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide-feedb",
+			"legacyKey": "contributors/medical-colleges-and-peak-organisations-invited-to-provide",
 			"legacyTitle": "Medical colleges and peak organisations invited to provide feedback",
 			"destination": "contributors-and-reviewers",
 			"how": "diverged"
@@ -1134,7 +1134,7 @@
 		]
 	},
 	"checkItems": 0,
-	"unplacedSections": [
+	"notedSections": [
 		{
 			"address": "optimal-care-pathway-for-people-with/preface",
 			"title": "Preface",
@@ -1161,9 +1161,9 @@
 			"note": "proposed: timeframes of Step 3 whose section is shared core text; move each into its section"
 		},
 		{
-			"address": "5/palliative-care",
+			"address": "5/supportive-care/palliative-care",
 			"title": "Palliative care",
-			"note": "unplaced: the cancer template has no section for this under Step 5; keep, move or remove it"
+			"note": "unplaced: printed as 5.3.3 under Step 5; placed under Supportive care — The template has palliative care in Step 4 (a treatment option) and Step 6, not in Step 5; the print’s Step 5 palliative care is supportive care after initial treatment, so a subsection there."
 		},
 		{
 			"address": "find-out-more/appendix-supportive-care",
