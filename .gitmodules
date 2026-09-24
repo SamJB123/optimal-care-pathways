@@ -10,9 +10,6 @@
 [submodule "packages/solid"]
 	path = packages/solid
 	url = https://github.com/SamJB123/aicolab-solid.git
-[submodule "packages/ui"]
-	path = packages/ui
-	url = https://github.com/SamJB123/aicolab-ui.git
 [submodule "packages/ui-solid"]
 	path = packages/ui-solid
 	url = https://github.com/SamJB123/aicolab-ui-solid.git

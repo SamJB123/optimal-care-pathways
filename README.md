@@ -15,7 +15,7 @@ on any Cloudflare account.
 |---|---|
 | `apps/cms` | The application worker: Solid + TanStack Start, live editing rooms, the D1 content database, the published API. |
 | `apps/auth` | The sign-in worker, built from `@aicolab/better-auth` with its own D1. |
-| `packages/*` | Git submodules of the shared libraries (`better-auth`, `cloudflare`, `room-service`, `solid`, `ui`, `ui-solid`). |
+| `packages/*` | Git submodules of the shared libraries (`app-kit`, `better-auth`, `cloudflare`, `room-service`, `solid`, `ui-solid`). |
 | `tooling/*` | Shared TypeScript and Biome configuration. |
 | `patches/` | pnpm patches the packages depend on. |
 
