@@ -234,13 +234,17 @@
    and takes no room here): the band is still the first thing the eye meets. In the
    template the same note is an inline accordion, so the band rightly sits below it. */
 .ocp-body .ocp-box .ui-callout-body > p[data-ocp="banner"]:not(:not(.ocp-guidance-anchor) ~ *),
-.ocp-body
+.ocp-body[data-guidance="margin"]
 	.ocp-box
 	.ui-callout-body
 	> .ocp-node-content
-	> [data-solid-block="banner"]:not(
-		:not([data-solid-block="guidance"]:has(.ocp-guidance-anchor)) ~ *
-	)
+	> [data-solid-block="banner"]:not(:not([data-solid-block="guidance"]) ~ *)
+	> p[data-ocp="banner"],
+.ocp-body:not([data-guidance="margin"])
+	.ocp-box
+	.ui-callout-body
+	> .ocp-node-content
+	> [data-solid-block="banner"]:first-child
 	> p[data-ocp="banner"] {
 	margin-top: calc(-1 * var(--_ui-callout-pad, 0.8rem));
 }
@@ -267,24 +271,52 @@
 	padding-left: 2.6em;
 }
 
+/* Written without a :has() inside the :has() — the browser drops the whole rule for
+   one — so the editor's case tells a margin-mode note (an anchor) from the template's
+   (a visible accordion) by the host's guidance mode, not by looking inside the note. */
 .ocp-body
 	.ocp-box
 	.ui-callout-body:has(> p[data-ocp="banner"]:not(:not(.ocp-guidance-anchor) ~ *))::before,
+.ocp-body[data-guidance="margin"]
+	.ocp-box
+	.ui-callout-body:has(
+		> .ocp-node-content > [data-solid-block="banner"]:not(:not([data-solid-block="guidance"]) ~ *)
+	)::before,
+.ocp-body:not([data-guidance="margin"])
+	.ocp-box
+	.ui-callout-body:has(> .ocp-node-content > [data-solid-block="banner"]:first-child)::before {
+	color: var(--color-secondary-content);
+	/* On the band's BASELINE: the glyph's line box starts where the band's first line
+	   does (its top padding, 0.35em) and is as tall (1.55em), both in the body's em,
+	   written in this glyph's larger em. Every glyph the template uses has its ink
+	   centred about 0.35em above the baseline, where the band's capitals are centred;
+	   centring the line box instead put them half a descender low. */
+	top: calc(0.35em / 1.1);
+	line-height: calc(1.55em / 1.1);
+}
+
+/* On a light "sub" band (Find out more, See also) the glyph reads in the body's ink, as
+   the band's own words do; the band's ink is for the solid navy band only. */
 .ocp-body
 	.ocp-box
 	.ui-callout-body:has(
+		> p[data-ocp="banner"][data-tone="sub"]:not(:not(.ocp-guidance-anchor) ~ *)
+	)::before,
+.ocp-body[data-guidance="margin"]
+	.ocp-box
+	.ui-callout-body:has(
 		> .ocp-node-content
-			> [data-solid-block="banner"]:not(
-				:not([data-solid-block="guidance"]:has(.ocp-guidance-anchor)) ~ *
-			)
+			> [data-solid-block="banner"]:not(:not([data-solid-block="guidance"]) ~ *)
+			> p[data-ocp="banner"][data-tone="sub"]
+	)::before,
+.ocp-body:not([data-guidance="margin"])
+	.ocp-box
+	.ui-callout-body:has(
+		> .ocp-node-content
+			> [data-solid-block="banner"]:first-child
+			> p[data-ocp="banner"][data-tone="sub"]
 	)::before {
-	color: var(--color-secondary-content);
-	/* Centred on the band's first line: the band's top padding (0.35em) and its line box
-	   (1.55em), both in the body's em, expressed in this glyph's larger em. */
-	top: calc(0.35em / 1.1);
-	block-size: calc(1.55em / 1.1);
-	display: grid;
-	place-items: center;
+	color: inherit;
 }
 
 /* ── The snapshot schematic, generated from the document's timeframe boxes ── */
