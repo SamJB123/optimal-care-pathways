@@ -117,7 +117,10 @@
 	.ocp-published-title,
 	.ocp-body :is(h1, h2, h3, h4, h5, h6),
 	.ocp-body p[data-ocp="banner"],
-	.ocp-body p[data-ocp="carePoint"] {
+	.ocp-body p[data-ocp="carePoint"],
+	.ocp-body p:has(> strong:only-child) {
+		/* The last is a paragraph that is only bold words: a legacy import's title line
+		   for the box or the run of text under it. */
 		break-after: avoid-page;
 	}
 
@@ -136,22 +139,27 @@
 		break-after: avoid-page;
 	}
 
-	/* A box, a table, a figure row or a set of columns is one thing on paper: it moves
-	   to the next page whole rather than splitting mid-sentence. One taller than a page
-	   still has to break, and does. */
+	/* What is small and one thing — a timeframe, a figure row, a set of columns, a
+	   resource entry, a table row — moves to the next page whole. A box or a callout may
+	   run on across a page, as a box in a printed report does, but only between its
+	   blocks: no paragraph or list item of it is ever cut mid-sentence. (Keeping whole
+	   boxes whole left pages a third empty.) A table breaks between rows and repeats its
+	   header row on the next page. */
 	.ocp-body
 	:is(
-		.ocp-box,
-		.ocp-box-callout,
 		.ocp-timeframe,
-		table,
 		blockquote,
-		.ocp-resources,
+		.ocp-resources > li,
 		div[data-ocp="columns"],
 		div[data-ocp="figureRow"],
-		div[data-ocp="timeframeSnapshot"]
-	) {
+		tr
+	),
+	.ocp-body :is(.ocp-box, .ocp-box-callout, .ocp-timeframe) :is(p, li) {
 		break-inside: avoid-page;
+	}
+
+	.ocp-body thead {
+		display: table-header-group;
 	}
 
 	/* No lone line of a paragraph at the top or bottom of a page. */
@@ -193,13 +201,15 @@
 		content: "•";
 	}
 
-	/* A figure and the caption written before it stay together on one page; a figure
-	   never splits. */
+	/* A figure never splits, and a caption written before it ("Figure 2: …", marked by
+	   the renderer) stays with it. Any other paragraph before a figure is ordinary text:
+	   tying it to the figure made the engine cut the paragraph short to carry its last
+	   lines over with the figure, and left the page before nearly empty. */
 	.ocp-body img {
 		break-inside: avoid;
 	}
 
-	.ocp-body p:has(+ img) {
+	.ocp-body p[data-caption] {
 		break-after: avoid-page;
 	}
 

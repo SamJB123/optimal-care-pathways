@@ -74,6 +74,55 @@ describe('renderBodyHtml', () => {
 		expect(html).not.toMatch(/<a[^>]*data-url-text[^>]*>the ALLG site/)
 	})
 
+	it('marks a link whose address the same run prints in words of its own', () => {
+		const html = renderBodyHtml(
+			{
+				type: 'doc',
+				content: [
+					{
+						type: 'paragraph',
+						content: [
+							{ type: 'text', text: 'Visit the ' },
+							{
+								type: 'text',
+								text: 'Cancer Council website',
+								marks: [{ type: 'link', attrs: { href: 'http://www.cancer.org.au/OCP' } }],
+							},
+							{ type: 'text', text: ' <' },
+							{
+								type: 'text',
+								text: 'www.cancer.org.au/OCP',
+								marks: [{ type: 'link', attrs: { href: 'http://www.cancer.org.au/OCP' } }],
+							},
+							{ type: 'text', text: '> to view the pathways.' },
+						],
+					},
+				],
+			},
+			derived,
+		)
+		expect(html.match(/data-url-text/g)?.length).toBe(2)
+	})
+
+	it('marks a caption that precedes its figure, and no other paragraph', () => {
+		const html = renderBodyHtml(
+			{
+				type: 'doc',
+				content: [
+					{ type: 'paragraph', content: [{ type: 'text', text: 'Young people face challenges.' }] },
+					{
+						type: 'paragraph',
+						content: [{ type: 'text', text: 'Figure 2: The seven principles' }],
+					},
+					{ type: 'image', attrs: { src: '/a.png', alt: '' } },
+				],
+			},
+			derived,
+		)
+		expect(html.match(/data-caption/g)?.length).toBe(1)
+		expect(html).toMatch(/<p[^>]*data-caption[^>]*>Figure 2/)
+	})
+
 	it('carries a table’s dragged column widths as a colgroup', () => {
 		const cell = (text: string, colwidth: number[] | null): JsonNode => ({
 			type: 'tableCell',

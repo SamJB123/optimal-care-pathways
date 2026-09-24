@@ -63,8 +63,21 @@ export function RenderedBody(props: {
 }
 
 function Blocks(props: { nodes: JsonNode[] }) {
-	return <For each={props.nodes}>{(node) => <Block node={node} />}</For>
+	return (
+		<For each={props.nodes}>{(node, i) => <Block node={node} next={props.nodes[i() + 1]} />}</For>
+	)
 }
+
+/** The plain text of a node's inline content. */
+const plainText = (node: JsonNode): string =>
+	node.type === 'text' ? (node.text ?? '') : (node.content ?? []).map(plainText).join('')
+
+/** A paragraph that captions the figure after it ("Figure 2: …", "Table A1 …"): on
+ *  paper the two stay together (print.css). */
+const isCaption = (node: JsonNode, next: JsonNode | undefined): boolean =>
+	node.type === 'paragraph' &&
+	next?.type === 'image' &&
+	/^\s*(figure|table|diagram)\s+[a-z]?\d/i.test(plainText(node))
 
 const str = (value: unknown, fallback = ''): string =>
 	typeof value === 'string' ? value : fallback
@@ -75,13 +88,16 @@ const alignStyle = (attrs: JsonNode['attrs']): JSX.CSSProperties | undefined => 
 	return align ? { 'text-align': align } : undefined
 }
 
-function Block(props: { node: JsonNode }) {
+function Block(props: { node: JsonNode; next?: JsonNode }) {
 	const attrs = () => props.node.attrs ?? {}
 	const children = () => props.node.content ?? []
 	return (
 		<Switch fallback={<Blocks nodes={children()} />}>
 			<Match when={props.node.type === 'paragraph'}>
-				<p style={alignStyle(attrs())}>
+				<p
+					style={alignStyle(attrs())}
+					data-caption={isCaption(props.node, props.next) ? '' : undefined}
+				>
 					<Inline nodes={children()} />
 				</p>
 			</Match>
@@ -265,12 +281,13 @@ function Cell(props: { node: JsonNode }) {
 /** Inline content: text under its marks (first mark outermost, as ProseMirror
  *  serialises), and the inline atoms. */
 export function Inline(props: { nodes: JsonNode[] }) {
+	const printed = () => printedAddresses(props.nodes)
 	return (
 		<For each={props.nodes}>
 			{(node, i) => (
 				<Switch>
 					<Match when={node.type === 'text'}>
-						<Marked marks={node.marks ?? []} index={0} text={node.text ?? ''} />
+						<Marked marks={node.marks ?? []} index={0} text={node.text ?? ''} printed={printed()} />
 					</Match>
 					<Match when={node.type === 'hardBreak'}>
 						<br />
@@ -298,21 +315,45 @@ export function Inline(props: { nodes: JsonNode[] }) {
 	)
 }
 
-/** Whether a link's words are its own address: the same once the scheme, a trailing
- *  slash and case are set aside ("www.allg.org.au" for "http://www.allg.org.au/"). */
-const sameAddress = (text: string, href: string): boolean => {
-	const plain = (s: string) =>
-		s
-			.trim()
-			.toLowerCase()
-			.replace(/^https?:\/\//, '')
-			.replace(/\/$/, '')
-	return href !== '' && plain(text) === plain(href)
+/** An address with the scheme, a leading "www.", a trailing slash and case set aside,
+ *  so that "www.allg.org.au" and "http://allg.org.au/" are the same one. */
+const plainAddress = (s: string): string =>
+	s
+		.trim()
+		.toLowerCase()
+		.replace(/^https?:\/\//, '')
+		.replace(/^www\./, '')
+		.replace(/\/$/, '')
+
+/** Whether a link's words are its own address. */
+const sameAddress = (text: string, href: string): boolean =>
+	href !== '' && plainAddress(text) === plainAddress(href)
+
+/** The addresses a run of inline content prints in words of their own — a legacy
+ *  import writes "the Cancer Council website <www.cancer.org.au/OCP>", two links to one
+ *  address — so that on paper the first link is not followed by the address a second
+ *  time (print.css). */
+const printedAddresses = (nodes: readonly JsonNode[]): ReadonlySet<string> => {
+	const out = new Set<string>()
+	for (const node of nodes) {
+		if (node.type !== 'text') continue
+		const link = node.marks?.find((m) => m.type === 'link')
+		const href = str(link?.attrs?.href)
+		if (link && sameAddress(node.text ?? '', href)) out.add(plainAddress(href))
+	}
+	return out
 }
 
-function Marked(props: { marks: JsonMark[]; index: number; text: string }) {
+function Marked(props: {
+	marks: JsonMark[]
+	index: number
+	text: string
+	printed: ReadonlySet<string>
+}) {
 	const mark = () => props.marks[props.index]
-	const inner = () => <Marked marks={props.marks} index={props.index + 1} text={props.text} />
+	const inner = () => (
+		<Marked marks={props.marks} index={props.index + 1} text={props.text} printed={props.printed} />
+	)
 	return (
 		<Show when={mark()} fallback={props.text}>
 			{(m) => (
@@ -340,10 +381,15 @@ function Marked(props: { marks: JsonMark[]; index: number; text: string }) {
 							href={str(m().attrs?.href)}
 							target={str(m().attrs?.target) || undefined}
 							rel={str(m().attrs?.rel) || undefined}
-							// Words that are the address itself (a legacy import prints the URL, with or
-							// without its scheme): on paper the address is not written a second time
-							// after them (print.css).
-							data-url-text={sameAddress(props.text, str(m().attrs?.href)) ? '' : undefined}
+							// Words that are the address itself, or words whose address the same run
+							// prints in a link of its own: on paper the address is not written a second
+							// time after them (print.css).
+							data-url-text={
+								sameAddress(props.text, str(m().attrs?.href)) ||
+								props.printed.has(plainAddress(str(m().attrs?.href)))
+									? ''
+									: undefined
+							}
 						>
 							{inner()}
 						</a>
