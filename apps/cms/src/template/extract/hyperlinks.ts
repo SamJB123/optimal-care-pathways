@@ -23,7 +23,7 @@
 
 import type { JsonMark, JsonNode } from '#/content/schema.ts'
 import type { TemplateKind } from '#/db/schema.ts'
-import { publishedHref } from '#/lib/links.ts'
+import { publishedHref } from '#/lib/hrefs.ts'
 import type { SeedResult } from '../rows.ts'
 
 /** The note as the templates print it, however Word spaced its brackets. */
