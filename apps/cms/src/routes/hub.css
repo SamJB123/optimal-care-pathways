@@ -36,7 +36,9 @@
 		gap: 0.3rem 1.25rem;
 		margin: 0.5rem 0 0;
 	}
-	.ocp-imprint-facts div {
+	/* Each fact's own div is flattened into the grid; what a fact HOLDS (the colour
+	   editor's rows) keeps its layout. */
+	.ocp-imprint-facts > div {
 		display: contents;
 	}
 	.ocp-imprint-facts dt {
