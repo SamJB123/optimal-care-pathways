@@ -15,15 +15,28 @@ import {
 } from '@aicolab/ui-solid'
 import { useNavigate } from '@tanstack/solid-router'
 import { createMemo, createSignal, onSettled } from 'solid-js'
-import { guideHref, guidePdfHref, pdfHref, publishedHref, workspaceHref } from '#/lib/links.ts'
+import {
+	type AppLink,
+	guideLink,
+	guidePdfHref,
+	pdfHref,
+	publishedLink,
+	workspaceLink,
+} from '#/lib/links.ts'
 import { type JumpDocument, jumpIndex } from '#/server/atlas.ts'
 import './jump.css'
 
 export const JUMP_ID = 'ocp-jump'
 
+/** A file the worker serves (a PDF, a Word file): the browser fetches it whole. */
+export interface JumpFile {
+	file: string
+}
+
 export interface JumpTarget extends CommandPaletteItem {
-	/** An in-app path, or a function to run. */
-	go: string | (() => void)
+	/** A typed destination in the app (the router moves there without leaving the page),
+	 *  a file to fetch, or a function to run. */
+	go: AppLink | JumpFile | (() => void)
 }
 
 /** What a page contributes: the sections of its document and its actions. */
@@ -46,7 +59,7 @@ function documentTargets(documents: readonly JumpDocument[]): JumpTarget[] {
 						detail: d.title,
 						kind: d.kind === 'core' ? 'Template' : 'Pathway',
 						keywords: [d.subject, d.slug],
-						go: workspaceHref(d.id),
+						go: workspaceLink(d.id),
 					},
 				]
 			: []),
@@ -57,28 +70,28 @@ function documentTargets(documents: readonly JumpDocument[]): JumpTarget[] {
 						label: `${d.name}, published`,
 						kind: 'Published',
 						keywords: [d.subject, d.slug, 'read'],
-						go: publishedHref(d.slug),
+						go: publishedLink(d.slug),
 					},
 					{
 						id: `guide:${d.slug}`,
 						label: `${d.name}, quick reference guide`,
 						kind: 'Published',
 						keywords: [d.subject, 'guide'],
-						go: guideHref(d.slug),
+						go: guideLink(d.slug),
 					},
 					{
 						id: `pdf:${d.slug}`,
 						label: `${d.name}, PDF`,
 						kind: 'Download',
 						keywords: [d.subject, 'pdf'],
-						go: pdfHref(d.slug),
+						go: { file: pdfHref(d.slug) },
 					},
 					{
 						id: `gpdf:${d.slug}`,
 						label: `${d.name}, guide PDF`,
 						kind: 'Download',
 						keywords: [d.subject, 'pdf', 'guide'],
-						go: guidePdfHref(d.slug),
+						go: { file: guidePdfHref(d.slug) },
 					},
 				]
 			: []),
@@ -146,8 +159,8 @@ export function Jump(props: JumpContribution) {
 			/* recents are a convenience */
 		}
 		if (typeof item.go === 'function') item.go()
-		else if (item.go.startsWith('/api/')) window.location.assign(item.go)
-		else void navigate({ href: item.go })
+		else if ('file' in item.go) window.location.assign(item.go.file)
+		else void navigate(item.go)
 	}
 
 	return (

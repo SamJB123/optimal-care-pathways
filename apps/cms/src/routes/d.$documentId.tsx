@@ -36,13 +36,15 @@ import { documentName, numberLabel } from '#/lib/labels.ts'
 import {
 	draftDocxHref,
 	draftPdfHref,
+	editionsLink,
 	homeLink,
-	partHref,
 	partLink,
-	previewHref,
+	previewLink,
 	publishedLink,
+	referencesLink,
 	sectionAnchor,
-	teamHref,
+	sectionLink,
+	teamLink,
 	workspaceLink,
 } from '#/lib/links.ts'
 import type { SectionWireRow } from '#/lib/live-topics.ts'
@@ -373,7 +375,7 @@ function DocumentShell() {
 						.join(' '),
 					kind: 'Section',
 					keywords: [s.address],
-					go: `${partHref(params().documentId, root?.address ?? s.address)}#${sectionAnchor(s.address)}`,
+					go: sectionLink(params().documentId, root?.address ?? s.address, s.address),
 				}
 			}),
 		)
@@ -417,42 +419,42 @@ function DocumentShell() {
 			label: 'Editions',
 			kind: 'Action',
 			keywords: ['versions', 'compare'],
-			go: `/d/${params().documentId}/versions`,
+			go: editionsLink(params().documentId),
 		},
 		{
 			id: 'act:team',
 			label: 'Team',
 			kind: 'Action',
 			keywords: ['people', 'members', 'invite', 'roles'],
-			go: teamHref(params().documentId),
+			go: teamLink(params().documentId),
 		},
 		{
 			id: 'act:preview',
 			label: 'Preview the draft',
 			kind: 'Action',
 			keywords: ['preview'],
-			go: previewHref(params().documentId),
+			go: previewLink(params().documentId),
 		},
 		{
 			id: 'act:draft-pdf',
 			label: 'Download the draft as a PDF',
 			kind: 'Action',
 			keywords: ['export', 'print'],
-			go: draftPdfHref(params().documentId),
+			go: { file: draftPdfHref(params().documentId) },
 		},
 		{
 			id: 'act:draft-docx',
 			label: 'Download the draft as a Word file',
 			kind: 'Action',
 			keywords: ['export', 'docx'],
-			go: draftDocxHref(params().documentId),
+			go: { file: draftDocxHref(params().documentId) },
 		},
 		{
 			id: 'act:references',
 			label: 'References',
 			kind: 'Action',
 			keywords: ['citations'],
-			go: `/d/${params().documentId}/references`,
+			go: referencesLink(params().documentId),
 		},
 		{
 			id: 'act:hidden',
@@ -468,7 +470,7 @@ function DocumentShell() {
 			label: hit.here ? hit.label : `${hit.documentName}: ${hit.label}`,
 			detail: hit.snippet,
 			kind: hit.here ? 'In the text' : 'Elsewhere',
-			go: `${partHref(hit.documentId, hit.part)}#${sectionAnchor(hit.address)}`,
+			go: sectionLink(hit.documentId, hit.part, hit.address),
 		}))
 
 	onSettled(() => {

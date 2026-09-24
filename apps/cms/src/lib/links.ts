@@ -42,6 +42,10 @@ export const suggestionsLink = (documentId: string) =>
 	linkOptions({ to: '/d/$documentId/suggestions', params: { documentId } })
 export const teamLink = (documentId: string) =>
 	linkOptions({ to: '/d/$documentId/team', params: { documentId } })
+export const editionsLink = (documentId: string) =>
+	linkOptions({ to: '/d/$documentId/versions', params: { documentId } })
+export const referencesLink = (documentId: string) =>
+	linkOptions({ to: '/d/$documentId/references', params: { documentId } })
 
 export const publishedHref = (slug: string): string => `/p/${slug}`
 export const editionHref = (slug: string, versionNo: number): string => `/p/${slug}/v/${versionNo}`
