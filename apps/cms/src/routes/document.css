@@ -127,6 +127,7 @@
 }
 
 .ocp-section-heading {
+	position: relative;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: baseline;
@@ -229,12 +230,17 @@
 	scale: 1.35;
 }
 
+/* The rule is drawn in the heading's bottom margin, out of the flow: focusing a section
+   moves nothing. It starts under the number, past the mark's column. */
 .ocp-section[data-focused="true"] > .ocp-section-heading::after {
 	content: "";
-	flex-basis: 100%;
+	position: absolute;
+	inset-inline-start: calc(var(--ocp-gutter) - 1.2rem + 1.75rem);
+	inset-inline-end: 0;
+	inset-block-end: -0.3rem;
 	block-size: 1px;
-	margin-inline-start: 1.75rem;
 	background: linear-gradient(to right, var(--family, var(--color-primary)), transparent 70%);
+	pointer-events: none;
 }
 
 /* Arriving from the spine or the jump: the number lights, then settles. */

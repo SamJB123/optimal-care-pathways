@@ -299,9 +299,23 @@ sup[data-ocp="citation"]::before {
 	line-height: 1.55;
 }
 
-/* Where the caret is: a faint rule in the document's colour down the gutter. */
-.ocp-section-editor .aic-prosekit-editor.ProseMirror-focused {
-	box-shadow: -0.9rem 0 0 -0.8rem var(--family, var(--color-primary));
+/* Where the caret is: a rule in the document's colour down the gutter, a little clear of
+   the text. Drawn by the editor's wrapper, not as a box-shadow on the editable element
+   (a shadow can only ever touch the element's edge) and never as a pseudo-element on the
+   editable element itself. */
+.ocp-section-editor.aic-prosekit {
+	position: relative;
+}
+
+.ocp-section-editor.aic-prosekit:has(.aic-prosekit-editor.ProseMirror-focused)::before {
+	content: "";
+	position: absolute;
+	inset-block: 0.15em;
+	inset-inline-start: -0.8rem;
+	inline-size: 0.2rem;
+	border-radius: 999px;
+	background: var(--family, var(--color-primary));
+	pointer-events: none;
 }
 
 .ocp-section-shared-note {
