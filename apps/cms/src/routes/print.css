@@ -112,9 +112,38 @@
 	}
 
 	/* A heading stays with the text it opens; a long section runs on across pages rather
-	   than leaving the page before it half empty. */
-	.ocp-published-title {
+	   than leaving the page before it half empty. The headings inside a section and a
+	   box's band are headings too. */
+	.ocp-published-title,
+	.ocp-body :is(h1, h2, h3, h4, h5, h6),
+	.ocp-body p[data-ocp="banner"],
+	.ocp-body p[data-ocp="carePoint"] {
 		break-after: avoid-page;
+	}
+
+	/* A box, a table, a figure row or a set of columns is one thing on paper: it moves
+	   to the next page whole rather than splitting mid-sentence. One taller than a page
+	   still has to break, and does. */
+	.ocp-body
+	:is(
+		.ocp-box,
+		.ocp-box-callout,
+		.ocp-timeframe,
+		table,
+		blockquote,
+		.ocp-resources,
+		div[data-ocp="columns"],
+		div[data-ocp="figureRow"],
+		div[data-ocp="timeframeSnapshot"]
+	) {
+		break-inside: avoid-page;
+	}
+
+	/* No lone line of a paragraph at the top or bottom of a page. */
+	.ocp-body p,
+	.ocp-body li {
+		orphans: 3;
+		widows: 3;
 	}
 
 	/* A link's address follows its words on paper — unless its words ARE its address
