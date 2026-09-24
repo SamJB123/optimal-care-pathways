@@ -269,6 +269,19 @@
 		cursor: not-allowed;
 		opacity: 0.5;
 	}
+	/* The Table panel: the row and column actions as one list of buttons. */
+	.ocp-table-menu {
+		min-inline-size: 11rem;
+	}
+	.ocp-table-menu .ocp-link-target {
+		inline-size: 100%;
+		font: inherit;
+		text-align: start;
+		color: inherit;
+		background: none;
+		border: 0;
+	}
+
 	.ocp-insert-label {
 		font-weight: 600;
 	}

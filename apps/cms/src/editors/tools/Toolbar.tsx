@@ -25,6 +25,7 @@ const ANCHOR = {
 	insert: '--ocp-tool-insert',
 	cite: '--ocp-tool-cite',
 	link: '--ocp-tool-link',
+	table: '--ocp-tool-table',
 	slash: '--ocp-tool-slash',
 } as const
 
@@ -64,6 +65,7 @@ export function StageToolbar() {
 	const insert = createToolPopover()
 	const cite = createToolPopover()
 	const link = createToolPopover()
+	const table = createToolPopover()
 	const [insertAnchor, setInsertAnchor] = createSignal<string>(ANCHOR.insert)
 	const [slashAt, setSlashAt] = createSignal<DOMRect | null>(null)
 	const [linkTab, setLinkTab] = createSignal<LinkTab | null>(null)
@@ -164,20 +166,19 @@ export function StageToolbar() {
 						</>
 					)}
 				</Show>
-				{/* With the caret in a table: rows and columns come and go from here. Columns are
-				    resized by dragging their edges in the table itself (section.css). */}
+				{/* With the caret in a table: one Table button, whose panel holds the row and
+				    column actions, so the bar never widens. Columns are resized by dragging their
+				    edges in the table itself (section.css). */}
 				<Show when={inTable()}>
 					<span class="aic-prosekit-toolbar-separator" aria-hidden="true" />
-					<For each={tableTools}>
-						{(tool) => (
-							<ToolButton
-								label={tool.label}
-								title={tool.title}
-								disabled={!canEdit()}
-								onPress={() => control()?.tableAction(tool.action)}
-							/>
-						)}
-					</For>
+					<ToolButton
+						label="Table"
+						title="Add or remove rows and columns of the table the caret is in"
+						anchor={ANCHOR.table}
+						popoverTarget={table.id}
+						pressed={table.open()}
+						disabled={!canEdit()}
+					/>
 				</Show>
 				<span class="aic-prosekit-toolbar-separator" aria-hidden="true" />
 				<ToolButton
@@ -248,6 +249,33 @@ export function StageToolbar() {
 				onEscape={refocus}
 			>
 				<LinkPopover control={control()} tab={linkTab()} close={() => link.hide()} />
+			</ToolPopover>
+			<ToolPopover
+				handle={table}
+				anchor={ANCHOR.table}
+				label="Table"
+				class="ocp-table-popover"
+				onEscape={refocus}
+			>
+				<ul class="ocp-link-list ocp-table-menu">
+					<For each={tableTools}>
+						{(tool) => (
+							<li>
+								<button
+									type="button"
+									class="ocp-link-target"
+									title={tool.title}
+									onClick={() => {
+										table.hide()
+										control()?.tableAction(tool.action)
+									}}
+								>
+									{tool.label}
+								</button>
+							</li>
+						)}
+					</For>
+				</ul>
 			</ToolPopover>
 		</div>
 	)
