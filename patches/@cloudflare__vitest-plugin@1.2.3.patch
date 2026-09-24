@@ -1,0 +1,94 @@
+diff --git a/dist/worker/index.mjs b/dist/worker/index.mjs
+index d1367652e17949ba779d423a5b584ba29111b6e2..7fd47914001868235a84878ab525fc386358fdb1 100644
+--- a/dist/worker/index.mjs
++++ b/dist/worker/index.mjs
+@@ -776,9 +776,6 @@ globalThis.clearTimeout = (...args) => {
+ function isDifferentIOContextError(e) {
+ 	return e instanceof Error && e.message.startsWith("Cannot perform I/O on behalf of a different");
+ }
+-function isUserConsoleLogResponse(response) {
+-	return typeof response === "object" && response !== null && "m" in response && response.m === "onUserConsoleLog";
+-}
+ let patchedFunction = false;
+ function ensurePatchedFunction(unsafeEval) {
+ 	if (patchedFunction) return;
+@@ -816,24 +813,16 @@ var __VITEST_POOL_WORKERS_RUNNER_DURABLE_OBJECT__ = class extends DurableObject
+ 		cwd = wd.cwd;
+ 		const { init, runBaseTests, setupEnvironment } = await import("vitest/worker");
+ 		poolSocket.accept();
+-		const pendingConsoleLogs = [];
+-		const sendPendingConsoleLogs = () => {
+-			while (pendingConsoleLogs.length > 0) {
+-				poolSocket.send(structuredSerializableStringify(pendingConsoleLogs[0]));
+-				pendingConsoleLogs.shift();
+-			}
+-		};
++
+ 		init({
+ 			post: (response) => {
+ 				try {
+-					sendPendingConsoleLogs();
+ 					poolSocket.send(structuredSerializableStringify(response));
+ 				} catch (error) {
+ 					if (isDifferentIOContextError(error)) {
+-						if (isUserConsoleLogResponse(response)) {
+-							pendingConsoleLogs.push(response);
+-							return;
+-						}
++						// Console reports are acknowledged RPCs too. Queueing one until the
++						// next outgoing message deadlocks Vitest's final rpcDone() drain.
++						// Send it in the runner context, just like every other response.
+ 						registerHandlerAndGlobalWaitUntil(runInRunnerObject(() => {
+ 							poolSocket.send(structuredSerializableStringify(response));
+ 						}).catch((e) => {
+diff --git a/dist/pool/index.mjs b/dist/pool/index.mjs
+--- a/dist/pool/index.mjs
++++ b/dist/pool/index.mjs
+@@ -64381,6 +64381,19 @@
+ }
+ /** Map that maps worker configPaths to their existing remote proxy session data (if any) */
+ const remoteProxySessionsDataMap = /* @__PURE__ */ new Map();
++// Serialize session creation/updates per config: concurrent pool workers must not
++// overwrite an untracked session while the first remote connection is opening.
++const remoteProxySessionLocks = new Map();
++async function withRemoteProxySessionLock(configPath, operation) {
++	const previous = remoteProxySessionLocks.get(configPath) ?? Promise.resolve();
++	const current = previous.catch(() => {}).then(operation);
++	remoteProxySessionLocks.set(configPath, current);
++	try {
++		return await current;
++	} finally {
++		if (remoteProxySessionLocks.get(configPath) === current) remoteProxySessionLocks.delete(configPath);
++	}
++}
+ /**
+ * Disposes every remote proxy session and clears the map.
+ *
+@@ -64463,15 +64476,18 @@
+ 			workerName: config$1.topLevelName
+ 		};
+ 		const wrangler = await import("wrangler");
+-		const preExistingRemoteProxySessionData = remoteProxySessionsDataMap.get(configPath);
+-		const remoteProxySessionData = options.remoteBindings ? await maybeStartOrUpdateRemoteProxySession({
+-			name: config$1.name ?? "worker",
+-			bindings: wrangler.unstable_convertConfigBindingsToStartWorkerBindings(config$1) ?? {},
+-			complianceRegion: getCloudflareComplianceRegion(config$1),
+-			account_id: config$1.account_id,
+-			profileDir: path.dirname(configPath)
+-		}, preExistingRemoteProxySessionData ?? null, void 0, { logger: remoteBindingsLogger }) : null;
+-		if (remoteProxySessionData) remoteProxySessionsDataMap.set(configPath, remoteProxySessionData);
++		const remoteProxySessionData = options.remoteBindings ? await withRemoteProxySessionLock(configPath, async () => {
++			const preExistingRemoteProxySessionData = remoteProxySessionsDataMap.get(configPath);
++			const remoteProxySessionData = await maybeStartOrUpdateRemoteProxySession({
++				name: config$1.name ?? "worker",
++				bindings: wrangler.unstable_convertConfigBindingsToStartWorkerBindings(config$1) ?? {},
++				complianceRegion: getCloudflareComplianceRegion(config$1),
++				account_id: config$1.account_id,
++				profileDir: path.dirname(configPath)
++			}, preExistingRemoteProxySessionData ?? null, void 0, { logger: remoteBindingsLogger });
++			if (remoteProxySessionData) remoteProxySessionsDataMap.set(configPath, remoteProxySessionData);
++			return remoteProxySessionData;
++		}) : null;
+ 		const { workerOptions, externalWorkers, define, main } = wrangler.unstable_getMiniflareWorkerOptions(config$1, environment, {
+ 			overrides: {
+ 				assets: options.miniflare.assets,

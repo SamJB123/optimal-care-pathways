@@ -9,6 +9,11 @@ packages:
 catalog:
   '@biomejs/biome': ^2.5.14
   '@cloudflare/vite-plugin': ^1.57.1
+  # (pathways) room-service's Workers tests moved to the renamed plugin (its commit
+  # 6407e22); cms still runs on pool-workers. The monorepo ranges ^1.2.3 but its lockfile
+  # holds 1.2.3 and its patch (below) is keyed to that version — pinned exact here so a
+  # fresh resolution can't float onto 1.2.4 and leave the patch unapplied.
+  '@cloudflare/vitest-plugin': 1.2.3
   '@cloudflare/vitest-pool-workers': ^0.22.0
   # v5 = latest-runtime types only (dated entrypoints dropped). Workers type
   # themselves via `wrangler types`; the bare entrypoint is all we use.
@@ -281,6 +286,11 @@ resolvePeersFromWorkspaceRoot: true
 
 patchedDependencies:
   # (pathways) Only what this repo installs; the monorepo also patches moq and three.
+  # Forward console RPCs from their runner context: deferring them until another
+  # message deadlocks Vitest's end-of-file RPC drain (2026-09-22).
+  # Serialize remote-session creation per config to avoid leaked connections
+  # from parallel test-worker startup (2026-09-23).
+  '@cloudflare/vitest-plugin@1.2.3': patches/@cloudflare__vitest-plugin@1.2.3.patch
   '@tanstack/db@0.9.2': patches/@tanstack__db@0.9.2.patch
 
 allowBuilds:
