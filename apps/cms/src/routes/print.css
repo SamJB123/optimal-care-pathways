@@ -121,6 +121,21 @@
 		break-after: avoid-page;
 	}
 
+	/* Said from the other side too: what opens a section — its first block, or a first
+	   nested section — does not start a page on its own, so the engine has both ends of
+	   the rule when a title's next content sits a level deeper (a subsection's title). */
+	.ocp-published-title + .ocp-body > :first-child,
+	.ocp-published-section:has(> .ocp-published-title:last-child) + .ocp-published-section,
+	.ocp-body :is(h1, h2, h3, h4, h5, h6) + * {
+		break-before: avoid-page;
+	}
+
+	/* A section that is only its title (its text is in the subsections that follow, as
+	   the sections run in sequence) keeps the next section with it. */
+	.ocp-published-section:has(> .ocp-published-title:last-child) {
+		break-after: avoid-page;
+	}
+
 	/* A box, a table, a figure row or a set of columns is one thing on paper: it moves
 	   to the next page whole rather than splitting mid-sentence. One taller than a page
 	   still has to break, and does. */
@@ -144,6 +159,14 @@
 	.ocp-body li {
 		orphans: 3;
 		widows: 3;
+	}
+
+	/* The snapshot's dashed frame says "generated" on screen; on paper the table runs
+	   over pages by itself, and a frame that ends on the next page would print as a
+	   stray dashed sliver there. */
+	.ocp-body div[data-ocp="timeframeSnapshot"] {
+		border: 0;
+		padding: 0;
 	}
 
 	/* A link's address follows its words on paper — unless its words ARE its address

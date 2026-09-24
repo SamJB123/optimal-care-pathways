@@ -53,6 +53,27 @@ describe('renderBodyHtml', () => {
 		expect(html).toContain('Signs and symptoms')
 	})
 
+	it('marks a link whose words are its own address, scheme or not', () => {
+		const link = (text: string, href: string): JsonNode => ({
+			type: 'paragraph',
+			content: [{ type: 'text', text, marks: [{ type: 'link', attrs: { href } }] }],
+		})
+		const html = renderBodyHtml(
+			{
+				type: 'doc',
+				content: [
+					link('https://www.vics.org.au/pics', 'https://www.vics.org.au/pics'),
+					link('www.allg.org.au', 'http://www.allg.org.au/'),
+					link('the ALLG site', 'http://www.allg.org.au/'),
+				],
+			},
+			derived,
+		)
+		expect(html.match(/data-url-text/g)?.length).toBe(2)
+		expect(html).toMatch(/<a[^>]*href="http:\/\/www\.allg\.org\.au\/"[^>]*>the ALLG site<\/a>/)
+		expect(html).not.toMatch(/<a[^>]*data-url-text[^>]*>the ALLG site/)
+	})
+
 	it('carries a table’s dragged column widths as a colgroup', () => {
 		const cell = (text: string, colwidth: number[] | null): JsonNode => ({
 			type: 'tableCell',

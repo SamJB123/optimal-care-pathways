@@ -298,6 +298,18 @@ export function Inline(props: { nodes: JsonNode[] }) {
 	)
 }
 
+/** Whether a link's words are its own address: the same once the scheme, a trailing
+ *  slash and case are set aside ("www.allg.org.au" for "http://www.allg.org.au/"). */
+const sameAddress = (text: string, href: string): boolean => {
+	const plain = (s: string) =>
+		s
+			.trim()
+			.toLowerCase()
+			.replace(/^https?:\/\//, '')
+			.replace(/\/$/, '')
+	return href !== '' && plain(text) === plain(href)
+}
+
 function Marked(props: { marks: JsonMark[]; index: number; text: string }) {
 	const mark = () => props.marks[props.index]
 	const inner = () => <Marked marks={props.marks} index={props.index + 1} text={props.text} />
@@ -328,13 +340,10 @@ function Marked(props: { marks: JsonMark[]; index: number; text: string }) {
 							href={str(m().attrs?.href)}
 							target={str(m().attrs?.target) || undefined}
 							rel={str(m().attrs?.rel) || undefined}
-							// Words that are the address itself (a legacy import prints the URL): on
-							// paper the address is not written a second time after them (print.css).
-							data-url-text={
-								props.text.trim().replace(/\/$/, '') === str(m().attrs?.href).replace(/\/$/, '')
-									? ''
-									: undefined
-							}
+							// Words that are the address itself (a legacy import prints the URL, with or
+							// without its scheme): on paper the address is not written a second time
+							// after them (print.css).
+							data-url-text={sameAddress(props.text, str(m().attrs?.href)) ? '' : undefined}
 						>
 							{inner()}
 						</a>
