@@ -47,6 +47,21 @@ export class DocumentRoom extends DocRoom {
 	#documentId: string | null = null
 	#document: Promise<HostedDocument> | null = null
 
+	constructor(state: DurableObjectState, env: Cloudflare.Env) {
+		super(state, env)
+		// The atlas mirror follows the roster from the moment room-service has reconciled
+		// it for this incarnation: announced once then, and on every change after. Not a
+		// field initialiser: subscribing to a collection starts its sync, and starting the
+		// roster's load ahead of the room's own start made reconcile run against an empty
+		// roster. Not the join/leave hook: reconcile deletes stale rows straight on the
+		// collection, and the hook alone left the mirror naming people who had left while
+		// the room was away.
+		void this.online.ready.then(() => {
+			this.collections.online.subscribeChanges(() => this.#scheduleAnnouncement())
+			this.#scheduleAnnouncement()
+		})
+	}
+
 	/** The document this room hosts, from the room's own name. */
 	documentId(): string {
 		if (this.#documentId) return this.#documentId
@@ -227,8 +242,7 @@ export class DocumentRoom extends DocRoom {
 
 	/** The roster moved: after it settles, the document row says who has it open, so the
 	 *  atlas can mark a pathway someone is working in without joining its room. */
-	override materializeOnline(userId: string): void {
-		super.materializeOnline(userId)
+	#scheduleAnnouncement(): void {
 		if (this.#presenceTimer) clearTimeout(this.#presenceTimer)
 		this.#presenceTimer = setTimeout(() => {
 			this.#presenceTimer = null

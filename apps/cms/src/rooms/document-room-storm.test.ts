@@ -26,6 +26,7 @@
 
 // biome-ignore lint/correctness/noUnresolvedImports: provided by the vitest workers pool
 import { env, evictDurableObject, runInDurableObject } from 'cloudflare:test'
+import { eq } from 'drizzle-orm'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import type { JsonNode } from '#/content/schema.ts'
 import { db, schema } from '#/db/index.ts'
@@ -116,11 +117,34 @@ async function eventually(assertion: () => void | Promise<void>, timeoutMs = 5_0
 	throw lastError
 }
 
+/** The online rows as SQLite holds them. */
+const onDisk = (state: DurableObjectState): unknown[] =>
+	[...state.storage.sql.exec('SELECT user_id FROM online').raw()].map((r) => r[0])
+
+/** A departed member's online row left on disk by a previous incarnation (the row a
+ *  socket that died during hibernation, or an eviction, never got to delete), then the
+ *  eviction. Proves the row is on disk when the incarnation goes, and returns that
+ *  incarnation's identity so a test can prove the next one is new. */
+async function plantStaleRow(doc: Seeded): Promise<{ incarnation: string }> {
+	const planted = await runInDurableObject(roomOf(doc), async (instance: DocumentRoom, state) => {
+		await instance.ready
+		state.storage.sql.exec(
+			'INSERT OR REPLACE INTO `online` (`user_id`, `place`, `connections`) VALUES (?, NULL, 1)',
+			MEMBER,
+		)
+		return { incarnation: instance.incarnationId, disk: onDisk(state) }
+	})
+	expect(planted.disk).toEqual([MEMBER])
+	await evictDurableObject(roomOf(doc), { webSockets: 'close' })
+	return { incarnation: planted.incarnation }
+}
+
 /** The DO's own view: registered facets per section, the online rows, live members, sockets. */
 async function serverView(doc: Seeded) {
 	return runInDurableObject(roomOf(doc), async (instance: DocumentRoom, state) => {
 		await instance.ready
 		return {
+			incarnation: instance.incarnationId,
 			facets: Object.fromEntries(
 				doc.owned.map((s) => [s.address, instance.facets.facetsFor(s.id).length]),
 			),
@@ -304,14 +328,11 @@ describe('step page over the production client (real workerd)', () => {
 
 	it('a stale online row on disk in a fresh incarnation is reconciled away before the first join', async () => {
 		const doc = await seedDocument('stale')
+		// The row is planted and the incarnation evicted BEFORE the page's client exists:
+		// the client connects the moment it is made, and its join used to race the planted
+		// row — the join that won made this test pass with no stale row at all.
+		const planted = await plantStaleRow(doc)
 		const client = pathwayClientFor(doc.documentId)
-		await runInDurableObject(roomOf(doc), async (_instance, state) => {
-			state.storage.sql.exec(
-				'INSERT OR REPLACE INTO `online` (`user_id`, `place`, `connections`) VALUES (?, NULL, 1)',
-				MEMBER,
-			)
-		})
-		await evictDurableObject(roomOf(doc), { webSockets: 'close' })
 		const mounted = doc.owned.map((s) => mountLikeThePage(client, s.id))
 		await Promise.all(mounted.map((m) => m.ready()))
 		await eventually(async () => {
@@ -319,6 +340,57 @@ describe('step page over the production client (real workerd)', () => {
 		}, 10_000)
 		await sleep(2_000)
 		expect(fatal).toEqual([])
+		expect((await serverView(doc)).incarnation).not.toBe(planted.incarnation)
 		for (const m of mounted) m.leave()
+	}, 30_000)
+
+	it('the atlas mirror follows the roster: a join, a leave, and a wake that only reconciles', async () => {
+		const doc = await seedDocument('mirror')
+		const d = db(env.DB)
+		const present = async () =>
+			(
+				await d
+					.select({ present: schema.documents.present })
+					.from(schema.documents)
+					.where(eq(schema.documents.id, doc.documentId))
+			)[0]?.present
+		// A member left while the room was away (their socket died during hibernation, or
+		// the room was evicted — every deploy evicts every room): their online row is still
+		// on disk and the document row still names them for the atlas.
+		const planted = await plantStaleRow(doc)
+		await d
+			.update(schema.documents)
+			.set({ present: [{ id: MEMBER, name: 'Member' }] })
+			.where(eq(schema.documents.id, doc.documentId))
+		// The next incarnation wakes for any reason but a join (here: a worker-side call)
+		// and room-service reconciles the row away, in memory and on disk. Nobody joins.
+		// (The row cannot be seen before that: the callback lands after the room's own
+		// startup, by which time the reconcile has run — its effects are the proof.)
+		const woke = await runInDurableObject(roomOf(doc), async (instance: DocumentRoom, state) => {
+			await instance.online.ready
+			return {
+				incarnation: instance.incarnationId,
+				memory: [...instance.collections.online.values()].map((r) => r.userId),
+				disk: onDisk(state),
+			}
+		})
+		expect(woke.incarnation).not.toBe(planted.incarnation)
+		expect(woke).toMatchObject({ memory: [], disk: [] })
+		// The mirror must follow: the atlas would otherwise show them until someone else
+		// opened the document.
+		await eventually(async () => expect(await present()).toEqual([]), 6_000)
+
+		// And it follows the ordinary paths too: a join names the member, a leave clears it.
+		const client = pathwayClientFor(doc.documentId)
+		const mounted = doc.owned.map((s) => mountLikeThePage(client, s.id))
+		await Promise.all(mounted.map((m) => m.ready()))
+		await eventually(
+			async () => expect(await present()).toEqual([{ id: MEMBER, name: MEMBER }]),
+			6_000,
+		)
+		for (const m of mounted) m.leave()
+		sharedSocket.close()
+		await eventually(async () => expect(await present()).toEqual([]), 6_000)
+		expect(fatal).toEqual([])
 	}, 30_000)
 })
