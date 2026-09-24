@@ -279,7 +279,12 @@
 			)
 	)::before {
 	color: var(--color-secondary-content);
-	top: 1.05em;
+	/* Centred on the band's first line: the band's top padding (0.35em) and its line box
+	   (1.55em), both in the body's em, expressed in this glyph's larger em. */
+	top: calc(0.35em / 1.1);
+	block-size: calc(1.55em / 1.1);
+	display: grid;
+	place-items: center;
 }
 
 /* ── The snapshot schematic, generated from the document's timeframe boxes ── */
