@@ -230,13 +230,18 @@
 	border-radius: 0;
 }
 
-.ocp-body .ocp-box .ui-callout-body > p[data-ocp="banner"]:first-child,
+/* "First" ignores a guidance ANCHOR before it (a pathway's note that lives in the margin
+   and takes no room here): the band is still the first thing the eye meets. In the
+   template the same note is an inline accordion, so the band rightly sits below it. */
+.ocp-body .ocp-box .ui-callout-body > p[data-ocp="banner"]:not(:not(.ocp-guidance-anchor) ~ *),
 .ocp-body
 	.ocp-box
 	.ui-callout-body
-	> :first-child
-	> :first-child
-	> p[data-ocp="banner"]:only-child {
+	> .ocp-node-content
+	> [data-solid-block="banner"]:not(
+		:not([data-solid-block="guidance"]:has(.ocp-guidance-anchor)) ~ *
+	)
+	> p[data-ocp="banner"] {
 	margin-top: calc(-1 * var(--_ui-callout-pad, 0.8rem));
 }
 
@@ -262,10 +267,17 @@
 	padding-left: 2.6em;
 }
 
-.ocp-body .ocp-box .ui-callout-body:has(> p[data-ocp="banner"]:first-child)::before,
 .ocp-body
 	.ocp-box
-	.ui-callout-body:has(> :first-child > :first-child > p[data-ocp="banner"]:only-child)::before {
+	.ui-callout-body:has(> p[data-ocp="banner"]:not(:not(.ocp-guidance-anchor) ~ *))::before,
+.ocp-body
+	.ocp-box
+	.ui-callout-body:has(
+		> .ocp-node-content
+			> [data-solid-block="banner"]:not(
+				:not([data-solid-block="guidance"]:has(.ocp-guidance-anchor)) ~ *
+			)
+	)::before {
 	color: var(--color-secondary-content);
 	top: 1.05em;
 }
