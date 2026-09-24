@@ -182,6 +182,37 @@ function defineJoinedCitations() {
 	)
 }
 
+/** A table cell always has a line to write on. A cell whose blocks are all guidance (the
+ *  template's prompt for that cell, which a pathway shows in the margin and not in the
+ *  text) has no place for a caret: a click in it lands nowhere. An empty paragraph goes
+ *  after the guidance — what the template seed writes now, applied here to every draft
+ *  written before it did, the moment the draft loads. */
+function defineCellFloor() {
+	return definePlugin(
+		new Plugin({
+			appendTransaction(transactions, _old, state) {
+				if (!transactions.some((tr) => tr.docChanged)) return null
+				const paragraph = state.schema.nodes.paragraph
+				if (!paragraph) return null
+				const ends: number[] = []
+				state.doc.descendants((node, pos) => {
+					if (node.type.name !== 'tableCell' && node.type.name !== 'tableHeaderCell') return true
+					let writable = false
+					node.forEach((child) => {
+						if (child.type.name !== 'guidance') writable = true
+					})
+					if (!writable) ends.push(pos + node.nodeSize - 1)
+					return false
+				})
+				if (ends.length === 0) return null
+				const tr = state.tr
+				for (const end of ends.reverse()) tr.insert(end, paragraph.create())
+				return tr
+			},
+		}),
+	)
+}
+
 /** Schema + behaviour. `defineTable()` also carries the table specs; ProseKit merges
  *  same-named specs, so the schema stays the one in content/schema.ts. `derived` is the
  *  page's derived view (citation numbers, timeframes) the node views read. */
@@ -207,6 +238,7 @@ export function defineSectionSchema(derived: () => DerivedView, guidance: Guidan
 		defineHardBreakKeymap(),
 		defineImageCommands(),
 		defineTable(),
+		defineCellFloor(),
 		defineListCommands(),
 		defineListKeymap(),
 		defineListInputRules(),

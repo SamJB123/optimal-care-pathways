@@ -256,16 +256,6 @@ sup[data-ocp="citation"]::before {
 	color: var(--color-error);
 }
 
-/* The author's cue that a row goes into the quick reference guide: an editing aid, not
-   part of the published page. */
-.ocp-body:not(.ocp-published .ocp-body)
-	.prosemirror-flat-list[data-list-kind="check"][data-point-of-care="true"]
-	> .list-marker::after {
-	content: " ◆";
-	color: var(--color-error);
-	font-size: 0.7em;
-}
-
 /* The editor's node views host their content in one element; it takes no space of
    its own. */
 .ocp-body .ocp-node-content {
