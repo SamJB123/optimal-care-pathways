@@ -19,6 +19,7 @@ import { createManagedCapnwebSession } from '@aicolab/room-service/client/capnwe
 import { createSyncedCollection } from '@aicolab/room-service/collection-sync/client'
 import type { RpcStub } from 'capnweb-experimental-hibernation'
 import type { DocumentWireRow, SectionWireRow } from '#/lib/live-topics.ts'
+import { nameOf, onNamesLearnt } from '#/lib/people.ts'
 import type { CoreRpcRoot } from '#/lib/rpc-root.ts'
 import { sharedSocket } from '#/ws.ts'
 
@@ -87,12 +88,15 @@ function createPathwayClient(documentId: string): PathwayClient {
 		},
 	})
 	void managed.get().catch((err) => console.error('[pathway client] outline session failed:', err))
+	// Cursor labels read the page's name book; when a name lands the labels repaint. The
+	// client is page-lifetime, so the listener is never removed.
 	const room = createDocRoomClient({
 		socket: sharedSocket,
 		id: `document:${documentId}`,
 		connect: (api) => api.connectDocumentRoom({ documentId }),
-		nameOf: (userId) => userId.slice(0, 8),
+		nameOf,
 	})
+	onNamesLearnt(() => room.cursors.refresh())
 	return { documentId, sections: sections.collection, ready: () => ready, room }
 }
 

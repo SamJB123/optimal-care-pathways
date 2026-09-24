@@ -33,6 +33,7 @@ import { Masthead } from '#/components/Masthead.tsx'
 import { useAuthSession } from '#/lib/auth-client.ts'
 import { familyStyle } from '#/lib/family.ts'
 import { documentName, numberLabel } from '#/lib/labels.ts'
+import { knownNames, learnNames, nameOf } from '#/lib/people.ts'
 import {
 	draftDocxHref,
 	draftPdfHref,
@@ -116,7 +117,6 @@ function DocumentShell() {
 		ownedWrite: true,
 	})
 	const [online, setOnline] = createSignal<{ userId: string; sectionId: string | null }[]>([])
-	const [names, setNames] = createSignal<Record<string, string>>({})
 	const [contents, setContents] = createSignal(false)
 	const [raise, setRaise] = createSignal(0)
 	const [reviewScope, setReviewScope] = createSignal<ReviewScope>('changed')
@@ -167,18 +167,19 @@ function DocumentShell() {
 		},
 	)
 
-	// Names for the people in the room, fetched as new ones arrive.
+	// Names for the people in the room, fetched as new ones arrive, into the page's name
+	// book (lib/people.ts): the spine's roster and the carets in the text read the same one.
 	createEffect(
 		() => ({
 			unknown: online()
 				.map((o) => o.userId)
-				.filter((id) => !(id in names())),
+				.filter((id) => !(id in knownNames())),
 			documentId: params().documentId,
 		}),
 		({ unknown, documentId }) => {
 			if (unknown.length === 0) return
 			void namesIn({ data: { documentId, userIds: unknown } }).then((found) =>
-				setNames((n) => ({ ...n, ...found })),
+				learnNames(unknown, found),
 			)
 		},
 	)
@@ -193,7 +194,7 @@ function DocumentShell() {
 			.filter((o) => o.userId !== selfId())
 			.map((o) => ({
 				userId: o.userId,
-				name: names()[o.userId] ?? 'Someone',
+				name: nameOf(o.userId),
 				sectionId: o.sectionId,
 			})),
 	)
